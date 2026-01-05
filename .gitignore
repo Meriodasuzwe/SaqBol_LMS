@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Docker
+.docker-compose.override.yml
+
+# DB
+postgres_data_auth/
+
+# IDE
+.vscode/
+.idea/
