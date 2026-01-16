@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser #Я использую AbstractUser для гибкого расширения модели пользователя без ломки встроенной аутентификации Django
 from django.db import models
 
 class User(AbstractUser):

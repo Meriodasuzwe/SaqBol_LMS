@@ -1,37 +1,36 @@
 version: '3.8'
 
 services:
-  # База данных для сервиса авторизации
-  db_auth:
+  # База данных для основного сервиса (Core)
+  db_core: # Поменял имя для логики
     image: postgres:15-alpine
-    container_name: saqbol_db_auth
+    container_name: saqbol_db_core
     volumes:
-      - postgres_data_auth:/var/lib/postgresql/data
+      - postgres_data_core:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=auth_db
+      - POSTGRES_DB=core_db
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=secretpassword
     ports:
       - "5433:5432"
 
-  # Наш первый микросервис: Identity & Auth
-  auth_service:
-    build: ./services/auth_service
-    container_name: saqbol_auth_service
-    # Команда для запуска сервера внутри контейнера
+  # Наш основной микросервис (Core): Пользователи, Курсы, Тесты
+  core_service: # Теперь он называется так
+    build: ./services/core_service
+    container_name: saqbol_core_service
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./services/auth_service:/app
+      - ./services/core_service:/app
     ports:
       - "8001:8000"
     environment:
-      - POSTGRES_DB=auth_db
+      - POSTGRES_DB=core_db
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=secretpassword
-      - POSTGRES_HOST=db_auth
+      - POSTGRES_HOST=db_core # Должно совпадать с именем сервиса БД выше
       - POSTGRES_PORT=5432
     depends_on:
-      - db_auth
+      - db_core
 
 volumes:
-  postgres_data_auth:
+  postgres_data_core:

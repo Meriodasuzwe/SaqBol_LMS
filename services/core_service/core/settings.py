@@ -31,7 +31,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
     'courses',
+    'quizzes',
     'rest_framework',
     'users',
 ]
@@ -151,3 +153,20 @@ SIMPLE_JWT = {
 # =========================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SaqBol LMS API',
+    'DESCRIPTION': 'Система управления обучением с упором на безопасность',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Настройка для работы с JWT в интерфейсе
+    'COMPONENT_SPLIT_PATCH': True,
+    'COMPONENT_NO_READ_ONLY_FIELDS': True,
+}
