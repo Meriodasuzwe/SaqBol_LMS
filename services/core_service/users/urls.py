@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import RegisterView
+from .views import RegisterView, MeView
 
 urlpatterns = [
     # Регистрация (использует твой RegisterSerializer через RegisterView)
@@ -14,4 +14,5 @@ urlpatterns = [
     
     # Обновление токена
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('me/', MeView.as_view(), name='user_me')
 ]

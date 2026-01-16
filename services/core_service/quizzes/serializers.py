@@ -7,26 +7,27 @@ class ChoiceSerializer(serializers.ModelSerializer):
         fields = ['id', 'text', 'is_correct']
 
 class QuestionSerializer(serializers.ModelSerializer):
-    choices = ChoiceSerializer(many=True, read_only=True) # Вложенные ответы
-
+    choices = ChoiceSerializer(many=True, read_only=True)
     class Meta:
         model = Question
         fields = ['id', 'text', 'choices']
 
 class QuizSerializer(serializers.ModelSerializer):
-    questions = QuestionSerializer(many=True, read_only=True) # Вложенные вопросы
-
+    questions = QuestionSerializer(many=True, read_only=True)
     class Meta:
         model = Quiz
         fields = ['id', 'title', 'description', 'questions']
 
 class QuizSubmissionSerializer(serializers.Serializer):
-    # Ожидаем список ответов в формате: {"question_id": 1, "choice_id": 5}
-    answers = serializers.ListField(
-        child=serializers.DictField()
-    )
-
+    answers = serializers.ListField(child=serializers.DictField())
     def validate_answers(self, value):
         if not value:
             raise serializers.ValidationError("Список ответов не может быть пустым.")
         return value
+
+# Тот самый "недостающий" сериализатор
+class QuizResultSerializer(serializers.ModelSerializer):
+    quiz_title = serializers.ReadOnlyField(source='quiz.title')
+    class Meta:
+        model = Result
+        fields = ['id', 'quiz_title', 'score', 'created_at']

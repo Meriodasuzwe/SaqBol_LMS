@@ -1,22 +1,24 @@
 from rest_framework import serializers
-from .models import Category, Course, Lesson
+from .models import Course, Lesson, Category
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'title']
 
 class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
-        fields = ('id', 'title', 'content', 'video_url', 'order')
+        fields = ['id', 'title', 'content', 'video_url', 'order']
 
 class CourseSerializer(serializers.ModelSerializer):
-    # Добавляем вложенные данные, чтобы сразу видеть уроки и категорию
-    category = CategorySerializer(read_only=True)
+    # Показываем название категории вместо ID
+    category_title = serializers.ReadOnlyField(source='category.title')
+    # Показываем имя преподавателя
+    teacher_name = serializers.ReadOnlyField(source='teacher.username')
+    # Вкладываем уроки (используем тот самый related_name='lessons')
     lessons = LessonSerializer(many=True, read_only=True)
-    teacher_name = serializers.CharField(source='teacher.username', read_only=True)
 
     class Meta:
         model = Course
-        fields = ('id', 'title', 'description', 'price', 'teacher_name', 'category', 'lessons', 'created_at')
+        fields = ['id', 'title', 'description', 'price', 'category_title', 'teacher_name', 'lessons']

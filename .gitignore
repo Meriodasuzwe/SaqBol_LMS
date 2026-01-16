@@ -10,6 +10,15 @@ db.sqlite3
 media/
 staticfiles/
 
+# --- ФРОНТЕНД (ОБЯЗАТЕЛЬНО ДОБАВЬ ЭТО) ---
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+services/frontend/dist/
+services/frontend/node_modules/
+
 # Docker
 .docker-compose.override.yml
 

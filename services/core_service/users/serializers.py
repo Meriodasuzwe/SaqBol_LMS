@@ -1,6 +1,10 @@
 from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import User
+
+
+User = get_user_model()
 
 
 # ---------------------------
@@ -42,3 +46,10 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email'] # можно добавить 'role', если она у тебя есть в модели
