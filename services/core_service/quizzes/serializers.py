@@ -30,4 +30,4 @@ class QuizResultSerializer(serializers.ModelSerializer):
     quiz_title = serializers.ReadOnlyField(source='quiz.title')
     class Meta:
         model = Result
-        fields = ['id', 'quiz_title', 'score', 'created_at']
+        fields = ['id', 'quiz_title', 'score']

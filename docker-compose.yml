@@ -1,36 +1,73 @@
 version: '3.8'
 
 services:
-  # База данных для основного сервиса (Core)
-  db_core: # Поменял имя для логики
-    image: postgres:15-alpine
+  # 1. БАЗА ДАННЫХ
+  db_core:
+    image: postgres:15
     container_name: saqbol_db_core
+    environment:
+      POSTGRES_DB: core_db
+      POSTGRES_USER: core_user
+      POSTGRES_PASSWORD: core_password
     volumes:
       - postgres_data_core:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=core_db
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secretpassword
-    ports:
-      - "5433:5432"
+    networks:
+      - lms_network
+    # Проверка: база, ты жива?
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U core_user -d core_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # Наш основной микросервис (Core): Пользователи, Курсы, Тесты
-  core_service: # Теперь он называется так
+  # 2. DJANGO (БЭКЕНД)
+  core_service:
     build: ./services/core_service
     container_name: saqbol_core_service
-    command: python manage.py runserver 0.0.0.0:8000
+    # Сначала миграции, потом запуск
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./services/core_service:/app
     ports:
-      - "8001:8000"
+      - "8000:8000"
+    depends_on:
+      db_core:
+        condition: service_healthy
+    # ЖЕСТКО ЗАДАЕМ НАСТРОЙКИ (перебиваем .env)
     environment:
       - POSTGRES_DB=core_db
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secretpassword
-      - POSTGRES_HOST=db_core # Должно совпадать с именем сервиса БД выше
+      - POSTGRES_USER=core_user
+      - POSTGRES_PASSWORD=core_password
+      - POSTGRES_HOST=db_core
       - POSTGRES_PORT=5432
-    depends_on:
-      - db_core
+    networks:
+      - lms_network
+
+  # 3. AI СЕРВИС (FastAPI)
+  ai_service:
+    build: ./services/ai_service
+    container_name: saqbol_ai_service
+    volumes:
+      - ./services/ai_service:/app
+    ports:
+      - "8001:8000"
+    networks:
+      - lms_network
+
+  # 4. ФРОНТЕНД (React)
+  frontend:
+    build: ./services/frontend
+    container_name: saqbol_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./services/frontend:/app
+      - /app/node_modules
+    networks:
+      - lms_network
 
 volumes:
   postgres_data_core:
+
+networks:
+  lms_network:

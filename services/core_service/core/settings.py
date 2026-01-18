@@ -93,10 +93,10 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'auth_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'admin'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'secretpassword'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'db_auth'),
+        'NAME': os.environ.get('POSTGRES_DB', 'core_db'),
+        'USER': os.environ.get('POSTGRES_USER', 'core_user'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'core_password'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'db_core'), # Важно: db_core
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
@@ -161,6 +161,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
@@ -174,3 +177,9 @@ SPECTACULAR_SETTINGS = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Разрешаем фронтенду обращаться к бэкенду
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
