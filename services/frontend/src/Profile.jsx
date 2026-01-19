@@ -2,57 +2,53 @@ import { useEffect, useState } from 'react';
 import api from './api';
 
 function Profile() {
-    const [userData, setUserData] = useState(null);
-    const [results, setResults] = useState([]);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
-        // 1. Получаем данные профиля (нужен эндпоинт на бэкенде)
         api.get('users/me/')
-            .then(res => setUserData(res.data))
+            .then(response => setUser(response.data))
             .catch(err => console.error("Ошибка загрузки профиля", err));
-
-        // 2. Получаем историю тестов
-        api.get('quizzes/my-results/')
-            .then(res => setResults(res.data))
-            .catch(err => console.error("Ошибка загрузки результатов", err));
     }, []);
 
-    if (!userData) return <p>Загрузка профиля...</p>;
+    if (!user) return <div className="text-center mt-10"><span className="loading loading-dots loading-lg"></span></div>;
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>Личный кабинет</h2>
-            <div style={{ background: '#f9f9f9', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-                <p><strong>Логин:</strong> {userData.username}</p>
-                <p><strong>Email:</strong> {userData.email || 'не указан'}</p>
-                <p><strong>Роль:</strong> Студент</p>
-            </div>
+        <div className="max-w-2xl mx-auto">
+            <div className="bg-base-100 rounded-box shadow-xl overflow-hidden">
+                <div className="h-32 bg-gradient-to-r from-primary to-secondary"></div>
+                <div className="px-8 pb-8">
+                    <div className="relative -mt-12 mb-4">
+                        <div className="avatar placeholder">
+                            <div className="bg-neutral text-neutral-content rounded-full w-24 ring ring-primary ring-offset-base-100 ring-offset-2">
+                                <span className="text-3xl uppercase">{user.username[0]}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h1 className="text-3xl font-bold">{user.username}</h1>
+                    <p className="text-gray-500">{user.email || 'Email не указан'}</p>
 
-            <h3>📊 Мои результаты тестов:</h3>
-            {results.length > 0 ? (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid #ddd' }}>
-                            <th style={{ textAlign: 'left', padding: '10px' }}>Тест</th>
-                            <th style={{ textAlign: 'left', padding: '10px' }}>Балл</th>
-                            <th style={{ textAlign: 'left', padding: '10px' }}>Дата</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {results.map(res => (
-                            <tr key={res.id} style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '10px' }}>{res.quiz_title}</td>
-                                <td style={{ padding: '10px', color: res.score >= 50 ? 'green' : 'red' }}>
-                                    {res.score}%
-                                </td>
-                                <td style={{ padding: '10px' }}>{new Date(res.completed_at).toLocaleDateString()}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>Вы еще не проходили тесты.</p>
-            )}
+                    <div className="divider">Статистика обучения</div>
+
+                    <div className="stats shadow w-full border border-base-200">
+                        <div className="stat">
+                            <div className="stat-title">Курсов пройдено</div>
+                            <div className="stat-value text-primary">0</div>
+                            <div className="stat-desc">За все время</div>
+                        </div>
+                        
+                        <div className="stat">
+                            <div className="stat-title">Активность</div>
+                            <div className="stat-value text-secondary">High</div>
+                            <div className="stat-desc">Последние 7 дней</div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 flex gap-2">
+                        <button className="btn btn-outline btn-sm">Редактировать профиль</button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

@@ -1,26 +1,29 @@
+import requests
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 
-# Добавляем Result в импорты моделей
-from .models import Quiz, Question, Choice, Result 
-# Добавляем QuizResultSerializer в импорты сериализаторов
+from .models import Quiz, Question, Choice, Result
 from .serializers import QuizSerializer, QuizSubmissionSerializer, QuizResultSerializer
+from courses.models import Lesson
 
-# 1. Просмотр теста
+# 1. Просмотр теста (БЕЗ ИЗМЕНЕНИЙ)
 class QuizDetailView(generics.RetrieveAPIView):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'lesson_id'
 
-# 2. Сдача теста
+# 2. Сдача теста (БЕЗ ИЗМЕНЕНИЙ)
 class QuizSubmitView(APIView):
     permission_classes = [IsAuthenticated]
     
-    @extend_schema(request=QuizSubmissionSerializer)
+    @extend_schema(
+        request=QuizSubmissionSerializer,
+        responses={200: QuizResultSerializer}
+    )
     def post(self, request, quiz_id):
         serializer = QuizSubmissionSerializer(data=request.data)
         if serializer.is_valid():
@@ -43,9 +46,8 @@ class QuizSubmitView(APIView):
 
             score = (correct_answers_count / total_questions * 100) if total_questions > 0 else 0
             
-            # Сохраняем результат (используем модель Result, как в твоем коде)
             Result.objects.create(
-                student=request.user, # здесь поле student
+                student=request.user,
                 quiz_id=quiz_id,
                 score=score
             )
@@ -59,11 +61,77 @@ class QuizSubmitView(APIView):
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 3. Список результатов для профиля
+# 3. Список результатов (БЕЗ ИЗМЕНЕНИЙ)
 class MyResultsView(generics.ListAPIView):
     serializer_class = QuizResultSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Используем Result и фильтруем по student (как в модели выше)
         return Result.objects.filter(student=self.request.user).order_by('-id')
+
+# 4. ГЕНЕРАЦИЯ ТЕСТА ЧЕРЕЗ AI (ИСПРАВЛЕНО ПОД ТВОЙ AI)
+class GenerateQuizView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={201: QuizSerializer},
+        description="Генерирует тест на основе контента урока через AI-сервис"
+    )
+    def post(self, request, lesson_id):
+        try:
+            lesson = Lesson.objects.get(id=lesson_id)
+            
+            # ШАГ 1: Удаляем старый тест для этого урока, чтобы избежать ошибки "Unique Constraint"
+            Quiz.objects.filter(lesson=lesson).delete()
+            
+            # ШАГ 2: Запрос к AI
+            ai_url = "http://ai_service:8000/generate-quiz"
+            payload = {"text": lesson.content}
+            response = requests.post(ai_url, json=payload, timeout=10)
+            
+            if response.status_code != 200:
+                return Response(
+                    {"error": "AI-сервис вернул ошибку"}, 
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            
+            data = response.json()
+            
+            # ШАГ 3: Создаем новый Quiz
+            quiz = Quiz.objects.create(
+                title=f"Тест: {lesson.title}",
+                lesson=lesson
+            )
+            
+            # ШАГ 4: Парсим данные в формате твоего FastAPI (generated_questions)
+            # Мы используем ключи 'question', 'options' и 'correct_answer'
+            questions_data = data.get('generated_questions', [])
+            
+            for q_item in questions_data:
+                question = Question.objects.create(
+                    quiz=quiz,
+                    text=q_item.get('question') # Ключ из твоего FastAPI
+                )
+                
+                correct_answer_text = q_item.get('correct_answer')
+                options = q_item.get('options', [])
+                
+                for opt_text in options:
+                    Choice.objects.create(
+                        question=question,
+                        text=opt_text,
+                        # Если текст варианта совпадает с правильным ответом - ставим True
+                        is_correct=(opt_text == correct_answer_text) 
+                    )
+            
+            return Response(
+                {"message": "Тест успешно сгенерирован", "quiz_id": quiz.id}, 
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Lesson.DoesNotExist:
+            return Response({"error": "Урок не найден"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # Выводим ошибку в консоль для дебага
+            print(f"Ошибка генерации: {e}") 
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,48 +1,92 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from './api';
+import { useNavigate } from 'react-router-dom';
 
 function Login({ onLoginSuccess }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setLoading(true);
         try {
-            // Используем твой проверенный эндпоинт
             const response = await api.post('users/login/', { username, password });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            
-            onLoginSuccess(); // Обновляем состояние в App.jsx
-            navigate('/courses'); // Перенаправляем на список курсов
-        } catch (error) {
-            const errorMsg = error.response?.data?.detail || "Ошибка входа";
-            alert(errorMsg);
+            onLoginSuccess();
+            navigate('/courses');
+        } catch (err) {
+            setError('Неверное имя пользователя или пароль');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '10px', marginTop: '50px' }}>
-            <h2>Вход в SaqBol LMS</h2>
-            <form onSubmit={handleLogin}>
-                <input 
-                    type="text" 
-                    placeholder="Логин" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)} 
-                    style={{ marginBottom: '10px', padding: '8px', width: '100%' }}
-                /><br />
-                <input 
-                    type="password" 
-                    placeholder="Пароль" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)} 
-                    style={{ marginBottom: '10px', padding: '8px', width: '100%' }}
-                /><br />
-                <button type="submit" style={{ padding: '10px 20px', cursor: 'pointer' }}>Войти</button>
-            </form>
+        <div className="flex items-center justify-center mt-12">
+            <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-base-200">
+                <div className="card-body">
+                    <h2 className="card-title text-2xl font-bold text-center justify-center mb-4">
+                        Вход в SaqBol
+                    </h2>
+                    
+                    {error && (
+                        <div className="alert alert-error mb-4 py-2">
+                            <span className="text-sm">{error}</span>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-semibold">Логин</span>
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Введите ваш логин"
+                                className="input input-bordered focus:input-primary"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text font-semibold">Пароль</span>
+                            </label>
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                                className="input input-bordered focus:input-primary"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="card-actions mt-6">
+                            <button 
+                                type="submit" 
+                                className={`btn btn-primary btn-block ${loading ? 'loading' : ''}`}
+                                disabled={loading}
+                            >
+                                {loading ? 'Входим...' : 'Войти'}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="text-center mt-4">
+                        <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">
+                            LMS System v1.0
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

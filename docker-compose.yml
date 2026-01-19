@@ -57,14 +57,13 @@ services:
   # 4. ФРОНТЕНД (React)
   frontend:
     build: ./services/frontend
-    container_name: saqbol_frontend
-    ports:
-      - "5173:5173"
     volumes:
       - ./services/frontend:/app
-      - /app/node_modules
-    networks:
-      - lms_network
+      - /app/node_modules # <--- Это магическая строчка. Она защищает папку с модулями от затирания
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/
 
 volumes:
   postgres_data_core:

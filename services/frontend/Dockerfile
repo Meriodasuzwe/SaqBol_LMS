@@ -6,7 +6,7 @@ COPY package*.json ./
 
 # Устанавливаем зависимости + axios принудительно
 RUN npm install
-RUN npm install axios
+
 
 COPY . .
 
