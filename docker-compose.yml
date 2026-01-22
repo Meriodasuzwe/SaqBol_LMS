@@ -6,16 +6,21 @@ services:
     image: postgres:15
     container_name: saqbol_db_core
     environment:
-      POSTGRES_DB: core_db
-      POSTGRES_USER: core_user
-      POSTGRES_PASSWORD: core_password
+      # Docker сам возьмет значения из твоего .env файла
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # Пробрасываем 5433 (внешний) на 5432 (внутренний)
+      # Теперь DBeaver увидит базу на порту 5433
+      - "5433:5432" 
     volumes:
       - postgres_data_core:/var/lib/postgresql/data
     networks:
       - lms_network
     # Проверка: база, ты жива?
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U core_user -d core_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -35,9 +40,9 @@ services:
         condition: service_healthy
     # ЖЕСТКО ЗАДАЕМ НАСТРОЙКИ (перебиваем .env)
     environment:
-      - POSTGRES_DB=core_db
-      - POSTGRES_USER=core_user
-      - POSTGRES_PASSWORD=core_password
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_HOST=db_core
       - POSTGRES_PORT=5432
     networks:

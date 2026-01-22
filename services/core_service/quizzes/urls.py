@@ -1,5 +1,5 @@
 from django.urls import path 
-from .views import QuizDetailView, QuizSubmitView, MyResultsView, GenerateQuizView # Добавили сюда
+from .views import QuizDetailView, QuizSubmitView, MyResultsView, GenerateQuizView 
 
 urlpatterns = [
     # Позволит получить тест по ID урока

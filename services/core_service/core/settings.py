@@ -93,11 +93,11 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'core_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'core_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'core_password'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'db_core'), # Важно: db_core
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST', 'db_core'),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 
