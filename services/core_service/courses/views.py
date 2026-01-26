@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from .models import Category, Course, Enrollment  
-from .serializers import CategorySerializer, CourseSerializer
+from .models import Category, Course, Enrollment, Lesson  
+from .serializers import CategorySerializer, CourseSerializer, LessonSerializer
 from rest_framework.exceptions import PermissionDenied
 
 # Список всех категорий
@@ -34,3 +34,8 @@ class CourseDetailView(generics.RetrieveAPIView):
             raise PermissionDenied("Вы не записаны на этот курс!")
         
         return course
+
+class LessonDetailView(generics.RetrieveAPIView):
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+    permission_classes = [IsAuthenticated]
