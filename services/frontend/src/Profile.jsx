@@ -55,12 +55,22 @@ function Profile() {
                 
                 <div className="px-8 pb-8">
                     <div className="relative -mt-12 mb-6 flex justify-between items-end">
+                        {/* Аватар */}
                         <div className="avatar placeholder ring ring-base-100 ring-offset-2 rounded-full">
                             <div className="bg-neutral text-neutral-content rounded-full w-24">
                                 <span className="text-3xl uppercase font-bold">{user?.username?.[0]}</span>
                             </div>
                         </div>
-                        <button className="btn btn-sm btn-ghost" onClick={() => navigate('/login')}>Выйти</button>
+
+                        {/* КНОПКИ (УЧИТЕЛЬ + ВЫХОД) */}
+                        <div className="flex gap-2">
+                            <button className="btn btn-sm btn-accent" onClick={() => navigate('/teacher')}>
+                                👨‍🏫 Учитель
+                            </button>
+                            <button className="btn btn-sm btn-ghost" onClick={() => navigate('/login')}>
+                                Выйти
+                            </button>
+                        </div>
                     </div>
                     
                     <h1 className="text-3xl font-bold">{user?.username}</h1>

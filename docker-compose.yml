@@ -58,6 +58,9 @@ services:
       - "8001:8000"
     networks:
       - lms_network
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
 
   # 4. ФРОНТЕНД (React)
   frontend:

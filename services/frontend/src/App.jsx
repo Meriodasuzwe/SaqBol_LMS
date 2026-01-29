@@ -5,7 +5,8 @@ import CourseList from './CourseList';
 import CourseDetail from './CourseDetail';
 import QuizPage from './QuizPage';
 import Profile from './Profile';
-import LessonPage from './LessonPage'; // Импортируем новую страницу
+import LessonPage from './LessonPage';
+import TeacherPanel from './TeacherPanel'; // <-- Импорт новой панели
 
 function App() {
   // Проверяем токен при загрузке, чтобы не выбивало при F5
@@ -59,7 +60,7 @@ function App() {
               isLoggedIn ? <CourseDetail /> : <Navigate to="/login" />
             } />
             
-            {/* 4. Страница УРОКА (Теория + Видео) - НОВОЕ */}
+            {/* 4. Страница УРОКА (Теория + Видео) */}
             <Route path="/lesson/:lessonId" element={
               isLoggedIn ? <LessonPage /> : <Navigate to="/login" />
             } />
@@ -72,6 +73,11 @@ function App() {
             {/* 6. Личный кабинет */}
             <Route path="/profile" element={
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
+            } />
+
+            {/* 7. ПАНЕЛЬ УЧИТЕЛЯ (AI) - НОВЫЙ МАРШРУТ */}
+            <Route path="/teacher" element={
+              isLoggedIn ? <TeacherPanel /> : <Navigate to="/login" />
             } />
 
             {/* Редиректы */}

@@ -1,5 +1,5 @@
 from django.urls import path 
-from .views import QuizDetailView, QuizSubmitView, MyQuizResultsView, GenerateQuizView 
+from .views import QuizDetailView, QuizSubmitView, MyQuizResultsView, GenerateQuizView,GeneratePreviewView,SaveGeneratedView
 
 urlpatterns = [
     # Позволит получить тест по ID урока
@@ -13,4 +13,6 @@ urlpatterns = [
     
     # Генерация теста (убрали приставку views.)
     path('generate/<int:lesson_id>/', GenerateQuizView.as_view(), name='generate-quiz'),
+    path('generate-preview/', GeneratePreviewView.as_view(), name='quiz-generate-preview'),
+    path('save-generated/', SaveGeneratedView.as_view(), name='quiz-save-generated'),
 ]
