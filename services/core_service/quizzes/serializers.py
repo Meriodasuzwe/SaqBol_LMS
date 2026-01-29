@@ -4,7 +4,8 @@ from .models import Quiz, Question, Choice, Result
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
-        fields = ['id', 'text', 'is_correct']
+        # ВАЖНО: Убрали 'is_correct', чтобы студент не видел правильный ответ в коде страницы
+        fields = ['id', 'text'] 
 
 class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True, read_only=True)
@@ -19,15 +20,23 @@ class QuizSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'questions']
 
 class QuizSubmissionSerializer(serializers.Serializer):
-    answers = serializers.ListField(child=serializers.DictField())
-    def validate_answers(self, value):
-        if not value:
-            raise serializers.ValidationError("Список ответов не может быть пустым.")
-        return value
+    answers = serializers.ListField(
+        child=serializers.DictField(child=serializers.IntegerField())
+    )
 
-# Тот самый "недостающий" сериализатор
 class QuizResultSerializer(serializers.ModelSerializer):
     quiz_title = serializers.ReadOnlyField(source='quiz.title')
     class Meta:
         model = Result
-        fields = ['id', 'quiz_title', 'score']
+        # Возвращаем дату завершения сразу после сдачи
+        fields = ['id', 'quiz_title', 'score', 'completed_at']
+
+# Сериализатор для ПРОФИЛЯ
+class MyResultSerializer(serializers.ModelSerializer):
+    lesson_title = serializers.CharField(source='quiz.lesson.title', read_only=True)
+    course_title = serializers.CharField(source='quiz.lesson.course.title', read_only=True)
+
+    class Meta:
+        model = Result
+        # Используем completed_at, как в твоей базе
+        fields = ['id', 'score', 'completed_at', 'lesson_title', 'course_title']

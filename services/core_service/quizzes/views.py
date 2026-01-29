@@ -5,25 +5,29 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 
+# Импортируем Result (твоя текущая модель)
 from .models import Quiz, Question, Choice, Result
-from .serializers import QuizSerializer, QuizSubmissionSerializer, QuizResultSerializer
 from courses.models import Lesson
 
-# 1. Просмотр теста (БЕЗ ИЗМЕНЕНИЙ)
+from .serializers import (
+    QuizSerializer, 
+    QuizSubmissionSerializer, 
+    QuizResultSerializer, 
+    MyResultSerializer
+)
+
+# 1. Просмотр теста
 class QuizDetailView(generics.RetrieveAPIView):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'lesson_id'
 
-# 2. Сдача теста (БЕЗ ИЗМЕНЕНИЙ)
+# 2. Сдача теста
 class QuizSubmitView(APIView):
     permission_classes = [IsAuthenticated]
     
-    @extend_schema(
-        request=QuizSubmissionSerializer,
-        responses={200: QuizResultSerializer}
-    )
+    @extend_schema(request=QuizSubmissionSerializer, responses={200: QuizResultSerializer})
     def post(self, request, quiz_id):
         serializer = QuizSubmissionSerializer(data=request.data)
         if serializer.is_valid():
@@ -35,6 +39,7 @@ class QuizSubmitView(APIView):
                 q_id = ans.get('question_id')
                 c_id = ans.get('choice_id')
                 
+                # Проверяем правильность
                 is_correct = Choice.objects.filter(
                     id=c_id, 
                     question_id=q_id, 
@@ -44,8 +49,9 @@ class QuizSubmitView(APIView):
                 if is_correct:
                     correct_answers_count += 1
 
-            score = (correct_answers_count / total_questions * 100) if total_questions > 0 else 0
+            score = int((correct_answers_count / total_questions * 100)) if total_questions > 0 else 0
             
+            # Сохраняем в модель Result
             Result.objects.create(
                 student=request.user,
                 quiz_id=quiz_id,
@@ -61,77 +67,58 @@ class QuizSubmitView(APIView):
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 3. Список результатов (БЕЗ ИЗМЕНЕНИЙ)
-class MyResultsView(generics.ListAPIView):
-    serializer_class = QuizResultSerializer
+# 3. Список результатов (ДЛЯ ПРОФИЛЯ)
+class MyQuizResultsView(generics.ListAPIView):
+    serializer_class = MyResultSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Result.objects.filter(student=self.request.user).order_by('-id')
+        # Используем Result и completed_at
+        return Result.objects.filter(student=self.request.user).order_by('-completed_at')
 
-# 4. ГЕНЕРАЦИЯ ТЕСТА ЧЕРЕЗ AI (ИСПРАВЛЕНО ПОД ТВОЙ AI)
+# 4. ГЕНЕРАЦИЯ ТЕСТА (AI)
 class GenerateQuizView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(
-        responses={201: QuizSerializer},
-        description="Генерирует тест на основе контента урока через AI-сервис"
-    )
     def post(self, request, lesson_id):
         try:
             lesson = Lesson.objects.get(id=lesson_id)
             
-            # ШАГ 1: Удаляем старый тест для этого урока, чтобы избежать ошибки "Unique Constraint"
+            # Удаляем старый тест, чтобы не было дублей
             Quiz.objects.filter(lesson=lesson).delete()
             
-            # ШАГ 2: Запрос к AI
-            ai_url = "http://ai_service:8000/generate-quiz"
+            # Адрес AI-сервиса в Docker
+            ai_url = "http://saqbol_ai_service:8000/generate-quiz"
             payload = {"text": lesson.content}
-            response = requests.post(ai_url, json=payload, timeout=10)
+            
+            response = requests.post(ai_url, json=payload, timeout=30)
             
             if response.status_code != 200:
-                return Response(
-                    {"error": "AI-сервис вернул ошибку"}, 
-                    status=status.HTTP_503_SERVICE_UNAVAILABLE
-                )
+                return Response({"error": "AI-сервис недоступен"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
             data = response.json()
             
-            # ШАГ 3: Создаем новый Quiz
-            quiz = Quiz.objects.create(
-                title=f"Тест: {lesson.title}",
-                lesson=lesson
-            )
+            # Создаем тест
+            quiz = Quiz.objects.create(title=f"Тест: {lesson.title}", lesson=lesson)
             
-            # ШАГ 4: Парсим данные в формате твоего FastAPI (generated_questions)
-            # Мы используем ключи 'question', 'options' и 'correct_answer'
             questions_data = data.get('generated_questions', [])
             
             for q_item in questions_data:
-                question = Question.objects.create(
-                    quiz=quiz,
-                    text=q_item.get('question') # Ключ из твоего FastAPI
-                )
+                question = Question.objects.create(quiz=quiz, text=q_item.get('question'))
+                correct_text = q_item.get('correct_answer')
                 
-                correct_answer_text = q_item.get('correct_answer')
-                options = q_item.get('options', [])
-                
-                for opt_text in options:
+                for opt_text in q_item.get('options', []):
                     Choice.objects.create(
-                        question=question,
-                        text=opt_text,
-                        # Если текст варианта совпадает с правильным ответом - ставим True
-                        is_correct=(opt_text == correct_answer_text) 
+                        question=question, 
+                        text=opt_text, 
+                        # Сравниваем строки без пробелов
+                        is_correct=(opt_text.strip() == correct_text.strip())
                     )
             
-            return Response(
-                {"message": "Тест успешно сгенерирован", "quiz_id": quiz.id}, 
-                status=status.HTTP_201_CREATED
-            )
+            return Response({"message": "Тест создан", "quiz_id": quiz.id}, status=status.HTTP_201_CREATED)
             
         except Lesson.DoesNotExist:
             return Response({"error": "Урок не найден"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            # Выводим ошибку в консоль для дебага
-            print(f"Ошибка генерации: {e}") 
+            print(f"Ошибка AI: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
