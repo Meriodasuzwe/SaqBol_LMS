@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import ReactQuill from 'react-quill-new'; // Импорт редактора
+import 'react-quill-new/dist/quill.snow.css'; // Импорт стилей редактора
 import api from './api';
 import TeacherPanel from './TeacherPanel';
 
@@ -15,6 +17,28 @@ function CourseBuilder() {
     const [newLessonTitle, setNewLessonTitle] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
+    // --- НАСТРОЙКИ РЕДАКТОРА (TOOLBAR) ---
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }], // Заголовки H1, H2, H3
+            ['bold', 'italic', 'underline', 'strike'], // Жирный, Курсив...
+            [{ 'color': [] }, { 'background': [] }], // Цвет текста и фона
+            [{ 'list': 'ordered'}, {'list': 'bullet'}], // Списки
+            [{ 'align': [] }], // Выравнивание
+            ['link', 'image', 'video'], // Вставка картинок и видео
+            ['clean'] // Очистить форматирование
+        ],
+    };
+
+    const formats = [
+        'header',
+        'bold', 'italic', 'underline', 'strike',
+        'color', 'background',
+        'list', 'bullet',
+        'align',
+        'link', 'image', 'video'
+    ];
+
     // Загрузка уроков
     useEffect(() => {
         fetchLessons();
@@ -23,7 +47,7 @@ function CourseBuilder() {
     const fetchLessons = async () => {
         try {
             const res = await api.get(`courses/${courseId}/lessons/`);
-            // Сортируем уроки по порядку (ID)
+            // Сортируем уроки по ID (в порядке создания)
             const sorted = res.data.sort((a, b) => a.id - b.id);
             setLessons(sorted);
             
@@ -44,23 +68,20 @@ function CourseBuilder() {
         setIsCreating(true);
 
         try {
-            // Отправляем чистые данные, чтобы не было ошибки 400
+            // Создаем урок с пустыми полями, чтобы избежать 400 Bad Request
             const res = await api.post(`courses/${courseId}/lessons/`, {
                 title: newLessonTitle,
-                content: "",    // Пустая строка теперь разрешена сериализатором
-                video_url: "",  // Пустая строка теперь разрешена сериализатором
+                content: "",    
+                video_url: "",  
                 order: lessons.length + 1
             });
 
-            // Добавляем новый урок в список
             const updatedLessons = [...lessons, res.data];
             setLessons(updatedLessons);
             
-            // Сразу открываем его
             setActiveLesson(res.data);
             setActiveTab('content');
             
-            // Закрываем модалку и чистим поле
             setIsModalOpen(false);
             setNewLessonTitle("");
 
@@ -72,21 +93,20 @@ function CourseBuilder() {
         }
     };
 
-    // СОХРАНЕНИЕ ИЗМЕНЕНИЙ (Исправление пути)
+    // СОХРАНЕНИЕ ИЗМЕНЕНИЙ
     const handleSaveContent = async () => {
         if (!activeLesson) return;
         try {
-            // ВАЖНО: Путь изменен на 'courses/lessons/...', чтобы соответствовать urls.py
+            // Отправляем HTML-контент из редактора на сервер
             await api.patch(`courses/lessons/${activeLesson.id}/`, {
                 title: activeLesson.title,
                 content: activeLesson.content,
                 video_url: activeLesson.video_url
             });
             
-            // Обновляем название в списке слева (на случай если поменяли заголовок)
             setLessons(lessons.map(l => l.id === activeLesson.id ? activeLesson : l));
             
-            // Анимация кнопки
+            // Анимация кнопки "Сохранено"
             const btn = document.getElementById('save-btn');
             if(btn) {
                 const originalText = btn.innerText;
@@ -114,10 +134,9 @@ function CourseBuilder() {
                     <h2 className="font-bold text-gray-700 flex items-center gap-2">
                         📚 План курса
                     </h2>
-                    <Link to={`/courses/${courseId}`} className="btn btn-xs btn-ghost" title="Предпросмотр для студента">👁️</Link>
+                    <Link to={`/courses/${courseId}`} className="btn btn-xs btn-ghost" title="Предпросмотр">👁️</Link>
                 </div>
                 
-                {/* Список уроков */}
                 <div className="overflow-y-auto flex-1 p-2">
                     <ul className="menu w-full rounded-box gap-1">
                         {lessons.map((lesson, index) => (
@@ -139,7 +158,6 @@ function CourseBuilder() {
                     )}
                 </div>
 
-                {/* Кнопка добавления внизу сайдбара */}
                 <div className="p-4 border-t border-base-300 bg-base-100">
                     <button 
                         className="btn btn-outline btn-primary w-full" 
@@ -154,7 +172,7 @@ function CourseBuilder() {
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-white relative">
                 {activeLesson ? (
                     <>
-                        {/* Шапка редактора (Табы и Название) */}
+                        {/* Шапка редактора */}
                         <div className="navbar border-b px-6 py-2 bg-base-100 shrink-0 z-10 shadow-sm">
                             <div className="flex-1 mr-4">
                                 <input 
@@ -173,13 +191,14 @@ function CourseBuilder() {
                             </div>
                         </div>
 
-                        {/* Рабочая область с прокруткой */}
+                        {/* Рабочая область */}
                         <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
                             
                             {/* Вкладка ТЕОРИЯ */}
                             {activeTab === 'content' && (
-                                <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-                                    {/* Видео */}
+                                <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
+                                    
+                                    {/* Поле Видео */}
                                     <div className="form-control w-full">
                                         <label className="label font-bold text-gray-500 text-xs uppercase">Видео (YouTube)</label>
                                         <input 
@@ -191,20 +210,25 @@ function CourseBuilder() {
                                         />
                                     </div>
 
-                                    {/* Текст лекции */}
-                                    <div className="card bg-white shadow-sm border border-base-200 h-[600px] flex flex-col">
+                                    {/* РЕДАКТОР ТЕКСТА (React Quill) */}
+                                    <div className="card bg-white shadow-sm border border-base-200 flex flex-col overflow-visible">
                                         <div className="p-3 border-b bg-base-50 flex justify-between items-center px-4">
                                             <span className="font-bold text-gray-500 text-xs uppercase">Конспект лекции</span>
                                             <button id="save-btn" className="btn btn-sm btn-ghost border-base-300" onClick={handleSaveContent}>
-                                                💾 Сохранить изменения
+                                                💾 Сохранить
                                             </button>
                                         </div>
-                                        <textarea 
-                                            className="textarea textarea-ghost w-full flex-1 text-lg leading-relaxed p-6 resize-none focus:outline-none" 
-                                            placeholder="Здесь пишется теория..."
+                                        
+                                        {/* Замена textarea на ReactQuill */}
+                                        <ReactQuill 
+                                            theme="snow"
                                             value={activeLesson.content || ""}
-                                            onChange={(e) => setActiveLesson({...activeLesson, content: e.target.value})}
-                                        ></textarea>
+                                            onChange={(content) => setActiveLesson({...activeLesson, content: content})}
+                                            modules={modules}
+                                            formats={formats}
+                                            className="h-[500px] mb-12" // mb-12 нужен, чтобы тулбар не перекрывал низ при скролле
+                                            placeholder="Напишите здесь теорию урока. Вы можете вставлять картинки, списки и форматировать текст..."
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -212,26 +236,25 @@ function CourseBuilder() {
                             {/* Вкладка AI ТЕСТЫ */}
                             {activeTab === 'quiz' && (
                                 <div className="max-w-5xl mx-auto animate-fade-in">
-                                    {/* Передаем ID и Текст урока в компонент генератора */}
                                     <TeacherPanel 
                                         preSelectedLessonId={activeLesson.id} 
-                                        preFilledText={activeLesson.content} 
+                                        preFilledText={activeLesson.content} // AI теперь получит HTML текст, но он справится
                                     />
                                 </div>
                             )}
                         </div>
                     </>
                 ) : (
-                    // Заглушка, если урок не выбран
+                    // Заглушка (Empty State)
                     <div className="flex flex-col h-full items-center justify-center text-gray-300 bg-slate-50">
                         <div className="text-8xl mb-4 opacity-20">👈</div>
-                        <h2 className="text-2xl font-bold text-gray-400">Выберите урок слева</h2>
-                        <p className="text-gray-400">или создайте новый, чтобы начать работу.</p>
+                        <h2 className="text-2xl font-bold text-gray-400">Выберите урок</h2>
+                        <p className="text-gray-400">В меню слева или создайте новый</p>
                     </div>
                 )}
             </div>
 
-            {/* --- 3. МОДАЛЬНОЕ ОКНО СОЗДАНИЯ (Stepik Style) --- */}
+            {/* --- 3. МОДАЛЬНОЕ ОКНО СОЗДАНИЯ --- */}
             {isModalOpen && (
                 <dialog className="modal modal-open">
                     <div className="modal-box">
@@ -242,7 +265,7 @@ function CourseBuilder() {
                             </label>
                             <input 
                                 type="text" 
-                                placeholder="Например: Циклы for и while" 
+                                placeholder="Например: Введение в функции" 
                                 className="input input-bordered w-full" 
                                 autoFocus
                                 value={newLessonTitle}
