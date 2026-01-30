@@ -1,19 +1,28 @@
 import { useEffect, useState } from 'react';
 import api from './api';
 
-function TeacherPanel() {
+// 1. Принимаем пропсы (параметры) из CourseBuilder
+function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // Состояния для генератора
-    const [selectedLessonId, setSelectedLessonId] = useState("");
-    const [customText, setCustomText] = useState("");
+    // 2. Инициализируем стейт: если пропсы есть, берем их, иначе пустые строки
+    const [selectedLessonId, setSelectedLessonId] = useState(preSelectedLessonId || "");
+    const [customText, setCustomText] = useState(preFilledText || "");
     const [count, setCount] = useState(3);
     const [difficulty, setDifficulty] = useState("medium");
     
     // Состояния интерфейса
     const [isGenerating, setIsGenerating] = useState(false);
-    const [previewQuestions, setPreviewQuestions] = useState(null); // Здесь теперь лежит массив, который мы редактируем
+    const [previewQuestions, setPreviewQuestions] = useState(null);
+
+    // 3. Следим за изменениями: если учитель переключил урок в CourseBuilder, обновляем здесь
+    useEffect(() => {
+        if (preSelectedLessonId) setSelectedLessonId(preSelectedLessonId);
+        if (preFilledText) setCustomText(preFilledText);
+        // Сбрасываем старые вопросы при смене урока
+        setPreviewQuestions(null);
+    }, [preSelectedLessonId, preFilledText]);
 
     useEffect(() => { fetchCourses(); }, []);
 
@@ -30,7 +39,6 @@ function TeacherPanel() {
         if (!selectedLessonId && !customText) return alert("Выберите урок или введите текст");
         
         setIsGenerating(true);
-        // Сбрасываем старое, чтобы было видно, что идет процесс
         setPreviewQuestions(null); 
         
         try {
@@ -40,7 +48,6 @@ function TeacherPanel() {
                 count: count,
                 difficulty: difficulty
             });
-            // Сохраняем полученные вопросы в стейт для редактирования
             setPreviewQuestions(res.data.generated_questions);
         } catch (err) {
             alert("Ошибка генерации. Проверь консоль.");
@@ -52,19 +59,16 @@ function TeacherPanel() {
 
     // --- ЛОГИКА РЕДАКТИРОВАНИЯ (ШАГ 2) ---
 
-    // Изменение текста вопроса или объяснения
     const handleQuestionChange = (index, field, value) => {
         const updated = [...previewQuestions];
         updated[index][field] = value;
         setPreviewQuestions(updated);
     };
 
-    // Изменение текста варианта ответа
     const handleOptionChange = (qIndex, oIndex, value) => {
         const updated = [...previewQuestions];
         updated[qIndex].options[oIndex] = value;
         
-        // Если мы меняем текст правильного ответа, нужно обновить и поле correct_answer
         if (previewQuestions[qIndex].options[oIndex] === previewQuestions[qIndex].correct_answer) {
             updated[qIndex].correct_answer = value;
         }
@@ -72,14 +76,12 @@ function TeacherPanel() {
         setPreviewQuestions(updated);
     };
 
-    // Выбор правильного ответа (Радио-кнопка)
     const handleCorrectSelect = (qIndex, value) => {
         const updated = [...previewQuestions];
         updated[qIndex].correct_answer = value;
         setPreviewQuestions(updated);
     };
 
-    // Добавить вопрос вручную
     const handleAddManualQuestion = () => {
         setPreviewQuestions([
             ...previewQuestions, 
@@ -87,12 +89,11 @@ function TeacherPanel() {
                 question: "Новый вопрос",
                 options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
                 correct_answer: "Вариант 1",
-                explanation: "" // Пустое объяснение
+                explanation: "" 
             }
         ]);
     };
 
-    // Удалить вопрос
     const handleDeleteQuestion = (index) => {
         const updated = previewQuestions.filter((_, i) => i !== index);
         setPreviewQuestions(updated);
@@ -105,11 +106,12 @@ function TeacherPanel() {
         try {
             await api.post(`quizzes/save-generated/`, {
                 lesson_id: selectedLessonId,
-                questions: previewQuestions // Отправляем отредактированную версию
+                questions: previewQuestions 
             });
             alert("✅ Тест успешно сохранен в базу!");
-            setPreviewQuestions(null); // Очищаем форму
-            setCustomText("");
+            setPreviewQuestions(null); 
+            // Не очищаем customText, если он пришел из пропсов, чтобы не сбивать контекст
+            if (!preFilledText) setCustomText("");
         } catch (err) {
             console.error(err);
             alert("Ошибка при сохранении");
@@ -126,14 +128,20 @@ function TeacherPanel() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                {/* ЛЕВАЯ КОЛОНКА: НАСТРОЙКИ (Занимает 4 части из 12) */}
+                {/* ЛЕВАЯ КОЛОНКА: НАСТРОЙКИ */}
                 <div className="lg:col-span-4 space-y-6">
                     <div className="card bg-base-100 shadow-xl border border-base-200 p-6 sticky top-10">
                         <h2 className="card-title mb-4">⚙️ Настройки генерации</h2>
                         
                         <div className="form-control w-full">
-                            <label className="label"><span className="label-text font-bold">Целевой урок (куда сохранять)</span></label>
-                            <select className="select select-bordered" value={selectedLessonId} onChange={(e) => setSelectedLessonId(e.target.value)}>
+                            <label className="label"><span className="label-text font-bold">Целевой урок</span></label>
+                            <select 
+                                className="select select-bordered" 
+                                value={selectedLessonId} 
+                                onChange={(e) => setSelectedLessonId(e.target.value)}
+                                // Если ID передан сверху (из CourseBuilder), блокируем выбор, чтобы не сломать логику
+                                disabled={!!preSelectedLessonId}
+                            >
                                 <option value="">-- Выберите урок --</option>
                                 {courses.map(c => c.lessons.map(l => (
                                     <option key={l.id} value={l.id}>{c.title} : {l.title}</option>
@@ -147,7 +155,7 @@ function TeacherPanel() {
                             <label className="label"><span className="label-text font-bold">Текст лекции / Материал</span></label>
                             <textarea 
                                 className="textarea textarea-bordered h-40 text-sm" 
-                                placeholder="Вставьте сюда текст лекции, статью или заметки. AI создаст тест на основе этого текста..."
+                                placeholder="Вставьте сюда текст лекции..."
                                 value={customText}
                                 onChange={(e) => setCustomText(e.target.value)}
                             ></textarea>
@@ -178,7 +186,7 @@ function TeacherPanel() {
                     </div>
                 </div>
 
-                {/* ПРАВАЯ КОЛОНКА: РЕДАКТОР (Занимает 8 частей из 12) */}
+                {/* ПРАВАЯ КОЛОНКА: РЕДАКТОР */}
                 <div className="lg:col-span-8">
                     {previewQuestions ? (
                         <div className="space-y-6 pb-20">
@@ -264,8 +272,10 @@ function TeacherPanel() {
                             ) : (
                                 <>
                                     <div className="text-6xl mb-4">👈</div>
-                                    <p className="text-xl font-bold">Выберите урок или вставьте текст,</p>
-                                    <p>чтобы начать магию.</p>
+                                    <p className="text-xl font-bold">
+                                        {preSelectedLessonId ? "Урок выбран автоматически." : "Выберите урок или вставьте текст,"}
+                                    </p>
+                                    <p>Нажмите кнопку слева, чтобы начать.</p>
                                 </>
                             )}
                         </div>
