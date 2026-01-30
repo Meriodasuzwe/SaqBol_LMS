@@ -11,11 +11,12 @@ class Quiz(models.Model):
         return f"Тест к уроку: {self.lesson.title}"
 
 class Question(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
+    quiz = models.ForeignKey(Quiz, related_name='questions', on_delete=models.CASCADE)
     text = models.TextField()
+    explanation = models.TextField(blank=True, null=True, help_text="Объяснение для студента")
 
     def __str__(self):
-        return self.text[:50]
+        return self.text
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
