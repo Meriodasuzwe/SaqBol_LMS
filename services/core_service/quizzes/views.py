@@ -84,18 +84,29 @@ class GeneratePreviewView(APIView):
         count = request.data.get('count', 3)
         difficulty = request.data.get('difficulty', 'medium')
 
-        # Получаем текст из урока или из поля ввода
         content = ""
-        if lesson_id:
+
+        # --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+        # 1. Сначала проверяем "Свой текст". Если там больше 5 символов - берем его.
+        if custom_text and len(str(custom_text).strip()) > 5:
+            content = custom_text
+            print(f"DEBUG: Использую пользовательский текст длиной {len(content)}")
+        
+        # 2. Если своего текста нет, тогда ищем урок по ID
+        elif lesson_id:
             try:
                 content = Lesson.objects.get(id=lesson_id).content
+                print(f"DEBUG: Использую текст из урока ID {lesson_id}")
             except Lesson.DoesNotExist:
                 return Response({"error": "Урок не найден"}, status=404)
+        
+        # 3. Если ни того, ни другого нет - ошибка
         else:
-            content = custom_text
+            return Response({"error": "Введите текст или выберите урок"}, status=400)
+        # -----------------------
 
         if not content or len(content) < 10:
-            return Response({"error": "Недостаточно текста для генерации"}, status=400)
+            return Response({"error": "Слишком короткий текст для генерации"}, status=400)
 
         try:
             ai_url = "http://saqbol_ai_service:8000/generate-quiz"
@@ -104,6 +115,7 @@ class GeneratePreviewView(APIView):
                 "count": int(count),
                 "difficulty": difficulty
             }
+            # Увеличим тайм-аут, так как большие тексты обрабатываются дольше
             response = requests.post(ai_url, json=payload, timeout=60)
             
             if response.status_code != 200:
