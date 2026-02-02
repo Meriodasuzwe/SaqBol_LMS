@@ -3,13 +3,14 @@ import { useState } from 'react';
 
 // Импорты страниц
 import Login from './Login';
+import Register from './Register'; // <-- НОВЫЙ ИМПОРТ
 import CourseList from './CourseList';
 import CourseDetail from './CourseDetail';
 import QuizPage from './QuizPage';
 import Profile from './Profile';
 import LessonPage from './LessonPage';
 import TeacherPanel from './TeacherPanel';
-import CourseBuilder from './CourseBuilder'; // <-- Убедись, что файл CourseBuilder.jsx существует в папке src
+import CourseBuilder from './CourseBuilder';
 
 function App() {
   // Проверяем наличие токена в localStorage для сохранения сессии
@@ -25,7 +26,6 @@ function App() {
       <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col">
         
         {/* --- ШАПКА САЙТА (NAVBAR) --- */}
-        {/* Добавили container mx-auto внутрь navbar, чтобы контент не прилипал к краям */}
         <header className="bg-base-100 shadow-sm border-b border-base-200 sticky top-0 z-50">
           <div className="navbar container mx-auto px-4 lg:px-8">
             <div className="flex-1">
@@ -39,7 +39,6 @@ function App() {
                 <>
                   <Link to="/courses" className="btn btn-ghost btn-sm">Курсы</Link>
                   
-                  {/* Ссылка на общую AI Лабораторию (можно скрыть на моб. устройствах) */}
                   <Link to="/teacher" className="btn btn-ghost btn-sm text-secondary hidden md:flex">
                     AI Лаборатория
                   </Link>
@@ -56,7 +55,10 @@ function App() {
                   </button>
                 </>
               ) : (
-                <Link to="/login" className="btn btn-primary btn-sm px-6">Войти</Link>
+                <div className="flex gap-2">
+                    <Link to="/login" className="btn btn-ghost btn-sm">Войти</Link>
+                    <Link to="/register" className="btn btn-primary btn-sm">Регистрация</Link>
+                </div>
               )}
             </div>
           </div>
@@ -69,6 +71,11 @@ function App() {
             {/* 1. АВТОРИЗАЦИЯ */}
             <Route path="/login" element={
               !isLoggedIn ? <Login onLoginSuccess={() => setIsLoggedIn(true)} /> : <Navigate to="/courses" />
+            } />
+            
+            {/* 1.1. МАРШРУТ РЕГИСТРАЦИИ */}
+            <Route path="/register" element={
+              !isLoggedIn ? <Register /> : <Navigate to="/courses" />
             } />
 
             {/* 2. СТУДЕНЧЕСКИЙ ИНТЕРФЕЙС */}
@@ -93,13 +100,10 @@ function App() {
             } />
 
             {/* 3. ИНТЕРФЕЙС УЧИТЕЛЯ (AI & BUILDER) */}
-            
-            {/* Гибридный конструктор курса (Теория + AI Тесты) */}
             <Route path="/teacher/course/:courseId/builder" element={
               isLoggedIn ? <CourseBuilder /> : <Navigate to="/login" />
             } />
 
-            {/* Общая панель генерации тестов */}
             <Route path="/teacher" element={
               isLoggedIn ? <TeacherPanel /> : <Navigate to="/login" />
             } />

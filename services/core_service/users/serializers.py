@@ -1,5 +1,4 @@
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 from .models import User, QuizAttempt
 
@@ -13,7 +12,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        # УБРАЛ 'role' из полей. Теперь API даже не будет читать это поле из JSON.
+        # Убрали 'role' из полей, чтобы нельзя было передать её в JSON
         fields = ('username', 'password', 'email', 'iin') 
 
     def create(self, validated_data):
@@ -23,14 +22,13 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data.get('email', ''),
             iin=validated_data.get('iin', ''),
             # ЖЕСТКО прописываем 'student'. 
-            # Даже если хакер подсунет поле role, мы его проигнорируем.
             role='student' 
         )
         return user
 
 
 # ---------------------------
-# Логин (Тут все ок)
+# Логин
 # ---------------------------
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -55,10 +53,7 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        # ВАЖНО: А вот тут 'role' НУЖНО вернуть.
-        # Почему? Потому что когда юзер залогинится, React должен узнать, 
-        # кто это (студент или препод), чтобы показать правильные кнопки.
-        # Но так как это UserSerializer (обычно на чтение), это безопасно.
+        # Возвращаем role, чтобы React знал, какие кнопки показывать
         fields = ['id', 'username', 'email', 'role', 'iin'] 
 
 
@@ -66,8 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
 # Результаты тестов
 # ---------------------------
 class QuizResultSerializer(serializers.ModelSerializer):
-    quiz_title = serializers.ReadOnlyField(source='quiz.title')
-
+    # Исправлено: убрали source='quiz.title', так как в модели QuizAttempt поле называется так же
     class Meta:
         model = QuizAttempt
-        fields = ['id', 'quiz_title', 'score', 'status', 'completed_at']
+        fields = ['id', 'quiz_title', 'score', 'date'] # Обрати внимание: в модели поле date, а не completed_at

@@ -1,74 +1,87 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import ReactQuill from 'react-quill-new'; // Импорт редактора
-import 'react-quill-new/dist/quill.snow.css'; // Импорт стилей редактора
+import ReactQuill from 'react-quill-new'; 
+import 'react-quill-new/dist/quill.snow.css';
 import api from './api';
 import TeacherPanel from './TeacherPanel';
 
 function CourseBuilder() {
     const { courseId } = useParams();
+    
+    // --- СОСТОЯНИЯ ---
     const [lessons, setLessons] = useState([]);
+    const [courseData, setCourseData] = useState({ title: '', description: '' }); // Данные курса
+    
     const [activeLesson, setActiveLesson] = useState(null);
-    const [activeTab, setActiveTab] = useState('content'); // 'content' (Теория) или 'quiz' (Тест)
+    const [activeTab, setActiveTab] = useState('content'); // 'content' | 'quiz'
+    const [isSettingsMode, setIsSettingsMode] = useState(false); // Режим настроек курса
     const [loading, setLoading] = useState(true);
 
-    // Состояния для МОДАЛЬНОГО ОКНА
+    // Модалка создания урока
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newLessonTitle, setNewLessonTitle] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
-    // --- НАСТРОЙКИ РЕДАКТОРА (TOOLBAR) ---
+    // --- НАСТРОЙКИ РЕДАКТОРА ---
     const modules = {
         toolbar: [
-            [{ 'header': [1, 2, 3, false] }], // Заголовки H1, H2, H3
-            ['bold', 'italic', 'underline', 'strike'], // Жирный, Курсив...
-            [{ 'color': [] }, { 'background': [] }], // Цвет текста и фона
-            [{ 'list': 'ordered'}, {'list': 'bullet'}], // Списки
-            [{ 'align': [] }], // Выравнивание
-            ['link', 'image', 'video'], // Вставка картинок и видео
-            ['clean'] // Очистить форматирование
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered'}, {'list': 'bullet'}],
+            [{ 'align': [] }],
+            ['link', 'image', 'video'],
+            ['clean']
         ],
     };
 
     const formats = [
-        'header',
-        'bold', 'italic', 'underline', 'strike',
-        'color', 'background',
-        'list', 'bullet',
-        'align',
+        'header', 'bold', 'italic', 'underline', 'strike',
+        'color', 'background', 'list', 'bullet', 'align',
         'link', 'image', 'video'
     ];
 
-    // Загрузка уроков
+    // --- ЗАГРУЗКА ДАННЫХ ---
     useEffect(() => {
-        fetchLessons();
+        const fetchData = async () => {
+            try {
+                // Загружаем параллельно и уроки, и инфо о курсе
+                const [lessonsRes, courseRes] = await Promise.all([
+                    api.get(`courses/${courseId}/lessons/`),
+                    api.get(`courses/${courseId}/`)
+                ]);
+
+                // Уроки
+                const sorted = lessonsRes.data.sort((a, b) => a.id - b.id);
+                setLessons(sorted);
+                if (sorted.length > 0) {
+                    setActiveLesson(sorted[0]);
+                } else {
+                    // Если уроков нет, открываем настройки курса
+                    setIsSettingsMode(true);
+                }
+
+                // Курс
+                setCourseData({
+                    title: courseRes.data.title,
+                    description: courseRes.data.description || ""
+                });
+
+            } catch (err) {
+                console.error("Ошибка загрузки:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [courseId]);
 
-    const fetchLessons = async () => {
-        try {
-            const res = await api.get(`courses/${courseId}/lessons/`);
-            // Сортируем уроки по ID (в порядке создания)
-            const sorted = res.data.sort((a, b) => a.id - b.id);
-            setLessons(sorted);
-            
-            // Если уроки есть, и ни один не выбран — выбираем первый
-            if (sorted.length > 0 && !activeLesson) {
-                setActiveLesson(sorted[0]);
-            }
-        } catch (err) {
-            console.error("Ошибка загрузки уроков:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // СОЗДАНИЕ УРОКА
+    // --- ЛОГИКА СОЗДАНИЯ УРОКА ---
     const handleCreateLesson = async () => {
         if (!newLessonTitle.trim()) return;
         setIsCreating(true);
-
         try {
-            // Создаем урок с пустыми полями, чтобы избежать 400 Bad Request
             const res = await api.post(`courses/${courseId}/lessons/`, {
                 title: newLessonTitle,
                 content: "",    
@@ -79,47 +92,65 @@ function CourseBuilder() {
             const updatedLessons = [...lessons, res.data];
             setLessons(updatedLessons);
             
+            // Переключаемся на новый урок
+            setIsSettingsMode(false);
             setActiveLesson(res.data);
             setActiveTab('content');
             
             setIsModalOpen(false);
             setNewLessonTitle("");
-
         } catch (err) {
             console.error(err);
-            alert(`Ошибка создания: ${err.response?.statusText || "Не удалось создать урок"}`);
+            alert("Ошибка создания урока");
         } finally {
             setIsCreating(false);
         }
     };
 
-    // СОХРАНЕНИЕ ИЗМЕНЕНИЙ
-    const handleSaveContent = async () => {
+    // --- СОХРАНЕНИЕ УРОКА ---
+    const handleSaveLesson = async () => {
         if (!activeLesson) return;
         try {
-            // Отправляем HTML-контент из редактора на сервер
             await api.patch(`courses/lessons/${activeLesson.id}/`, {
                 title: activeLesson.title,
                 content: activeLesson.content,
                 video_url: activeLesson.video_url
             });
             
+            // Обновляем список (на случай смены названия)
             setLessons(lessons.map(l => l.id === activeLesson.id ? activeLesson : l));
-            
-            // Анимация кнопки "Сохранено"
-            const btn = document.getElementById('save-btn');
-            if(btn) {
-                const originalText = btn.innerText;
-                btn.innerText = "✅ Сохранено!";
-                btn.classList.add('btn-success', 'text-white');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.remove('btn-success', 'text-white');
-                }, 2000);
-            }
+            showToast("save-lesson-btn");
         } catch (err) {
             console.error(err);
-            alert("Ошибка сохранения! Проверьте консоль.");
+            alert("Ошибка сохранения урока");
+        }
+    };
+
+    // --- СОХРАНЕНИЕ НАСТРОЕК КУРСА (НОВОЕ) ---
+    const handleSaveCourseSettings = async () => {
+        try {
+            await api.patch(`courses/${courseId}/`, {
+                title: courseData.title,
+                description: courseData.description
+            });
+            showToast("save-course-btn");
+        } catch (err) {
+            console.error(err);
+            alert("Ошибка сохранения настроек курса");
+        }
+    };
+
+    // Анимация кнопки сохранения
+    const showToast = (btnId) => {
+        const btn = document.getElementById(btnId);
+        if(btn) {
+            const originalText = btn.innerText;
+            btn.innerText = "✅ Сохранено!";
+            btn.classList.add('btn-success', 'text-white');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('btn-success', 'text-white');
+            }, 2000);
         }
     };
 
@@ -128,49 +159,101 @@ function CourseBuilder() {
     return (
         <div className="flex h-[calc(100vh-64px)] bg-base-100 overflow-hidden"> 
             
-            {/* --- 1. ЛЕВАЯ КОЛОНКА (САЙДБАР) --- */}
+            {/* === ЛЕВАЯ КОЛОНКА (САЙДБАР) === */}
             <div className="w-72 bg-base-200 border-r border-base-300 flex flex-col h-full shrink-0 shadow-inner">
+                {/* Шапка сайдбара */}
                 <div className="p-4 border-b border-base-300 bg-base-100 flex justify-between items-center">
-                    <h2 className="font-bold text-gray-700 flex items-center gap-2">
-                        📚 План курса
+                    <h2 className="font-bold text-gray-700 truncate max-w-[150px]" title={courseData.title}>
+                        {courseData.title || "Курс"}
                     </h2>
-                    <Link to={`/courses/${courseId}`} className="btn btn-xs btn-ghost" title="Предпросмотр">👁️</Link>
+                    <div className="flex gap-1">
+                        <button 
+                            className={`btn btn-sm btn-ghost ${isSettingsMode ? 'text-primary bg-primary/10' : ''}`} 
+                            onClick={() => { setIsSettingsMode(true); setActiveLesson(null); }}
+                            title="Настройки курса"
+                        >
+                            ⚙️
+                        </button>
+                        <Link to={`/courses/${courseId}`} className="btn btn-sm btn-ghost" title="Предпросмотр">👁️</Link>
+                    </div>
                 </div>
                 
+                {/* Список уроков */}
                 <div className="overflow-y-auto flex-1 p-2">
                     <ul className="menu w-full rounded-box gap-1">
                         {lessons.map((lesson, index) => (
                             <li key={lesson.id}>
                                 <a 
-                                    className={`${activeLesson?.id === lesson.id ? "active font-bold bg-primary text-white" : "hover:bg-base-300"}`}
-                                    onClick={() => { setActiveLesson(lesson); setActiveTab('content'); }}
+                                    className={`${activeLesson?.id === lesson.id && !isSettingsMode ? "active font-bold bg-primary text-white" : "hover:bg-base-300"}`}
+                                    onClick={() => { setActiveLesson(lesson); setIsSettingsMode(false); setActiveTab('content'); }}
                                 >
                                     <span className="truncate">{index + 1}. {lesson.title}</span>
                                 </a>
                             </li>
                         ))}
                     </ul>
-                    
                     {lessons.length === 0 && (
                         <div className="text-center mt-10 text-gray-400 text-sm px-4">
-                            Уроков пока нет.<br/>Нажмите кнопку ниже 👇
+                            Уроков пока нет.<br/>Создайте первый 👇
                         </div>
                     )}
                 </div>
 
                 <div className="p-4 border-t border-base-300 bg-base-100">
-                    <button 
-                        className="btn btn-outline btn-primary w-full" 
-                        onClick={() => setIsModalOpen(true)}
-                    >
+                    <button className="btn btn-outline btn-primary w-full" onClick={() => setIsModalOpen(true)}>
                         ➕ Добавить урок
                     </button>
                 </div>
             </div>
 
-            {/* --- 2. ПРАВАЯ КОЛОНКА (РЕДАКТОР) --- */}
+            {/* === ПРАВАЯ КОЛОНКА (КОНТЕНТ) === */}
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-white relative">
-                {activeLesson ? (
+                
+                {/* ВАРИАНТ 1: РЕЖИМ НАСТРОЕК КУРСА */}
+                {isSettingsMode ? (
+                    <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
+                        <div className="max-w-3xl mx-auto card bg-base-100 shadow-xl">
+                            <div className="card-body">
+                                <h2 className="card-title text-2xl mb-6 flex items-center gap-2">
+                                    ⚙️ Настройки курса
+                                </h2>
+                                
+                                <div className="form-control w-full mb-4">
+                                    <label className="label"><span className="label-text font-bold">Название курса</span></label>
+                                    <input 
+                                        type="text" 
+                                        className="input input-bordered w-full text-lg" 
+                                        value={courseData.title}
+                                        onChange={(e) => setCourseData({...courseData, title: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-control w-full mb-6">
+                                    <label className="label"><span className="label-text font-bold">Описание курса</span></label>
+                                    <textarea 
+                                        className="textarea textarea-bordered h-40 text-base leading-relaxed" 
+                                        placeholder="О чем этот курс? Чему научатся студенты? (Это описание будет видно на карточке курса)"
+                                        value={courseData.description}
+                                        onChange={(e) => setCourseData({...courseData, description: e.target.value})}
+                                    ></textarea>
+                                </div>
+
+                                <div className="card-actions justify-end">
+                                    <button 
+                                        id="save-course-btn" 
+                                        className="btn btn-primary px-8" 
+                                        onClick={handleSaveCourseSettings}
+                                    >
+                                        Сохранить настройки
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : 
+                
+                /* ВАРИАНТ 2: РЕДАКТОР УРОКА */
+                activeLesson ? (
                     <>
                         {/* Шапка редактора */}
                         <div className="navbar border-b px-6 py-2 bg-base-100 shrink-0 z-10 shadow-sm">
@@ -191,14 +274,9 @@ function CourseBuilder() {
                             </div>
                         </div>
 
-                        {/* Рабочая область */}
                         <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
-                            
-                            {/* Вкладка ТЕОРИЯ */}
                             {activeTab === 'content' && (
                                 <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
-                                    
-                                    {/* Поле Видео */}
                                     <div className="form-control w-full">
                                         <label className="label font-bold text-gray-500 text-xs uppercase">Видео (YouTube)</label>
                                         <input 
@@ -210,64 +288,54 @@ function CourseBuilder() {
                                         />
                                     </div>
 
-                                    {/* РЕДАКТОР ТЕКСТА (React Quill) */}
                                     <div className="card bg-white shadow-sm border border-base-200 flex flex-col overflow-visible">
                                         <div className="p-3 border-b bg-base-50 flex justify-between items-center px-4">
                                             <span className="font-bold text-gray-500 text-xs uppercase">Конспект лекции</span>
-                                            <button id="save-btn" className="btn btn-sm btn-ghost border-base-300" onClick={handleSaveContent}>
+                                            <button id="save-lesson-btn" className="btn btn-sm btn-ghost border-base-300" onClick={handleSaveLesson}>
                                                 💾 Сохранить
                                             </button>
                                         </div>
-                                        
-                                        {/* Замена textarea на ReactQuill */}
                                         <ReactQuill 
                                             theme="snow"
                                             value={activeLesson.content || ""}
                                             onChange={(content) => setActiveLesson({...activeLesson, content: content})}
                                             modules={modules}
                                             formats={formats}
-                                            className="h-[500px] mb-12" // mb-12 нужен, чтобы тулбар не перекрывал низ при скролле
-                                            placeholder="Напишите здесь теорию урока. Вы можете вставлять картинки, списки и форматировать текст..."
+                                            className="h-[500px] mb-12"
+                                            placeholder="Пишите теорию здесь..."
                                         />
                                     </div>
                                 </div>
                             )}
 
-                            {/* Вкладка AI ТЕСТЫ */}
                             {activeTab === 'quiz' && (
                                 <div className="max-w-5xl mx-auto animate-fade-in">
-                                    <TeacherPanel 
-                                        preSelectedLessonId={activeLesson.id} 
-                                        preFilledText={activeLesson.content} // AI теперь получит HTML текст, но он справится
-                                    />
+                                    <TeacherPanel preSelectedLessonId={activeLesson.id} preFilledText={activeLesson.content} />
                                 </div>
                             )}
                         </div>
                     </>
                 ) : (
-                    // Заглушка (Empty State)
+                    // Заглушка
                     <div className="flex flex-col h-full items-center justify-center text-gray-300 bg-slate-50">
                         <div className="text-8xl mb-4 opacity-20">👈</div>
                         <h2 className="text-2xl font-bold text-gray-400">Выберите урок</h2>
-                        <p className="text-gray-400">В меню слева или создайте новый</p>
+                        <p className="text-gray-400">или откройте настройки курса (⚙️)</p>
                     </div>
                 )}
             </div>
 
-            {/* --- 3. МОДАЛЬНОЕ ОКНО СОЗДАНИЯ --- */}
+            {/* Модальное окно создания урока */}
             {isModalOpen && (
                 <dialog className="modal modal-open">
                     <div className="modal-box">
                         <h3 className="font-bold text-lg mb-4">✨ Новый урок</h3>
                         <div className="form-control w-full">
-                            <label className="label">
-                                <span className="label-text font-bold">Название темы</span>
-                            </label>
                             <input 
                                 type="text" 
-                                placeholder="Например: Введение в функции" 
                                 className="input input-bordered w-full" 
                                 autoFocus
+                                placeholder="Название урока"
                                 value={newLessonTitle}
                                 onChange={(e) => setNewLessonTitle(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleCreateLesson()}
@@ -275,13 +343,7 @@ function CourseBuilder() {
                         </div>
                         <div className="modal-action">
                             <button className="btn" onClick={() => setIsModalOpen(false)}>Отмена</button>
-                            <button 
-                                className={`btn btn-primary ${isCreating ? 'loading' : ''}`} 
-                                onClick={handleCreateLesson}
-                                disabled={!newLessonTitle.trim() || isCreating}
-                            >
-                                Создать
-                            </button>
+                            <button className={`btn btn-primary ${isCreating ? 'loading' : ''}`} onClick={handleCreateLesson}>Создать</button>
                         </div>
                     </div>
                     <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}></div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import api from './api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Добавил Link
 
 function Login({ onLoginSuccess }) {
     const [username, setUsername] = useState('');
@@ -79,6 +79,14 @@ function Login({ onLoginSuccess }) {
                             </button>
                         </div>
                     </form>
+
+                    {/* --- ДОБАВЛЕНА ССЫЛКА НА РЕГИСТРАЦИЮ --- */}
+                    <div className="text-center mt-4">
+                        <span className="text-gray-500 text-sm">Нет аккаунта? </span>
+                        <Link to="/register" className="link link-primary link-hover font-bold text-sm">
+                            Зарегистрироваться
+                        </Link>
+                    </div>
 
                     <div className="text-center mt-4">
                         <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">

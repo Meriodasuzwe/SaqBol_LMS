@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from .serializers import RegisterSerializer, UserSerializer
 
 class RegisterView(generics.CreateAPIView):
+    queryset = UserSerializer.Meta.model.objects.all() # Явное указание queryset (хорошая практика)
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
