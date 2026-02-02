@@ -2,6 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import Category, Course, Enrollment, Lesson
 from .serializers import CategorySerializer, CourseSerializer, LessonSerializer
@@ -20,11 +21,28 @@ class CategoryListView(generics.ListCreateAPIView):
 # 2. КУРСЫ
 # ==========================================
 
-# Список курсов (Витрина)
 class CourseListView(generics.ListCreateAPIView):
-    queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        # Начинаем со всех курсов
+        queryset = Course.objects.all()
+        
+        # Получаем параметры из URL (например: ?search=python&category=1)
+        search_query = self.request.query_params.get('search', None)
+        category_id = self.request.query_params.get('category', None)
+
+        # 1. Фильтр по названию (поиск)
+        if search_query:
+            # icontains = ищет вхождение без учета регистра (Python, python, PYTHON)
+            queryset = queryset.filter(title__icontains=search_query)
+        
+        # 2. Фильтр по категории
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+            
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(teacher=self.request.user)

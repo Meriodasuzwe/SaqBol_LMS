@@ -1,15 +1,32 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from './api';
-import { useNavigate } from 'react-router-dom';
 
 function CourseList() {
     const [courses, setCourses] = useState([]);
+    const [categories, setCategories] = useState([]); // Для выпадающего списка
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
+    // Состояния фильтров
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("");
+
+    // 1. Загружаем категории (один раз при старте)
     useEffect(() => {
-        // Загружаем курсы при открытии страницы
-        api.get('courses/')
+        api.get('courses/categories/')
+            .then(res => setCategories(res.data))
+            .catch(err => console.error("Ошибка загрузки категорий", err));
+    }, []);
+
+    // 2. Загружаем курсы (каждый раз, когда меняются фильтры)
+    useEffect(() => {
+        setLoading(true);
+        // Собираем строку запроса
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        if (selectedCategory) params.append('category', selectedCategory);
+
+        api.get(`courses/?${params.toString()}`)
             .then(response => {
                 setCourses(response.data);
                 setLoading(false);
@@ -18,22 +35,103 @@ function CourseList() {
                 console.error("Ошибка загрузки курсов:", error);
                 setLoading(false);
             });
-    }, []);
-
-    if (loading) return <p>Загрузка курсов...</p>;
+    }, [searchTerm, selectedCategory]); // <-- Перезапуск при изменении поиска или категории
 
     return (
-        <div style={{ marginTop: '20px' }}>
-            <h2>📚 Доступные курсы</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {courses.map(course => (
-                    <div key={course.id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '8px' }}>
-                        <h3>{course.title}</h3>
-                        <p>{course.description}</p>
-                        <button onClick={() => navigate(`/courses/${course.id}`)}>Открыть</button>
-                    </div>
-                ))}
+        <div className="container mx-auto py-8 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <h1 className="text-3xl font-bold flex items-center gap-2">
+                    📚 Каталог курсов
+                </h1>
+
+                {/* --- БЛОК ФИЛЬТРОВ --- */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    {/* Поиск */}
+                    <input 
+                        type="text" 
+                        placeholder="🔍 Найти курс..." 
+                        className="input input-bordered w-full sm:w-64 focus:input-primary"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+
+                    {/* Категории */}
+                    <select 
+                        className="select select-bordered w-full sm:w-48 focus:select-primary"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                        <option value="">Все категории</option>
+                        {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.title}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
+
+            {loading ? (
+                <div className="flex justify-center mt-20">
+                    <span className="loading loading-dots loading-lg text-primary"></span>
+                </div>
+            ) : (
+                <>
+                    {courses.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {courses.map(course => (
+                                <Link 
+                                    to={`/courses/${course.id}`} 
+                                    key={course.id} 
+                                    className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 border border-base-200 group"
+                                >
+                                    {/* Если нет картинки, показываем красивый градиент с первой буквой */}
+                                    <figure className="h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center relative overflow-hidden">
+                                        <span className="text-6xl group-hover:scale-110 transition-transform duration-300">
+                                            {/* Тут можно поставить иконку по категории, пока просто эмодзи книги */}
+                                            🎓
+                                        </span>
+                                        {/* Бейдж категории */}
+                                        <div className="absolute top-4 right-4 badge badge-primary badge-outline bg-base-100">
+                                            {course.category_title || 'Курс'}
+                                        </div>
+                                    </figure>
+                                    
+                                    <div className="card-body">
+                                        <h2 className="card-title text-xl font-bold group-hover:text-primary transition-colors">
+                                            {course.title}
+                                        </h2>
+                                        <p className="text-sm text-gray-500 line-clamp-2">
+                                            {course.description || "Описание отсутствует..."}
+                                        </p>
+                                        
+                                        <div className="card-actions justify-between items-center mt-4">
+                                            <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                                <div className="avatar placeholder">
+                                                    <div className="bg-neutral-focus text-neutral-content rounded-full w-6">
+                                                        <span>{course.teacher_name?.[0] || 'T'}</span>
+                                                    </div>
+                                                </div>
+                                                {course.teacher_name}
+                                            </div>
+                                            <button className="btn btn-primary btn-sm">Открыть</button>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-20">
+                            <h3 className="text-2xl font-bold text-gray-400">Ничего не найдено 😔</h3>
+                            <p className="text-gray-500">Попробуйте изменить параметры поиска.</p>
+                            <button 
+                                className="btn btn-link mt-2"
+                                onClick={() => { setSearchTerm(""); setSelectedCategory(""); }}
+                            >
+                                Сбросить фильтры
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
