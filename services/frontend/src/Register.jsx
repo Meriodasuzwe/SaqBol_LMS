@@ -30,8 +30,6 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Отправляем запрос на создание пользователя
-      // Обрати внимание: путь должен совпадать с urls.py (users/register/)
       await api.post("users/register/", {
         username: formData.username,
         email: formData.email,
@@ -44,7 +42,6 @@ const Register = () => {
     } catch (err) {
       console.error(err);
       if (err.response && err.response.data) {
-         // Превращаем объект ошибок от Django в строку
          const errorMsg = Object.values(err.response.data).flat().join(", ");
          setError(errorMsg || "Ошибка регистрации");
       } else {
@@ -56,60 +53,108 @@ const Register = () => {
   };
 
   return (
-    <div className="flex items-center justify-center mt-12 mb-12">
-      <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-base-200">
-        <div className="card-body">
-          <h2 className="card-title justify-center text-2xl font-bold text-center mb-4">
+    <div className="flex min-h-screen items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl border border-base-200">
+        <div className="card-body p-8">
+          <h2 className="text-3xl font-bold text-center text-primary mb-6">
             Регистрация
           </h2>
           
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="form-control">
-              <label className="label"><span className="label-text font-semibold">Логин *</span></label>
-              <input type="text" name="username" className="input input-bordered focus:input-primary" onChange={handleChange} required />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* ГРУППА: ЛОГИН */}
+            <div className="form-control w-full">
+              <label className="label pt-0">
+                <span className="label-text font-semibold text-gray-600">Логин <span className="text-error">*</span></span>
+              </label>
+              <input 
+                type="text" 
+                name="username" 
+                placeholder="Придумайте логин"
+                className="input input-bordered w-full focus:input-primary bg-gray-50" 
+                onChange={handleChange} 
+                required 
+              />
             </div>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text font-semibold">Email *</span></label>
-              <input type="email" name="email" className="input input-bordered focus:input-primary" onChange={handleChange} required />
+            {/* ГРУППА: EMAIL */}
+            <div className="form-control w-full">
+              <label className="label pt-0">
+                <span className="label-text font-semibold text-gray-600">Email <span className="text-error">*</span></span>
+              </label>
+              <input 
+                type="email" 
+                name="email" 
+                placeholder="example@mail.com"
+                className="input input-bordered w-full focus:input-primary bg-gray-50" 
+                onChange={handleChange} 
+                required 
+              />
             </div>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text font-semibold">ИИН (необязательно)</span></label>
-              <input type="text" name="iin" className="input input-bordered focus:input-primary" onChange={handleChange} />
+            {/* ГРУППА: ИИН */}
+            <div className="form-control w-full">
+              <label className="label pt-0">
+                <span className="label-text font-semibold text-gray-600">ИИН (необязательно)</span>
+              </label>
+              <input 
+                type="text" 
+                name="iin" 
+                placeholder="12 цифр"
+                className="input input-bordered w-full focus:input-primary bg-gray-50" 
+                onChange={handleChange} 
+              />
             </div>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text font-semibold">Пароль *</span></label>
-              <input type="password" name="password" className="input input-bordered focus:input-primary" onChange={handleChange} required />
+            {/* ГРУППА: ПАРОЛЬ */}
+            <div className="form-control w-full">
+              <label className="label pt-0">
+                <span className="label-text font-semibold text-gray-600">Пароль <span className="text-error">*</span></span>
+              </label>
+              <input 
+                type="password" 
+                name="password" 
+                placeholder="••••••••"
+                className="input input-bordered w-full focus:input-primary bg-gray-50" 
+                onChange={handleChange} 
+                required 
+              />
             </div>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text font-semibold">Повторите пароль *</span></label>
-              <input type="password" name="confirmPassword" className="input input-bordered focus:input-primary" onChange={handleChange} required />
+            {/* ГРУППА: ПОВТОР ПАРОЛЯ */}
+            <div className="form-control w-full">
+              <label className="label pt-0">
+                <span className="label-text font-semibold text-gray-600">Повторите пароль <span className="text-error">*</span></span>
+              </label>
+              <input 
+                type="password" 
+                name="confirmPassword" 
+                placeholder="••••••••"
+                className="input input-bordered w-full focus:input-primary bg-gray-50" 
+                onChange={handleChange} 
+                required 
+              />
             </div>
 
-            {error && <div className="alert alert-error text-sm mt-2">{error}</div>}
+            {error && <div className="alert alert-error text-sm shadow-sm">{error}</div>}
 
-            <div className="card-actions mt-6">
-                <button 
-                    type="submit" 
-                    className={`btn btn-primary btn-block ${loading ? 'loading' : ''}`}
-                    disabled={loading}
-                >
-                    {loading ? 'Создаем аккаунт...' : 'Создать аккаунт'}
-                </button>
-            </div>
+            <button 
+                type="submit" 
+                className={`btn btn-primary w-full text-lg mt-4 ${loading ? 'loading' : ''}`}
+                disabled={loading}
+            >
+                {loading ? 'Создаем...' : 'Создать аккаунт'}
+            </button>
           </form>
 
-          <div className="divider">ИЛИ</div>
+          <div className="divider my-6">ИЛИ</div>
 
-          <div className="text-center">
-            <span className="text-gray-500 text-sm">Уже есть аккаунт? </span>
-            <Link to="/login" className="link link-primary font-bold">
+          <p className="text-center text-sm text-gray-600">
+            Уже есть аккаунт?{' '}
+            <Link to="/login" className="link link-primary font-bold hover:text-primary-focus transition-colors">
               Войти
             </Link>
-          </div>
+          </p>
         </div>
       </div>
     </div>

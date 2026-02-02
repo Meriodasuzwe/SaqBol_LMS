@@ -6,46 +6,47 @@ function Profile() {
     const [user, setUser] = useState(null);
     const [results, setResults] = useState([]); 
     const [myCourses, setMyCourses] = useState([]); 
-    const [categories, setCategories] = useState([]); // <-- Храним список категорий
+    const [categories, setCategories] = useState([]); 
     const [loading, setLoading] = useState(true);
     
     // Состояния для Модального окна
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCourseTitle, setNewCourseTitle] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState(""); // <-- Выбранная категория
+    const [selectedCategory, setSelectedCategory] = useState(""); 
     const [isCreating, setIsCreating] = useState(false);
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Внутри Profile.jsx найди функцию fetchData
-    const fetchData = async () => {
-        try {
-            const userRes = await api.get('users/me/');
-            setUser(userRes.data);
+        const fetchData = async () => {
+            try {
+                // 1. Получаем данные о юзере
+                const userRes = await api.get('users/me/');
+                setUser(userRes.data);
 
-            const resultsRes = await api.get('quizzes/my-results/'); 
-            setResults(resultsRes.data);
-            
-            // --- ИСПРАВЛЕННЫЙ ПУТЬ ТУТ ---
-            const catRes = await api.get('courses/categories/'); // Добавили courses/
-            console.log("Категории получены:", catRes.data); // Добавь лог, чтобы видеть данные в F12
-            setCategories(catRes.data);
+                // 2. Получаем результаты тестов
+                const resultsRes = await api.get('quizzes/my-results/'); 
+                setResults(resultsRes.data);
+                
+                // 3. Получаем категории (для создания курсов)
+                const catRes = await api.get('courses/categories/'); 
+                setCategories(catRes.data);
 
-            if (catRes.data.length > 0) {
-                setSelectedCategory(catRes.data[0].id);
+                if (catRes.data.length > 0) {
+                    setSelectedCategory(catRes.data[0].id);
+                }
+
+                // 4. ВАЖНО: Получаем ТОЛЬКО "Мои курсы"
+                // (Студент получит подписки, Учитель — свои курсы)
+                const coursesRes = await api.get('courses/my_courses/');
+                setMyCourses(coursesRes.data);
+
+            } catch (err) {
+                console.error("Ошибка загрузки данных", err);
+            } finally {
+                setLoading(false);
             }
-
-            // Загрузка курсов
-            const coursesRes = await api.get('courses/');
-            setMyCourses(coursesRes.data);
-
-        } catch (err) {
-            console.error("Ошибка загрузки данных", err);
-        } finally {
-            setLoading(false);
-        }
-    };  
+        };  
 
         fetchData();
     }, []);
@@ -59,34 +60,42 @@ function Profile() {
             const res = await api.post('courses/', {
                 title: newCourseTitle,
                 description: "Описание курса...",
-                category: selectedCategory, // Убрали _id, теперь совпадает с сериализатором
+                category: selectedCategory,
                 price: 0
             });
             
             setIsModalOpen(false);
             setNewCourseTitle("");
+            // Сразу перекидываем учителя в конструктор
             navigate(`/teacher/course/${res.data.id}/builder`);
         } catch (err) {
-            console.error(err.response?.data); // Выводим точную ошибку от сервера в консоль
-            alert("Ошибка создания курса. Проверь консоль браузера.");
+            console.error(err.response?.data);
+            alert("Ошибка создания курса. Проверь консоль.");
         } finally {
             setIsCreating(false);
         }
     };
     
-    // ... (Код вычисления статистики results/averageScore без изменений) ...
+    // Подсчет статистики
     const totalTests = results.length;
     const averageScore = totalTests > 0 ? Math.round(results.reduce((acc, curr) => acc + curr.score, 0) / totalTests) : 0;
-    const getScoreColor = (score) => { if (score >= 80) return 'text-success'; if (score >= 50) return 'text-warning'; return 'text-error'; };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.href = '/login';
+    };
 
     if (loading) return <div className="text-center mt-20"><span className="loading loading-dots loading-lg text-primary"></span></div>;
 
+    // Определяем роль для скрытия кнопок
+    const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+
     return (
-        <div className="max-w-4xl mx-auto py-8 px-4">
+        <div className="max-w-5xl mx-auto py-8 px-4 animate-fade-in">
             
-            {/* ... (Блок Профиля без изменений) ... */}
+            {/* --- БЛОК ПРОФИЛЯ --- */}
             <div className="bg-base-100 rounded-2xl shadow-xl overflow-hidden mb-8 border border-base-200">
-                <div className="h-32 bg-gradient-to-r from-primary to-accent relative"></div>
+                <div className="h-32 bg-gradient-to-r from-primary to-secondary relative"></div>
                 <div className="px-8 pb-8">
                     <div className="relative -mt-12 mb-6 flex justify-between items-end">
                         <div className="avatar placeholder ring ring-base-100 ring-offset-2 rounded-full">
@@ -94,63 +103,127 @@ function Profile() {
                                 <span className="text-3xl uppercase font-bold">{user?.username?.[0]}</span>
                             </div>
                         </div>
+                        <button onClick={handleLogout} className="btn btn-sm btn-outline btn-error">Выйти</button>
                     </div>
-                    <h1 className="text-3xl font-bold">{user?.username}</h1>
-                    <p className="text-base-content/60 mb-6">{user?.email}</p>
-                    {/* Статистика */}
-                     <div className="stats shadow w-full bg-base-200/50 border border-base-200">
-                        <div className="stat">
-                            <div className="stat-title">Тестов сдано</div>
-                            <div className="stat-value">{totalTests}</div>
+                    
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold flex items-center gap-2">
+                                {user?.username}
+                                <span className="badge badge-ghost text-xs uppercase tracking-wide">
+                                    {isTeacher ? 'Преподаватель' : 'Студент'}
+                                </span>
+                            </h1>
+                            <p className="text-base-content/60">{user?.email}</p>
+                            {user?.iin && <p className="text-xs text-base-content/40 font-mono mt-1">ИИН: {user.iin}</p>}
                         </div>
-                        <div className="stat">
-                            <div className="stat-title">Средний балл</div>
-                            <div className="stat-value text-primary">{averageScore}%</div>
+
+                        {/* Статистика */}
+                        <div className="stats shadow bg-base-200/50 border border-base-200">
+                            <div className="stat place-items-center px-6">
+                                <div className="stat-title text-xs uppercase font-bold">Тестов</div>
+                                <div className="stat-value text-2xl">{totalTests}</div>
+                            </div>
+                            <div className="stat place-items-center px-6">
+                                <div className="stat-title text-xs uppercase font-bold">Ср. балл</div>
+                                <div className={`stat-value text-2xl ${averageScore >= 80 ? 'text-success' : averageScore >= 50 ? 'text-warning' : 'text-error'}`}>
+                                    {averageScore}%
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ЗОНА УЧИТЕЛЯ */}
+            {/* --- БЛОК КУРСОВ --- */}
             <div className="mb-10">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold flex items-center gap-2">🎓 Мои Курсы</h2>
-                    <button onClick={() => setIsModalOpen(true)} className="btn btn-primary btn-sm">+ Создать курс</button>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                        {isTeacher ? '🎓 Созданные курсы' : '📚 Мои подписки'}
+                    </h2>
+                    
+                    {/* КНОПКА ВИДНА ТОЛЬКО УЧИТЕЛЮ */}
+                    {isTeacher && (
+                        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary btn-sm gap-2 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Создать курс
+                        </button>
+                    )}
                 </div>
 
                 {myCourses.length > 0 ? (
-                    <div className="grid gap-3">
+                    <div className="grid gap-4">
                         {myCourses.map(course => (
-                            <div key={course.id} className="alert bg-base-100 shadow-sm border border-base-200 flex justify-between">
-                                <div>
-                                    <h3 className="font-bold">{course.title}</h3>
-                                    <span className="text-xs text-gray-500">ID: {course.id}</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Link to={`/courses/${course.id}`} className="btn btn-sm btn-ghost">Просмотр</Link>
-                                    <Link to={`/teacher/course/${course.id}/builder`} className="btn btn-sm btn-secondary text-white">🛠 Конструктор</Link>
+                            <div key={course.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200">
+                                <div className="card-body flex-row items-center p-4">
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-lg">{course.title}</h3>
+                                        <span className="text-xs text-gray-400">ID: {course.id} • {course.category_title || 'Без категории'}</span>
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                        <Link to={`/courses/${course.id}`} className="btn btn-sm btn-ghost">
+                                            {isTeacher ? 'Просмотр' : 'Учиться'}
+                                        </Link>
+                                        
+                                        {/* КНОПКА КОНСТРУКТОРА ВИДНА ТОЛЬКО УЧИТЕЛЮ */}
+                                        {isTeacher && (
+                                            <Link to={`/teacher/course/${course.id}/builder`} className="btn btn-sm btn-secondary text-white">
+                                                🛠 Конструктор
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-8 border-2 border-dashed border-base-300 rounded-xl text-gray-400">Нет курсов.</div>
+                    <div className="text-center py-12 border-2 border-dashed border-base-300 rounded-xl bg-base-100/50">
+                        <p className="text-gray-500 mb-2">
+                            {isTeacher ? 'Вы еще не создали курсов.' : 'Вы пока не записаны на курсы.'}
+                        </p>
+                        {!isTeacher && (
+                            <Link to="/courses" className="btn btn-link btn-sm">Перейти в каталог →</Link>
+                        )}
+                    </div>
                 )}
             </div>
             
-            {/* История (код таблицы без изменений, сокращаю для удобства копирования) */}
+            {/* --- ИСТОРИЯ ТЕСТОВ --- */}
              <h2 className="text-2xl font-bold mb-4">📜 История обучения</h2>
-             {results.length === 0 ? <div className="alert"><span>Пусто.</span></div> : (
+             {results.length === 0 ? (
+                <div className="alert bg-base-100 border border-base-200"><span>Вы еще не проходили тесты.</span></div>
+             ) : (
                 <div className="overflow-x-auto bg-base-100 rounded-xl shadow-sm border border-base-200">
-                    <table className="table table-zebra w-full">
-                         {/* ... table content ... */}
-                         <tbody>{results.map(r => <tr key={r.id}><td>{r.course_title}</td><td>{new Date(r.completed_at).toLocaleDateString()}</td><td>{r.score}%</td></tr>)}</tbody>
+                    <table className="table w-full">
+                        <thead>
+                            <tr className="bg-base-200/50">
+                                <th>Курс</th>
+                                <th>Тест</th>
+                                <th>Дата</th>
+                                <th>Результат</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {results.map(r => (
+                                <tr key={r.id} className="hover">
+                                    <td className="font-bold text-sm">{r.course_title || 'N/A'}</td>
+                                    <td className="text-sm">{r.quiz_title}</td>
+                                    <td className="text-sm text-gray-500">{new Date(r.completed_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <div className={`badge ${r.score >= 80 ? 'badge-success text-white' : r.score >= 50 ? 'badge-warning' : 'badge-error text-white'}`}>
+                                            {r.score}%
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
                     </table>
                 </div>
              )}
 
-            {/* --- МОДАЛЬНОЕ ОКНО (ОБНОВЛЕННОЕ) --- */}
-            {isModalOpen && (
+            {/* --- МОДАЛЬНОЕ ОКНО (Только для учителей) --- */}
+            {isModalOpen && isTeacher && (
                 <dialog className="modal modal-open">
                     <div className="modal-box">
                         <h3 className="font-bold text-lg mb-4">Создание нового курса</h3>
@@ -166,7 +239,6 @@ function Profile() {
                             />
                         </div>
 
-                        {/* ВЫБОР КАТЕГОРИИ */}
                         <div className="form-control w-full mb-6">
                             <label className="label"><span className="label-text font-bold">Категория</span></label>
                             <select 
@@ -174,7 +246,7 @@ function Profile() {
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
                             >
-                                {categories.length === 0 && <option disabled>Нет категорий (создайте в админке)</option>}
+                                {categories.length === 0 && <option disabled>Нет категорий</option>}
                                 {categories.map(cat => (
                                     <option key={cat.id} value={cat.id}>{cat.title}</option>
                                 ))}
@@ -186,7 +258,7 @@ function Profile() {
                             <button 
                                 className={`btn btn-primary ${isCreating ? 'loading' : ''}`} 
                                 onClick={handleCreateCourse}
-                                disabled={isCreating || !selectedCategory}
+                                disabled={isCreating || !selectedCategory || !newCourseTitle}
                             >
                                 {isCreating ? 'Создаем...' : 'Создать'}
                             </button>

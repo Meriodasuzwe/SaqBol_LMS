@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import api from './api';
-import { useNavigate, Link } from 'react-router-dom'; // Добавил Link
+import { useNavigate, Link } from 'react-router-dom';
 
 function Login({ onLoginSuccess }) {
     const [username, setUsername] = useState('');
@@ -27,69 +27,68 @@ function Login({ onLoginSuccess }) {
     };
 
     return (
-        <div className="flex items-center justify-center mt-12">
-            <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-base-200">
-                <div className="card-body">
-                    <h2 className="card-title text-2xl font-bold text-center justify-center mb-4">
+        <div className="flex min-h-screen items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="card w-full max-w-md bg-base-100 shadow-xl border border-base-200">
+                <div className="card-body p-8">
+                    <h2 className="text-3xl font-bold text-center text-primary mb-6">
                         Вход в SaqBol
                     </h2>
                     
                     {error && (
-                        <div className="alert alert-error mb-4 py-2">
-                            <span className="text-sm">{error}</span>
+                        <div className="alert alert-error mb-4 text-sm shadow-sm">
+                            <span>{error}</span>
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="form-control">
-                            <label className="label">
-                                <span className="label-text font-semibold">Логин</span>
+                        <div className="form-control w-full">
+                            <label className="label pt-0">
+                                <span className="label-text font-semibold text-gray-600">Логин</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Введите ваш логин"
-                                className="input input-bordered focus:input-primary"
+                                placeholder="Ваш логин"
+                                className="input input-bordered w-full focus:input-primary bg-gray-50"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
                             />
                         </div>
 
-                        <div className="form-control">
-                            <label className="label">
-                                <span className="label-text font-semibold">Пароль</span>
+                        <div className="form-control w-full">
+                            <label className="label pt-0">
+                                <span className="label-text font-semibold text-gray-600">Пароль</span>
                             </label>
                             <input
                                 type="password"
                                 placeholder="••••••••"
-                                className="input input-bordered focus:input-primary"
+                                className="input input-bordered w-full focus:input-primary bg-gray-50"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
                         </div>
 
-                        <div className="card-actions mt-6">
-                            <button 
-                                type="submit" 
-                                className={`btn btn-primary btn-block ${loading ? 'loading' : ''}`}
-                                disabled={loading}
-                            >
-                                {loading ? 'Входим...' : 'Войти'}
-                            </button>
-                        </div>
+                        <button 
+                            type="submit" 
+                            className={`btn btn-primary w-full text-lg mt-4 ${loading ? 'loading' : ''}`}
+                            disabled={loading}
+                        >
+                            {loading ? 'Входим...' : 'Войти'}
+                        </button>
                     </form>
 
-                    {/* --- ДОБАВЛЕНА ССЫЛКА НА РЕГИСТРАЦИЮ --- */}
-                    <div className="text-center mt-4">
-                        <span className="text-gray-500 text-sm">Нет аккаунта? </span>
-                        <Link to="/register" className="link link-primary link-hover font-bold text-sm">
+                    <div className="divider my-6">ИЛИ</div>
+
+                    <p className="text-center text-sm text-gray-600">
+                        Нет аккаунта?{' '}
+                        <Link to="/register" className="link link-primary font-bold hover:text-primary-focus transition-colors">
                             Зарегистрироваться
                         </Link>
-                    </div>
+                    </p>
 
-                    <div className="text-center mt-4">
-                        <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">
+                    <div className="text-center mt-6">
+                        <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">
                             LMS System v1.0
                         </p>
                     </div>

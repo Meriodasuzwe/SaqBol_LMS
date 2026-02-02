@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from './api'; // <-- Не забудь проверить импорт api
 
 // Импорты страниц
 import Login from './Login';
-import Register from './Register'; // <-- НОВЫЙ ИМПОРТ
+import Register from './Register';
 import CourseList from './CourseList';
 import CourseDetail from './CourseDetail';
 import QuizPage from './QuizPage';
@@ -13,13 +14,42 @@ import TeacherPanel from './TeacherPanel';
 import CourseBuilder from './CourseBuilder';
 
 function App() {
-  // Проверяем наличие токена в localStorage для сохранения сессии
+  // 1. Состояние авторизации
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access'));
+  
+  // 2. НОВОЕ: Состояние роли (student / teacher / admin)
+  const [userRole, setUserRole] = useState(null);
+  const [loadingRole, setLoadingRole] = useState(false);
+
+  // 3. НОВОЕ: При загрузке или входе проверяем, кто это
+  useEffect(() => {
+    if (isLoggedIn) {
+      setLoadingRole(true);
+      api.get('users/me/')
+        .then(response => {
+          setUserRole(response.data.role); // 'student' или 'teacher'
+        })
+        .catch(err => {
+          console.error("Не удалось получить роль", err);
+          // Если токен протух - разлогиниваем
+          if (err.response && err.response.status === 401) {
+             handleLogout();
+          }
+        })
+        .finally(() => setLoadingRole(false));
+    } else {
+      setUserRole(null);
+    }
+  }, [isLoggedIn]);
 
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
+    setUserRole(null);
   };
+
+  // Вспомогательная проверка: является ли юзер учителем
+  const isTeacher = userRole === 'teacher' || userRole === 'admin';
 
   return (
     <Router>
@@ -39,9 +69,12 @@ function App() {
                 <>
                   <Link to="/courses" className="btn btn-ghost btn-sm">Курсы</Link>
                   
-                  <Link to="/teacher" className="btn btn-ghost btn-sm text-secondary hidden md:flex">
-                    AI Лаборатория
-                  </Link>
+                  {/* ⚠️ СКРЫВАЕМ КНОПКУ ОТ СТУДЕНТОВ */}
+                  {isTeacher && (
+                    <Link to="/teacher" className="btn btn-ghost btn-sm text-secondary hidden md:flex">
+                      AI Лаборатория
+                    </Link>
+                  )}
 
                   <Link to="/profile" className="btn btn-ghost btn-sm">Профиль</Link>
                   
@@ -73,7 +106,6 @@ function App() {
               !isLoggedIn ? <Login onLoginSuccess={() => setIsLoggedIn(true)} /> : <Navigate to="/courses" />
             } />
             
-            {/* 1.1. МАРШРУТ РЕГИСТРАЦИИ */}
             <Route path="/register" element={
               !isLoggedIn ? <Register /> : <Navigate to="/courses" />
             } />
@@ -99,13 +131,20 @@ function App() {
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
             } />
 
-            {/* 3. ИНТЕРФЕЙС УЧИТЕЛЯ (AI & BUILDER) */}
+            {/* 3. ИНТЕРФЕЙС УЧИТЕЛЯ (ЗАЩИЩЕНО) */}
+            
+            {/* Конструктор: Доступ только если isTeacher */}
             <Route path="/teacher/course/:courseId/builder" element={
-              isLoggedIn ? <CourseBuilder /> : <Navigate to="/login" />
+              isLoggedIn ? (
+                 isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
+              ) : <Navigate to="/login" />
             } />
 
+            {/* AI Панель: Доступ только если isTeacher */}
             <Route path="/teacher" element={
-              isLoggedIn ? <TeacherPanel /> : <Navigate to="/login" />
+              isLoggedIn ? (
+                 isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
+              ) : <Navigate to="/login" />
             } />
 
             {/* --- РЕДИРЕКТЫ --- */}
