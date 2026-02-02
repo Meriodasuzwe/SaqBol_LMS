@@ -21,6 +21,10 @@ function CourseBuilder() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newLessonTitle, setNewLessonTitle] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+    const [renameValue, setRenameValue] = useState('');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // --- НАСТРОЙКИ РЕДАКТОРА ---
     const modules = {
@@ -82,12 +86,17 @@ function CourseBuilder() {
         if (!newLessonTitle.trim()) return;
         setIsCreating(true);
         try {
-            const res = await api.post(`courses/${courseId}/lessons/`, {
+            const payload = {
                 title: newLessonTitle,
-                content: "",    
-                video_url: "",  
-                order: lessons.length + 1
-            });
+                content: "",
+                video_url: "",
+                order: lessons.length + 1,
+                course: courseId
+            };
+            console.log('Creating lesson payload:', payload);
+
+            const res = await api.post(`courses/${courseId}/lessons/`, payload);
+            console.log('Create lesson response:', res);
 
             const updatedLessons = [...lessons, res.data];
             setLessons(updatedLessons);
@@ -100,8 +109,9 @@ function CourseBuilder() {
             setIsModalOpen(false);
             setNewLessonTitle("");
         } catch (err) {
-            console.error(err);
-            alert("Ошибка создания урока");
+            console.error('Ошибка при создании урока:', err);
+            const serverMsg = err.response && err.response.data ? JSON.stringify(err.response.data) : err.message;
+            alert(`Ошибка создания урока: ${serverMsg}`);
         } finally {
             setIsCreating(false);
         }
@@ -123,6 +133,65 @@ function CourseBuilder() {
         } catch (err) {
             console.error(err);
             alert("Ошибка сохранения урока");
+        }
+    };
+
+    // --- ПЕРЕИМЕНОВАНИЕ УРОКА (МОДАЛ) ---
+    const handleRenameLesson = () => {
+        if (!activeLesson) return;
+        setRenameValue(activeLesson.title || '');
+        setIsRenameModalOpen(true);
+    };
+
+    const handleConfirmRename = async () => {
+        if (!activeLesson) return setIsRenameModalOpen(false);
+        const newTitle = renameValue && renameValue.trim();
+        if (!newTitle || newTitle === activeLesson.title) {
+            setIsRenameModalOpen(false);
+            return;
+        }
+        try {
+            await api.patch(`courses/lessons/${activeLesson.id}/`, { title: newTitle });
+            const updated = { ...activeLesson, title: newTitle };
+            setActiveLesson(updated);
+            setLessons(lessons.map(l => l.id === updated.id ? updated : l));
+            showToast('save-lesson-btn');
+        } catch (err) {
+            console.error('Ошибка переименования:', err);
+            alert('Не удалось переименовать урок.');
+        } finally {
+            setIsRenameModalOpen(false);
+        }
+    };
+
+    // --- УДАЛЕНИЕ УРОКА (МОДАЛ) ---
+    const handleDeleteLesson = () => {
+        if (!activeLesson) return;
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!activeLesson) return setIsDeleteModalOpen(false);
+        setIsDeleting(true);
+        try {
+            await api.delete(`courses/lessons/${activeLesson.id}/`);
+            const idx = lessons.findIndex(l => l.id === activeLesson.id);
+            const remaining = lessons.filter(l => l.id !== activeLesson.id);
+            setLessons(remaining);
+            if (remaining.length > 0) {
+                const nextIndex = Math.min(idx, remaining.length - 1);
+                setActiveLesson(remaining[nextIndex]);
+                setActiveTab('content');
+            } else {
+                setActiveLesson(null);
+                setIsSettingsMode(true);
+            }
+        } catch (err) {
+            console.error('Ошибка удаления урока:', err);
+            alert('Не удалось удалить урок.');
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
         }
     };
 
@@ -266,10 +335,14 @@ function CourseBuilder() {
                                     placeholder="Название урока"
                                 />
                             </div>
-                            <div className="flex-none">
+                            <div className="flex-none flex items-center gap-3">
                                 <div role="tablist" className="tabs tabs-boxed">
                                     <a role="tab" className={`tab ${activeTab === 'content' ? 'tab-active' : ''}`} onClick={() => setActiveTab('content')}>📝 Теория</a>
                                     <a role="tab" className={`tab ${activeTab === 'quiz' ? 'tab-active bg-secondary text-white' : ''}`} onClick={() => setActiveTab('quiz')}>⚡ AI Тесты</a>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button title="Переименовать урок" className="btn btn-sm btn-ghost" onClick={handleRenameLesson}>✏️</button>
+                                    <button title="Удалить урок" className={`btn btn-sm btn-ghost text-red-600`} onClick={handleDeleteLesson} disabled={isDeleting}>{isDeleting ? 'Удаление...' : '🗑️'}</button>
                                 </div>
                             </div>
                         </div>
@@ -347,6 +420,38 @@ function CourseBuilder() {
                         </div>
                     </div>
                     <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}></div>
+                </dialog>
+            )}
+
+            {/* Модальное окно переименования */}
+            {isRenameModalOpen && (
+                <dialog className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg mb-4">✏️ Переименовать урок</h3>
+                        <div className="form-control w-full">
+                            <input type="text" className="input input-bordered w-full" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} autoFocus />
+                        </div>
+                        <div className="modal-action">
+                            <button className="btn" onClick={() => setIsRenameModalOpen(false)}>Отмена</button>
+                            <button className="btn btn-primary" onClick={handleConfirmRename}>Сохранить</button>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop" onClick={() => setIsRenameModalOpen(false)}></div>
+                </dialog>
+            )}
+
+            {/* Модальное окно удаления */}
+            {isDeleteModalOpen && (
+                <dialog className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg mb-4">🗑️ Удалить урок</h3>
+                        <p className="mb-4">Вы уверены, что хотите удалить урок "{activeLesson?.title}"? Это действие нельзя отменить.</p>
+                        <div className="modal-action">
+                            <button className="btn" onClick={() => setIsDeleteModalOpen(false)}>Отмена</button>
+                            <button className={`btn btn-error ${isDeleting ? 'loading' : ''}`} onClick={handleConfirmDelete}>Удалить</button>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop" onClick={() => setIsDeleteModalOpen(false)}></div>
                 </dialog>
             )}
         </div>

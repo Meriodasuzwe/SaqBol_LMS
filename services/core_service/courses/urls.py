@@ -6,7 +6,8 @@ from .views import (
     CategoryListView,
     EnrollCourseView, 
     LessonListCreateView,
-    MyCoursesView, 
+    MyCoursesView,
+    MarkLessonCompleteView, 
     LessonDetailView
 )
 
@@ -15,6 +16,7 @@ urlpatterns = [
     path('', CourseListView.as_view(), name='course-list'),
     path('<int:pk>/', CourseDetailView.as_view(), name='course-detail'),
     path('my_courses/', MyCoursesView.as_view(), name='my-courses'),
+    path('lessons/<int:pk>/complete/', MarkLessonCompleteView.as_view(), name='lesson-complete'),
     
     # Категории
     path('categories/', CategoryListView.as_view(), name='category-list'),

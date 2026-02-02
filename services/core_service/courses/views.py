@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from .models import Category, Course, Enrollment, Lesson
+from .models import Category, Course, Enrollment, Lesson,LessonProgress
 from .serializers import CategorySerializer, CourseSerializer, LessonSerializer
 
 # ==========================================
@@ -171,3 +171,16 @@ class MyCoursesView(generics.ListAPIView):
         
         # Шаг Б: Достаем сами курсы по этим ID
         return Course.objects.filter(id__in=enrolled_course_ids)
+
+class MarkLessonCompleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        lesson = get_object_or_404(Lesson, pk=pk)
+        
+        # Создаем запись о прогрессе (или берем существующую)
+        LessonProgress.objects.get_or_create(
+            student=request.user, 
+            lesson=lesson
+        )
+        return Response({"message": "Урок пройден!"}, status=status.HTTP_200_OK)

@@ -60,3 +60,11 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.student.username} -> {self.course.title}"
+
+class LessonProgress(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'lesson') # Один урок нельзя пройти дважды
