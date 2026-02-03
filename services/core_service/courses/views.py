@@ -178,9 +178,19 @@ class MarkLessonCompleteView(APIView):
     def post(self, request, pk):
         lesson = get_object_or_404(Lesson, pk=pk)
         
-        # Создаем запись о прогрессе (или берем существующую)
-        LessonProgress.objects.get_or_create(
+        # 1. Получаем очки из запроса (если фронтенд их прислал)
+        # Если очков нет (обычный урок), ставим 10 по умолчанию
+        score = request.data.get('score', 10)
+
+        # 2. Обновляем или создаем запись о прогрессе
+        # update_or_create позволяет перезаписать лучший результат, если нужно
+        progress, created = LessonProgress.objects.update_or_create(
             student=request.user, 
-            lesson=lesson
+            lesson=lesson,
+            defaults={'score_earned': score, 'is_completed': True} 
         )
-        return Response({"message": "Урок пройден!"}, status=status.HTTP_200_OK)
+        
+        return Response({
+            "message": "Урок пройден!", 
+            "score_earned": score
+        }, status=status.HTTP_200_OK)
