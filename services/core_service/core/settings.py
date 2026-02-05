@@ -15,9 +15,9 @@ SECRET_KEY = os.environ.get(
     'unsafe-dev-secret-key'
 )
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # =========================
@@ -138,25 +138,6 @@ STATIC_URL = 'static/'
 # =========================
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
-
-
-# =========================
-# DEFAULT PK
-# =========================
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -165,6 +146,18 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# =========================
+# DEFAULT PK
+# =========================
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'SaqBol LMS API',
@@ -176,10 +169,13 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_NO_READ_ONLY_FIELDS': True,
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
-
-# Разрешаем фронтенду обращаться к бэкенду
+# Безопасная конфигурация CORS
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+# Для разработки можно разрешить все origins через переменную окружения
+if os.environ.get('CORS_ALLOW_ALL_IN_DEV', 'False') == 'True':
+    CORS_ALLOW_ALL_ORIGINS = True

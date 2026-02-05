@@ -21,8 +21,19 @@ class QuizSerializer(serializers.ModelSerializer):
 
 class QuizSubmissionSerializer(serializers.Serializer):
     answers = serializers.ListField(
-        child=serializers.DictField(child=serializers.IntegerField())
+        child=serializers.DictField(child=serializers.IntegerField()),
+        min_length=1,
+        max_length=50  # Ограничиваем количество ответов для безопасности
     )
+    
+    def validate_answers(self, value):
+        """Валидация структуры ответов"""
+        for answer in value:
+            if 'choice_id' not in answer or 'question_id' not in answer:
+                raise serializers.ValidationError(
+                    "Каждый ответ должен содержать 'choice_id' и 'question_id'"
+                )
+        return value
 
 class QuizResultSerializer(serializers.ModelSerializer):
     quiz_title = serializers.ReadOnlyField(source='quiz.title')
