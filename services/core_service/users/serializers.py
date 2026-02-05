@@ -12,7 +12,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        # Убрали 'role' из полей, чтобы нельзя было передать её в JSON
         fields = ('username', 'password', 'email', 'iin') 
 
     def create(self, validated_data):
@@ -21,7 +20,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             email=validated_data.get('email', ''),
             iin=validated_data.get('iin', ''),
-            # ЖЕСТКО прописываем 'student'. 
             role='student' 
         )
         return user
@@ -53,15 +51,19 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        # Возвращаем role, чтобы React знал, какие кнопки показывать
-        fields = ['id', 'username', 'email', 'role', 'iin'] 
+        # 🔥 ДОБАВИЛИ age, avatar, first_name, last_name
+        fields = ['id', 'username', 'email', 'role', 'iin', 'first_name', 'last_name', 'age', 'avatar']
+        read_only_fields = ['role', 'username', 'email'] # Роль и логин менять через профиль нельзя
 
 
 # ---------------------------
 # Результаты тестов
 # ---------------------------
 class QuizResultSerializer(serializers.ModelSerializer):
-    # Исправлено: убрали source='quiz.title', так как в модели QuizAttempt поле называется так же
+    # Создаем псевдоним: фронт просит completed_at, мы берем данные из date
+    completed_at = serializers.DateTimeField(source='date', read_only=True)
+
     class Meta:
         model = QuizAttempt
-        fields = ['id', 'quiz_title', 'score', 'date'] # Обрати внимание: в модели поле date, а не completed_at
+        # Возвращаем id, название теста, очки и "правильную" дату
+        fields = ['id', 'quiz_title', 'score', 'completed_at']
