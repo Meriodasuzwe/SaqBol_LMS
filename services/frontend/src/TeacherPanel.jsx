@@ -16,11 +16,20 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewQuestions, setPreviewQuestions] = useState(null);
+    
+    // Toast состояния
+    const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', message: string }
 
     const stripHtml = (html) => {
         if (!html) return "";
         const doc = new DOMParser().parseFromString(html, 'text/html');
         return doc.body.textContent || "";
+    };
+
+    // Функция показа тостера
+    const showToast = (type, message) => {
+        setToast({ type, message });
+        setTimeout(() => setToast(null), 4000);
     };
 
     useEffect(() => {
@@ -56,7 +65,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     };
 
     const handleStartGeneration = async () => {
-        if (!selectedLessonId && !customText) return alert("Выберите урок или введите текст");
+        if (!selectedLessonId && !customText) return showToast('error', "Выберите урок или введите текст");
         setIsGenerating(true);
         setPreviewQuestions(null); 
         
@@ -70,7 +79,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
             });
 
             const questions = res.data.generated_questions || res.data;
-            // Нормализуем каждый вопрос: обеспечим поля question, options (array), correct_answer, explanation
+            // Нормализуем каждый вопрос с трекингом AI-предложенного индекса
             const normalized = Array.isArray(questions) ? questions.map(q => {
                 const questionText = (q.question || q.text || q.prompt || q.title || '').trim();
                 
@@ -94,10 +103,12 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
 
                 // Determine correct answer from multiple possible keys
                 let correct = (q.correct_answer || q.correctAnswer || q.correct || q.answer || q.correct_option || '').toString().trim();
+                let aiIndex = -1;
 
-                // If correct is numeric index, convert to value
+                // If correct is numeric index, convert to value and store index
                 if (correct && /^\d+$/.test(correct) && options.length > 0) {
                     const idx = parseInt(correct, 10);
+                    aiIndex = idx;
                     if (idx >= 0 && idx < options.length) correct = options[idx];
                 }
 
@@ -117,8 +128,11 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                     options = Array.from(new Set(placeholders));
                 }
 
-                // Ensure correct is one of options; if not, fallback to first
-                if (!correct || !options.includes(correct)) {
+                // Ensure correct is one of options; compute AI index
+                let aiSuggestedIndex = -1;
+                if (correct) aiSuggestedIndex = options.indexOf(correct);
+                if (aiSuggestedIndex === -1) {
+                    aiSuggestedIndex = 0;
                     correct = options[0] || '';
                 }
 
@@ -128,13 +142,15 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                     question: questionText,
                     options,
                     correct_answer: correct,
-                    explanation
+                    explanation,
+                    ai_suggested_index: aiSuggestedIndex,
+                    user_selected_index: aiSuggestedIndex
                 };
             }) : [];
              setPreviewQuestions(normalized);
         } catch (err) {
             console.error("Ошибка генерации:", err.response?.data || err.message);
-            alert("Ошибка генерации. Проверьте консоль.");
+            showToast('error', "Ошибка генерации. Проверьте консоль.");
         } finally {
             setIsGenerating(false);
         }
@@ -149,17 +165,22 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
 
     const handleOptionChange = (qIndex, oIndex, value) => {
         const updated = [...previewQuestions];
-        const oldOptionValue = updated[qIndex].options[oIndex];
         updated[qIndex].options[oIndex] = value;
-        if (oldOptionValue === updated[qIndex].correct_answer) {
+        // Keep user selection pointing to same index
+        if (updated[qIndex].user_selected_index === oIndex) {
+            updated[qIndex].correct_answer = value;
+        }
+        // If AI suggested this index, update its text too
+        if (updated[qIndex].ai_suggested_index === oIndex) {
             updated[qIndex].correct_answer = value;
         }
         setPreviewQuestions(updated);
     };
 
-    const handleCorrectSelect = (qIndex, value) => {
+    const handleCorrectSelect = (qIndex, oIndex) => {
         const updated = [...previewQuestions];
-        updated[qIndex].correct_answer = value;
+        updated[qIndex].user_selected_index = oIndex;
+        updated[qIndex].correct_answer = updated[qIndex].options[oIndex] || '';
         setPreviewQuestions(updated);
     };
 
@@ -168,6 +189,8 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
             question: "Новый вопрос",
             options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
             correct_answer: "Вариант 1",
+            ai_suggested_index: 0,
+            user_selected_index: 0,
             explanation: "" 
         };
         setPreviewQuestions(previewQuestions ? [...previewQuestions, newQuestion] : [newQuestion]);
@@ -181,40 +204,31 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     // --- СОХРАНЕНИЕ (ИСПРАВЛЕНО) ---
     const handleSaveQuiz = async () => {
         if (!selectedLessonId || selectedLessonId === "") {
-            return alert("Ошибка: Не выбран ID урока. Выберите урок в списке слева.");
+            return showToast("error", "Не выбран ID урока. Выберите урок в списке слева.");
         }
         
         if (!previewQuestions || previewQuestions.length === 0) {
-            return alert("Нет вопросов для сохранения!");
+            return showToast("error", "Нет вопросов для сохранения!");
         }
 
         // ПРЕОБРАЗОВАНИЕ ДАННЫХ (Важно!)
-        // Если твой бэкенд ждет "text" вместо "question", меняем здесь.
-        // Формируем payload в формате, ожидаемом сервером:
-        // { question: string, options: [string], correct_answer: string, explanation: string }
+        // Отправляем correct_index как индекс выбранного пользователем варианта
         const payloadQuestions = previewQuestions.map(q => {
             const optionsRaw = Array.isArray(q.options) ? q.options : [];
-            // Нормализуем: если опция объект {text:...} — берем text, если строка — оставляем
             const options = optionsRaw
                 .map(o => (typeof o === 'string' ? o : (o && o.text ? o.text : '')))
                 .map(s => (s == null ? '' : String(s).trim()))
                 .filter(s => s.length > 0);
 
-            let correct = (typeof q.correct_answer === 'string') ? q.correct_answer : (q.correct_answer && q.correct_answer.text ? q.correct_answer.text : '');
-            correct = correct ? String(correct).trim() : '';
-
-            // Если correct отсутствует в options, пытаемся подставить первый вариант
-            if (correct && !options.includes(correct)) {
-                // возможно correct приходил как индекс
-                const idx = Number(correct);
-                if (!Number.isNaN(idx) && options[idx]) correct = options[idx];
-                else correct = options[0] || '';
-            }
+            // Определяем индекс выбранного варианта
+            let userIndex = (typeof q.user_selected_index === 'number') ? q.user_selected_index : 0;
+            if (userIndex < 0 || userIndex >= options.length) userIndex = 0;
 
             return {
                 question: q.question ? String(q.question) : '',
                 options,
-                correct_answer: correct,
+                correct_answer: String(userIndex), // индекс как строка для бэка
+                correct_index: userIndex, // числовой индекс
                 explanation: q.explanation ? String(q.explanation) : ''
             };
         });
@@ -222,12 +236,15 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
         // Валидация: убедимся что каждая запись имеет минимум 2 опции
         for (const [i, pq] of payloadQuestions.entries()) {
             if (!pq.options || pq.options.length < 2) {
-                return alert(`Ошибка: в вопросе #${i+1} недостаточно вариантов (нужно минимум 2).`);
+                return showToast("error", `В вопросе #${i+1} недостаточно вариантов (нужно минимум 2).`);
             }
-            if (!pq.correct_answer || !pq.options.includes(pq.correct_answer)) {
-                // если нет корректного варианта, ставим первый
-                pq.correct_answer = pq.options[0];
+            // Убедимся что correct_index в допустимых границах
+            let correctIndex = parseInt(pq.correct_answer, 10);
+            if (Number.isNaN(correctIndex) || correctIndex < 0 || correctIndex >= pq.options.length) {
+                correctIndex = 0;
             }
+            pq.correct_answer = String(correctIndex);
+            pq.correct_index = correctIndex;
         }
 
         const payload = {
@@ -244,7 +261,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
         try {
             const res = await api.post(`quizzes/save-generated/`, payload);
             console.log("📥 Ответ сервера:", res.data);
-            alert("✅ Тест успешно сохранен в базу!");
+            showToast("success", "✅ Тест успешно сохранен в базу!");
             setPreviewQuestions(null); 
             if (!preFilledText) setCustomText("");
             
@@ -254,7 +271,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
             // ВЫВОДИМ ПОЛНУЮ ОШИБКУ В КОНСОЛЬ
             console.error("❌ ОШИБКА СОХРАНЕНИЯ:", err.response?.data || err.message);
             const errorMsg = err.response?.data?.error || err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message;
-            alert(`Ошибка при сохранении: ${errorMsg}`);
+            showToast("error", `Ошибка при сохранении: ${errorMsg}`);
         }
     };
 
@@ -262,6 +279,17 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
 
     return (
         <div className="max-w-7xl mx-auto py-10 px-4 animate-fade-in">
+            {/* TOAST УВЕДОМЛЕНИЕ */}
+            {toast && (
+                <div className="fixed top-4 right-4 z-50 animate-slide-in">
+                    <div className={`alert alert-${toast.type === 'success' ? 'success' : toast.type === 'error' ? 'error' : 'info'} shadow-lg rounded-lg flex items-center gap-3`}>
+                        {toast.type === 'success' && <span className="text-2xl">✅</span>}
+                        {toast.type === 'error' && <span className="text-2xl">❌</span>}
+                        {toast.type === 'info' && <span className="text-2xl">ℹ️</span>}
+                        <span className="font-semibold">{toast.message}</span>
+                    </div>
+                </div>
+            )}
             <h1 className="text-4xl font-black mb-10 flex items-center gap-4 tracking-tighter">
                 Лаборатория Учителя <div className="badge badge-secondary badge-lg py-4">AI HELPER</div>
             </h1>
@@ -373,23 +401,30 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                                        {q.options.map((opt, oIndex) => (
-                                            <div key={oIndex} className="flex items-center gap-3 p-2 rounded-xl bg-base-200/50">
-                                                <input 
-                                                    type="radio" 
-                                                    name={`q-${qIndex}`} 
-                                                    className="radio radio-primary radio-sm"
-                                                    checked={opt === q.correct_answer}
-                                                    onChange={() => handleCorrectSelect(qIndex, opt)}
-                                                />
-                                                <input 
-                                                    type="text" 
-                                                    className={`input input-sm w-full bg-transparent border-none ${opt === q.correct_answer ? 'font-bold text-primary' : ''}`}
-                                                    value={opt}
-                                                    onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                                                />
-                                            </div>
-                                        ))}
+                                        {q.options.map((opt, oIndex) => {
+                                            const isUserSelected = (typeof q.user_selected_index === 'number') && q.user_selected_index === oIndex;
+                                            const isAiSuggested = (typeof q.ai_suggested_index === 'number') && q.ai_suggested_index === oIndex;
+                                            return (
+                                                <div key={oIndex} className={`flex items-center gap-3 p-2 rounded-xl ${isAiSuggested ? 'bg-yellow-50 border border-yellow-200' : 'bg-base-200/50'}`}>
+                                                    <input 
+                                                        type="radio" 
+                                                        name={`q-${qIndex}`} 
+                                                        className="radio radio-primary radio-sm"
+                                                        checked={isUserSelected}
+                                                        onChange={() => handleCorrectSelect(qIndex, oIndex)}
+                                                    />
+                                                    <input 
+                                                        type="text" 
+                                                        className={`input input-sm w-full bg-transparent border-none ${isUserSelected ? 'font-bold text-primary' : ''}`}
+                                                        value={opt}
+                                                        onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                                                    />
+                                                    {isAiSuggested && (
+                                                        <span className="badge badge-sm badge-outline ml-2">AI</span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
 
                                     <div className="collapse collapse-arrow bg-primary/5 rounded-xl border border-primary/10">
