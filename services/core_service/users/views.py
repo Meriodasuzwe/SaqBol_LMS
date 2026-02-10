@@ -1,13 +1,12 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.views import APIView
 from .serializers import RegisterSerializer, UserSerializer
 
+# Регистрация (Оставляем как было, тут все верно)
 class RegisterView(generics.CreateAPIView):
-    queryset = UserSerializer.Meta.model.objects.all() # Явное указание queryset (хорошая практика)
+    queryset = RegisterSerializer.Meta.model.objects.all()
     serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -19,10 +18,13 @@ class RegisterView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MeView(APIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = UserSerializer 
+# Профиль (MeView)
+# ИСПРАВЛЕНИЕ: Используем RetrieveUpdateAPIView вместо APIView.
+# Это автоматически добавляет поддержку методов GET (просмотр) и PATCH (обновление).
+class MeView(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
 
-    def get(self, request):
-        serializer = self.serializer_class(request.user)
-        return Response(serializer.data)
+    # Переопределяем этот метод, чтобы View знала, что "объект" — это текущий юзер из токена
+    def get_object(self):
+        return self.request.user

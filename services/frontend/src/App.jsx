@@ -1,6 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import api from './api'; // <-- Не забудь проверить импорт api
+import api from './api';
 
 // Импорты страниц
 import Login from './Login';
@@ -12,26 +12,26 @@ import Profile from './Profile';
 import LessonPage from './LessonPage';
 import TeacherPanel from './TeacherPanel';
 import CourseBuilder from './CourseBuilder';
+import Navbar from './Navbar';
 
 function App() {
   // 1. Состояние авторизации
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access'));
   
-  // 2. НОВОЕ: Состояние роли (student / teacher / admin)
+  // 2. Состояние роли
   const [userRole, setUserRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(false);
 
-  // 3. НОВОЕ: При загрузке или входе проверяем, кто это
+  // 3. Проверка роли при загрузке
   useEffect(() => {
     if (isLoggedIn) {
       setLoadingRole(true);
       api.get('users/me/')
         .then(response => {
-          setUserRole(response.data.role); // 'student' или 'teacher'
+          setUserRole(response.data.role); 
         })
         .catch(err => {
           console.error("Не удалось получить роль", err);
-          // Если токен протух - разлогиниваем
           if (err.response && err.response.status === 401) {
              handleLogout();
           }
@@ -48,59 +48,23 @@ function App() {
     setUserRole(null);
   };
 
-  // Вспомогательная проверка: является ли юзер учителем
   const isTeacher = userRole === 'teacher' || userRole === 'admin';
 
   return (
     <Router>
-      <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col">
+      <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
         
-        {/* --- ШАПКА САЙТА (NAVBAR) --- */}
-        <header className="bg-base-100 shadow-sm border-b border-base-200 sticky top-0 z-50">
-          <div className="navbar container mx-auto px-4 lg:px-8">
-            <div className="flex-1">
-              <Link to="/" className="btn btn-ghost text-xl font-bold text-primary tracking-tighter hover:bg-transparent">
-                SaqBol <span className="text-secondary font-black">LMS</span>
-              </Link>
-            </div>
-            
-            <div className="flex-none gap-3">
-              {isLoggedIn ? (
-                <>
-                  <Link to="/courses" className="btn btn-ghost btn-sm">Курсы</Link>
-                  
-                  {/* ⚠️ СКРЫВАЕМ КНОПКУ ОТ СТУДЕНТОВ */}
-                  {isTeacher && (
-                    <Link to="/teacher" className="btn btn-ghost btn-sm text-secondary hidden md:flex">
-                      AI Лаборатория
-                    </Link>
-                  )}
-
-                  <Link to="/profile" className="btn btn-ghost btn-sm">Профиль</Link>
-                  
-                  <div className="divider divider-horizontal mx-1 h-6 self-center"></div>
-                  
-                  <button 
-                    onClick={handleLogout} 
-                    className="btn btn-sm btn-outline btn-error"
-                  >
-                    Выйти
-                  </button>
-                </>
-              ) : (
-                <div className="flex gap-2">
-                    <Link to="/login" className="btn btn-ghost btn-sm">Войти</Link>
-                    <Link to="/register" className="btn btn-primary btn-sm">Регистрация</Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+        {/* 🔥 ЗАМЕНИЛИ СТАРЫЙ HEADER НА НОВЫЙ NAVBAR */}
+        {/* Передаем туда состояние и функцию выхода, чтобы Navbar знал, что показывать */}
+        <Navbar 
+            isLoggedIn={isLoggedIn} 
+            userRole={userRole} 
+            onLogout={handleLogout} 
+        />
 
         {/* --- ОСНОВНОЙ КОНТЕНТ --- */}
         <main className="container mx-auto p-4 lg:p-8 flex-grow">
           <Routes>
-            
             {/* 1. АВТОРИЗАЦИЯ */}
             <Route path="/login" element={
               !isLoggedIn ? <Login onLoginSuccess={() => setIsLoggedIn(true)} /> : <Navigate to="/courses" />
@@ -131,16 +95,13 @@ function App() {
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
             } />
 
-            {/* 3. ИНТЕРФЕЙС УЧИТЕЛЯ (ЗАЩИЩЕНО) */}
-            
-            {/* Конструктор: Доступ только если isTeacher */}
+            {/* 3. ИНТЕРФЕЙС УЧИТЕЛЯ */}
             <Route path="/teacher/course/:courseId/builder" element={
               isLoggedIn ? (
                  isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
               ) : <Navigate to="/login" />
             } />
 
-            {/* AI Панель: Доступ только если isTeacher */}
             <Route path="/teacher" element={
               isLoggedIn ? (
                  isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
@@ -154,7 +115,7 @@ function App() {
           </Routes>
         </main>
 
-        {/* --- ПОДВАЛ (FOOTER) --- */}
+        {/* --- ПОДВАЛ --- */}
         <footer className="footer footer-center p-4 bg-base-200 text-base-content mt-auto">
           <div>
             <p>© 2026 SaqBol LMS - AI Education Platform</p>

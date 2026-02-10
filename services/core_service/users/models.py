@@ -24,6 +24,9 @@ class User(AbstractUser):
         blank=True, 
         verbose_name="ИИН"
     )
+    
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Возраст")
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватарка")
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

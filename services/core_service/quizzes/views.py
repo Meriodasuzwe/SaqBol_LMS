@@ -15,14 +15,25 @@ from .serializers import (
     MyResultSerializer
 )
 
-# 1. Просмотр теста
+# 1. Список тестов (можно фильтровать по lesson_id)
+class QuizListView(generics.ListAPIView):
+    serializer_class = QuizSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Quiz.objects.all().order_by('-id')
+        lesson_id = self.request.query_params.get('lesson_id')
+        if lesson_id:
+            qs = qs.filter(lesson_id=lesson_id)
+        return qs
+
+# 2. Просмотр конкретного теста
 class QuizDetailView(generics.RetrieveAPIView):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
-    lookup_field = 'lesson_id'
 
-# 2. Сдача теста
+# 3. Сдача теста (оставляем без изменений)
 class QuizSubmitView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -64,7 +75,7 @@ class QuizSubmitView(APIView):
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 3. Список результатов
+# 4. Список результатов
 class MyQuizResultsView(generics.ListAPIView):
     serializer_class = MyResultSerializer
     permission_classes = [IsAuthenticated]
@@ -74,7 +85,7 @@ class MyQuizResultsView(generics.ListAPIView):
 
 # --- БЛОК AI ФУНКЦИЙ ---
 
-# 4. ПРЕДПРОСМОТР (Генерация без сохранения)
+# 5. ПРЕДПРОСМОТР (Генерация без сохранения)
 class GeneratePreviewView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -125,7 +136,7 @@ class GeneratePreviewView(APIView):
         except Exception as e:
             return Response({"error": f"Ошибка связи с AI: {str(e)}"}, status=500)
 
-# 5. СОХРАНЕНИЕ УТВЕРЖДЕННОГО ТЕСТА
+# 6. СОХРАНЕНИЕ УТВЕРДЕННОГО ТЕСТА (поддерживает добавление к существующему тесту или создание нового)
 class SaveGeneratedView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -133,33 +144,76 @@ class SaveGeneratedView(APIView):
     def post(self, request):
         lesson_id = request.data.get('lesson_id')
         questions_data = request.data.get('questions')
+        quiz_id = request.data.get('quiz_id')
+        quiz_title = request.data.get('quiz_title') or request.data.get('title')
 
         if not lesson_id or not questions_data:
             return Response({"error": "Данные неполные"}, status=400)
 
         try:
-            lesson = Lesson.objects.get(id=lesson_id)
-            # Удаляем старый тест и вопросы
-            Quiz.objects.filter(lesson=lesson).delete()
-            
-            quiz = Quiz.objects.create(title=f"Тест: {lesson.title}", lesson=lesson)
-            
+            try:
+                lesson = Lesson.objects.get(id=lesson_id)
+            except Lesson.DoesNotExist:
+                return Response({"error": "Урок не найден"}, status=404)
+
+            # Получаем или создаём тест
+            if quiz_id:
+                try:
+                    quiz = Quiz.objects.get(id=quiz_id)
+                except Quiz.DoesNotExist:
+                    return Response({"error": "Тест не найден"}, status=404)
+                if quiz.lesson_id != lesson.id:
+                    return Response({"error": "Тест не принадлежит указанному уроку"}, status=400)
+            else:
+                title = quiz_title.strip() if quiz_title and str(quiz_title).strip() else f"Тест: {lesson.title}"
+                quiz = Quiz.objects.create(title=title, lesson=lesson)
+
+            # Добавляем вопросы и варианты — не удаляем предыдущие (поддержка нескольких тестов)
             for q_item in questions_data:
-                question = Question.objects.create(quiz=quiz, text=q_item.get('question'))
-                correct_text = q_item.get('correct_answer')
-                
-                for opt_text in q_item.get('options', []):
-                    Choice.objects.create(
-                        question=question,
-                        text=opt_text,
-                        is_correct=(opt_text.strip() == correct_text.strip())
-                    )
-            
-            return Response({"message": "Тест успешно сохранен"}, status=201)
+                q_text = (q_item.get('question') or q_item.get('text') or '').strip()
+                if not q_text:
+                    continue
+                explanation = (q_item.get('explanation') or q_item.get('explain') or '').strip()
+                question = Question.objects.create(quiz=quiz, text=q_text, explanation=explanation)
+
+                options_raw = q_item.get('options') or []
+                # Нормализуем опции
+                normalized_options = []
+                for o in options_raw:
+                    if isinstance(o, dict):
+                        val = o.get('text') or o.get('value') or ''
+                    else:
+                        val = o
+                    if val is None:
+                        continue
+                    s = str(val).strip()
+                    if s:
+                        normalized_options.append(s)
+
+                correct_text = (q_item.get('correct_answer') or q_item.get('correct') or '').strip()
+
+                # Если correct_text это индекс
+                if correct_text and correct_text.isdigit():
+                    idx = int(correct_text)
+                    if 0 <= idx < len(normalized_options):
+                        correct_text = normalized_options[idx]
+                    else:
+                        correct_text = ''
+
+                # Если корректного варианта не указали — пометим первым
+                for i, opt_text in enumerate(normalized_options):
+                    is_correct = False
+                    if correct_text:
+                        is_correct = (opt_text == correct_text)
+                    elif i == 0:
+                        is_correct = True
+                    Choice.objects.create(question=question, text=opt_text, is_correct=is_correct)
+
+            return Response({"message": "Тест успешно сохранен", "quiz_id": quiz.id}, status=201)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-# 6. БЫСТРАЯ ГЕНЕРАЦИЯ (Старая кнопка, но улучшенная)
+# 7. БЫСТРАЯ ГЕНЕРАЦИЯ (создаёт новый тест для урока)
 class GenerateQuizView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -181,18 +235,42 @@ class GenerateQuizView(APIView):
                 return Response({"error": "AI-сервис недоступен"}, status=503)
             
             data = response.json()
-            Quiz.objects.filter(lesson=lesson).delete()
+            # НЕ удаляем старые тесты — создаём новый
             quiz = Quiz.objects.create(title=f"Тест: {lesson.title}", lesson=lesson)
             
             for q_item in data.get('generated_questions', []):
-                question = Question.objects.create(quiz=quiz, text=q_item.get('question'))
-                correct_text = q_item.get('correct_answer')
-                for opt_text in q_item.get('options', []):
-                    Choice.objects.create(
-                        question=question, 
-                        text=opt_text, 
-                        is_correct=(opt_text.strip() == correct_text.strip())
-                    )
+                q_text = (q_item.get('question') or q_item.get('text') or '').strip()
+                if not q_text:
+                    continue
+                question = Question.objects.create(quiz=quiz, text=q_text)
+                correct_text = (q_item.get('correct_answer') or q_item.get('correct') or '').strip()
+                options_raw = q_item.get('options') or []
+                normalized_options = []
+                for o in options_raw:
+                    if isinstance(o, dict):
+                        val = o.get('text') or o.get('value') or ''
+                    else:
+                        val = o
+                    if val is None:
+                        continue
+                    s = str(val).strip()
+                    if s:
+                        normalized_options.append(s)
+
+                if correct_text and correct_text.isdigit():
+                    idx = int(correct_text)
+                    if 0 <= idx < len(normalized_options):
+                        correct_text = normalized_options[idx]
+                    else:
+                        correct_text = ''
+
+                for i, opt_text in enumerate(normalized_options):
+                    is_correct = False
+                    if correct_text:
+                        is_correct = (opt_text == correct_text)
+                    elif i == 0:
+                        is_correct = True
+                    Choice.objects.create(question=question, text=opt_text, is_correct=is_correct)
             
             return Response({"message": "Тест создан", "quiz_id": quiz.id}, status=201)
         except Exception as e:

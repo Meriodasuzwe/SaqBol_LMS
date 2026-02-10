@@ -3,7 +3,7 @@ from django.conf import settings
 from courses.models import Lesson
 
 class Quiz(models.Model):
-    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name='quiz')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='quizzes')  # Allow multiple quizzes per lesson (ForeignKey instead of OneToOne)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
