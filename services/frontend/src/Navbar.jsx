@@ -56,7 +56,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         {isTeacher && (
                              <li>
                                 <Link to="/teacher" className="text-secondary hover:bg-secondary/10">
-                                    👨‍🏫 AI Лаборатория
+                                     AI Учитель
                                 </Link>
                             </li>
                         )}

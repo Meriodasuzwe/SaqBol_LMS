@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import Category, Course, Enrollment, Lesson,LessonProgress
 from .serializers import CategorySerializer, CourseSerializer, LessonSerializer
+from quizzes.models import Quiz, Result
 
 # ==========================================
 # 1. КАТЕГОРИИ
@@ -177,20 +178,25 @@ class MarkLessonCompleteView(APIView):
 
     def post(self, request, pk):
         lesson = get_object_or_404(Lesson, pk=pk)
-        
-        # 1. Получаем очки из запроса (если фронтенд их прислал)
-        # Если очков нет (обычный урок), ставим 10 по умолчанию
+        user = request.user
+
+        # Получаем очки из запроса (по умолчанию 10)
         score = request.data.get('score', 10)
 
-        # 2. Обновляем или создаем запись о прогрессе
-        # update_or_create позволяет перезаписать лучший результат, если нужно
+        # Если у урока есть связанные тесты — требуем, чтобы студент успешно их прошёл
+        # (учитель и админ обходятся)
+        if not (lesson.course.teacher == user or user.is_staff):
+            quizzes = Quiz.objects.filter(lesson=lesson)
+            if quizzes.exists():
+                passed = Result.objects.filter(student=user, quiz__in=quizzes, score__gte=70).exists()
+                if not passed:
+                    return Response({"error": "Сначала нужно успешно пройти тест/тесты для этого урока (минимум 70%)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Обновляем или создаём запись о прогрессе
         progress, created = LessonProgress.objects.update_or_create(
-            student=request.user, 
+            student=user,
             lesson=lesson,
-            defaults={'score_earned': score, 'is_completed': True} 
+            defaults={'score_earned': score, 'is_completed': True}
         )
-        
-        return Response({
-            "message": "Урок пройден!", 
-            "score_earned": score
-        }, status=status.HTTP_200_OK)
+
+        return Response({"message": "Урок пройден!", "score_earned": score}, status=status.HTTP_200_OK)
