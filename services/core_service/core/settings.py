@@ -132,7 +132,16 @@ USE_TZ = True
 # STATIC
 # =========================
 
-STATIC_URL = 'static/'
+# URL, по которому Nginx будет запрашивать файлы
+STATIC_URL = '/api/static/' 
+
+# Папка внутри контейнера core_service, куда соберутся все файлы
+# Она должна совпадать с путем в docker-compose volumes
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Для загрузки файлов (аватарки)
+MEDIA_URL = '/api/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # =========================
@@ -174,10 +183,16 @@ SPECTACULAR_SETTINGS = {
 # Безопасная конфигурация CORS
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "http://localhost",
+    "http://127.0.0.1",
 ]
 
 # Для разработки можно разрешить все origins через переменную окружения
 if os.environ.get('CORS_ALLOW_ALL_IN_DEV', 'False') == 'True':
     CORS_ALLOW_ALL_ORIGINS = True
+    
+
+# Добавь это в конец файла
+FORCE_SCRIPT_NAME = '/api'
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

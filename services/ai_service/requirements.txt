@@ -2,3 +2,6 @@ fastapi
 pydantic
 uvicorn
 groq
+python-jose[cryptography]
+python-multipart
+python-dotenv

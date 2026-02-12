@@ -1,8 +1,10 @@
 import os
 import json
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # <--- Для защиты
+from jose import JWTError, jwt # <--- Для расшифровки токена
 from pydantic import BaseModel
 from groq import Groq
 
@@ -10,20 +12,44 @@ from groq import Groq
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+# root_path="/ai" говорит Swagger-у, что все запросы должны идти через префикс /ai
+app = FastAPI(
+    title="SaqBol AI Service",
+    root_path="/ai", 
+    docs_url="/docs",
+    openapi_url="/openapi.json"
+)
 
-# --- ВАЖНО: РАЗРЕШАЕМ ЗАПРОСЫ С ФРОНТЕНДА (CORS) ---
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Для разработки разрешаем всем. В продакшене укажи конкретный домен.
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 1. Получение ключа
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# --- БЕЗОПАСНОСТЬ (SECURITY) ---
+security = HTTPBearer()
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-secret-key") # Тот же ключ, что в Django
+ALGORITHM = "HS256"
 
+def verify_token(auth: HTTPAuthorizationCredentials = Depends(security)):
+    """Проверяет токен, пришедший в заголовке Authorization: Bearer <token>"""
+    try:
+        token = auth.credentials
+        # Расшифровываем токен. Если он поддельный или истек — будет ошибка.
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Невалидный токен доступа (Invalid Token)",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+# --- НАСТРОЙКА AI ---
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     logger.critical("❌ ОШИБКА: GROQ_API_KEY не найден!")
 else:
@@ -32,7 +58,6 @@ else:
 client = Groq(api_key=GROQ_API_KEY)
 
 # --- МОДЕЛИ ДАННЫХ ---
-
 class QuizRequest(BaseModel):
     text: str
     count: int = 3
@@ -43,10 +68,22 @@ class ScenarioRequest(BaseModel):
     scenario_type: str      # "chat" или "email"
     difficulty: str = "medium"
 
-# --- ЭНДПОИНТ 1: ГЕНЕРАЦИЯ ОБЫЧНЫХ ТЕСТОВ ---
+# --- ЭНДПОИНТЫ ---
+
+@app.get("/")
+def root():
+    return {"message": "AI Service is running. Go to /docs for Swagger."}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+# 🔐 ЗАЩИЩЕННЫЙ МЕТОД: Генерация тестов
+# Добавили аргумент `user_data=Depends(verify_token)`
 @app.post("/generate-quiz")
-async def generate_quiz(request: QuizRequest):
-    logger.info(f"Запрос на квиз: {request.count} вопросов")
+async def generate_quiz(request: QuizRequest, user_data=Depends(verify_token)):
+    logger.info(f"User {user_data.get('user_id')} запросил квиз.")
+    
     if len(request.text.strip()) < 10:
         raise HTTPException(status_code=400, detail="Текст слишком короткий.")
     try:
@@ -64,52 +101,24 @@ async def generate_quiz(request: QuizRequest):
         logger.error(f"Error Quiz: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- ЭНДПОИНТ 2: ГЕНЕРАЦИЯ СЦЕНАРИЕВ (ЧАТ/EMAIL) ---
+# 🔐 ЗАЩИЩЕННЫЙ МЕТОД: Генерация сценариев
 @app.post("/generate-scenario")
-async def generate_scenario(request: ScenarioRequest):
-    logger.info(f"Запрос на сценарий: {request.scenario_type} | Тема: {request.topic}")
+async def generate_scenario(request: ScenarioRequest, user_data=Depends(verify_token)):
+    logger.info(f"User {user_data.get('user_id')} запросил сценарий: {request.topic}")
 
-    system_prompt = "Ты эксперт по кибербезопасности. Твоя задача — создать обучающую симуляцию атаки на сотрудника."
+    system_prompt = "Ты эксперт по кибербезопасности. Твоя задача — создать обучающую симуляцию атаки."
     user_prompt = ""
 
-    # 1. Сценарий ЧАТА
     if request.scenario_type == "chat":
         user_prompt = f"""
         Создай сценарий диалога (мошенник vs пользователь). Тема: "{request.topic}".
-        
-        Формат JSON СТРОГО такой:
-        {{
-          "contact_name": "Имя отправителя",
-          "steps": [
-            {{ "type": "message", "text": "..." }},
-            {{ 
-              "type": "choice", 
-              "options": [
-                {{ "text": "Правильный ответ", "is_correct": true, "feedback": "Похвала" }},
-                {{ "text": "Неправильный ответ", "is_correct": false, "feedback": "Объяснение ошибки" }}
-              ] 
-            }},
-            {{ "type": "message", "text": "Реакция бота..." }}
-          ]
-        }}
-        Сделай минимум 3 шага. Язык: Русский.
+        Формат JSON: {{ "contact_name": "...", "steps": [ ... ] }}
+        Язык: Русский.
         """
-
-    # 2. Сценарий EMAIL
     elif request.scenario_type == "email":
         user_prompt = f"""
         Создай фишинговое письмо. Тема: "{request.topic}".
-        Если нужна ссылка, используй: <a href='#' class='fake-link' data-url='http://fake.com'>Текст</a>
-        
-        Формат JSON СТРОГО такой:
-        {{
-          "subject": "Тема письма",
-          "sender_name": "Имя",
-          "sender_email": "fake@email.com",
-          "body_html": "HTML текст письма",
-          "is_phishing": true,
-          "explanation": "Почему это фишинг?"
-        }}
+        Формат JSON: {{ "subject": "...", "body_html": "...", "explanation": "..." }}
         Язык: Русский.
         """
     else:
@@ -129,7 +138,3 @@ async def generate_scenario(request: ScenarioRequest):
     except Exception as e:
         logger.error(f"Error Scenario: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}

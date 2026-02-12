@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import api from './api';
+import api from './api';      // 👈 Для работы с Django (курсы, сохранение)
+import aiApi from './aiApi';  // 👈 Для работы с AI (генерация)
 
 function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     const [courses, setCourses] = useState([]);
@@ -18,7 +19,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     const [previewQuestions, setPreviewQuestions] = useState(null);
     
     // Toast состояния
-    const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', message: string }
+    const [toast, setToast] = useState(null); 
 
     const stripHtml = (html) => {
         if (!html) return "";
@@ -26,7 +27,6 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
         return doc.body.textContent || "";
     };
 
-    // Функция показа тостера
     const showToast = (type, message) => {
         setToast({ type, message });
         setTimeout(() => setToast(null), 4000);
@@ -48,7 +48,6 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
         finally { setLoading(false); }
     };
 
-    // When lesson changes, fetch quizzes for that lesson
     useEffect(() => {
         if (selectedLessonId) fetchQuizzesForLesson(selectedLessonId);
         else { setQuizzesList([]); setSelectedQuizId(""); }
@@ -59,76 +58,66 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
             const res = await api.get(`quizzes/?lesson_id=${lessonId}`);
             setQuizzesList(Array.isArray(res.data) ? res.data : (res.data.results || []));
         } catch (err) {
-            console.error('Ошибка загрузки тестов для урока:', err.response?.data || err.message);
+            console.error('Ошибка загрузки тестов:', err);
             setQuizzesList([]);
         }
     };
 
+    // --- ГЛАВНОЕ ИЗМЕНЕНИЕ: ГЕНЕРАЦИЯ ЧЕРЕЗ AI СЕРВИС ---
     const handleStartGeneration = async () => {
-        if (!selectedLessonId && !customText) return showToast('error', "Выберите урок или введите текст");
+        const plainText = stripHtml(customText);
+
+        if (!plainText || plainText.length < 10) {
+            return showToast('error', "Введите текст лекции (минимум 10 символов) для генерации.");
+        }
+
         setIsGenerating(true);
         setPreviewQuestions(null); 
         
         try {
-            const plainText = stripHtml(customText);
-            const res = await api.post(`quizzes/generate-preview/`, {
-                lesson_id: selectedLessonId ? Number(selectedLessonId) : null,
-                custom_text: plainText || null,
+            // Используем aiApi для запроса к FastAPI
+            // Обрати внимание: endpoint 'generate-quiz' (без слэша в начале, т.к. baseURL уже имеет /ai/)
+            const res = await aiApi.post('generate-quiz', {
+                text: plainText,      // FastAPI ждет поле 'text'
                 count: Number(count),
                 difficulty: difficulty
             });
 
+            // FastAPI возвращает JSON, в котором вопросы лежат в generated_questions
             const questions = res.data.generated_questions || res.data;
-            // Нормализуем каждый вопрос с трекингом AI-предложенного индекса
+            
+            // --- ЛОГИКА НОРМАЛИЗАЦИИ (Твоя оригинальная, она отличная) ---
             const normalized = Array.isArray(questions) ? questions.map(q => {
                 const questionText = (q.question || q.text || q.prompt || q.title || '').trim();
                 
-                // Try multiple keys that AI might return
-                let rawOptions = q.options || q.choices || q.answers || q.variants || q.options_list || q.generated_options || [];
+                let rawOptions = q.options || q.choices || q.answers || q.variants || q.options_list || [];
 
-                // If options come as a single string, try splitting by common separators
                 if (typeof rawOptions === 'string') {
                     rawOptions = rawOptions.split(/\r?\n|\||;|,|•|\-|\u2022/).map(s => s.trim()).filter(Boolean);
                 }
 
-                // Normalize option items (objects or strings)
                 let options = Array.isArray(rawOptions) ? rawOptions.map(o => {
                     if (!o) return '';
                     if (typeof o === 'string') return o.trim();
-                    if (typeof o === 'number') return String(o);
                     if (o.text) return String(o.text).trim();
-                    if (o.value) return String(o.value).trim();
                     return String(o).trim();
                 }).filter(Boolean) : [];
 
-                // Determine correct answer from multiple possible keys
-                let correct = (q.correct_answer || q.correctAnswer || q.correct || q.answer || q.correct_option || '').toString().trim();
+                let correct = (q.correct_answer || q.correctAnswer || q.correct || '').toString().trim();
                 let aiIndex = -1;
 
-                // If correct is numeric index, convert to value and store index
                 if (correct && /^\d+$/.test(correct) && options.length > 0) {
                     const idx = parseInt(correct, 10);
-                    aiIndex = idx;
                     if (idx >= 0 && idx < options.length) correct = options[idx];
                 }
 
-                // If options are empty but AI returned an object 'answers' mapping or similar
-                if (options.length === 0 && (q.answers && typeof q.answers === 'object')) {
-                    // try to extract values
-                    options = Object.values(q.answers).map(v => (typeof v === 'string' ? v.trim() : (v && v.text ? v.text : ''))).filter(Boolean);
-                }
-
-                // If still no options, build placeholders: include correct (if exists) plus generated distractors
                 if (options.length < 2) {
                     const placeholders = [];
                     if (correct) placeholders.push(correct);
-                    // generate placeholder variants
                     while (placeholders.length < 4) placeholders.push(`Вариант ${placeholders.length + 1}`);
-                    // Merge unique
                     options = Array.from(new Set(placeholders));
                 }
 
-                // Ensure correct is one of options; compute AI index
                 let aiSuggestedIndex = -1;
                 if (correct) aiSuggestedIndex = options.indexOf(correct);
                 if (aiSuggestedIndex === -1) {
@@ -136,21 +125,27 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                     correct = options[0] || '';
                 }
 
-                const explanation = (q.explanation || q.explain || q.expl || q.hint || '').toString().trim();
-
                 return {
                     question: questionText,
                     options,
                     correct_answer: correct,
-                    explanation,
+                    explanation: q.explanation || '',
                     ai_suggested_index: aiSuggestedIndex,
                     user_selected_index: aiSuggestedIndex
                 };
             }) : [];
-             setPreviewQuestions(normalized);
+
+            setPreviewQuestions(normalized);
+            showToast('success', 'Тест успешно сгенерирован AI!');
+
         } catch (err) {
-            console.error("Ошибка генерации:", err.response?.data || err.message);
-            showToast('error', "Ошибка генерации. Проверьте консоль.");
+            console.error("Ошибка генерации AI:", err);
+            // Проверка на ошибку авторизации
+            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+                 showToast('error', "Ошибка доступа к AI. Попробуйте перезайти в систему.");
+            } else {
+                 showToast('error', "AI не смог сгенерировать тест. Попробуйте другой текст.");
+            }
         } finally {
             setIsGenerating(false);
         }
@@ -166,12 +161,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
     const handleOptionChange = (qIndex, oIndex, value) => {
         const updated = [...previewQuestions];
         updated[qIndex].options[oIndex] = value;
-        // Keep user selection pointing to same index
         if (updated[qIndex].user_selected_index === oIndex) {
-            updated[qIndex].correct_answer = value;
-        }
-        // If AI suggested this index, update its text too
-        if (updated[qIndex].ai_suggested_index === oIndex) {
             updated[qIndex].correct_answer = value;
         }
         setPreviewQuestions(updated);
@@ -201,50 +191,33 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
         setPreviewQuestions(updated);
     };
 
-    // --- СОХРАНЕНИЕ (ИСПРАВЛЕНО) ---
+    // --- СОХРАНЕНИЕ В DJANGO (Оставляем api) ---
     const handleSaveQuiz = async () => {
-        if (!selectedLessonId || selectedLessonId === "") {
-            return showToast("error", "Не выбран ID урока. Выберите урок в списке слева.");
+        if (!selectedLessonId) {
+            return showToast("error", "Не выбран урок для сохранения!");
         }
         
         if (!previewQuestions || previewQuestions.length === 0) {
             return showToast("error", "Нет вопросов для сохранения!");
         }
 
-        // ПРЕОБРАЗОВАНИЕ ДАННЫХ (Важно!)
-        // Отправляем correct_index как индекс выбранного пользователем варианта
         const payloadQuestions = previewQuestions.map(q => {
-            const optionsRaw = Array.isArray(q.options) ? q.options : [];
-            const options = optionsRaw
-                .map(o => (typeof o === 'string' ? o : (o && o.text ? o.text : '')))
-                .map(s => (s == null ? '' : String(s).trim()))
-                .filter(s => s.length > 0);
-
-            // Определяем индекс выбранного варианта
-            let userIndex = (typeof q.user_selected_index === 'number') ? q.user_selected_index : 0;
-            if (userIndex < 0 || userIndex >= options.length) userIndex = 0;
+            const options = q.options.map(s => String(s || '').trim()).filter(Boolean);
+            let userIndex = q.user_selected_index ?? 0;
+            if (userIndex >= options.length) userIndex = 0;
 
             return {
-                question: q.question ? String(q.question) : '',
+                question: String(q.question),
                 options,
-                correct_answer: String(userIndex), // индекс как строка для бэка
-                correct_index: userIndex, // числовой индекс
-                explanation: q.explanation ? String(q.explanation) : ''
+                correct_answer: String(userIndex), // Django ждет индекс строкой
+                correct_index: userIndex,
+                explanation: String(q.explanation || '')
             };
         });
 
-        // Валидация: убедимся что каждая запись имеет минимум 2 опции
-        for (const [i, pq] of payloadQuestions.entries()) {
-            if (!pq.options || pq.options.length < 2) {
-                return showToast("error", `В вопросе #${i+1} недостаточно вариантов (нужно минимум 2).`);
-            }
-            // Убедимся что correct_index в допустимых границах
-            let correctIndex = parseInt(pq.correct_answer, 10);
-            if (Number.isNaN(correctIndex) || correctIndex < 0 || correctIndex >= pq.options.length) {
-                correctIndex = 0;
-            }
-            pq.correct_answer = String(correctIndex);
-            pq.correct_index = correctIndex;
+        // Простая валидация
+        for (const pq of payloadQuestions) {
+            if (pq.options.length < 2) return showToast("error", "В вопросе слишком мало вариантов ответа.");
         }
 
         const payload = {
@@ -252,26 +225,18 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
             questions: payloadQuestions
         };
 
-        // Если выбран существующий тест - передаём его ID, иначе можно передать title для создания нового
         if (selectedQuizId) payload.quiz_id = Number(selectedQuizId);
-        else if (newQuizTitle && newQuizTitle.trim().length > 0) payload.quiz_title = newQuizTitle.trim();
-
-        console.log("📤 Отправка данных на сохранение:", payload);
+        else if (newQuizTitle) payload.quiz_title = newQuizTitle.trim();
 
         try {
-            const res = await api.post(`quizzes/save-generated/`, payload);
-            console.log("📥 Ответ сервера:", res.data);
-            showToast("success", "✅ Тест успешно сохранен в базу!");
+            // Сохраняем через Django API
+            await api.post(`quizzes/save-generated/`, payload);
+            showToast("success", "Тест сохранен в базу данных!");
             setPreviewQuestions(null); 
-            if (!preFilledText) setCustomText("");
-            
-            // После сохранения — обновим список тестов для урока
             if (selectedLessonId) fetchQuizzesForLesson(selectedLessonId);
         } catch (err) {
-            // ВЫВОДИМ ПОЛНУЮ ОШИБКУ В КОНСОЛЬ
-            console.error("❌ ОШИБКА СОХРАНЕНИЯ:", err.response?.data || err.message);
-            const errorMsg = err.response?.data?.error || err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message;
-            showToast("error", `Ошибка при сохранении: ${errorMsg}`);
+            console.error("Ошибка сохранения:", err);
+            showToast("error", "Не удалось сохранить тест в БД.");
         }
     };
 
@@ -279,13 +244,9 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
 
     return (
         <div className="max-w-7xl mx-auto py-10 px-4 animate-fade-in">
-            {/* TOAST УВЕДОМЛЕНИЕ */}
             {toast && (
                 <div className="fixed top-4 right-4 z-50 animate-slide-in">
-                    <div className={`alert alert-${toast.type === 'success' ? 'success' : toast.type === 'error' ? 'error' : 'info'} shadow-lg rounded-lg flex items-center gap-3`}>
-                        {toast.type === 'success' && <span className="text-2xl">✅</span>}
-                        {toast.type === 'error' && <span className="text-2xl">❌</span>}
-                        {toast.type === 'info' && <span className="text-2xl">ℹ️</span>}
+                    <div className={`alert alert-${toast.type} shadow-lg rounded-lg flex items-center gap-3`}>
                         <span className="font-semibold">{toast.message}</span>
                     </div>
                 </div>
@@ -295,25 +256,22 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
             </h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
-                {/* ЛЕВАЯ КОЛОНКА: НАСТРОЙКИ */}
+                {/* ЛЕВАЯ КОЛОНКА */}
                 <div className="lg:col-span-4">
                     <div className="card bg-base-100 shadow-xl border border-base-200 p-6 sticky top-24">
                         <h2 className="card-title mb-4">⚙️ Настройки</h2>
                         
                         <div className="form-control w-full">
                             <label className="label"><span className="label-text font-bold">Курс</span></label>
-                            <select className="select select-bordered" value={selectedCourseId} onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedLessonId(""); setQuizzesList([]); setSelectedQuizId(""); }}>
+                            <select className="select select-bordered" value={selectedCourseId} onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedLessonId(""); setQuizzesList([]); }}>
                                 <option value="">-- Выберите курс --</option>
-                                {courses?.map(c => (
-                                    <option key={c.id} value={c.id}>{c.title}</option>
-                                ))}
+                                {courses?.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                             </select>
                         </div>
 
                         <div className="form-control w-full mt-4">
                             <label className="label"><span className="label-text font-bold">Урок</span></label>
-                            <select className="select select-bordered" value={selectedLessonId} onChange={(e) => setSelectedLessonId(e.target.value)} disabled={!!preSelectedLessonId || !selectedCourseId}>
+                            <select className="select select-bordered" value={selectedLessonId} onChange={(e) => setSelectedLessonId(e.target.value)} disabled={!selectedCourseId}>
                                 <option value="">-- Выберите урок --</option>
                                 {selectedCourseId && courses?.find(c => String(c.id) === String(selectedCourseId))?.lessons?.map(l => (
                                     <option key={l.id} value={l.id}>{l.title}</option>
@@ -322,25 +280,23 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                         </div>
 
                         <div className="form-control w-full mt-4">
-                            <label className="label"><span className="label-text font-bold">Тест (существующий или новый)</span></label>
+                            <label className="label"><span className="label-text font-bold">Тест</span></label>
                             <select className="select select-bordered" value={selectedQuizId} onChange={(e) => setSelectedQuizId(e.target.value)} disabled={!selectedLessonId}>
                                 <option value="">-- Создать новый тест --</option>
-                                {quizzesList?.map(q => (
-                                    <option key={q.id} value={q.id}>{q.title || `Тест #${q.id}`}</option>
-                                ))}
+                                {quizzesList?.map(q => <option key={q.id} value={q.id}>{q.title}</option>)}
                             </select>
                             {!selectedQuizId && (
-                                <input type="text" placeholder="Название нового теста (необязательно)" className="input input-bordered mt-2" value={newQuizTitle} onChange={(e) => setNewQuizTitle(e.target.value)} />
+                                <input type="text" placeholder="Название (опционально)" className="input input-bordered mt-2" value={newQuizTitle} onChange={(e) => setNewQuizTitle(e.target.value)} />
                             )}
                         </div>
                         
                         <div className="divider text-[10px] uppercase font-bold opacity-50">Контекст</div>
 
                         <div className="form-control w-full">
-                            <label className="label"><span className="label-text font-bold">Текст лекции</span></label>
+                            <label className="label"><span className="label-text font-bold">Текст для анализа</span></label>
                             <textarea 
                                 className="textarea textarea-bordered h-48 text-sm" 
-                                placeholder="Текст для анализа..."
+                                placeholder="Вставьте текст лекции сюда..."
                                 value={customText}
                                 onChange={(e) => setCustomText(e.target.value)}
                             ></textarea>
@@ -349,7 +305,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                         <div className="grid grid-cols-2 gap-4 mt-4">
                             <div className="form-control">
                                 <label className="label"><span className="label-text text-xs">Вопросов</span></label>
-                                <input type="number" min="1" max="15" value={count} onChange={(e) => setCount(e.target.value)} className="input input-bordered" />
+                                <input type="number" min="1" max="10" value={count} onChange={(e) => setCount(e.target.value)} className="input input-bordered" />
                             </div>
                             <div className="form-control">
                                 <label className="label"><span className="label-text text-xs">Сложность</span></label>
@@ -366,17 +322,17 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                             onClick={handleStartGeneration}
                             disabled={isGenerating}
                         >
-                            {isGenerating ? 'Анализирую...' : '🪄 Сгенерировать'}
+                            {isGenerating ? 'AI Думает...' : '🪄 Сгенерировать'}
                         </button>
                     </div>
                 </div>
 
-                {/* ПРАВАЯ КОЛОНКА: РЕДАКТОР */}
+                {/* ПРАВАЯ КОЛОНКА */}
                 <div className="lg:col-span-8">
                     {previewQuestions ? (
                         <div className="space-y-6 pb-24">
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-2xl font-bold">📝 Проверка черновика</h2>
+                                <h2 className="text-2xl font-bold">📝 Результат генерации</h2>
                                 <div className="flex gap-2">
                                     <button className="btn btn-sm btn-outline" onClick={handleAddManualQuestion}>➕</button>
                                     <button className="btn btn-sm btn-success text-white" onClick={handleSaveQuiz}>💾 Сохранить</button>
@@ -385,10 +341,7 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
 
                             {previewQuestions.map((q, qIndex) => (
                                 <div key={qIndex} className="card bg-base-100 shadow-md border border-base-200 p-6 relative group">
-                                    <button 
-                                        className="btn btn-circle btn-xs btn-error absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleDeleteQuestion(qIndex)}
-                                    >✕</button>
+                                    <button className="btn btn-circle btn-xs btn-error absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteQuestion(qIndex)}>✕</button>
 
                                     <div className="form-control mb-4">
                                         <label className="label text-[10px] font-bold uppercase text-gray-400">Вопрос #{qIndex + 1}</label>
@@ -419,22 +372,18 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                                                         value={opt}
                                                         onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
                                                     />
-                                                    {isAiSuggested && (
-                                                        <span className="badge badge-sm badge-outline ml-2">AI</span>
-                                                    )}
+                                                    {isAiSuggested && <span className="badge badge-sm badge-outline ml-2">AI</span>}
                                                 </div>
                                             );
                                         })}
                                     </div>
-
-                                    <div className="collapse collapse-arrow bg-primary/5 rounded-xl border border-primary/10">
+                                    
+                                    <div className="collapse collapse-arrow bg-base-200/30 rounded-xl">
                                         <input type="checkbox" /> 
-                                        <div className="collapse-title text-xs font-bold text-primary flex items-center gap-2">
-                                            💡 Объяснение
-                                        </div>
+                                        <div className="collapse-title text-xs font-bold opacity-70">💡 Объяснение (опционально)</div>
                                         <div className="collapse-content"> 
                                             <textarea 
-                                                className="textarea textarea-bordered w-full h-20 text-sm"
+                                                className="textarea textarea-bordered w-full h-16 text-sm"
                                                 value={q.explanation || ""}
                                                 onChange={(e) => handleQuestionChange(qIndex, 'explanation', e.target.value)}
                                             ></textarea>
@@ -442,18 +391,17 @@ function TeacherPanel({ preSelectedLessonId, preFilledText }) {
                                     </div>
                                 </div>
                             ))}
-
                             <div className="flex justify-center mt-12">
-                                <button className="btn btn-wide btn-success btn-lg text-white" onClick={handleSaveQuiz}>
+                                <button className="btn btn-wide btn-success btn-lg text-white shadow-xl" onClick={handleSaveQuiz}>
                                     Утвердить и опубликовать
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="h-[600px] border-2 border-dashed border-base-300 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-10 bg-base-100">
-                             <div className="text-7xl opacity-20 mb-4">✨</div>
-                             <h3 className="text-xl font-bold opacity-60">Жду ваших настроек</h3>
-                             <p className="text-sm opacity-40">Выберите урок и нажмите кнопку генерации.</p>
+                        <div className="h-[500px] border-2 border-dashed border-base-300 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-10 opacity-60">
+                             <div className="text-6xl mb-4">🤖</div>
+                             <h3 className="text-xl font-bold">AI Помощник готов</h3>
+                             <p>Выберите урок, вставьте текст и нажмите "Сгенерировать".</p>
                         </div>
                     )}
                 </div>

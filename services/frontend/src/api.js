@@ -1,14 +1,16 @@
 import axios from 'axios';
 
+// Мы используем относительный путь. 
+// Браузер сам подставит домен, на котором открыт сайт (localhost:80).
+// Nginx перехватит запрос на /api/ и отправит его в Django.
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api/', // Убедись, что тут 8000
+    baseURL: '/api/', 
 });
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('access');
-    console.log("Интерцептор видит токен:", token);
+    // console.log("Интерцептор видит токен:", token); // Можно раскомментировать для отладки
     if (token) {
-        
         config.headers.Authorization = `Bearer ${token}`; 
     }
     return config;
