@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.SecurityAuditMiddleware'
 ]
 
 
@@ -196,3 +197,44 @@ if os.environ.get('CORS_ALLOW_ALL_IN_DEV', 'False') == 'True':
 FORCE_SCRIPT_NAME = '/api'
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+# =========================
+# LOGGING (Аудит безопасности)
+# =========================
+# Папка для логов внутри контейнера
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} | {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        # Записываем в файл
+        'security_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGS_DIR, 'security.log'),
+            'formatter': 'verbose',
+        },
+        # Выводим в консоль Docker (чтобы видеть через docker logs)
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

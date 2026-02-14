@@ -32,8 +32,27 @@ class QuizResultSerializer(serializers.ModelSerializer):
         fields = ['id', 'quiz_title', 'score', 'completed_at']
 
 class MyResultSerializer(serializers.ModelSerializer):
-    lesson_title = serializers.CharField(source='quiz.lesson.title', read_only=True)
-    course_title = serializers.CharField(source='quiz.lesson.course.title', read_only=True)
+    # Безопасное получение полей. Если тест удален, вернем null или заглушку.
+    quiz_id = serializers.IntegerField(source='quiz.id', read_only=True)
+    quiz_title = serializers.SerializerMethodField()
+    lesson_title = serializers.SerializerMethodField()
+    course_title = serializers.SerializerMethodField()
+
     class Meta:
         model = Result
-        fields = ['id', 'score', 'completed_at', 'lesson_title', 'course_title']
+        fields = ['id', 'score', 'completed_at', 'quiz_id', 'quiz_title', 'lesson_title', 'course_title']
+
+    def get_quiz_title(self, obj):
+        return obj.quiz.title if obj.quiz else "Тест удален"
+
+    def get_lesson_title(self, obj):
+        # Цепочка проверок: Result -> Quiz -> Lesson
+        if obj.quiz and obj.quiz.lesson:
+            return obj.quiz.lesson.title
+        return None
+
+    def get_course_title(self, obj):
+        # Цепочка: Result -> Quiz -> Lesson -> Course
+        if obj.quiz and obj.quiz.lesson and obj.quiz.lesson.course:
+            return obj.quiz.lesson.course.title
+        return None

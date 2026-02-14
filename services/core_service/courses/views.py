@@ -200,3 +200,54 @@ class MarkLessonCompleteView(APIView):
         )
 
         return Response({"message": "Урок пройден!", "score_earned": score}, status=status.HTTP_200_OK)
+
+
+class BulkCreateCourseView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        title = data.get('course_title')
+        description = data.get('course_description', '')
+        lessons_data = data.get('lessons', [])
+
+        if not title:
+            return Response({'error': 'Название курса обязательно'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 1. Защита от обязательных полей:
+            # Ищем первую попавшуюся категорию в базе. Если её нет - создаем временную.
+            category = Category.objects.first()
+            if not category:
+                category = Category.objects.create(title="Сгенерированные AI")
+
+            # 2. Создаем курс (теперь с категорией!)
+            course = Course.objects.create(
+                title=title, 
+                description=description,
+                teacher=request.user,
+                category=category  # 👈 Добавили обязательное поле
+            )
+
+            # 3. Создаем уроки
+            lessons_to_create = []
+            for i, lesson_data in enumerate(lessons_data):
+                lessons_to_create.append(Lesson(
+                    course=course,
+                    title=lesson_data.get('title', 'Без названия'),
+                    content=lesson_data.get('content', ''),
+                    order=i + 1,
+                    lesson_type='text'  # 👈 Добавили обязательное поле типа урока
+                ))
+            
+            Lesson.objects.bulk_create(lessons_to_create)
+
+            return Response({
+                'message': 'Курс успешно создан!', 
+                'course_id': course.id
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            # Если база данных все равно ругается, мы распечатаем точную причину в терминал
+            print(f"🔥 ОШИБКА СОХРАНЕНИЯ В БД: {str(e)}") 
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,0 +1,30 @@
+WARNING 2026-02-12 14:16:52,721 | ACCESS DENIED: [401] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.097s
+INFO 2026-02-12 14:17:07,908 | ACTION: [200] GET /api/admin/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.043s
+INFO 2026-02-12 14:17:10,836 | ACTION: [200] GET /api/admin/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.018s
+WARNING 2026-02-12 14:21:12,315 | ACCESS DENIED: [401] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.092s
+INFO 2026-02-12 14:21:14,661 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.117s
+INFO 2026-02-12 14:25:12,931 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.019s
+INFO 2026-02-12 14:34:17,658 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.018s
+INFO 2026-02-12 14:35:07,715 | ACTION: [200] POST /api/quizzes/67/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+ERROR 2026-02-12 14:43:56,262 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.065s
+ERROR 2026-02-12 14:43:56,293 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.028s
+ERROR 2026-02-12 14:44:01,183 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.042s
+ERROR 2026-02-12 14:44:01,226 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.038s
+ERROR 2026-02-12 14:44:07,065 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.040s
+ERROR 2026-02-12 14:44:07,108 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.039s
+ERROR 2026-02-12 14:44:30,534 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.041s
+ERROR 2026-02-12 14:44:30,577 | SERVER ERROR: [500] GET /api/quizzes/my-results/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.038s
+WARNING 2026-02-14 17:33:55,733 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-02-14 17:33:55,734 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.005s
+WARNING 2026-02-14 17:33:55,734 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.004s
+WARNING 2026-02-14 17:33:55,739 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-14 17:33:55,740 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-02-14 17:33:55,741 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+INFO 2026-02-14 17:34:01,348 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.098s
+WARNING 2026-02-14 18:04:24,102 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-14 18:04:24,105 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+INFO 2026-02-14 18:11:11,033 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.101s
+INFO 2026-02-14 18:11:18,639 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.096s
+WARNING 2026-02-14 18:14:18,808 | CLIENT ERROR: [404] POST /api/bulk-create/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-14 18:14:49,306 | CLIENT ERROR: [404] POST /api/bulk-create/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.000s
+ERROR 2026-02-14 18:18:23,707 | SERVER ERROR: [500] POST /api/courses/bulk-create/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s

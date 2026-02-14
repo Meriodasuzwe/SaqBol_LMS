@@ -1,0 +1,14 @@
+INFO 2026-02-12 14:23:32,870 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-12 14:24:54,487 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-12 14:24:57,592 | User 1 запросил квиз.
+INFO 2026-02-12 14:24:58,442 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-12 14:24:58,456 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.6) - 0.878s
+INFO 2026-02-12 14:30:30,091 | User 1 запросил квиз.
+INFO 2026-02-12 14:30:31,512 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-12 14:30:31,515 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.6) - 1.426s
+INFO 2026-02-14 17:33:26,132 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-14 17:40:05,572 | ✅ AI Service запущен. Ключ: ...fI6F
+WARNING 2026-02-14 17:42:53,931 | CLIENT ERROR: [404] POST /generate-course-from-file (IP: 172.18.0.6) - 0.001s
+WARNING 2026-02-14 17:43:52,038 | CLIENT ERROR: [404] POST /generate-course-from-file (IP: 172.18.0.6) - 0.000s
+WARNING 2026-02-14 17:45:33,382 | CLIENT ERROR: [404] POST /generate-course-from-file (IP: 172.18.0.6) - 0.000s
+INFO 2026-02-14 17:45:59,560 | ✅ AI Service запущен. Ключ: ...fI6F

@@ -50,6 +50,7 @@ services:
       - .env
     volumes:
       - ./services/ai_service:/app
+      - ./services/ai_service/logs:/app/logs
     expose:
       - "8000"
     networks:
