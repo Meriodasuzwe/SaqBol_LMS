@@ -4,14 +4,10 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MEDIA_URL = '/media/'
-# Физическая папка внутри контейнера, где лежат файлы
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # =========================
 # SECURITY
 # =========================
 
-# Берём SECRET_KEY из окружения, если нет — используем dev-ключ
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'unsafe-dev-secret-key'
@@ -19,7 +15,7 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ["*"]  # Временное решение для разработки. В проде нужно указать конкретные домены.
 
 
 # =========================
@@ -35,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'drf_spectacular',
+    'django_prometheus', # ✅ Мониторинг
     'courses',
     'quizzes',
     'rest_framework',
@@ -47,6 +44,7 @@ INSTALLED_APPS = [
 # =========================
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware', # ✅ В САМОМ ВЕРХУ
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,7 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.SecurityAuditMiddleware'
+    'core.middleware.SecurityAuditMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware', # ✅ В САМОМ НИЗУ
 ]
 
 
@@ -64,7 +63,6 @@ MIDDLEWARE = [
 # =========================
 
 ROOT_URLCONF = 'core.urls'
-
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
@@ -106,16 +104,32 @@ DATABASES = {
 
 
 # =========================
-# AUTH
+# AUTH & PASSWORDS (ИБ)
 # =========================
 
 AUTH_USER_MODEL = 'users.User'
 
+# ✅ Оставляем только одну, строгую версию настроек
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        # Проверка, что пароль не похож на имя пользователя или email
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        # Минимальная длина (9 символов)
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 9,
+        }
+    },
+    {
+        # Проверка на распространенные пароли
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        # Проверка, что пароль не состоит только из цифр
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 
@@ -130,17 +144,14 @@ USE_TZ = True
 
 
 # =========================
-# STATIC
+# STATIC & MEDIA
 # =========================
 
-# URL, по которому Nginx будет запрашивать файлы
+# Nginx раздает статику по этому пути
 STATIC_URL = '/api/static/' 
-
-# Папка внутри контейнера core_service, куда соберутся все файлы
-# Она должна совпадать с путем в docker-compose volumes
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Для загрузки файлов (аватарки)
+# Nginx раздает медиа по этому пути
 MEDIA_URL = '/api/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -157,6 +168,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '10/minute',  # Анонимы - 10 запросов в минуту
+        'user': '100/minute'  # Юзеры - 100
+    }
 }
 
 SIMPLE_JWT = {
@@ -165,8 +184,9 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+
 # =========================
-# DEFAULT PK
+# DEFAULT PK & SCHEMA
 # =========================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -176,33 +196,35 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Система управления обучением с упором на безопасность',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # Настройка для работы с JWT в интерфейсе
     'COMPONENT_SPLIT_PATCH': True,
     'COMPONENT_NO_READ_ONLY_FIELDS': True,
 }
 
-# Безопасная конфигурация CORS
+
+# =========================
+# CORS & PROXY
+# =========================
+
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
 ]
 
-# Для разработки можно разрешить все origins через переменную окружения
 if os.environ.get('CORS_ALLOW_ALL_IN_DEV', 'False') == 'True':
     CORS_ALLOW_ALL_ORIGINS = True
-    
 
-# Добавь это в конец файла
+# Важно для работы за Nginx
 FORCE_SCRIPT_NAME = '/api'
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+#USE_X_FORWARDED_HOST = True
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # =========================
-# LOGGING (Аудит безопасности)
+# LOGGING (Аудит)
 # =========================
-# Папка для логов внутри контейнера
+
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR)
@@ -217,14 +239,12 @@ LOGGING = {
         },
     },
     'handlers': {
-        # Записываем в файл
         'security_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOGS_DIR, 'security.log'),
             'formatter': 'verbose',
         },
-        # Выводим в консоль Docker (чтобы видеть через docker logs)
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
@@ -238,3 +258,10 @@ LOGGING = {
         },
     },
 }
+
+# =========================
+# EMERGENCY ALLOWED HOSTS
+# =========================
+# Разрешаем вообще всё, чтобы Docker-контейнеры могли общаться
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = True

@@ -54,8 +54,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
         
-        {/* 🔥 ЗАМЕНИЛИ СТАРЫЙ HEADER НА НОВЫЙ NAVBAR */}
-        {/* Передаем туда состояние и функцию выхода, чтобы Navbar знал, что показывать */}
+        {/* Navbar всегда виден и сам решает, что показывать (Вход или Профиль) */}
         <Navbar 
             isLoggedIn={isLoggedIn} 
             userRole={userRole} 
@@ -74,15 +73,11 @@ function App() {
               !isLoggedIn ? <Register /> : <Navigate to="/courses" />
             } />
 
-            {/* 2. СТУДЕНЧЕСКИЙ ИНТЕРФЕЙС */}
-            <Route path="/courses" element={
-              isLoggedIn ? <CourseList /> : <Navigate to="/login" />
-            } />
+            {/* 2. ПУБЛИЧНЫЕ СТРАНИЦЫ (Витрина) - Доступны ВСЕМ */}
+            <Route path="/courses" element={<CourseList />} />
+            <Route path="/courses/:id" element={<CourseDetail isLoggedIn={isLoggedIn} />} /> {/* Передаем проп isLoggedIn */}
             
-            <Route path="/courses/:id" element={
-              isLoggedIn ? <CourseDetail /> : <Navigate to="/login" />
-            } />
-            
+            {/* 3. ЗАЩИЩЕННЫЕ СТРАНИЦЫ (Только для студентов) */}
             <Route path="/lesson/:lessonId" element={
               isLoggedIn ? <LessonPage /> : <Navigate to="/login" />
             } />
@@ -95,27 +90,27 @@ function App() {
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
             } />
 
-            {/* 3. ИНТЕРФЕЙС УЧИТЕЛЯ */}
+            {/* 4. ИНТЕРФЕЙС УЧИТЕЛЯ */}
             <Route path="/teacher/course/:courseId/builder" element={
               isLoggedIn ? (
-                 isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
+                  isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
               ) : <Navigate to="/login" />
             } />
 
             <Route path="/teacher" element={
               isLoggedIn ? (
-                 isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
+                  isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
               ) : <Navigate to="/login" />
             } />
 
             {/* --- РЕДИРЕКТЫ --- */}
-            <Route path="/" element={<Navigate to={isLoggedIn ? "/courses" : "/login"} />} />
-            <Route path="*" element={<Navigate to="/" />} />
+            {/* Если зашел на корень, кидаем на витрину курсов, а не на логин */}
+            <Route path="/" element={<Navigate to="/courses" />} />
+            <Route path="*" element={<Navigate to="/courses" />} />
 
           </Routes>
         </main>
 
-        {/* --- ПОДВАЛ --- */}
         <footer className="footer footer-center p-4 bg-base-200 text-base-content mt-auto">
           <div>
             <p>© 2026 SaqBol LMS - AI Education Platform</p>

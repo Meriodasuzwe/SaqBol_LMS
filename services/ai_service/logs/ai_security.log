@@ -12,3 +12,65 @@ WARNING 2026-02-14 17:42:53,931 | CLIENT ERROR: [404] POST /generate-course-from
 WARNING 2026-02-14 17:43:52,038 | CLIENT ERROR: [404] POST /generate-course-from-file (IP: 172.18.0.6) - 0.000s
 WARNING 2026-02-14 17:45:33,382 | CLIENT ERROR: [404] POST /generate-course-from-file (IP: 172.18.0.6) - 0.000s
 INFO 2026-02-14 17:45:59,560 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-14 17:46:07,251 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-14 17:46:20,697 | FILE UPLOAD: User ID 1 uploaded 1 лабб Алиев Рахат.docx
+INFO 2026-02-14 17:46:20,716 | AI PARSING: Sending 8123 chars to Groq...
+INFO 2026-02-14 17:46:23,471 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-14 17:46:23,486 | AI PARSING SUCCESS: Course 'Тестирование программного обеспечения' generated.
+INFO 2026-02-14 17:46:23,486 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 2.802s
+INFO 2026-02-14 18:00:05,221 | FILE UPLOAD: User ID 1 uploaded Audio_Cataloger_Requirements.pdf
+INFO 2026-02-14 18:00:05,254 | AI PARSING: Sending 8471 chars to Groq...
+INFO 2026-02-14 18:00:07,863 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-14 18:00:07,865 | AI PARSING SUCCESS: Course 'Введение в тестирование программного обеспечения' generated.
+INFO 2026-02-14 18:00:07,866 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 2.648s
+INFO 2026-02-14 18:11:48,730 | FILE UPLOAD: User ID 1 uploaded Зертханалық жұмыстар МОБИЛЬДИ.docx
+INFO 2026-02-14 18:11:48,865 | AI PARSING: Sending 30000 chars to Groq...
+INFO 2026-02-14 18:11:49,076 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 413 Payload Too Large"
+ERROR 2026-02-14 18:11:49,077 | AI PARSING ERROR: Error code: 413 - {'error': {'message': 'Request too large for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Requested 13385, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-02-14 18:11:49,077 | SERVER ERROR: [500] POST /generate-course-from-file (IP: 172.18.0.6) - 0.351s
+INFO 2026-02-14 18:11:53,945 | FILE UPLOAD: User ID 1 uploaded Зертханалық жұмыстар МОБИЛЬДИ.docx
+INFO 2026-02-14 18:11:54,091 | AI PARSING: Sending 30000 chars to Groq...
+INFO 2026-02-14 18:11:54,293 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 413 Payload Too Large"
+ERROR 2026-02-14 18:11:54,294 | AI PARSING ERROR: Error code: 413 - {'error': {'message': 'Request too large for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Requested 13385, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-02-14 18:11:54,294 | SERVER ERROR: [500] POST /generate-course-from-file (IP: 172.18.0.6) - 0.352s
+INFO 2026-02-14 18:13:58,764 | FILE UPLOAD: User ID 1 uploaded Алиев Рахат заявление.docx
+INFO 2026-02-14 18:13:58,770 | AI PARSING: Sending 850 chars to Groq...
+INFO 2026-02-14 18:14:01,392 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-14 18:14:01,396 | AI PARSING SUCCESS: Course 'Интеллектуальные системы для защищенного обучения и тестирования' generated.
+INFO 2026-02-14 18:14:01,397 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 2.636s
+INFO 2026-02-14 18:14:42,807 | FILE UPLOAD: User ID 1 uploaded Лабораторная работа 1.docx
+INFO 2026-02-14 18:14:42,813 | AI PARSING: Sending 5957 chars to Groq...
+INFO 2026-02-14 18:14:45,841 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-14 18:14:45,844 | AI PARSING SUCCESS: Course 'Разработка приложений для Android' generated.
+INFO 2026-02-14 18:14:45,846 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 3.042s
+INFO 2026-02-14 18:18:19,333 | FILE UPLOAD: User ID 1 uploaded Лабораторная работа 1.docx
+INFO 2026-02-14 18:18:19,339 | AI PARSING: Sending 5957 chars to Groq...
+INFO 2026-02-14 18:18:21,418 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-14 18:18:21,421 | AI PARSING SUCCESS: Course 'Разработка приложений для Android' generated.
+INFO 2026-02-14 18:18:21,422 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 2.093s
+INFO 2026-02-14 18:35:12,914 | User 1 запросил квиз.
+INFO 2026-02-14 18:35:13,821 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-14 18:35:13,825 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.6) - 0.916s
+INFO 2026-02-15 10:20:26,263 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-15 12:03:47,002 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-15 12:04:16,424 | FILE UPLOAD: User ID 1 uploaded Лабораторная работа 1.docx
+INFO 2026-02-15 12:04:16,432 | AI PARSING: Sending 5957 chars to Groq...
+INFO 2026-02-15 12:04:19,087 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+ERROR 2026-02-15 12:04:19,089 | AI PARSING ERROR: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n  "course_title": "Разработка приложений для Android",\n   "course_description": "Курс посвящен разработке приложений для операционной системы Android. Студенты научатся использовать среду разработки Android Studio, создавать новые проекты, работать с эмулятором и разрабатывать простые приложения. Курс охватывает основы разработки Android-приложений, включая создание проектов, работу с кодом и ресурсами, а также запуск приложений в эмуляторе.",\n   "lessons": [\n       {\n           "title": "Введение в Android и среду разработки Android Studio",\n           "content": "Android - операционная система, которая широко используется в мобильных устройствах: смартфонах и планшетных компьютерах. Это бесплатная операционная система, основанная на Linux с интерфейсом программирования Java. Приложение для Android пишется на языке Java или Kotlin. Наиболее популярной средой разработки в настоящее время является Android Studio. Android Studio - среда разработки под Android, основанная на IntelliJ IDEA. Она предоставляет интегрированные инструменты для разработки и отладки. Для отладки приложений используется эмулятор телефона - виртуальная машина, на которой будет запускаться созданное приложение."\n       },\n       {\n           "title": "Установка и настройка Android Studio",\n           "content": "Для того, чтобы установить Android Studio на Windows, следует выполнить следующие действия. Загрузите актуальную версию Android Studio с официального сайта https://android-studio.com/ и затем запустите сохраненный файл. Установите Android Studio и все необходимые инструменты SDK по инструкциям мастера установки. Отдельные инструменты и другие пакеты SDK сохраняются вне каталога приложений в Android Studio. Например: Users\\usersdk. При настройке Android SDK следует установить пакеты соответствующего уровня, который зависит от версии OS Android, для которой предполагается разрабатывать приложения."\n       },\n       {\n           "title": "Создание нового проекта в Android Studio",\n           "content": "При создании проекта в нем создается по меньшей мере один модуль. В модуле содержится описание на языке xml изображения на экране приложения и код на языке Java. Каждый модуль по сути является приложением, а проект - контейнер для модуля. Если в проекте содержится несколько модулей, то следует указать, какой из них надо запустить. Рассмотрим этапы создания нового проекта. После запуска Android Studio выбираем Start a New Android Studio Project, появится диалоговое окно мастера. Предлагается несколько шаблонов проекта, где выбираем Empty Activity."\n       },\n       {\n           "title": "Структура проекта и работа с эмулятором",\n           "content": "В левой части среды разработки на вкладке Android появится иерархический список из папок, которые относятся к проекту. Вкладка Android содержит две основные папки: арр и Gradle Scripts. Первая папка арр является отдельным модулем для приложения и содержит все необходимые файлы приложения - код, ресурсы картинок и т.п. Вторая папка служит для различных настроек для управления проектом. Раскрываем папку арр. В ней находятся три папки: manifest, java, res. Папка manifest содержит единственный файл манифеста AndroidManifest.xml. В этом файле должны быть объявлены все активности, службы, приёмники и контент-провайдеры приложения."\n       },\n       {\n           "title": "Запуск приложения в эмуляторе",\n           "content": "Чтобы запустить приложение, нужно реальное Android устройство или эмулятор. Если через шнур подключен смартфон или планшет, то приложение будет запущено на нем. Для выбора эмулятора следует нажать кнопку Create New Virual Device. Затем следует указать название эмулятора и поменять его настройки. В итоге в списке устройств появляется только что созданный эмулятор. Теперь его можно использовать для запуска приложения. В результате на экране появится эмулятор выбранного мобильного устройства, в котором будет запущено приложение."\n       },\n       {\n           "title": "Создание отчета и контрольные вопросы",\n           "content": "Содержание отчета: 1. Название и цель работы. 2. Состав проекта, экранные копии (скриншоты) для созданного приложения в Android Studio. 3. Результаты работы приложения в эмуляторе телефона в виде скриншотов. Контрольные вопросы: 1. Какие возможности имеет среда разработки приложений Android Studio? 2. Этапы создания нового проекта? 3. В каких папках хранятся файлы проекта? 4. Что содержится в манифесте проекта? 5. Что нужно сделать для создания модуля?"\n       }\n   ]\n}'}}
+ERROR 2026-02-15 12:04:19,090 | SERVER ERROR: [500] POST /generate-course-from-file (IP: 172.18.0.6) - 2.704s
+INFO 2026-02-15 12:04:27,970 | FILE UPLOAD: User ID 1 uploaded 1 лабб Алиев Рахат.docx
+INFO 2026-02-15 12:04:27,987 | AI PARSING: Sending 8123 chars to Groq...
+INFO 2026-02-15 12:04:30,867 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-15 12:04:30,881 | AI PARSING SUCCESS: Course 'Тестирование программного обеспечения' generated.
+INFO 2026-02-15 12:04:30,882 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 2.914s
+INFO 2026-02-15 12:05:16,697 | FILE UPLOAD: User ID 1 uploaded 1 лабб Алиев Рахат.docx
+INFO 2026-02-15 12:05:16,717 | AI PARSING: Sending 8123 chars to Groq...
+INFO 2026-02-15 12:05:18,930 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-15 12:05:18,932 | AI PARSING SUCCESS: Course 'Тестирование программного обеспечения' generated.
+INFO 2026-02-15 12:05:18,933 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.6) - 2.239s
+INFO 2026-02-16 13:49:36,663 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 12:50:28,742 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 13:06:35,923 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 13:08:49,381 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 13:17:21,545 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 13:41:23,380 | ✅ AI Service запущен. Ключ: ...fI6F

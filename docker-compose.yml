@@ -69,6 +69,33 @@ services:
     networks:
       - lms_network
 
+  # ---  МОНИТОРИНГ: PROMETHEUS ---
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: saqbol_prometheus
+    volumes:
+      # Убедись, что создал этот файл на прошлом шаге!
+      - ./services/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - lms_network
+    ports:
+      - "9090:9090"
+
+  # ---  МОНИТОРИНГ: GRAFANA ---
+  grafana:
+    image: grafana/grafana:latest
+    container_name: saqbol_grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - lms_network
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Пароль для входа
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana # Чтобы дашборды сохранялись
+
   nginx:
     image: nginx:alpine
     container_name: saqbol_gateway
@@ -89,6 +116,7 @@ volumes:
   postgres_data_core:
   static_volume:
   media_volume:
+  grafana_data: # 👈 Не забудь добавить этот том
 
 networks:
   lms_network:
