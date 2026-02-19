@@ -1,49 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from './api';
+import { toast } from 'react-toastify';
 
 function QuizPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
 
-    // Состояния данных
-    const [quizzes, setQuizzes] = useState([]); // Список всех тестов урока
-    const [userResults, setUserResults] = useState([]); // Результаты пользователя
-    
-    // Состояния UI
-    const [activeQuizIndex, setActiveQuizIndex] = useState(0); // Какой тест сейчас открыт (индекс)
+    // Данные
+    const [quiz, setQuiz] = useState(null); 
     const [loading, setLoading] = useState(true);
 
-    // Состояния прохождения теста
-    const [currentIndex, setCurrentIndex] = useState(0); // Номер вопроса внутри теста
+    // Состояния прохождения
+    const [currentIndex, setCurrentIndex] = useState(0); // Текущий ВОПРОС
     const [selectedAnswers, setSelectedAnswers] = useState({});
-    const [currentResult, setCurrentResult] = useState(null); // Результат ТОЛЬКО ЧТО сданного теста
+    const [currentResult, setCurrentResult] = useState(null); 
 
-    // 1. Загружаем тесты и результаты при открытии страницы
+    // Анти-чит
+    const [cheatWarnings, setCheatWarnings] = useState(0);
+    const cheatWarningsRef = useRef(cheatWarnings);
+    const selectedAnswersRef = useRef(selectedAnswers);
+    
+    useEffect(() => { cheatWarningsRef.current = cheatWarnings; }, [cheatWarnings]);
+    useEffect(() => { selectedAnswersRef.current = selectedAnswers; }, [selectedAnswers]);
+
+    // 1. Загрузка данных
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Параллельно грузим тесты урока и историю прохождений пользователя
-                const [quizzesRes, resultsRes] = await Promise.all([
-                    api.get(`quizzes/lesson/${lessonId}/`),
-                    api.get(`quizzes/my-results/`)
-                ]);
-
-                // Обработка списка тестов
-                // Бэкенд возвращает список тестов (ListAPIView)
+                const quizzesRes = await api.get(`quizzes/lesson/${lessonId}/`);
                 const quizList = Array.isArray(quizzesRes.data) ? quizzesRes.data : [quizzesRes.data];
-                // Фильтруем пустые элементы и сортируем по ID (чтобы старые были слева)
-                const sortedQuizzes = quizList
-                    .filter(q => q && q.id)
-                    .sort((a, b) => a.id - b.id);
                 
-                setQuizzes(sortedQuizzes);
-
-                // Обработка результатов
-                setUserResults(resultsRes.data || []);
+                // Берем ПОСЛЕДНИЙ созданный тест для этого урока (чтобы избежать каши из "вариантов")
+                const validQuizzes = quizList.filter(q => q && q.id).sort((a, b) => b.id - a.id);
+                
+                if (validQuizzes.length > 0) {
+                    setQuiz(validQuizzes[0]);
+                }
             } catch (err) {
                 console.error("Ошибка загрузки данных:", err);
+                toast.error("Не удалось загрузить тест.");
             } finally {
                 setLoading(false);
             }
@@ -51,33 +48,44 @@ function QuizPage() {
         fetchData();
     }, [lessonId]);
 
-    // Сброс состояния при переключении теста (клике на квадратик)
+    // 2. Анти-чит (Отслеживание вкладок)
     useEffect(() => {
-        setCurrentIndex(0);
-        setSelectedAnswers({});
-        setCurrentResult(null);
-    }, [activeQuizIndex]);
+        const handleVisibilityChange = () => {
+            if (document.hidden && !currentResult && quiz) {
+                const currentWarnings = cheatWarningsRef.current + 1;
+                setCheatWarnings(currentWarnings);
 
-    // --- ЛОГИКА ОПРЕДЕЛЕНИЯ СТАТУСА ТЕСТА (Цвет квадратика) ---
-    const getQuizStatus = (quizId) => {
-        // Фильтруем результаты для конкретного ID теста
-        const attempts = userResults.filter(r => r.quiz_id === quizId);
-        
-        if (attempts.length === 0) return 'neutral'; // Не проходил
+                if (currentWarnings >= 3) {
+                    toast.error("🚨 ТЕСТ ЗАВЕРШЕН! Зафиксировано переключение вкладок (Списывание).", {
+                        autoClose: false, // Ошибка висит, пока не закроют
+                        theme: "colored"
+                    });
+                    submitQuiz(true);
+                } else {
+                    toast.warning(`⚠️ ПРЕДУПРЕЖДЕНИЕ (${currentWarnings}/3)\n\nНе переключайтесь на другие вкладки! Система фиксирует списывание.`, {
+                        autoClose: 7000,
+                        theme: "colored"
+                    });
+                }
+            }
+        };
 
-        // Проверяем, есть ли хоть одна успешная попытка (>= 70%)
-        const hasSuccess = attempts.some(r => r.score >= 70);
-        return hasSuccess ? 'success' : 'error';
-    };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, [currentResult, quiz]);
 
-    // --- ОБРАБОТЧИКИ ---
+    // Обработка клика по варианту ответа
     const handleAnswer = (questionId, optionId) => {
         setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }));
     };
 
-    const submitQuiz = () => {
-        const quiz = quizzes[activeQuizIndex];
-        const answers = Object.entries(selectedAnswers).map(([qId, oId]) => ({
+    // Отправка теста
+    const submitQuiz = (isForced = false) => {
+        if (!quiz) return;
+        
+        const answersToSubmit = isForced ? selectedAnswersRef.current : selectedAnswers;
+
+        const answers = Object.entries(answersToSubmit).map(([qId, oId]) => ({
             question_id: parseInt(qId),
             choice_id: oId
         }));
@@ -85,192 +93,201 @@ function QuizPage() {
         api.post(`quizzes/${quiz.id}/submit/`, { answers })
             .then(res => {
                 setCurrentResult(res.data);
-                // Обновляем локально список результатов, чтобы квадратик сразу окрасился
-                // Добавляем новый результат в начало списка
-                setUserResults(prev => [{ 
-                    id: Date.now(), // Временный ID для UI
-                    quiz_id: quiz.id,
-                    quiz_title: quiz.title, 
-                    score: res.data.score, 
-                    completed_at: new Date().toISOString() 
-                }, ...prev]);
+                if (res.data.score >= 70) {
+                    toast.success(`🎉 Тест сдан! Ваш результат: ${res.data.score}%`);
+                } else {
+                    toast.error(`📚 Тест провален. Ваш результат: ${res.data.score}%`);
+                }
             })
-            .catch(err => alert("Ошибка при отправке ответов"));
+            .catch(err => {
+                toast.error("Произошла ошибка при отправке ответов.");
+                console.error(err);
+            });
     };
 
-    // --- РЕНДЕРИНГ ---
-
     if (loading) return (
-        <div className="flex justify-center mt-20"><span className="loading loading-ring loading-lg text-primary"></span></div>
-    );
-
-    if (quizzes.length === 0) return (
-        <div className="max-w-md mx-auto text-center mt-20 p-6 card bg-base-100 shadow-xl">
-            <h2 className="text-2xl font-bold mb-4">😔 Тестов нет</h2>
-            <p>Преподаватель еще не создал тесты для этого урока.</p>
-            <button className="btn btn-primary mt-6" onClick={() => navigate(-1)}>Назад</button>
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
         </div>
     );
 
-    const activeQuiz = quizzes[activeQuizIndex];
-    const questions = activeQuiz.questions || [];
+    if (!quiz || !quiz.questions || quiz.questions.length === 0) return (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center pt-20">
+            <div className="max-w-md w-full text-center p-8 card bg-white shadow-sm border border-gray-200">
+                <div className="text-6xl mb-4">📭</div>
+                <h2 className="text-2xl font-bold mb-2">Тестов пока нет</h2>
+                <p className="text-gray-500 mb-6">В этом шаге нет вопросов.</p>
+                <button className="btn btn-primary" onClick={() => navigate(`/lesson/${lessonId}`)}>
+                    ← Вернуться к уроку
+                </button>
+            </div>
+        </div>
+    );
+
+    const questions = quiz.questions;
     const currentQuestion = questions[currentIndex];
     const choices = currentQuestion?.choices || []; 
+    
+    // Проверяем, на все ли вопросы дан ответ
+    const isAllAnswered = questions.every(q => selectedAnswers[q.id]);
 
     return (
-        <div className="max-w-3xl mx-auto py-10 px-4 animate-fade-in">
-            
-            {/* 🟦 НАВИГАЦИЯ (STEPIK STYLE) */}
-            <div className="mb-8">
-                <h3 className="text-sm font-bold uppercase text-gray-400 mb-3 tracking-widest">
-                    Выберите вариант теста:
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                    {quizzes.map((q, idx) => {
-                        const status = getQuizStatus(q.id);
-                        let btnClass = "btn-outline border-base-300 text-base-content/50"; // Серый по умолчанию
-                        
-                        if (status === 'success') btnClass = "btn-success text-white border-none shadow-md shadow-success/20";
-                        if (status === 'error') btnClass = "btn-error text-white border-none shadow-md shadow-error/20";
-                        
-                        // Если активен - добавляем кольцо и делаем ярче
-                        const isActive = idx === activeQuizIndex;
-                        const activeClass = isActive ? 'ring-4 ring-primary ring-offset-2 scale-110 z-10' : 'hover:scale-105';
-                        
-                        // Если активен и нейтрален (еще не сдан), делаем его синим
-                        if (isActive && status === 'neutral') {
-                            btnClass = "btn-primary text-white border-none shadow-lg shadow-primary/30";
-                        }
-
-                        return (
-                            <button
-                                key={q.id}
-                                onClick={() => setActiveQuizIndex(idx)}
-                                className={`btn btn-square transition-all duration-200 ${btnClass} ${activeClass}`}
-                                title={q.title}
-                            >
-                                {idx + 1}
-                            </button>
-                        );
-                    })}
+        <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in">
+            <div className="max-w-3xl mx-auto">
+                
+                {/* 🔝 ВЕРХНЯЯ ПАНЕЛЬ С КНОПКОЙ ВЫХОДА */}
+                <div className="flex justify-between items-center mb-6">
+                    <button onClick={() => navigate(`/lesson/${lessonId}`)} className="btn btn-sm btn-ghost text-gray-500 hover:text-gray-800 gap-2">
+                        ← Вернуться к уроку
+                    </button>
+                    {cheatWarnings > 0 && !currentResult && (
+                        <div className="badge badge-error gap-1 animate-pulse">⚠️ Предупреждений: {cheatWarnings}/3</div>
+                    )}
                 </div>
-            </div>
 
-            {/* ОСНОВНОЙ БЛОК ТЕСТА */}
-            {!currentResult ? (
-                <div className="card bg-base-100 shadow-2xl border border-base-200">
+                {/* 🟦 КВАДРАТИКИ ВОПРОСОВ (Навигация) */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6">
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        {questions.map((q, idx) => {
+                            const isAnswered = !!selectedAnswers[q.id];
+                            const isActive = idx === currentIndex;
+                            
+                            // Базовый стиль квадратика
+                            let btnClass = "border-gray-300 text-gray-500 bg-white hover:border-primary hover:text-primary";
+                            
+                            // Если тест еще идет
+                            if (!currentResult) {
+                                if (isAnswered) btnClass = "bg-primary border-primary text-white"; // Закрашен синим
+                                if (isActive) btnClass += " ring-4 ring-primary/30 ring-offset-1 scale-110 z-10"; // Обводка текущего
+                            } 
+                            // Если тест ЗАВЕРШЕН (Показываем результаты)
+                            else {
+                                const isPassed = currentResult.score >= 70;
+                                btnClass = isPassed ? "bg-success border-success text-white" : "bg-error border-error text-white";
+                                if (isActive) btnClass += " ring-4 ring-offset-1 scale-110 z-10 ring-gray-300";
+                            }
+
+                            return (
+                                <button
+                                    key={q.id}
+                                    onClick={() => setCurrentIndex(idx)}
+                                    className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-lg font-bold transition-all border-2 ${btnClass}`}
+                                >
+                                    {idx + 1}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* ОСНОВНОЙ БЛОК ВОПРОСА */}
+                <div className="card bg-white shadow-sm border border-gray-200 overflow-hidden">
                     <div className="card-body p-6 md:p-10">
-                        {/* Заголовок теста */}
-                        <div className="flex justify-between items-start mb-6 border-b border-base-200 pb-4">
-                            <div>
-                                <h2 className="text-xs text-primary font-bold uppercase mb-1 tracking-wider opacity-70">
-                                    Вариант №{activeQuizIndex + 1} • {activeQuiz.title}
-                                </h2>
-                                <h1 className="text-xl md:text-2xl font-black leading-tight">
-                                    {currentQuestion?.text}
-                                </h1>
-                            </div>
-                            <div className="badge badge-lg badge-ghost font-mono">
-                                {currentIndex + 1} / {questions.length}
-                            </div>
+                        
+                        {/* Заголовок вопроса */}
+                        <div className="mb-8">
+                            <h2 className="text-xs text-primary font-bold uppercase mb-2 tracking-wider">
+                                Вопрос {currentIndex + 1} из {questions.length}
+                            </h2>
+                            <h1 className="text-xl md:text-2xl font-black text-gray-800 leading-snug">
+                                {currentQuestion?.text}
+                            </h1>
                         </div>
 
                         {/* Варианты ответов */}
                         <div className="grid gap-3">
-                            {choices.map(choice => (
-                                <label 
-                                    key={choice.id} 
-                                    className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all active:scale-[0.99] ${
-                                        selectedAnswers[currentQuestion.id] === choice.id 
-                                        ? 'border-primary bg-primary/5 shadow-inner ring-1 ring-primary' 
-                                        : 'border-base-200 hover:border-primary/40 hover:bg-base-100'
-                                    }`}
-                                >
-                                    <input 
-                                        type="radio" 
-                                        name={`q-${currentQuestion.id}`}
-                                        className="radio radio-primary radio-sm mr-4"
-                                        checked={selectedAnswers[currentQuestion.id] === choice.id}
-                                        onChange={() => handleAnswer(currentQuestion.id, choice.id)}
-                                    />
-                                    <span className="font-medium text-lg">{choice.text}</span>
-                                </label>
-                            ))}
+                            {choices.map(choice => {
+                                const isSelected = selectedAnswers[currentQuestion.id] === choice.id;
+                                
+                                // Стилизация во время теста
+                                let labelClass = isSelected 
+                                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' 
+                                    : 'border-gray-200 text-gray-700 hover:border-primary/50 hover:bg-gray-50';
+
+                                // Если тест завершен - блокируем выбор
+                                if (currentResult) {
+                                    labelClass = isSelected 
+                                        ? 'border-gray-400 bg-gray-100 text-gray-600 opacity-70' 
+                                        : 'border-gray-100 text-gray-400 opacity-50';
+                                }
+
+                                return (
+                                    <label key={choice.id} className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${labelClass}`}>
+                                        <input 
+                                            type="radio" 
+                                            name={`q-${currentQuestion.id}`}
+                                            className="radio radio-primary radio-sm mr-4"
+                                            checked={isSelected}
+                                            disabled={!!currentResult} // Блокируем после отправки
+                                            onChange={() => handleAnswer(currentQuestion.id, choice.id)}
+                                        />
+                                        <span className="font-medium text-lg">{choice.text}</span>
+                                    </label>
+                                )
+                            })}
                         </div>
 
-                        {/* Кнопки Назад / Далее */}
-                        <div className="card-actions justify-between mt-10 pt-6 border-t border-base-200">
-                            <button 
-                                className="btn btn-ghost gap-2" 
-                                disabled={currentIndex === 0}
-                                onClick={() => setCurrentIndex(v => v - 1)}
-                            >
-                                ← Назад
-                            </button>
-                            
-                            {currentIndex < questions.length - 1 ? (
+                        {/* === КНОПКИ УПРАВЛЕНИЯ === */}
+                        {!currentResult ? (
+                            <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-100">
+                                {/* Кнопка Назад */}
                                 <button 
-                                    className="btn btn-primary px-8 gap-2"
-                                    disabled={!selectedAnswers[currentQuestion.id]}
-                                    onClick={() => setCurrentIndex(v => v + 1)}
+                                    className={`btn btn-ghost text-gray-500 ${currentIndex === 0 ? 'invisible' : ''}`}
+                                    onClick={() => setCurrentIndex(v => v - 1)}
                                 >
-                                    Далее →
+                                    ← Назад
                                 </button>
-                            ) : (
-                                <button 
-                                    className="btn btn-success px-8 text-white shadow-lg shadow-success/30 gap-2"
-                                    disabled={!selectedAnswers[currentQuestion.id]}
-                                    onClick={submitQuiz}
-                                >
-                                    Отправить решение ✨
-                                </button>
-                            )}
-                        </div>
+                                
+                                {/* Кнопка Далее или Отправить */}
+                                {currentIndex < questions.length - 1 ? (
+                                    <button 
+                                        className="btn btn-primary px-8"
+                                        onClick={() => setCurrentIndex(v => v + 1)}
+                                    >
+                                        Далее →
+                                    </button>
+                                ) : (
+                                    <button 
+                                        className={`btn px-8 text-white shadow-md transition-all ${isAllAnswered ? 'btn-success hover:-translate-y-0.5' : 'btn-disabled bg-gray-300'}`}
+                                        disabled={!isAllAnswered}
+                                        onClick={() => submitQuiz(false)}
+                                    >
+                                        {isAllAnswered ? 'Отправить ответы ✔️' : 'Ответьте на все вопросы'}
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            // ПАНЕЛЬ РЕЗУЛЬТАТОВ (Показывается внизу после завершения)
+                            <div className={`mt-8 p-6 rounded-2xl border-2 text-center animate-fade-in ${currentResult.score >= 70 ? 'bg-success/10 border-success' : 'bg-error/10 border-error'}`}>
+                                <h3 className="text-2xl font-black mb-2">
+                                    {currentResult.score >= 70 ? '🎉 Тест пройден!' : '📚 Тест не сдан'}
+                                </h3>
+                                <p className="text-lg mb-4">Ваш результат: <span className="font-bold">{currentResult.score}%</span></p>
+                                
+                                <div className="flex gap-4 justify-center">
+                                    <button 
+                                        className="btn btn-outline"
+                                        onClick={() => {
+                                            setCurrentResult(null);
+                                            setCurrentIndex(0);
+                                            setSelectedAnswers({});
+                                            setCheatWarnings(0);
+                                        }}
+                                    >
+                                        🔄 Пересдать
+                                    </button>
+                                    {currentResult.score >= 70 && (
+                                        <button className="btn btn-primary" onClick={() => navigate(`/lesson/${lessonId}`)}>
+                                            К уроку →
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            ) : (
-                /* ЭКРАН РЕЗУЛЬТАТА */
-                <div className="card bg-base-100 shadow-xl border-t-8 border-primary animate-fade-in">
-                    <div className="card-body items-center text-center py-10">
-                        <div className="text-7xl mb-4 animate-bounce-short">
-                            {currentResult.score >= 70 ? '🎉' : '🤔'}
-                        </div>
-                        <h2 className="text-3xl font-black mb-2">
-                            {currentResult.score >= 70 ? 'Тест сдан!' : 'Попробуйте еще раз'}
-                        </h2>
-                        <div className="stat-value text-primary my-4">{currentResult.score}%</div>
-                        <p className="text-gray-500 mb-8 max-w-xs mx-auto">
-                            {currentResult.score >= 70 
-                                ? 'Отличный результат! Вы можете переходить к следующему уроку.' 
-                                : 'К сожалению, этого недостаточно. Повторите материал и попробуйте снова.'}
-                        </p>
-                        
-                        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                             {/* Кнопка Рестарт */}
-                            <button 
-                                className="btn btn-outline btn-wide" 
-                                onClick={() => {
-                                    setCurrentResult(null);
-                                    setCurrentIndex(0);
-                                    setSelectedAnswers({});
-                                }}
-                            >
-                                🔄 Перепройти
-                            </button>
 
-                            {/* Если есть следующий тест, можно предложить перейти к нему */}
-                            {activeQuizIndex < quizzes.length - 1 && (
-                                <button 
-                                    className="btn btn-primary btn-wide"
-                                    onClick={() => setActiveQuizIndex(i => i + 1)}
-                                >
-                                    След. вариант →
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 }

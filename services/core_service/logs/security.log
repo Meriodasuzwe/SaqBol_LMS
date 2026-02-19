@@ -158,3 +158,11 @@ WARNING 2026-02-19 15:56:36,874 | ACCESS DENIED: [401] GET /api/courses/ (User: 
 INFO 2026-02-19 15:56:50,823 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.092s
 INFO 2026-02-19 16:04:32,095 | ACTION: [200] GET /api/admin/courses/lessonstep/add/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.070s
 INFO 2026-02-19 16:04:32,122 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-02-19 16:09:45,846 | ACTION: [201] POST /api/courses/lessons/5/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.022s
+INFO 2026-02-19 16:10:26,252 | ACTION: [201] POST /api/courses/lessons/5/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-02-19 16:11:21,999 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.020s
+INFO 2026-02-19 16:11:47,616 | ACTION: [200] POST /api/quizzes/70/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
+INFO 2026-02-19 16:13:15,917 | ACTION: [204] DELETE /api/courses/lessons/10/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.022s
+INFO 2026-02-19 16:17:37,038 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.094s
+INFO 2026-02-19 16:26:00,460 | ACTION: [200] PATCH /api/courses/steps/3/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.021s
+INFO 2026-02-19 16:26:10,478 | ACTION: [200] PATCH /api/courses/steps/2/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
