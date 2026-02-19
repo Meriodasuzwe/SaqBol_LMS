@@ -1,22 +1,29 @@
 from rest_framework import serializers
-from .models import Course, Lesson, Category, LessonProgress
+from .models import Course, Lesson, Category, LessonStep, StepProgress
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'title']
 
+# ДОБАВЛЕНО: Сериализатор для шагов
+class LessonStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonStep
+        fields = ['id', 'title', 'step_type', 'content', 'file', 'scenario_data', 'order']
+        extra_kwargs = {
+            'content': {'required': False, 'allow_blank': True},
+            'scenario_data': {'required': False}, 
+        }
+
 class LessonSerializer(serializers.ModelSerializer):
+    # ДОБАВЛЕНО: Вкладываем шаги внутрь урока (матрешка)
+    steps = LessonStepSerializer(many=True, read_only=True)
+
     class Meta:
         model = Lesson
-        # ДОБАВИЛИ: lesson_type и scenario_data
-        fields = ['id', 'title', 'content', 'video_url', 'order', 'course', 'lesson_type', 'scenario_data']
-        
-        extra_kwargs = {
-            'video_url': {'required': False, 'allow_blank': True},
-            'content': {'required': False, 'allow_blank': True},
-            'scenario_data': {'required': False}, # JSON может быть пустым
-        }
+        # Убрали content и video_url (они теперь в шагах), добавили steps
+        fields = ['id', 'title', 'order', 'course', 'steps']
 
 class CourseSerializer(serializers.ModelSerializer):
     category_title = serializers.ReadOnlyField(source='category.title')
@@ -32,7 +39,6 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        # --- ДОБАВИЛ short_description И cover_image В СПИСОК ПОЛЕЙ ---
         fields = [
             'id', 'title', 'description', 
             'short_description', 'cover_image', 
@@ -48,14 +54,15 @@ class CourseSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return 0
         
-        total_lessons = obj.lessons.count()
-        if total_lessons == 0:
+        # ОБНОВЛЕНО: Считаем прогресс по шагам, а не урокам
+        total_steps = LessonStep.objects.filter(lesson__course=obj).count()
+        if total_steps == 0:
             return 0
             
-        completed_lessons = LessonProgress.objects.filter(
+        completed_steps = StepProgress.objects.filter(
             student=request.user, 
-            lesson__course=obj,
+            step__lesson__course=obj,
             is_completed=True
         ).count()
         
-        return int((completed_lessons / total_lessons) * 100)
+        return int((completed_steps / total_steps) * 100)
