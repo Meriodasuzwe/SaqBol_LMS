@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from './api';
 
-function CourseDetail() {
+// Принимаем проп isLoggedIn из App.js
+function CourseDetail({ isLoggedIn }) { 
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -17,21 +18,27 @@ function CourseDetail() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 1. Грузим инфо о курсе
+                // 1. Грузим инфо о курсе (теперь это публичный эндпоинт)
                 const courseRes = await api.get(`courses/${id}/`);
                 setCourse(courseRes.data);
 
-                // 2. Пытаемся загрузить уроки
-                try {
-                    const lessonsRes = await api.get(`courses/${id}/lessons/`);
-                    // Сортировка уроков по ID (или order)
-                    const sortedLessons = lessonsRes.data.sort((a, b) => a.id - b.id);
-                    setLessons(sortedLessons);
-                    setIsEnrolled(true); 
-                } catch (error) {
-                    if (error.response && error.response.status === 403) {
-                        setIsEnrolled(false);
+                // 2. Если пользователь залогинен, проверяем, записан ли он
+                if (isLoggedIn) {
+                    try {
+                        const lessonsRes = await api.get(`courses/${id}/lessons/`);
+                        // Если уроки загрузились - значит, мы записаны (бэкенд не отдал бы их иначе)
+                        const sortedLessons = lessonsRes.data.sort((a, b) => a.id - b.id);
+                        setLessons(sortedLessons);
+                        setIsEnrolled(true); 
+                    } catch (error) {
+                        // Если 403 - значит не записан, это нормально
+                        if (error.response && error.response.status === 403) {
+                            setIsEnrolled(false);
+                        }
                     }
+                } else {
+                    // Если гость - точно не записан
+                    setIsEnrolled(false);
                 }
             } catch (err) {
                 console.error("Ошибка загрузки курса", err);
@@ -41,37 +48,29 @@ function CourseDetail() {
         };
 
         fetchData();
-    }, [id]);
+    }, [id, isLoggedIn]);
 
     // --- ХЕЛПЕР: ОПРЕДЕЛЕНИЕ ТИПА УРОКА ---
     const getLessonStyle = (type) => {
         switch (type) {
             case 'simulation_chat':
-                return { 
-                    icon: '💬', 
-                    label: 'Чат-квест', 
-                    color: 'text-success', 
-                    badge: 'badge-success' 
-                };
+                return { icon: '💬', label: 'Чат-квест', color: 'text-success', badge: 'badge-success' };
             case 'simulation_email':
-                return { 
-                    icon: '📧', 
-                    label: 'Фишинг', 
-                    color: 'text-warning', 
-                    badge: 'badge-warning' 
-                };
+                return { icon: '📧', label: 'Фишинг', color: 'text-warning', badge: 'badge-warning' };
             default: // text
-                return { 
-                    icon: '📄', 
-                    label: 'Лекция', 
-                    color: 'text-base-content', 
-                    badge: 'badge-ghost' 
-                };
+                return { icon: '📄', label: 'Лекция', color: 'text-base-content', badge: 'badge-ghost' };
         }
     };
 
-    // --- ФУНКЦИЯ ЗАПИСИ ---
-    const handleEnroll = async () => {
+    // --- ФУНКЦИЯ ЗАПИСИ (ИЛИ РЕДИРЕКТА) ---
+    const handleEnrollClick = async () => {
+        // 1. Если ГОСТЬ -> Отправляем на логин
+        if (!isLoggedIn) {
+            navigate('/login');
+            return;
+        }
+
+        // 2. Если СТУДЕНТ -> Записываем на курс
         setEnrollLoading(true);
         try {
             await api.post(`courses/${id}/enroll/`);
@@ -91,28 +90,30 @@ function CourseDetail() {
     if (!course) return <div className="alert alert-error mt-10">Курс не найден</div>;
 
     // ============================================================
-    // ВАРИАНТ 1: ЛЕНДИНГ (Если НЕ записан)
+    // ВАРИАНТ 1: ЛЕНДИНГ (Если НЕ записан или Гость)
     // ============================================================
     if (!isEnrolled) {
         return (
-            <div className="min-h-screen bg-base-100">
+            <div className="min-h-screen bg-base-100 animate-fade-in">
                 {/* Hero секция */}
-                <div className="hero py-20 bg-base-200">
-                    <div className="hero-content flex-col lg:flex-row-reverse gap-12 max-w-5xl">
+                <div className="hero py-20 bg-base-200 rounded-box mt-4 mx-4 shadow-sm max-w-7xl lg:mx-auto">
+                    <div className="hero-content flex-col lg:flex-row-reverse gap-12 w-full justify-between px-8">
                         
                         {/* Карточка записи */}
                         <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100 border border-base-200">
                             <div className="card-body">
                                 <div className="badge badge-secondary mb-2">Открытый курс</div>
                                 <h2 className="text-3xl font-bold text-primary mb-2">Бесплатно</h2>
+                                
                                 <button 
-                                    onClick={handleEnroll} 
+                                    onClick={handleEnrollClick} 
                                     className={`btn btn-primary btn-lg w-full ${enrollLoading ? 'loading' : ''}`}
                                 >
-                                    {enrollLoading ? 'Записываем...' : 'Начать обучение 🚀'}
+                                    {enrollLoading ? 'Записываем...' : (isLoggedIn ? 'Начать обучение 🚀' : 'Войти и начать 🔐')}
                                 </button>
+                                
                                 <p className="text-xs text-center text-gray-500 mt-4">
-                                    Мгновенный доступ ко всем материалам
+                                    {isLoggedIn ? 'Мгновенный доступ ко всем материалам' : 'Требуется авторизация для сохранения прогресса'}
                                 </p>
                                 <div className="divider"></div>
                                 <ul className="space-y-3 text-sm text-gray-600">
@@ -124,14 +125,14 @@ function CourseDetail() {
                         </div>
 
                         {/* Описание курса */}
-                        <div className="text-center lg:text-left">
+                        <div className="text-center lg:text-left max-w-2xl">
                             <h1 className="text-5xl font-black leading-tight mb-6">{course.title}</h1>
                             <p className="py-2 text-lg text-gray-600 leading-relaxed mb-8">
                                 {course.description || "Описание курса пока отсутствует, но мы уверены, что материал будет полезен!"}
                             </p>
                             
                             {/* Блок автора */}
-                            <div className="flex items-center justify-center lg:justify-start gap-4 p-4 bg-base-100 rounded-xl shadow-sm w-fit border border-base-200">
+                            <div className="flex items-center justify-center lg:justify-start gap-4 p-4 bg-base-100 rounded-xl shadow-sm w-fit border border-base-200 mx-auto lg:mx-0">
                                 <div className="avatar placeholder">
                                     <div className="bg-neutral text-neutral-content rounded-full w-12">
                                         <span className="text-xl">{course.teacher_name?.[0]?.toUpperCase() || "T"}</span>
@@ -150,7 +151,7 @@ function CourseDetail() {
     }
 
     // ============================================================
-    // ВАРИАНТ 2: ПЛЕЕР УРОКОВ (Если ЗАПИСАН)
+    // ВАРИАНТ 2: ПЛЕЕР УРОКОВ (Если ЗАПИСАН и АВТОРИЗОВАН)
     // ============================================================
     return (
         <div className="flex flex-col lg:flex-row gap-8 p-6 max-w-7xl mx-auto animate-fade-in">
@@ -176,7 +177,6 @@ function CourseDetail() {
                         </p>
                         
                         <div className="alert alert-info bg-blue-50 border-blue-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6 text-blue-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <span className="text-blue-900">Выберите урок из списка справа, чтобы продолжить обучение.</span>
                         </div>
                     </div>
@@ -197,18 +197,15 @@ function CourseDetail() {
                         <ul className="flex flex-col gap-2">
                             {lessons.map((lesson, index) => {
                                 const style = getLessonStyle(lesson.lesson_type);
-                                
                                 return (
                                     <li key={lesson.id}>
                                         <div 
                                             className="group flex items-center p-3 rounded-xl hover:bg-base-200 transition-all cursor-pointer border border-transparent hover:border-base-300"
                                             onClick={() => navigate(`/lesson/${lesson.id}`)}
                                         >
-                                            {/* Иконка типа */}
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-base-100 border border-base-200 shadow-sm mr-3 text-xl group-hover:scale-110 transition-transform`}>
                                                 {style.icon}
                                             </div>
-
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-xs font-mono text-gray-400">#{index + 1}</span>
@@ -220,19 +217,13 @@ function CourseDetail() {
                                                     {lesson.title}
                                                 </h4>
                                             </div>
-
-                                            <div className="text-gray-300 group-hover:text-primary">
-                                                ➔
-                                            </div>
+                                            <div className="text-gray-300 group-hover:text-primary">➔</div>
                                         </div>
                                     </li>
                                 );
                             })}
-
                             {lessons.length === 0 && (
-                                <div className="text-center py-10 text-gray-400 text-sm">
-                                    Уроков пока нет
-                                </div>
+                                <div className="text-center py-10 text-gray-400 text-sm">Уроков пока нет</div>
                             )}
                         </ul>
                     </div>

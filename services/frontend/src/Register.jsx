@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "./api"; 
+import { toast } from 'react-toastify';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ const Register = () => {
 
     if (formData.password !== formData.confirmPassword) {
       setError("Пароли не совпадают!");
+      toast.warn("⚠️ Пароли не совпадают");
       return;
     }
 
@@ -37,7 +39,7 @@ const Register = () => {
         iin: formData.iin
       });
       
-      alert("Регистрация успешна! Теперь вы можете войти.");
+      toast.success(" Регистрация успешна! Теперь войдите в аккаунт.");
       navigate("/login"); 
     } catch (err) {
       console.error(err);

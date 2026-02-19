@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'django_core'
+    # 🔥 Возвращаем /api, так как идем через Nginx
+    metrics_path: '/api/prometheus/metrics'
+    static_configs:
+      # 🔥 Стучимся не в core_service, а в Nginx (порт 80)
+      - targets: ['nginx:80']

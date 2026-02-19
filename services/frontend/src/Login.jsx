@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import api from './api';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 function Login({ onLoginSuccess }) {
     const [username, setUsername] = useState('');
@@ -17,6 +18,7 @@ function Login({ onLoginSuccess }) {
             const response = await api.post('users/login/', { username, password });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
+            toast.success(`👋 С возвращением, ${username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {

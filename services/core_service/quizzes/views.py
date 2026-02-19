@@ -31,7 +31,7 @@ class QuizByLessonView(generics.ListAPIView):
         # Берем lesson_id из URL (из urls.py)
         lesson_id = self.kwargs.get('lesson_id')
         if lesson_id:
-            return Quiz.objects.filter(lesson_id=lesson_id).order_by('-id')
+            return Quiz.objects.filter(lesson_id=lesson_id).order_by('id')
         return Quiz.objects.none()
 
 # 3. Детальный просмотр теста по ID теста
