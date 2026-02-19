@@ -74,3 +74,8 @@ INFO 2026-02-18 13:06:35,923 | ✅ AI Service запущен. Ключ: ...fI6F
 INFO 2026-02-18 13:08:49,381 | ✅ AI Service запущен. Ключ: ...fI6F
 INFO 2026-02-18 13:17:21,545 | ✅ AI Service запущен. Ключ: ...fI6F
 INFO 2026-02-18 13:41:23,380 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 13:43:42,274 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-18 13:50:51,895 | User 1 запросил квиз.
+INFO 2026-02-18 13:50:52,697 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-18 13:50:52,712 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.843s
+INFO 2026-02-19 10:31:30,651 | ✅ AI Service запущен. Ключ: ...fI6F

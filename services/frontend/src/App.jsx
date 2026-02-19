@@ -2,6 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import api from './api';
 
+// 👇 1. Импорты для уведомлений (Toasts)
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 // Импорты страниц
 import Login from './Login';
 import Register from './Register';
@@ -33,7 +37,7 @@ function App() {
         .catch(err => {
           console.error("Не удалось получить роль", err);
           if (err.response && err.response.status === 401) {
-             handleLogout();
+              handleLogout();
           }
         })
         .finally(() => setLoadingRole(false));
@@ -54,6 +58,20 @@ function App() {
     <Router>
       <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
         
+        {/* 👇 2. Контейнер для уведомлений (Невидим, пока нет тостов) */}
+        <ToastContainer 
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored" // Сделаем цветным, чтобы ошибки были красными
+        />
+
         {/* Navbar всегда виден и сам решает, что показывать (Вход или Профиль) */}
         <Navbar 
             isLoggedIn={isLoggedIn} 

@@ -1,19 +1,22 @@
 import axios from 'axios';
 
-// Этот инстанс смотрит специально на шлюз AI
+import { setupAxiosInterceptors } from './utils/axiosErrorHandler';
+
 const aiApi = axios.create({
-    baseURL: '/ai/', // Nginx перенаправит это в FastAPI
+    baseURL: '/ai/', 
 });
 
-// Добавляем перехватчик (Interceptor), который автоматически вставляет токен
 aiApi.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access'); // Берем токен, полученный от Django
+    const token = localStorage.getItem('access'); 
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`; // Прикрепляем к запросу
+        config.headers.Authorization = `Bearer ${token}`; 
     }
     return config;
 }, (error) => {
     return Promise.reject(error);
 });
+
+
+setupAxiosInterceptors(aiApi);
 
 export default aiApi;
