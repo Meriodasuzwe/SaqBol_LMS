@@ -79,3 +79,93 @@ INFO 2026-02-18 13:50:51,895 | User 1 запросил квиз.
 INFO 2026-02-18 13:50:52,697 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-02-18 13:50:52,712 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.843s
 INFO 2026-02-19 10:31:30,651 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-19 15:55:58,494 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-19 16:11:15,564 | User 1 запросил квиз.
+INFO 2026-02-19 16:11:16,874 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-19 16:11:16,892 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.346s
+WARNING 2026-02-19 16:17:24,209 | CLIENT ERROR: [401] POST /generate-scenario (IP: 172.18.0.8) - 0.003s
+WARNING 2026-02-19 16:17:50,915 | CLIENT ERROR: [401] POST /generate-scenario (IP: 172.18.0.8) - 0.001s
+WARNING 2026-02-19 16:18:18,086 | CLIENT ERROR: [401] POST /generate-scenario (IP: 172.18.0.8) - 0.001s
+INFO 2026-02-19 16:25:39,829 | User 1 запросил сценарий: письмо мошенника
+INFO 2026-02-19 16:25:41,954 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-19 16:25:41,956 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 2.129s
+INFO 2026-02-20 15:08:26,837 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-20 15:13:44,911 | FILE UPLOAD: User ID 1 uploaded Писпекбаев_Алихан_Резюме_2026.docx
+INFO 2026-02-20 15:13:44,920 | AI PARSING: Sending 1169 chars to Groq...
+INFO 2026-02-20 15:13:48,008 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:13:48,022 | AI PARSING SUCCESS: Course 'Основы высокопроизводительных вычислений и криптовалютных технологий' generated.
+INFO 2026-02-20 15:13:48,023 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 3.142s
+INFO 2026-02-20 15:19:06,536 | FILE UPLOAD: User ID 1 uploaded Писпекбаев_Алихан_Резюме_2026.docx
+INFO 2026-02-20 15:19:06,548 | AI PARSING: Sending 1169 chars to Groq...
+INFO 2026-02-20 15:19:08,864 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:19:08,865 | AI PARSING SUCCESS: Course 'Основы высокопроизводительных вычислений и криптовалютных технологий' generated.
+INFO 2026-02-20 15:19:08,866 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 2.332s
+INFO 2026-02-20 15:24:10,706 | FILE UPLOAD: User ID 1 uploaded Писпекбаев_Алихан_Резюме_2026.docx
+INFO 2026-02-20 15:24:10,714 | AI PARSING: Sending 1169 chars to Groq...
+INFO 2026-02-20 15:24:13,479 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:24:13,482 | AI PARSING SUCCESS: Course 'Основы высокопроизводительных вычислений и IT-инфраструктуры' generated.
+INFO 2026-02-20 15:24:13,482 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 2.778s
+INFO 2026-02-20 15:24:25,202 | FILE UPLOAD: User ID 1 uploaded Писпекбаев_Алихан_Резюме_2026.docx
+INFO 2026-02-20 15:24:25,209 | AI PARSING: Sending 1169 chars to Groq...
+INFO 2026-02-20 15:24:27,615 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:24:27,616 | AI PARSING SUCCESS: Course 'Основы высокопроизводительных вычислений и криптовалютных технологий' generated.
+INFO 2026-02-20 15:24:27,617 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 2.418s
+INFO 2026-02-20 15:37:05,835 | User 1 запросил квиз.
+INFO 2026-02-20 15:37:06,545 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:37:06,547 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.716s
+INFO 2026-02-20 15:41:31,184 | User 1 запросил квиз.
+INFO 2026-02-20 15:41:31,770 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:41:31,774 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.592s
+INFO 2026-02-20 15:54:23,802 | User 1 запросил квиз.
+INFO 2026-02-20 15:54:25,378 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:54:25,381 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.580s
+INFO 2026-02-20 15:54:57,935 | User 1 запросил квиз.
+INFO 2026-02-20 15:54:59,823 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:54:59,825 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.891s
+INFO 2026-02-20 15:55:11,903 | User 1 запросил квиз.
+INFO 2026-02-20 15:55:13,208 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:55:13,209 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.307s
+INFO 2026-02-20 15:59:46,217 | User 1 запросил квиз.
+INFO 2026-02-20 15:59:47,195 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:59:47,199 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.983s
+INFO 2026-02-20 15:59:57,214 | User 1 запросил квиз.
+INFO 2026-02-20 15:59:58,014 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 15:59:58,015 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.802s
+INFO 2026-02-20 16:07:09,590 | User 1 запросил квиз.
+INFO 2026-02-20 16:07:10,790 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 16:07:10,792 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.203s
+INFO 2026-02-20 16:08:18,301 | User 1 запросил квиз.
+INFO 2026-02-20 16:08:19,252 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-20 16:08:19,254 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.954s
+INFO 2026-02-22 09:11:43,025 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-24 15:42:18,622 | ✅ AI Service запущен. Ключ: ...fI6F
+INFO 2026-02-24 16:25:15,797 | User 1 запросил сценарий: Атака на сервер банка
+INFO 2026-02-24 16:25:17,546 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:25:17,561 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.802s
+INFO 2026-02-24 16:29:35,430 | User 1 запросил сценарий: Атака на сервер
+INFO 2026-02-24 16:29:37,843 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:29:37,846 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 2.417s
+INFO 2026-02-24 16:35:15,016 | User 1 запросил сценарий: Атака на сервер
+INFO 2026-02-24 16:35:16,670 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:35:16,671 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.657s
+INFO 2026-02-24 16:38:20,189 | User 1 запросил сценарий: Атака на сайт
+INFO 2026-02-24 16:38:22,223 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:38:22,226 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 2.038s
+INFO 2026-02-24 16:41:44,235 | User 1 запросил сценарий: Атака на банк
+INFO 2026-02-24 16:41:45,619 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:41:45,620 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.387s
+INFO 2026-02-24 16:45:36,058 | User 1 запросил сценарий: Атака на банк
+INFO 2026-02-24 16:45:37,620 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:45:37,622 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.566s
+INFO 2026-02-24 16:46:40,902 | User 1 запросил сценарий: Атака на банк
+INFO 2026-02-24 16:46:42,730 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:46:42,732 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.831s
+INFO 2026-02-24 16:54:18,614 | User 1 запросил сценарий: Атака на сайт
+INFO 2026-02-24 16:54:20,423 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 16:54:20,426 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.813s
+INFO 2026-02-24 18:03:32,688 | User 1 запросил сценарий: атака на универ
+INFO 2026-02-24 18:03:35,513 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 18:03:35,528 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 2.857s
+INFO 2026-02-24 18:18:07,712 | User 1 запросил сценарий: Атака на завод мантов | type=chat
+INFO 2026-02-24 18:18:09,837 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-02-24 18:18:09,853 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 2.156s

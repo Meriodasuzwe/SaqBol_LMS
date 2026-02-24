@@ -16,12 +16,35 @@ const Register = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // НОВОЕ: Умная обработка для ИИН (только цифры и максимум 12 символов)
+    if (name === "iin") {
+      const onlyNumbers = value.replace(/\D/g, ''); // Удаляем все, кроме цифр
+      if (onlyNumbers.length <= 12) {
+        setFormData({ ...formData, [name]: onlyNumbers });
+      }
+      return; // Выходим, чтобы не сработал стандартный setFormData
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // НОВОЕ: Проверка длины ИИН (если он введен, он должен быть ровно 12 цифр)
+    if (formData.iin && formData.iin.length !== 12) {
+      setError("ИИН должен состоять ровно из 12 цифр!");
+      return;
+    }
+
+    // НОВОЕ: Базовая проверка длины пароля (чтобы не мешало тестить, но отсекало мусор)
+    if (formData.password.length < 6) {
+      setError("Пароль должен содержать минимум 6 символов.");
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Пароли не совпадают!");
@@ -39,7 +62,7 @@ const Register = () => {
         iin: formData.iin
       });
       
-      toast.success(" Регистрация успешна! Теперь войдите в аккаунт.");
+      toast.success("Регистрация успешна! Теперь войдите в аккаунт.");
       navigate("/login"); 
     } catch (err) {
       console.error(err);
@@ -64,7 +87,6 @@ const Register = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             
-            {/* ГРУППА: ЛОГИН */}
             <div className="form-control w-full">
               <label className="label pt-0">
                 <span className="label-text font-semibold text-gray-600">Логин <span className="text-error">*</span></span>
@@ -79,7 +101,6 @@ const Register = () => {
               />
             </div>
 
-            {/* ГРУППА: EMAIL */}
             <div className="form-control w-full">
               <label className="label pt-0">
                 <span className="label-text font-semibold text-gray-600">Email <span className="text-error">*</span></span>
@@ -94,7 +115,6 @@ const Register = () => {
               />
             </div>
 
-            {/* ГРУППА: ИИН */}
             <div className="form-control w-full">
               <label className="label pt-0">
                 <span className="label-text font-semibold text-gray-600">ИИН (необязательно)</span>
@@ -102,13 +122,13 @@ const Register = () => {
               <input 
                 type="text" 
                 name="iin" 
+                value={formData.iin} // НОВОЕ: Привязали value к state, чтобы маска работала визуально
                 placeholder="12 цифр"
                 className="input input-bordered w-full focus:input-primary bg-gray-50" 
                 onChange={handleChange} 
               />
             </div>
 
-            {/* ГРУППА: ПАРОЛЬ */}
             <div className="form-control w-full">
               <label className="label pt-0">
                 <span className="label-text font-semibold text-gray-600">Пароль <span className="text-error">*</span></span>
@@ -123,7 +143,6 @@ const Register = () => {
               />
             </div>
 
-            {/* ГРУППА: ПОВТОР ПАРОЛЯ */}
             <div className="form-control w-full">
               <label className="label pt-0">
                 <span className="label-text font-semibold text-gray-600">Повторите пароль <span className="text-error">*</span></span>

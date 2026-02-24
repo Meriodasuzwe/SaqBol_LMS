@@ -1,5 +1,4 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
 from .views import (
     CourseListView, 
     CourseDetailView, 
@@ -7,28 +6,27 @@ from .views import (
     EnrollCourseView, 
     LessonListCreateView,
     MyCoursesView,
-    MarkLessonCompleteView, 
     LessonDetailView,
-    BulkCreateCourseView
+    BulkCreateCourseView,
+    LessonStepDetailView, # НОВОЕ
+    LessonStepCreateView, # НОВОЕ
+    MarkStepCompleteView  # ОБНОВЛЕНО
 )
 
 urlpatterns = [
-    # Категории
     path('categories/', CategoryListView.as_view(), name='category-list'),
-    
-    # Специфичные маршруты курсов (ДОЛЖНЫ БЫТЬ ВЫШЕ <int:pk>)
-    path('bulk-create/', BulkCreateCourseView.as_view(), name='course-bulk-create'), # Убрал 'courses/', так как в главном urls.py уже есть префикс
+    path('bulk-create/', BulkCreateCourseView.as_view(), name='course-bulk-create'), 
     path('my_courses/', MyCoursesView.as_view(), name='my-courses'),
     
-    # Общие маршруты курсов
     path('', CourseListView.as_view(), name='course-list'),
     path('<int:pk>/', CourseDetailView.as_view(), name='course-detail'),
     path('<int:pk>/enroll/', EnrollCourseView.as_view(), name='course-enroll'),
 
-    # Уроки 
     path('<int:course_id>/lessons/', LessonListCreateView.as_view(), name='course-lessons'),
-    
-    # Детали урока
     path('lessons/<int:pk>/', LessonDetailView.as_view(), name='lesson-detail'),
-    path('lessons/<int:pk>/complete/', MarkLessonCompleteView.as_view(), name='lesson-complete'),
+    
+    # ДОБАВЛЕНО: Маршруты для шагов
+    path('lessons/<int:lesson_id>/steps/', LessonStepCreateView.as_view(), name='step-create'),
+    path('steps/<int:pk>/complete/', MarkStepCompleteView.as_view(), name='step-complete'),
+    path('steps/<int:pk>/', LessonStepDetailView.as_view(), name='step-detail'),
 ]
