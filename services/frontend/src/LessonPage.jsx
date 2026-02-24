@@ -32,7 +32,11 @@ function LessonPage() {
             try {
                 const lessonRes = await api.get(`courses/lessons/${lessonId}/`);
                 setLesson(lessonRes.data);
-                setActiveStepIndex(0);
+                
+                // Ищем первый НЕПРОЙДЕННЫЙ шаг, чтобы открыть его по умолчанию
+                // Если все пройдены, откроется первый (0)
+                const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
+                setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
 
                 const allLessonsRes = await api.get(`courses/${lessonRes.data.course}/lessons/`);
                 setCourseLessons(allLessonsRes.data);
@@ -55,8 +59,17 @@ function LessonPage() {
         const currentStep = lesson.steps[activeStepIndex];
         
         try {
+            // 1. Отправляем на бэкенд инфу о прохождении
             await api.post(`courses/steps/${currentStep.id}/complete/`, { score });
             
+            // 🔥 2. ИСПРАВЛЕНИЕ: Обновляем локальное состояние, ставим галочку мгновенно!
+            setLesson(prevLesson => {
+                const updatedSteps = [...prevLesson.steps];
+                updatedSteps[activeStepIndex] = { ...updatedSteps[activeStepIndex], is_completed: true };
+                return { ...prevLesson, steps: updatedSteps };
+            });
+            
+            // 3. Переход дальше
             if (activeStepIndex < lesson.steps.length - 1) {
                 setActiveStepIndex(activeStepIndex + 1);
                 // Прокручиваем страницу наверх при переходе на новый шаг
@@ -147,7 +160,8 @@ function LessonPage() {
                         <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-center sm:justify-start gap-2 overflow-x-auto">
                             {lesson.steps?.map((step, index) => {
                                 const isActive = index === activeStepIndex;
-                                const isPassed = index < activeStepIndex; // Визуально помечаем пройденные
+                                // 🔥 ИСПРАВЛЕНИЕ: Теперь галочка зависит только от бэкенда!
+                                const isPassed = step.is_completed === true; 
                                 
                                 let icon = "📝";
                                 if (step.step_type === 'video_url' || step.step_type === 'video_file') icon = "▶️";

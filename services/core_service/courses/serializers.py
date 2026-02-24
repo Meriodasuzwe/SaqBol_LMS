@@ -6,16 +6,39 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'title']
 
-# ДОБАВЛЕНО: Сериализатор для шагов
 class LessonStepSerializer(serializers.ModelSerializer):
+    is_completed = serializers.SerializerMethodField()
+
     class Meta:
         model = LessonStep
-        fields = ['id', 'title', 'step_type', 'content', 'file', 'scenario_data', 'order']
+        fields = ['id', 'title', 'step_type', 'content', 'file', 'scenario_data', 'order', 'is_completed']
         extra_kwargs = {
             'content': {'required': False, 'allow_blank': True},
             'scenario_data': {'required': False}, 
         }
 
+    def get_is_completed(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+
+        # 🔥 Локальный импорт решает проблему 500 ошибки (NameError / Circular Import)
+        from quizzes.models import Quiz, Result 
+
+        if obj.step_type == 'quiz':
+            quizzes = Quiz.objects.filter(lesson=obj.lesson)
+            if quizzes.exists():
+                # Просто возвращаем True, если тест сдан. Ничего не пишем в базу!
+                return Result.objects.filter(student=request.user, quiz__in=quizzes, score__gte=70).exists()
+            return False
+
+        # Для обычных шагов
+        return StepProgress.objects.filter(
+            student=request.user,
+            step=obj,
+            is_completed=True
+        ).exists()
+        
 class LessonSerializer(serializers.ModelSerializer):
     # ДОБАВЛЕНО: Вкладываем шаги внутрь урока (матрешка)
     steps = LessonStepSerializer(many=True, read_only=True)
@@ -54,15 +77,24 @@ class CourseSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return 0
         
-        # ОБНОВЛЕНО: Считаем прогресс по шагам, а не урокам
-        total_steps = LessonStep.objects.filter(lesson__course=obj).count()
+        steps = LessonStep.objects.filter(lesson__course=obj)
+        total_steps = steps.count()
         if total_steps == 0:
             return 0
             
-        completed_steps = StepProgress.objects.filter(
-            student=request.user, 
-            step__lesson__course=obj,
-            is_completed=True
-        ).count()
+        completed_count = 0
         
-        return int((completed_steps / total_steps) * 100)
+        # 🔥 Локальный импорт
+        from quizzes.models import Quiz, Result
+
+        # 🔥 УМНЫЙ ПОДСЧЕТ ПРОГРЕССА (Учитывает и обычные шаги, и тесты)
+        for step in steps:
+            if step.step_type == 'quiz':
+                quizzes = Quiz.objects.filter(lesson=step.lesson)
+                if quizzes.exists() and Result.objects.filter(student=request.user, quiz__in=quizzes, score__gte=70).exists():
+                    completed_count += 1
+            else:
+                if StepProgress.objects.filter(student=request.user, step=step, is_completed=True).exists():
+                    completed_count += 1
+        
+        return int((completed_count / total_steps) * 100)
