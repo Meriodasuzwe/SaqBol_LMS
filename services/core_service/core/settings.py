@@ -112,22 +112,18 @@ AUTH_USER_MODEL = 'users.User'
 # ✅ Оставляем только одну, строгую версию настроек
 AUTH_PASSWORD_VALIDATORS = [
     {
-        # Проверка, что пароль не похож на имя пользователя или email
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        # Минимальная длина (9 символов)
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {
             'min_length': 9,
         }
     },
     {
-        # Проверка на распространенные пароли
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        # Проверка, что пароль не состоит только из цифр
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
@@ -147,11 +143,9 @@ USE_TZ = True
 # STATIC & MEDIA
 # =========================
 
-# Nginx раздает статику по этому пути
 STATIC_URL = '/api/static/' 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Nginx раздает медиа по этому пути
 MEDIA_URL = '/api/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -173,8 +167,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '10/minute',  # Анонимы - 10 запросов в минуту
-        'user': '100/minute'  # Юзеры - 100
+        'anon': '10/minute',  
+        'user': '100/minute'  
     }
 }
 
@@ -214,12 +208,7 @@ CORS_ALLOWED_ORIGINS = [
 if os.environ.get('CORS_ALLOW_ALL_IN_DEV', 'False') == 'True':
     CORS_ALLOW_ALL_ORIGINS = True
 
-# Важно для работы за Nginx
 FORCE_SCRIPT_NAME = '/api'
-
-#USE_X_FORWARDED_HOST = True
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
 
 # =========================
 # LOGGING (Аудит)
@@ -262,6 +251,20 @@ LOGGING = {
 # =========================
 # EMERGENCY ALLOWED HOSTS
 # =========================
-# Разрешаем вообще всё, чтобы Docker-контейнеры могли общаться
 ALLOWED_HOSTS = ["*"]
 CORS_ALLOW_ALL_ORIGINS = True
+
+# =========================
+# EMAIL CONFIGURATION (Gmail)
+# =========================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# ВНИМАНИЕ: Здесь должен быть 16-значный "Пароль приложения" Google, а не обычный пароль от почты!
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'raxataliev05@gmail.com') 
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'uszf mvcg area risy')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+FRONTEND_URL = 'http://localhost' # URL твоего React приложения
