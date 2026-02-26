@@ -521,3 +521,6 @@ INFO 2026-02-26 18:22:58,816 | ACTION: [200] POST /api/users/google-login/ (User
 INFO 2026-02-26 18:33:05,522 | ACTION: [201] POST /api/users/register/ (User:  [ID:None], IP: 172.18.0.1) - 2.482s
 ERROR 2026-02-26 18:33:32,236 | SERVER ERROR: [500] POST /api/users/verify-email/ (User:  [ID:None], IP: 172.18.0.1) - 0.049s
 ERROR 2026-02-26 18:33:34,498 | SERVER ERROR: [500] POST /api/users/verify-email/ (User:  [ID:None], IP: 172.18.0.1) - 0.033s
+INFO 2026-02-26 18:46:30,283 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 0.764s
+INFO 2026-02-26 18:51:54,073 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 0.788s
+INFO 2026-02-26 18:54:37,557 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 0.697s

@@ -33,13 +33,12 @@ services:
     depends_on:
       db_core:
         condition: service_healthy
+    env_file:
+      - .env
+    # В блоке environment оставляем только то, что не влезло в .env или требует переопределения
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_HOST=db_core
       - POSTGRES_PORT=5432
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
     networks:
       - lms_network
 
