@@ -1,5 +1,6 @@
 import logging
 import uuid
+import os
 from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
@@ -166,7 +167,7 @@ class GoogleLoginView(generics.GenericAPIView):
             
         try:
             # Наш Client ID из Google Cloud Console
-            CLIENT_ID = "938595288066-rme6f4ga3143r5f0f9j7pl4qsihhs54r.apps.googleusercontent.com"
+            CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
             
             # Проверка подлинности токена через сервера Google
             idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
