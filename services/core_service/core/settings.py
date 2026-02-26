@@ -150,6 +150,12 @@ MEDIA_URL = '/api/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
+# AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailOrUsernameModelBackend', # Наш новый метод
+    'django.contrib.auth.backends.ModelBackend',  # Стандартный метод (оставляем как запасной)
+]
+
 # =========================
 # DRF + JWT
 # =========================
@@ -267,4 +273,4 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'raxataliev05@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'uszf mvcg area risy')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-FRONTEND_URL = 'http://localhost' # URL твоего React приложения
+FRONTEND_URL = 'http://localhost' 

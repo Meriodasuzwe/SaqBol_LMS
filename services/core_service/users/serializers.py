@@ -1,7 +1,6 @@
 import logging
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
-from .models import User, QuizAttempt, EmailVerification
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -10,10 +9,13 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
+from .models import User, QuizAttempt, EmailVerification
+
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
 
 # ---------------------------
 # Регистрация
@@ -49,7 +51,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 fail_silently=False,
             )
         except Exception as e:
-            # Если почта не отправилась (например, неверный пароль Google), пишем ошибку в логи, 
+            # Если почта не отправилась, пишем ошибку в логи, 
             # но не ломаем регистрацию пользователя.
             logger.error(f"Ошибка отправки email для {user.email}: {str(e)}")
 
@@ -123,6 +125,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
         return value
 
+
 # ---------------------------
 # Установка нового пароля
 # ---------------------------
@@ -132,31 +135,35 @@ class SetNewPasswordSerializer(serializers.Serializer):
     uidb64 = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        try:
-            password = attrs.get('password')
-            token = attrs.get('token')
-            uidb64 = attrs.get('uidb64')
+        password = attrs.get('password')
+        token = attrs.get('token')
+        uidb64 = attrs.get('uidb64')
 
+        try:
+            # Декодируем ID
             id = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(id=id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError("Пользователь не найден или ссылка повреждена.")
 
-            if not PasswordResetTokenGenerator().check_token(user, token):
-                raise serializers.ValidationError("Ссылка недействительна или устарела.")
+        # Проверяем токен
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            raise serializers.ValidationError("Ссылка устарела или уже была использована.")
 
-            try:
-                validate_password(password, user)
-            except DjangoValidationError as e:
-                raise serializers.ValidationError({"password": list(e.messages)})
+        # Проверяем сложность пароля
+        try:
+            validate_password(password, user)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
 
-            attrs['user'] = user
-            return attrs
+        attrs['user'] = user
+        return attrs
 
-        except Exception:
-            raise serializers.ValidationError("Ссылка недействительна или повреждена.")
-
+    # ПРАВИЛЬНОЕ сохранение пароля (с шифрованием)
     def save(self, **kwargs):
-        user = self.validated_data['user']
         password = self.validated_data['password']
+        user = self.validated_data['user']
+        # set_password автоматически хэширует пароль!
         user.set_password(password)
         user.save()
         return user
@@ -206,8 +213,6 @@ class ResendVerificationSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Возвращаем ошибку в формате словаря с ключом 'error', 
-            # чтобы наш крутой фронтенд красиво ее перехватил
             raise serializers.ValidationError({"error": "Пользователь с таким email не найден."})
 
         if user.is_active:

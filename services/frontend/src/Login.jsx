@@ -9,7 +9,6 @@ function Login({ onLoginSuccess }) {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     
-    // НОВОЕ: Состояние для видимости пароля и чекбокса "Запомнить меня"
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     
@@ -24,14 +23,11 @@ function Login({ onLoginSuccess }) {
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
             
-            // Если добавишь логику для "Запомнить меня", ее можно обработать тут
-            // Например, сохранять токены в sessionStorage, если rememberMe === false
-            
             toast.success(`👋 С возвращением, ${username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {
-            setError('Неверное имя пользователя или пароль');
+            setError('Неверный логин, email или пароль');
         } finally {
             setLoading(false);
         }
@@ -54,11 +50,11 @@ function Login({ onLoginSuccess }) {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="form-control w-full">
                             <label className="label pt-0">
-                                <span className="label-text font-semibold text-gray-600">Логин</span>
+                                <span className="label-text font-semibold text-gray-600">Логин или Email</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Ваш логин"
+                                placeholder="Введите логин или почту"
                                 className="input input-bordered w-full focus:input-primary bg-gray-50"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
@@ -71,7 +67,6 @@ function Login({ onLoginSuccess }) {
                                 <span className="label-text font-semibold text-gray-600">Пароль</span>
                             </label>
                             
-                            {/* НОВОЕ: Обертка для инпута и кнопки глазика */}
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -99,7 +94,6 @@ function Login({ onLoginSuccess }) {
                                 </button>
                             </div>
 
-                            {/* НОВОЕ: Запомнить меня и Забыли пароль */}
                             <div className="flex justify-between items-center mt-3 px-1">
                                 <label className="cursor-pointer flex items-center space-x-2">
                                     <input 
