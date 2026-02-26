@@ -9,6 +9,9 @@ import 'react-toastify/dist/ReactToastify.css';
 // Импорты страниц
 import Login from './Login';
 import Register from './Register';
+import ForgotPassword from './ForgotPassword';
+import ResetPassword from './ResetPassword';
+import VerifyEmail from './VerifyEmail';
 import CourseList from './CourseList';
 import CourseDetail from './CourseDetail';
 import QuizPage from './QuizPage';
@@ -25,6 +28,13 @@ function App() {
   // 2. Состояние роли
   const [userRole, setUserRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(false);
+
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    setUserRole(null);
+  };
 
   // 3. Проверка роли при загрузке
   useEffect(() => {
@@ -46,11 +56,7 @@ function App() {
     }
   }, [isLoggedIn]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    setIsLoggedIn(false);
-    setUserRole(null);
-  };
+  
 
   const isTeacher = userRole === 'teacher' || userRole === 'admin';
 
@@ -90,6 +96,12 @@ function App() {
             <Route path="/register" element={
               !isLoggedIn ? <Register /> : <Navigate to="/courses" />
             } />
+            <Route path="/verify-email" element={
+            !isLoggedIn ? <VerifyEmail /> : <Navigate to="/courses" />
+            } />
+
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} /> 
 
             {/* 2. ПУБЛИЧНЫЕ СТРАНИЦЫ (Витрина) - Доступны ВСЕМ */}
             <Route path="/courses" element={<CourseList />} />

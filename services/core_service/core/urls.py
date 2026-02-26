@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from django.conf import settings 
+from django.conf.urls.static import static 
 
 urlpatterns = [
     # Просто 'admin/', без api. Nginx сам разрулит.
@@ -17,3 +19,5 @@ urlpatterns = [
     path('prometheus/', include('django_prometheus.urls')),
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

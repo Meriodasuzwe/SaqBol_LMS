@@ -3,7 +3,15 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import RegisterView, MeView
+# Вот здесь мы импортируем НАШИ вьюхи из соседнего файла views.py
+from .views import (
+    RegisterView, 
+    MeView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
+    VerifyEmailView,
+    ResendVerificationView
+)
 
 urlpatterns = [
     # Регистрация
@@ -17,4 +25,11 @@ urlpatterns = [
     
     # Профиль (GET - получить инфо, PATCH - обновить инфо/фото)
     path('me/', MeView.as_view(), name='user_me'),
+    
+    # Сброс пароля
+    path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
+    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    # Подтверждение email
+    path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
+    path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
 ]
