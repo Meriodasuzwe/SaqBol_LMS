@@ -449,3 +449,42 @@ INFO 2026-02-26 11:45:30,329 | ACTION: [200] POST /api/users/login/ (User:  [ID:
 WARNING 2026-02-26 11:49:11,227 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: test_login_2 [ID:27], IP: 172.18.0.1) - 0.010s
 WARNING 2026-02-26 11:49:11,257 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: test_login_2 [ID:27], IP: 172.18.0.1) - 0.008s
 INFO 2026-02-26 11:49:11,851 | ACTION: [201] POST /api/courses/3/enroll/ (User: test_login_2 [ID:27], IP: 172.18.0.1) - 0.015s
+INFO 2026-02-26 11:52:47,123 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.106s
+INFO 2026-02-26 11:52:56,295 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-02-26 11:53:16,826 | ACTION: [200] PATCH /api/users/me/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.086s
+WARNING 2026-02-26 12:26:20,895 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:20,896 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:20,901 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:20,902 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:23,367 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:23,371 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:24,123 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:24,125 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:24,129 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:24,130 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,085 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,087 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,089 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,095 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,096 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,101 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,108 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 12:26:29,112 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-02-26 12:26:42,529 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-02-26 12:33:09,315 | ACTION: [200] GET /api/admin/courses/lessonstep/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.072s
+INFO 2026-02-26 12:33:09,340 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+WARNING 2026-02-26 16:30:51,721 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.017s
+WARNING 2026-02-26 16:30:51,721 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.009s
+WARNING 2026-02-26 16:30:51,722 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+WARNING 2026-02-26 16:30:51,726 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 16:30:51,728 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 16:30:51,730 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 16:30:51,735 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-26 16:30:51,739 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-02-26 16:31:19,719 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.116s
+INFO 2026-02-26 16:31:42,839 | ACTION: [200] POST /api/quizzes/70/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-02-26 16:32:18,910 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+INFO 2026-02-26 16:33:09,049 | ACTION: [201] POST /api/courses/lessons/4/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-02-26 16:33:19,087 | ACTION: [200] PATCH /api/courses/steps/32/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-02-26 16:34:44,358 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 1.747s
+WARNING 2026-02-26 18:03:57,264 | CLIENT ERROR: [404] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s

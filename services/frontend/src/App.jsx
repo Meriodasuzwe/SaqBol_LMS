@@ -2,9 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import api from './api';
 
-// 👇 1. Импорты для уведомлений (Toasts)
+// Импорты для уведомлений (Toasts)
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+// 👇 НОВОЕ: Импортируем провайдер Google
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Импорты страниц
 import Login from './Login';
@@ -28,7 +31,6 @@ function App() {
   // 2. Состояние роли
   const [userRole, setUserRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(false);
-
 
   const handleLogout = () => {
     localStorage.clear();
@@ -56,99 +58,91 @@ function App() {
     }
   }, [isLoggedIn]);
 
-  
-
   const isTeacher = userRole === 'teacher' || userRole === 'admin';
 
   return (
-    <Router>
-      <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
-        
-        {/* 👇 2. Контейнер для уведомлений (Невидим, пока нет тостов) */}
-        <ToastContainer 
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="colored" // Сделаем цветным, чтобы ошибки были красными
-        />
-
-        {/* Navbar всегда виден и сам решает, что показывать (Вход или Профиль) */}
-        <Navbar 
-            isLoggedIn={isLoggedIn} 
-            userRole={userRole} 
-            onLogout={handleLogout} 
-        />
-
-        {/* --- ОСНОВНОЙ КОНТЕНТ --- */}
-        <main className="container mx-auto p-4 lg:p-8 flex-grow">
-          <Routes>
-            {/* 1. АВТОРИЗАЦИЯ */}
-            <Route path="/login" element={
-              !isLoggedIn ? <Login onLoginSuccess={() => setIsLoggedIn(true)} /> : <Navigate to="/courses" />
-            } />
+    // 👇 Оборачиваем всё приложение в GoogleOAuthProvider и передаем твой Client ID
+    <GoogleOAuthProvider clientId="938595288066-rme6f4ga3143r5f0f9j7pl4qsihhs54r.apps.googleusercontent.com">
+        <Router>
+          <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
             
-            <Route path="/register" element={
-              !isLoggedIn ? <Register /> : <Navigate to="/courses" />
-            } />
-            <Route path="/verify-email" element={
-            !isLoggedIn ? <VerifyEmail /> : <Navigate to="/courses" />
-            } />
+            <ToastContainer 
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored" 
+            />
 
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} /> 
+            <Navbar 
+                isLoggedIn={isLoggedIn} 
+                userRole={userRole} 
+                onLogout={handleLogout} 
+            />
 
-            {/* 2. ПУБЛИЧНЫЕ СТРАНИЦЫ (Витрина) - Доступны ВСЕМ */}
-            <Route path="/courses" element={<CourseList />} />
-            <Route path="/courses/:id" element={<CourseDetail isLoggedIn={isLoggedIn} />} /> {/* Передаем проп isLoggedIn */}
-            
-            {/* 3. ЗАЩИЩЕННЫЕ СТРАНИЦЫ (Только для студентов) */}
-            <Route path="/lesson/:lessonId" element={
-              isLoggedIn ? <LessonPage /> : <Navigate to="/login" />
-            } />
+            <main className="container mx-auto p-4 lg:p-8 flex-grow">
+              <Routes>
+                <Route path="/login" element={
+                  !isLoggedIn ? <Login onLoginSuccess={() => setIsLoggedIn(true)} /> : <Navigate to="/courses" />
+                } />
+                
+                <Route path="/register" element={
+                  !isLoggedIn ? <Register /> : <Navigate to="/courses" />
+                } />
+                <Route path="/verify-email" element={
+                !isLoggedIn ? <VerifyEmail /> : <Navigate to="/courses" />
+                } />
 
-            <Route path="/quiz/lesson/:lessonId" element={
-              isLoggedIn ? <QuizPage /> : <Navigate to="/login" />
-            } />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} /> 
 
-            <Route path="/profile" element={
-              isLoggedIn ? <Profile /> : <Navigate to="/login" />
-            } />
+                <Route path="/courses" element={<CourseList />} />
+                <Route path="/courses/:id" element={<CourseDetail isLoggedIn={isLoggedIn} />} />
+                
+                <Route path="/lesson/:lessonId" element={
+                  isLoggedIn ? <LessonPage /> : <Navigate to="/login" />
+                } />
 
-            {/* 4. ИНТЕРФЕЙС УЧИТЕЛЯ */}
-            <Route path="/teacher/course/:courseId/builder" element={
-              isLoggedIn ? (
-                  isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
-              ) : <Navigate to="/login" />
-            } />
+                <Route path="/quiz/lesson/:lessonId" element={
+                  isLoggedIn ? <QuizPage /> : <Navigate to="/login" />
+                } />
 
-            <Route path="/teacher" element={
-              isLoggedIn ? (
-                  isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
-              ) : <Navigate to="/login" />
-            } />
+                <Route path="/profile" element={
+                  isLoggedIn ? <Profile /> : <Navigate to="/login" />
+                } />
 
-            {/* --- РЕДИРЕКТЫ --- */}
-            {/* Если зашел на корень, кидаем на витрину курсов, а не на логин */}
-            <Route path="/" element={<Navigate to="/courses" />} />
-            <Route path="*" element={<Navigate to="/courses" />} />
+                <Route path="/teacher/course/:courseId/builder" element={
+                  isLoggedIn ? (
+                      isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
+                  ) : <Navigate to="/login" />
+                } />
 
-          </Routes>
-        </main>
+                <Route path="/teacher" element={
+                  isLoggedIn ? (
+                      isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
+                  ) : <Navigate to="/login" />
+                } />
 
-        <footer className="footer footer-center p-4 bg-base-200 text-base-content mt-auto">
-          <div>
-            <p>© 2026 SaqBol LMS - AI Education Platform</p>
+                <Route path="/" element={<Navigate to="/courses" />} />
+                <Route path="*" element={<Navigate to="/courses" />} />
+
+              </Routes>
+            </main>
+
+            <footer className="footer footer-center p-4 bg-base-200 text-base-content mt-auto">
+              <div>
+                <p>© 2026 SaqBol LMS - AI Education Platform</p>
+              </div>
+            </footer>
+
           </div>
-        </footer>
-
-      </div>
-    </Router>
+        </Router>
+    </GoogleOAuthProvider>
   );
 }
 
