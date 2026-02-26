@@ -1,8 +1,14 @@
 import logging
+import uuid
+import os
 from django.conf import settings
 from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import EmailVerification
 from .serializers import (
@@ -16,6 +22,9 @@ from .serializers import (
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
+
+# Получаем нашу модель User
+User = get_user_model()
 
 
 # ---------------------------
@@ -144,3 +153,61 @@ class ResendVerificationView(generics.GenericAPIView):
             {"message": "Новый код успешно отправлен."}, 
             status=status.HTTP_200_OK
         )
+
+# ---------------------------
+# Авторизация через Google (OAuth 2.0)
+# ---------------------------
+class GoogleLoginView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('credential')
+        if not token:
+            return Response({'error': 'Токен не предоставлен'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # Наш Client ID из Google Cloud Console
+            CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+            
+            # Проверка подлинности токена через сервера Google
+            idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
+
+            email = idinfo['email']
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+
+            # Ищем пользователя в нашей БД
+            user = User.objects.filter(email=email).first()
+            
+            # Если такого юзера нет, тихо создаем его
+            if not user:
+                base_username = email.split('@')[0]
+                username = base_username
+                # Если такой username уже есть, добавляем случайные символы
+                if User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{uuid.uuid4().hex[:5]}"
+
+                user = User.objects.create(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    role='student',
+                    is_active=True # Аккаунты от Google считаются подтвержденными
+                )
+                user.set_unusable_password() # Блокируем вход по обычному паролю
+                user.save()
+
+            # Выдаем пользователю наши стандартные токены доступа к системе
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'username': user.username,
+                'message': 'Успешный вход через Google'
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            logger.error(f"Ошибка проверки токена Google: {str(e)}")
+            return Response({'error': 'Недействительный токен Google'}, status=status.HTTP_400_BAD_REQUEST)

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import api from './api';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+// НОВОЕ: Импортируем компонент кнопки Google
+import { GoogleLogin } from '@react-oauth/google';
 
 function Login({ onLoginSuccess }) {
     const [username, setUsername] = useState('');
@@ -14,6 +16,7 @@ function Login({ onLoginSuccess }) {
     
     const navigate = useNavigate();
 
+    // Стандартный логин по паролю
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -28,6 +31,32 @@ function Login({ onLoginSuccess }) {
             navigate('/courses');
         } catch (err) {
             setError('Неверный логин, email или пароль');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // НОВОЕ: Логин через Google
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        setError('');
+        try {
+            // Отправляем Google-токен на наш бэкенд
+            const response = await api.post('users/google-login/', { 
+                credential: credentialResponse.credential 
+            });
+            
+            // Бэкенд проверил токен и вернул НАШИ токены системы SaqBol
+            localStorage.setItem('access', response.data.access);
+            localStorage.setItem('refresh', response.data.refresh);
+            
+            toast.success(`👋 Привет, ${response.data.username}!`);
+            onLoginSuccess();
+            navigate('/courses');
+        } catch (err) {
+            console.error(err);
+            setError('Ошибка авторизации через Google. Попробуйте снова.');
+            toast.error('Сбой при входе через Google');
         } finally {
             setLoading(false);
         }
@@ -112,16 +141,33 @@ function Login({ onLoginSuccess }) {
 
                         <button 
                             type="submit" 
-                            className={`btn btn-primary w-full text-lg mt-6 ${loading ? 'loading' : ''}`}
+                            className={`btn btn-primary w-full text-lg mt-6 shadow-md ${loading ? 'loading' : ''}`}
                             disabled={loading}
                         >
                             {loading ? 'Входим...' : 'Войти'}
                         </button>
                     </form>
 
-                    <div className="divider my-6">ИЛИ</div>
+                    {/* НОВОЕ: Секция входа через Google */}
+                    <div className="divider my-6 text-gray-400 text-sm">ИЛИ</div>
 
-                    <p className="text-center text-sm text-gray-600">
+                    <div className="flex justify-center mb-6">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => {
+                                toast.error('Сбой при входе через Google');
+                                setError('Не удалось связаться с Google');
+                            }}
+                            useOneTap
+                            shape="rectangular"
+                            theme="outline"
+                            text="continue_with"
+                            size="large"
+                            width="100%"
+                        />
+                    </div>
+
+                    <p className="text-center text-sm text-gray-600 mt-2">
                         Нет аккаунта?{' '}
                         <Link to="/register" className="link link-primary font-bold hover:text-primary-focus transition-colors">
                             Зарегистрироваться

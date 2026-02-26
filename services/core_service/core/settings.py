@@ -269,8 +269,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # ВНИМАНИЕ: Здесь должен быть 16-значный "Пароль приложения" Google, а не обычный пароль от почты!
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'raxataliev05@gmail.com') 
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'uszf mvcg area risy')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 FRONTEND_URL = 'http://localhost' 

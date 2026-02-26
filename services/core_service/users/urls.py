@@ -10,7 +10,8 @@ from .views import (
     PasswordResetRequestView,
     PasswordResetConfirmView,
     VerifyEmailView,
-    ResendVerificationView
+    ResendVerificationView,
+    GoogleLoginView
 )
 
 urlpatterns = [
@@ -20,6 +21,7 @@ urlpatterns = [
     # Логин (SimpleJWT)
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     
+    path('google-login/', GoogleLoginView.as_view(), name='google_login'),
     # Обновление токена
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
