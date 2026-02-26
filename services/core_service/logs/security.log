@@ -524,3 +524,5 @@ ERROR 2026-02-26 18:33:34,498 | SERVER ERROR: [500] POST /api/users/verify-email
 INFO 2026-02-26 18:46:30,283 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 0.764s
 INFO 2026-02-26 18:51:54,073 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 0.788s
 INFO 2026-02-26 18:54:37,557 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 0.697s
+INFO 2026-02-26 18:59:01,884 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 1.642s
+INFO 2026-02-26 18:59:20,527 | ACTION: [200] POST /api/users/password-reset-confirm/ (User:  [ID:None], IP: 172.18.0.1) - 0.130s
