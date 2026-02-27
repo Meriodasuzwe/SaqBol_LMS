@@ -10,3 +10,4 @@ django-prometheus
 pytest
 pytest-django
 google-auth==2.27.0
+stripe

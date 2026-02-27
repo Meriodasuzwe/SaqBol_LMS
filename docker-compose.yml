@@ -39,6 +39,9 @@ services:
     environment:
       - POSTGRES_HOST=db_core
       - POSTGRES_PORT=5432
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     networks:
       - lms_network
 

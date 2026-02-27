@@ -1,18 +1,31 @@
+import stripe
+from django.conf import settings
+from django.http import HttpResponse # Добавлен импорт для вебхука
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-# ОБНОВЛЕНЫ ИМПОРТЫ
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+# Импорты моделей и сериализаторов
 from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress
 from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer
 from quizzes.models import Quiz, Result
+
+# Инициализация ключа Stripe
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
+
 
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 
 class CourseListView(generics.ListCreateAPIView):
     serializer_class = CourseSerializer
@@ -32,6 +45,7 @@ class CourseListView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(teacher=self.request.user)
 
+
 class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
@@ -46,17 +60,69 @@ class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("Только преподаватель может редактировать этот курс.")
         return course
 
+
 class EnrollCourseView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         course = get_object_or_404(Course, pk=pk)
+        
+        # Если курс платный, требуем оплаты через Stripe (не даем записаться бесплатно)
+        if course.price > 0:
+            return Response(
+                {"error": "Этот курс платный. Пожалуйста, оплатите его перед записью."}, 
+                status=status.HTTP_402_PAYMENT_REQUIRED
+            )
+
         enrollment, created = Enrollment.objects.get_or_create(student=request.user, course=course)
         
         if created:
             return Response({"message": "Вы успешно записались!"}, status=status.HTTP_201_CREATED)
         else:
             return Response({"message": "Вы уже записаны на этот курс"}, status=status.HTTP_200_OK)
+
+
+# --- STRIPE ОПЛАТА ---
+class CreateStripeCheckoutSessionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+        
+        if course.price <= 0:
+            return Response({"error": "Этот курс бесплатный!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Переводим в минимальные единицы (тиын/центы)
+        price_in_cents = int(course.price * 100)
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost')
+
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[
+                    {
+                        'price_data': {
+                            'currency': 'kzt',
+                            'unit_amount': price_in_cents,
+                            'product_data': {
+                                'name': course.title,
+                                'description': course.short_description or 'Обучающий курс',
+                            },
+                        },
+                        'quantity': 1,
+                    },
+                ],
+                mode='payment',
+                success_url=f"{frontend_url}/course/{course.id}?success=true",
+                cancel_url=f"{frontend_url}/course/{course.id}?canceled=true",
+                metadata={
+                    'course_id': course.id,
+                    'user_id': request.user.id
+                }
+            )
+            return Response({'checkout_url': checkout_session.url})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LessonListCreateView(generics.ListCreateAPIView):
@@ -105,7 +171,7 @@ class LessonDetailView(generics.RetrieveUpdateDestroyAPIView):
                 raise PermissionDenied("Редактировать урок может только автор.")
         return lesson
 
-# ДОБАВЛЕНО: View для создания шагов
+
 class LessonStepCreateView(generics.CreateAPIView):
     serializer_class = LessonStepSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -117,20 +183,30 @@ class LessonStepCreateView(generics.CreateAPIView):
         serializer.save(lesson=lesson)
 
 
+class LessonStepDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = LessonStep.objects.all()
+    serializer_class = LessonStepSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return LessonStep.objects.all()
+        return LessonStep.objects.filter(lesson__course__teacher=self.request.user)
+
+
 class MyCoursesView(generics.ListAPIView):
     serializer_class = CourseSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'teacher' or user.role == 'admin' or user.is_staff:
+        if user.role in ['teacher', 'admin'] or user.is_staff:
             return Course.objects.filter(teacher=user)
         
         enrolled_course_ids = Enrollment.objects.filter(student=user).values_list('course_id', flat=True)
         return Course.objects.filter(id__in=enrolled_course_ids)
 
 
-# ОБНОВЛЕНО: Отмечаем пройденным ШАГ, а не урок. Логика Quiz сохранена!
 class MarkStepCompleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -139,13 +215,15 @@ class MarkStepCompleteView(APIView):
         user = request.user
         score = request.data.get('score', 10)
 
-        # Проверяем квизы, привязанные к родителю-уроку
         if not (step.lesson.course.teacher == user or user.is_staff):
             quizzes = Quiz.objects.filter(lesson=step.lesson)
             if quizzes.exists():
                 passed = Result.objects.filter(student=user, quiz__in=quizzes, score__gte=70).exists()
                 if not passed:
-                    return Response({"error": "Сначала нужно успешно пройти тесты для этого урока (минимум 70%)."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": "Сначала нужно успешно пройти тесты для этого урока (минимум 70%)."}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
         progress, created = StepProgress.objects.update_or_create(
             student=user,
@@ -156,7 +234,6 @@ class MarkStepCompleteView(APIView):
         return Response({"message": "Шаг пройден!", "score_earned": score}, status=status.HTTP_200_OK)
 
 
-# ОБНОВЛЕНО: Чтобы AI генератор не сломался
 class BulkCreateCourseView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -181,7 +258,6 @@ class BulkCreateCourseView(APIView):
                 category=category 
             )
 
-            # Создаем уроки, а внутрь каждого сразу кидаем текстовый шаг
             for i, lesson_data in enumerate(lessons_data):
                 lesson = Lesson.objects.create(
                     course=course,
@@ -189,7 +265,6 @@ class BulkCreateCourseView(APIView):
                     order=i + 1
                 )
                 
-                # Создаем шаг с контентом
                 LessonStep.objects.create(
                     lesson=lesson,
                     step_type='text',
@@ -206,13 +281,59 @@ class BulkCreateCourseView(APIView):
             print(f"🔥 ОШИБКА СОХРАНЕНИЯ В БД: {str(e)}") 
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class LessonStepDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = LessonStep.objects.all()
-    serializer_class = LessonStepSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        # Разрешаем учителю удалять и изменять только свои шаги
-        if self.request.user.is_staff:
-            return LessonStep.objects.all()
-        return LessonStep.objects.filter(lesson__course__teacher=self.request.user)
+# --- STRIPE WEBHOOK (ОБНОВЛЕННЫЙ: ТЕПЕРЬ ЭТО ФУНКЦИЯ) ---
+@csrf_exempt
+def stripe_webhook(request):
+    import sys
+    print("\n" + "="*40, flush=True)
+    print("🔥 СТРАЙП СТУЧИТСЯ В ВЕБХУК!", flush=True)
+
+    webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', None)
+    
+    if not webhook_secret:
+        print("❌ ОШИБКА: STRIPE_WEBHOOK_SECRET пустой в settings.py!", flush=True)
+        return HttpResponse("No secret", status=500)
+
+    try:
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+        print(f"✅ Успешно принято событие: {event['type']}", flush=True)
+        
+    except Exception as e:
+        print(f"❌ ОШИБКА ПОДПИСИ ИЛИ ПАРСИНГА: {str(e)}", flush=True)
+        return HttpResponse(status=400)
+
+    # Если оплата прошла успешно
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        
+        course_id = session.get('metadata', {}).get('course_id')
+        user_id = session.get('metadata', {}).get('user_id')
+        
+        print(f"🔍 Метаданные: Курс={course_id}, Юзер={user_id}", flush=True)
+
+        if course_id and user_id:
+            try:
+                from .models import Course, Enrollment
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                
+                course = Course.objects.get(id=course_id)
+                user = User.objects.get(id=user_id)
+                
+                # Записываем на курс
+                Enrollment.objects.get_or_create(student=user, course=course)
+                print(f"🎉 УРА! Пользователь {user.email} записан на курс!", flush=True)
+            except Exception as e:
+                print(f"❌ ОШИБКА БАЗЫ ДАННЫХ: {str(e)}", flush=True)
+                import traceback
+                traceback.print_exc()
+                return HttpResponse(status=500)
+
+    print("="*40 + "\n", flush=True)
+    return HttpResponse(status=200)
