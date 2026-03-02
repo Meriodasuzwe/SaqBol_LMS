@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from './api';
 
 function CourseDetail({ isLoggedIn }) { 
     const { id } = useParams();
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
 
     // --- СОСТОЯНИЯ ---
     const [course, setCourse] = useState(null);
@@ -13,41 +12,52 @@ function CourseDetail({ isLoggedIn }) {
     const [isEnrolled, setIsEnrolled] = useState(false); 
     const [loading, setLoading] = useState(true);
     const [enrollLoading, setEnrollLoading] = useState(false); 
-    const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-    // --- ПРОВЕРКА УСПЕШНОЙ ОПЛАТЫ ---
+    // ХИТРЫЙ ТРЮК: Читаем URL напрямую при загрузке страницы
+    const [showSuccessToast, setShowSuccessToast] = useState(() => {
+        return new URLSearchParams(window.location.search).get('success') === 'true';
+    });
+
+    // --- 1. ПРОВЕРКА УСПЕШНОЙ ОПЛАТЫ (УВЕДОМЛЕНИЕ) ---
     useEffect(() => {
-        if (searchParams.get('success') === 'true') {
-            setShowSuccessToast(true);
+        if (showSuccessToast) {
+            // Тихо стираем ?success=true из адресной строки, чтобы при F5 плашка не вылезала снова
+            window.history.replaceState(null, '', window.location.pathname);
             
-            // Очищаем URL, чтобы при обновлении страницы уведомление не вылезало снова
-            searchParams.delete('success');
-            setSearchParams(searchParams);
-            
-            // Прячем уведомление через 5 секунд
-            setTimeout(() => {
+            // Прячем плашку через 5 секунд
+            const timer = setTimeout(() => {
                 setShowSuccessToast(false);
             }, 5000);
+            return () => clearTimeout(timer);
         }
-    }, [searchParams, setSearchParams]);
+    }, [showSuccessToast]);
 
-    // --- ЗАГРУЗКА ДАННЫХ ---
+    // --- 2. ЗАГРУЗКА ДАННЫХ БЕЗ ОШИБКИ 403 ---
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Грузим инфо о курсе (доступно всем)
                 const courseRes = await api.get(`courses/${id}/`);
                 setCourse(courseRes.data);
 
                 if (isLoggedIn) {
                     try {
-                        const lessonsRes = await api.get(`courses/${id}/lessons/`);
-                        const sortedLessons = lessonsRes.data.sort((a, b) => a.id - b.id);
-                        setLessons(sortedLessons);
-                        setIsEnrolled(true); 
-                    } catch (error) {
-                        if (error.response && error.response.status === 403) {
+                        // СНАЧАЛА проверяем, куплен ли курс (чтобы не было 403)
+                        const myCoursesRes = await api.get(`courses/my_courses/`);
+                        const isUserEnrolled = myCoursesRes.data.some(c => c.id === parseInt(id));
+
+                        if (isUserEnrolled) {
+                            // Если куплен - грузим уроки
+                            const lessonsRes = await api.get(`courses/${id}/lessons/`);
+                            const sortedLessons = lessonsRes.data.sort((a, b) => a.id - b.id);
+                            setLessons(sortedLessons);
+                            setIsEnrolled(true); 
+                        } else {
                             setIsEnrolled(false);
                         }
+                    } catch (error) {
+                        console.error("Ошибка при проверке записи:", error);
+                        setIsEnrolled(false);
                     }
                 } else {
                     setIsEnrolled(false);
@@ -83,14 +93,13 @@ function CourseDetail({ isLoggedIn }) {
 
         setEnrollLoading(true);
         try {
-            // Если курс ПЛАТНЫЙ
             if (course.price && parseFloat(course.price) > 0) {
                 const response = await api.post(`courses/${id}/create-checkout-session/`);
                 window.location.href = response.data.checkout_url; 
             } else {
-                // Если курс БЕСПЛАТНЫЙ
                 await api.post(`courses/${id}/enroll/`);
-                window.location.reload(); 
+                // Добавляем ?success=true даже для бесплатных курсов
+                window.location.href = `/course/${id}?success=true`; 
             }
         } catch (err) {
             console.error("Ошибка при записи/оплате:", err);
@@ -106,15 +115,34 @@ function CourseDetail({ isLoggedIn }) {
         return new Intl.NumberFormat('ru-RU').format(num) + ' ₸';
     };
 
+    // --- САМЫЙ ГЛАВНЫЙ КОМПОНЕНТ: ПЛАШКА УВЕДОМЛЕНИЯ ---
+    // Вынесли отдельно, чтобы показывать её на любом этапе (даже во время загрузки)
+    const SuccessToast = () => {
+        if (!showSuccessToast) return null;
+        return (
+            <div className="toast toast-top toast-center z-[9999] animate-bounce mt-4 fixed">
+                <div className="alert alert-success text-white shadow-xl flex items-center gap-3 px-6 py-4 rounded-2xl bg-emerald-500 border-none">
+                    <span className="text-2xl">🎉</span>
+                    <div>
+                        <h3 className="font-bold text-lg">Оплата прошла успешно!</h3>
+                        <div className="text-sm opacity-90">Доступ к материалам курса открыт.</div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // --- ЛОАДЕР ---
     if (loading) return (
-        <div className="min-h-[70vh] flex items-center justify-center bg-slate-50">
+        <div className="min-h-[70vh] flex items-center justify-center bg-slate-50 relative">
+            <SuccessToast />
             <div className="w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
         </div>
     );
     
     if (!course) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 relative">
+            <SuccessToast />
             <div className="text-center text-slate-500 font-medium">Курс не найден</div>
         </div>
     );
@@ -126,7 +154,8 @@ function CourseDetail({ isLoggedIn }) {
     // ============================================================
     if (!isEnrolled) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-16 pb-24 font-sans text-slate-900">
+            <div className="min-h-screen bg-slate-50 pt-16 pb-24 font-sans text-slate-900 relative">
+                <SuccessToast />
                 <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row gap-16 items-start">
                     
                     {/* ЛЕВАЯ ЧАСТЬ: ОПИСАНИЕ */}
@@ -165,7 +194,7 @@ function CourseDetail({ isLoggedIn }) {
 
                             <button 
                                 onClick={handleEnrollClick} 
-                                disabled={enrollLoading}
+                                disabled={enrollLoading || showSuccessToast}
                                 className="w-full bg-slate-900 hover:bg-slate-800 text-white transition-all duration-200 py-4 px-6 rounded-xl font-semibold text-lg flex justify-center items-center shadow-md disabled:bg-slate-300 disabled:cursor-not-allowed"
                             >
                                 {enrollLoading ? (
@@ -206,20 +235,7 @@ function CourseDetail({ isLoggedIn }) {
     // ============================================================
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 py-10 relative">
-            
-            {/* --- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ О ПОКУПКЕ --- */}
-            {showSuccessToast && (
-                <div className="toast toast-top toast-center z-[100] animate-bounce mt-4">
-                    <div className="alert alert-success text-white shadow-xl flex items-center gap-3 px-6 py-4 rounded-2xl bg-emerald-500 border-none">
-                        <span className="text-2xl">🎉</span>
-                        <div>
-                            <h3 className="font-bold text-lg">Оплата прошла успешно!</h3>
-                            <div className="text-sm opacity-90">Доступ к материалам курса открыт.</div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+            <SuccessToast />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8">
                 
                 {/* ЛЕВАЯ ЧАСТЬ: ИНФО О КУРСЕ */}

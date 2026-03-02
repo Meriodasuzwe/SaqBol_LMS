@@ -11,15 +11,16 @@ from .views import (
     PasswordResetConfirmView,
     VerifyEmailView,
     ResendVerificationView,
+    CustomLoginView,
     GoogleLoginView
 )
 
 urlpatterns = [
     # Регистрация
     path('register/', RegisterView.as_view(), name='register'),
-    
-    # Логин (SimpleJWT)
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+
+    # Логин (по email и паролю)
+    path('login/', CustomLoginView.as_view(), name='login'),
     
     path('google-login/', GoogleLoginView.as_view(), name='google_login'),
     # Обновление токена

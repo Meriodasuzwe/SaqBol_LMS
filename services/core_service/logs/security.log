@@ -604,3 +604,148 @@ WARNING 2026-02-27 18:07:54,136 | ACCESS DENIED: [403] GET /api/courses/3/lesson
 WARNING 2026-02-27 18:07:54,175 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.009s
 WARNING 2026-02-27 18:10:53,462 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.011s
 WARNING 2026-02-27 18:10:53,490 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.007s
+WARNING 2026-02-27 18:11:59,531 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.012s
+WARNING 2026-02-27 18:11:59,573 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.009s
+INFO 2026-02-27 18:12:01,020 | ACTION: [200] POST /api/courses/3/create-checkout-session/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.733s
+WARNING 2026-02-27 18:12:22,700 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.012s
+WARNING 2026-02-27 18:12:22,738 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.009s
+WARNING 2026-02-27 18:13:35,040 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.011s
+WARNING 2026-02-27 18:13:35,071 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.009s
+INFO 2026-02-27 18:13:41,569 | ACTION: [200] POST /api/courses/3/create-checkout-session/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.681s
+INFO 2026-02-27 18:14:07,380 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.011s
+INFO 2026-02-27 18:14:07,441 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.010s
+INFO 2026-02-27 18:14:07,473 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-02-27 18:14:07,684 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.019s
+INFO 2026-02-27 18:14:09,761 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.004s
+WARNING 2026-02-27 18:21:21,154 | ACCESS DENIED: [403] GET /api/courses/5/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.011s
+WARNING 2026-02-27 18:21:21,178 | ACCESS DENIED: [403] GET /api/courses/5/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.010s
+INFO 2026-02-27 18:21:22,593 | ACTION: [200] POST /api/courses/5/create-checkout-session/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.690s
+INFO 2026-02-27 18:21:38,197 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-02-27 18:21:38,286 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.004s
+INFO 2026-02-27 18:21:38,332 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+INFO 2026-02-27 18:21:38,479 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.014s
+INFO 2026-02-27 18:21:40,506 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 18:26:11,932 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 18:26:11,933 | ACCESS DENIED: [401] GET /api/courses/5/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 18:26:11,938 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 18:26:11,939 | ACCESS DENIED: [401] GET /api/courses/5/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-02-27 18:26:11,943 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 18:26:11,948 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-02-27 18:33:08,512 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.292s
+WARNING 2026-02-27 18:33:10,222 | ACCESS DENIED: [403] GET /api/courses/6/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.012s
+WARNING 2026-02-27 18:33:10,238 | ACCESS DENIED: [403] GET /api/courses/6/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.009s
+INFO 2026-02-27 18:33:11,919 | ACTION: [201] POST /api/courses/6/enroll/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.016s
+WARNING 2026-02-27 18:33:14,773 | ACCESS DENIED: [403] GET /api/courses/7/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.009s
+WARNING 2026-02-27 18:33:14,817 | ACCESS DENIED: [403] GET /api/courses/7/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.008s
+INFO 2026-02-27 18:33:20,763 | ACTION: [302] GET /api/admin/ (User:  [ID:None], IP: 172.18.0.1) - 0.021s
+INFO 2026-02-27 18:33:20,805 | ACTION: [200] GET /api/admin/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.038s
+INFO 2026-02-27 18:33:26,023 | ACTION: [302] POST /api/admin/login/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.118s
+INFO 2026-02-27 18:33:26,053 | ACTION: [200] GET /api/admin/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-02-27 18:33:33,033 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.039s
+INFO 2026-02-27 18:33:33,061 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+INFO 2026-02-27 18:33:35,301 | ACTION: [200] GET /api/admin/courses/course/15/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.035s
+INFO 2026-02-27 18:33:35,327 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-02-27 18:33:39,731 | ACTION: [302] POST /api/admin/courses/course/15/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.019s
+INFO 2026-02-27 18:33:39,758 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.022s
+INFO 2026-02-27 18:33:39,782 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+WARNING 2026-02-27 18:33:47,113 | ACCESS DENIED: [403] GET /api/courses/15/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.011s
+WARNING 2026-02-27 18:33:47,139 | ACCESS DENIED: [403] GET /api/courses/15/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.008s
+INFO 2026-02-27 18:33:55,520 | ACTION: [200] POST /api/courses/15/create-checkout-session/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.751s
+WARNING 2026-02-27 19:04:18,906 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 19:04:18,908 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 19:04:18,909 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-02-27 19:04:18,913 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 19:04:18,914 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-02-27 19:04:18,916 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 19:04:18,920 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-02-27 19:04:18,924 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+ERROR 2026-03-01 10:11:40,802 | SERVER ERROR: [500] POST /api/users/register/ (User:  [ID:None], IP: 172.18.0.1) - 0.148s
+INFO 2026-03-01 10:11:47,392 | ACTION: [201] POST /api/users/register/ (User:  [ID:None], IP: 172.18.0.1) - 2.225s
+ERROR 2026-03-01 10:12:29,490 | SERVER ERROR: [500] POST /api/users/verify-email/ (User:  [ID:None], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-01 10:12:42,916 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.307s
+INFO 2026-03-01 10:13:02,206 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.115s
+INFO 2026-03-01 10:13:27,223 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.283s
+WARNING 2026-03-01 10:13:35,889 | ACCESS DENIED: [403] GET /api/courses/14/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.010s
+WARNING 2026-03-01 10:13:35,915 | ACCESS DENIED: [403] GET /api/courses/14/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-01 10:13:49,617 | ACTION: [200] GET /api/admin/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.044s
+INFO 2026-03-01 10:13:52,476 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.034s
+INFO 2026-03-01 10:13:52,506 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-01 10:13:58,561 | ACTION: [200] GET /api/admin/courses/course/14/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.037s
+INFO 2026-03-01 10:13:58,589 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-01 10:14:05,283 | ACTION: [302] POST /api/admin/courses/course/14/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+INFO 2026-03-01 10:14:05,312 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.024s
+INFO 2026-03-01 10:14:05,337 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+WARNING 2026-03-01 10:14:08,040 | ACCESS DENIED: [403] GET /api/courses/14/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.010s
+WARNING 2026-03-01 10:14:08,074 | ACCESS DENIED: [403] GET /api/courses/14/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-01 10:14:25,426 | ACTION: [200] POST /api/courses/14/create-checkout-session/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.728s
+WARNING 2026-03-02 15:53:13,150 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-03-02 15:53:13,151 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+WARNING 2026-03-02 15:53:13,151 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.006s
+WARNING 2026-03-02 15:53:13,157 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-02 15:53:13,158 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-03-02 15:53:13,159 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-02 15:53:13,163 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-02 15:53:13,166 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 15:53:44,745 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.292s
+WARNING 2026-03-02 15:53:46,241 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-02 15:53:46,267 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-02 15:53:51,268 | ACTION: [200] POST /api/courses/3/create-checkout-session/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.720s
+WARNING 2026-03-02 15:54:19,335 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.009s
+WARNING 2026-03-02 15:54:19,386 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.007s
+WARNING 2026-03-02 15:54:33,558 | ACCESS DENIED: [403] GET /api/courses/5/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.012s
+WARNING 2026-03-02 15:54:33,580 | ACCESS DENIED: [403] GET /api/courses/5/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.008s
+WARNING 2026-03-02 15:54:51,119 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.010s
+WARNING 2026-03-02 15:54:51,149 | ACCESS DENIED: [403] GET /api/courses/3/lessons/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-02 16:03:09,996 | ACTION: [200] POST /api/courses/3/create-checkout-session/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.669s
+INFO 2026-03-02 16:03:26,750 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.018s
+INFO 2026-03-02 16:03:26,832 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-02 16:03:26,861 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:03:27,004 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-02 16:03:29,205 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.003s
+INFO 2026-03-02 16:06:02,950 | ACTION: [200] POST /api/courses/5/create-checkout-session/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.659s
+INFO 2026-03-02 16:06:35,908 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+INFO 2026-03-02 16:06:35,990 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+INFO 2026-03-02 16:06:36,041 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:06:36,197 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+INFO 2026-03-02 16:06:38,457 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+INFO 2026-03-02 16:08:01,250 | ACTION: [200] POST /api/quizzes/78/submit/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.019s
+INFO 2026-03-02 16:10:04,253 | ACTION: [200] POST /api/courses/15/create-checkout-session/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.657s
+INFO 2026-03-02 16:10:16,084 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:10:16,165 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:10:16,195 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:10:16,369 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.014s
+INFO 2026-03-02 16:10:18,497 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.003s
+INFO 2026-03-02 16:12:15,242 | ACTION: [200] GET /api/admin/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.074s
+INFO 2026-03-02 16:12:23,896 | ACTION: [200] GET /api/admin/courses/course/add/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.050s
+INFO 2026-03-02 16:12:23,982 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.063s
+INFO 2026-03-02 16:12:25,606 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.037s
+INFO 2026-03-02 16:12:25,633 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-02 16:12:27,475 | ACTION: [200] GET /api/admin/courses/course/7/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.026s
+INFO 2026-03-02 16:12:27,503 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-02 16:12:32,717 | ACTION: [302] POST /api/admin/courses/course/7/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.018s
+INFO 2026-03-02 16:12:32,744 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-02 16:12:32,770 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-02 16:13:24,290 | ACTION: [200] POST /api/courses/7/create-checkout-session/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.708s
+INFO 2026-03-02 16:13:35,121 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+INFO 2026-03-02 16:13:35,157 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:13:35,226 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:13:35,317 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.030s
+INFO 2026-03-02 16:13:37,487 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+INFO 2026-03-02 16:14:12,439 | ACTION: [200] GET /api/admin/courses/course/8/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.033s
+INFO 2026-03-02 16:14:12,466 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-02 16:14:17,698 | ACTION: [302] POST /api/admin/courses/course/8/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-03-02 16:14:17,727 | ACTION: [200] GET /api/admin/courses/course/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.024s
+INFO 2026-03-02 16:14:17,753 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-02 16:14:29,462 | ACTION: [200] POST /api/courses/8/create-checkout-session/ (User: ruhti [ID:26], IP: 172.18.0.1) - 0.720s
+INFO 2026-03-02 16:14:41,849 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:14:41,924 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:14:42,003 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:14:42,133 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.019s
+INFO 2026-03-02 16:14:44,132 | ACTION: [200] POST /api/courses/webhook/stripe/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:15:21,474 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 2.726s
+INFO 2026-03-02 16:15:43,654 | ACTION: [200] POST /api/users/password-reset-confirm/ (User:  [ID:None], IP: 172.18.0.1) - 0.110s
+ERROR 2026-03-02 16:15:55,852 | SERVER ERROR: [500] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.042s
+WARNING 2026-03-02 16:24:28,279 | CLIENT ERROR: [400] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:24:39,762 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 1.915s
+INFO 2026-03-02 16:25:01,364 | ACTION: [200] POST /api/users/password-reset-confirm/ (User:  [ID:None], IP: 172.18.0.1) - 0.106s
+WARNING 2026-03-02 16:25:11,174 | CLIENT ERROR: [400] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
