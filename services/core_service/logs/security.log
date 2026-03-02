@@ -749,3 +749,14 @@ WARNING 2026-03-02 16:24:28,279 | CLIENT ERROR: [400] POST /api/users/login/ (Us
 INFO 2026-03-02 16:24:39,762 | ACTION: [200] POST /api/users/password-reset/ (User:  [ID:None], IP: 172.18.0.1) - 1.915s
 INFO 2026-03-02 16:25:01,364 | ACTION: [200] POST /api/users/password-reset-confirm/ (User:  [ID:None], IP: 172.18.0.1) - 0.106s
 WARNING 2026-03-02 16:25:11,174 | CLIENT ERROR: [400] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-02 16:32:57,304 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.101s
+INFO 2026-03-02 16:34:50,369 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.106s
+INFO 2026-03-02 16:34:50,396 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-02 16:34:57,023 | ACTION: [200] GET /api/admin/users/user/28/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.062s
+INFO 2026-03-02 16:34:57,054 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+WARNING 2026-03-02 16:35:09,143 | CLIENT ERROR: [400] POST /api/users/login/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-02 16:46:09,263 | ACTION: [201] POST /api/courses/12/enroll/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.015s
+INFO 2026-03-02 16:46:35,285 | ACTION: [200] POST /api/quizzes/70/submit/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-02 16:46:36,420 | CLIENT ERROR: [429] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.006s
+WARNING 2026-03-02 16:46:36,519 | CLIENT ERROR: [429] GET /api/courses/3/lessons/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.008s
+WARNING 2026-03-02 16:46:50,993 | CLIENT ERROR: [429] POST /api/courses/steps/25/complete/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.010s
