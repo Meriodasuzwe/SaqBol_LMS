@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 from .views import (
     CourseListView, 
     CourseDetailView, 
@@ -8,9 +8,11 @@ from .views import (
     MyCoursesView,
     LessonDetailView,
     BulkCreateCourseView,
-    LessonStepDetailView, # НОВОЕ
-    LessonStepCreateView, # НОВОЕ
-    MarkStepCompleteView  # ОБНОВЛЕНО
+    LessonStepDetailView,
+    LessonStepCreateView,
+    MarkStepCompleteView,
+    CreateStripeCheckoutSessionView,
+    stripe_webhook # <-- ИМПОРТИРУЕМ ФУНКЦИЮ
 )
 
 urlpatterns = [
@@ -21,11 +23,14 @@ urlpatterns = [
     path('', CourseListView.as_view(), name='course-list'),
     path('<int:pk>/', CourseDetailView.as_view(), name='course-detail'),
     path('<int:pk>/enroll/', EnrollCourseView.as_view(), name='course-enroll'),
+    
+    # ССЫЛКА НА ОПЛАТУ STRIPE И ВЕБХУК
+    path('<int:course_id>/create-checkout-session/', CreateStripeCheckoutSessionView.as_view(), name='create-checkout-session'),
+    path('webhook/stripe/', stripe_webhook, name='stripe-webhook'), # <-- МАРШРУТ НА ФУНКЦИЮ
 
     path('<int:course_id>/lessons/', LessonListCreateView.as_view(), name='course-lessons'),
     path('lessons/<int:pk>/', LessonDetailView.as_view(), name='lesson-detail'),
     
-    # ДОБАВЛЕНО: Маршруты для шагов
     path('lessons/<int:lesson_id>/steps/', LessonStepCreateView.as_view(), name='step-create'),
     path('steps/<int:pk>/complete/', MarkStepCompleteView.as_view(), name='step-complete'),
     path('steps/<int:pk>/', LessonStepDetailView.as_view(), name='step-detail'),

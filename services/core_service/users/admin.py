@@ -6,9 +6,9 @@ from .models import User
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     # Указываем, какие поля показывать в списке пользователей
-    list_display = ('username', 'email', 'iin', 'role', 'is_staff')
+    list_display = ('username', 'email', 'role', 'is_staff')
     
-    # Добавляем возможность редактирования ИИН и Роли прямо в админке
+    # Добавляем возможность редактирования Роли прямо в админке
     fieldsets = UserAdmin.fieldsets + (
-        ('Дополнительная информация (CyberSec)', {'fields': ('iin', 'role')}),
+        ('Дополнительная информация (CyberSec)', {'fields': ('role',)}),
     )

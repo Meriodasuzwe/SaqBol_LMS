@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Q
 
 from .models import EmailVerification
 from .serializers import (
@@ -211,3 +212,60 @@ class GoogleLoginView(generics.GenericAPIView):
         except ValueError as e:
             logger.error(f"Ошибка проверки токена Google: {str(e)}")
             return Response({'error': 'Недействительный токен Google'}, status=status.HTTP_400_BAD_REQUEST)
+
+# ---------------------------
+# Обычный логин (по email/логину и паролю)
+# ---------------------------
+class CustomLoginView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        # Фронтенд может прислать как 'email', так и 'username' (в зависимости от инпута)
+        login_data = request.data.get('email') or request.data.get('username')
+        password = request.data.get('password')
+
+        if not login_data or not password:
+            return Response(
+                {"error": "Пожалуйста, введите логин/email и пароль"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ищем пользователя либо по email, либо по username
+        user = User.objects.filter(Q(email=login_data) | Q(username=login_data)).first()
+
+        if not user:
+            return Response(
+                {"error": "Неверный логин, email или пароль"}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # ПРОВЕРКА НА GOOGLE: Если у юзера нет пароля в НАШЕЙ базе
+        if not user.has_usable_password():
+            return Response(
+                {"error": "Вы регистрировались через Google. Войдите через Google или нажмите 'Забыли пароль', чтобы создать локальный пароль."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Проверяем пароль
+        if not user.check_password(password):
+            return Response(
+                {"error": "Неверный логин, email или пароль"}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Проверяем активацию
+        if not user.is_active:
+            return Response(
+                {"error": "Аккаунт не активирован. Проверьте почту."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Если всё ок, выдаем токены
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'username': user.username,
+            'role': user.role
+        }, status=status.HTTP_200_OK)

@@ -1,4 +1,6 @@
+# Этот импорт нужен для работы с AI-сервисом
 import requests
+# Стандартные импорты Django и DRF
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -7,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 
 from .models import Quiz, Question, Choice, Result
+# Импорт модели Lesson для получения контента урока при генерации тестов через AI
 from courses.models import Lesson
 from .serializers import (
     QuizSerializer, 
@@ -21,34 +24,44 @@ class QuizListView(generics.ListAPIView):
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
 
-# 2. 🔥 НОВЫЙ КЛАСС: Получение тестов КОНКРЕТНОГО УРОКА по URL
+# 2. Получение тестов по конкретному уроку
 # Этот View будет обрабатывать путь: quizzes/lesson/<lesson_id>/
+# ListAPIView дает возможность легко реализовать получение списка объектов
 class QuizByLessonView(generics.ListAPIView):
+    #serializer_class = QuizSerializer для получения тестов вместе с их вопросами и вариантами ответов
     serializer_class = QuizSerializer
+    #permission_classes = [IsAuthenticated] для защиты данных тестов от неавторизованных пользователей
     permission_classes = [IsAuthenticated]
 
+# Получение тестов по конкретному уроку
     def get_queryset(self):
         # Берем lesson_id из URL (из urls.py)
         lesson_id = self.kwargs.get('lesson_id')
         if lesson_id:
+            # Получаем тесты, связанные с конкретным уроком, и сортируем их по ID для стабильного порядка отображения
             return Quiz.objects.filter(lesson_id=lesson_id).order_by('id')
         return Quiz.objects.none()
 
 # 3. Детальный просмотр теста по ID теста
+# RetrieveAPIView позволяет получить один объект по его ID (pk) и возвращает 404, если объект не найден
 class QuizDetailView(generics.RetrieveAPIView):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
 
 # 4. Сдача теста
+# ApiView позволяет нам создать кастомную логику для обработки POST-запросов, которые будут содержать ответы на тест и логику вычисления результатов.
 class QuizSubmitView(APIView):
     permission_classes = [IsAuthenticated]
-    
+    # Этот класс будет обрабатывать отправку ответов на тест и вычисление результатов.
     @extend_schema(request=QuizSubmissionSerializer, responses={200: QuizResultSerializer})
     def post(self, request, quiz_id):
+        # Получаем данные из запроса
         serializer = QuizSubmissionSerializer(data=request.data)
         if serializer.is_valid():
+            # Получаем ответы из сериализатора
             answers = serializer.validated_data.get('answers')
+            # Получаем все вопросы теста и их количество для вычисления результатов
             questions = Question.objects.filter(quiz_id=quiz_id)
             total_questions = questions.count()
             
@@ -58,6 +71,8 @@ class QuizSubmitView(APIView):
             correct_answers_count = 0
             for ans in answers:
                 is_correct = Choice.objects.filter(
+                    # ans.get('choice_id') это айди выбранного варианта ответа, ans.get('question_id') это айди вопроса на который был дан ответ.
+                    # Мы проверяем существует ли такой вариант ответа который соответствует этому вопросу и является правильным (is_correct=True) 
                     id=ans.get('choice_id'), 
                     question_id=ans.get('question_id'), 
                     is_correct=True

@@ -70,13 +70,16 @@ function LessonPage() {
             });
             
             // 3. Переход дальше
+            const currentIndexInCourse = courseLessons.findIndex(l => l.id === lesson.id);
+            const nextLessonObj = currentIndexInCourse < courseLessons.length - 1 ? courseLessons[currentIndexInCourse + 1] : null;
+
             if (activeStepIndex < lesson.steps.length - 1) {
                 setActiveStepIndex(activeStepIndex + 1);
                 // Прокручиваем страницу наверх при переходе на новый шаг
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                if (nextLesson) {
-                    navigate(`/lesson/${nextLesson.id}`);
+                if (nextLessonObj) {
+                    navigate(`/lesson/${nextLessonObj.id}`);
                 } else {
                     alert("Поздравляем! Вы успешно завершили все шаги курса! 🎉");
                     navigate(`/courses/${lesson.course}`);
@@ -160,12 +163,12 @@ function LessonPage() {
                         <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-center sm:justify-start gap-2 overflow-x-auto">
                             {lesson.steps?.map((step, index) => {
                                 const isActive = index === activeStepIndex;
-                                // 🔥 ИСПРАВЛЕНИЕ: Теперь галочка зависит только от бэкенда!
                                 const isPassed = step.is_completed === true; 
                                 
                                 let icon = "📝";
                                 if (step.step_type === 'video_url' || step.step_type === 'video_file') icon = "▶️";
-                                if (step.step_type.includes('simulation')) icon = "🛡️";
+                                // 🔥 ВОТ ОНО ИСПРАВЛЕНИЕ: Безопасная проверка с ?
+                                if (step.step_type?.includes('simulation')) icon = "🛡️";
                                 if (step.step_type === 'quiz') icon = "❓";
 
                                 return (
@@ -174,10 +177,10 @@ function LessonPage() {
                                         onClick={() => setActiveStepIndex(index)}
                                         className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-lg font-medium transition-all duration-200 ease-in-out border-b-4
                                             ${isActive 
-                                                ? 'bg-white border-primary text-primary shadow-sm scale-105' // Текущий
+                                                ? 'bg-white border-primary text-primary shadow-sm scale-105' 
                                                 : isPassed 
-                                                    ? 'bg-success/10 border-success text-success hover:bg-success/20' // Пройденный
-                                                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600' // Будущий
+                                                    ? 'bg-success/10 border-success text-success hover:bg-success/20' 
+                                                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600' 
                                             }`}
                                         title={step.title || `Шаг ${index + 1}`}
                                     >
