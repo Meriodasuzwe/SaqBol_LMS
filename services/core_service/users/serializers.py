@@ -25,7 +25,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'email', 'iin') 
+        fields = ('username', 'password', 'email') # ИИН УДАЛЕН ОТСЮДА
 
     def create(self, validated_data):
         # 1. Создаем пользователя, но делаем его НЕАКТИВНЫМ
@@ -33,15 +33,14 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=validated_data['username'],
             password=validated_data['password'],
             email=validated_data.get('email', ''),
-            iin=validated_data.get('iin', ''),
-            role='student',
+            role='student', # ИИН УДАЛЕН ОТСЮДА
             is_active=False  # <--- ВАЖНО: аккаунт заморожен до подтверждения!
         )
 
         # 2. Генерируем 6-значный код
         verification = EmailVerification.generate_code(user)
 
-        # 3. Отправляем письмо с кодом (ОБЕРНУТО В TRY-EXCEPT для защиты от 500 ошибки)
+        # 3. Отправляем письмо с кодом
         try:
             send_mail(
                 subject='Код подтверждения SaqBol LMS',
@@ -51,8 +50,6 @@ class RegisterSerializer(serializers.ModelSerializer):
                 fail_silently=False,
             )
         except Exception as e:
-            # Если почта не отправилась, пишем ошибку в логи, 
-            # но не ломаем регистрацию пользователя.
             logger.error(f"Ошибка отправки email для {user.email}: {str(e)}")
 
         return user
@@ -84,7 +81,7 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'iin', 'first_name', 'last_name', 'age', 'avatar']
+        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'age', 'avatar'] # ИИН УДАЛЕН ОТСЮДА
         read_only_fields = ['role', 'username', 'email'] # Роль и логин менять через профиль нельзя
 
 
@@ -140,17 +137,14 @@ class SetNewPasswordSerializer(serializers.Serializer):
         uidb64 = attrs.get('uidb64')
 
         try:
-            # Декодируем ID
             id = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(id=id)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             raise serializers.ValidationError("Пользователь не найден или ссылка повреждена.")
 
-        # Проверяем токен
         if not PasswordResetTokenGenerator().check_token(user, token):
             raise serializers.ValidationError("Ссылка устарела или уже была использована.")
 
-        # Проверяем сложность пароля
         try:
             validate_password(password, user)
         except DjangoValidationError as e:
@@ -159,11 +153,9 @@ class SetNewPasswordSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
 
-    # ПРАВИЛЬНОЕ сохранение пароля (с шифрованием)
     def save(self, **kwargs):
         password = self.validated_data['password']
         user = self.validated_data['user']
-        # set_password автоматически хэширует пароль!
         user.set_password(password)
         user.save()
         return user

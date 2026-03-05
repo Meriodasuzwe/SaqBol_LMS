@@ -785,3 +785,15 @@ WARNING 2026-03-05 10:00:55,055 | ACCESS DENIED: [401] GET /api/courses/ (User: 
 WARNING 2026-03-05 10:00:55,057 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 WARNING 2026-03-05 10:00:55,061 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 INFO 2026-03-05 10:01:10,959 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.095s
+INFO 2026-03-05 10:20:44,410 | ACTION: [200] POST /api/quizzes/70/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.025s
+INFO 2026-03-05 10:20:53,005 | ACTION: [200] POST /api/quizzes/70/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-05 10:21:00,884 | ACTION: [200] POST /api/quizzes/70/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+WARNING 2026-03-05 10:34:31,869 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-05 10:34:31,870 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-05 10:34:31,872 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-05 10:34:31,876 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-05 10:34:31,877 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-05 10:34:31,878 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-03-05 10:34:31,882 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-05 10:34:31,885 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-05 10:34:40,564 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s

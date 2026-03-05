@@ -8,13 +8,12 @@ const Register = () => {
     username: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    iin: "" 
+    confirmPassword: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // НОВОЕ: Состояния для видимости паролей
+  // Состояния для видимости паролей
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -22,17 +21,10 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "iin") {
-      const onlyNumbers = value.replace(/\D/g, ''); 
-      if (onlyNumbers.length <= 12) {
-        setFormData({ ...formData, [name]: onlyNumbers });
-      }
-      return; 
-    }
     setFormData({ ...formData, [name]: value });
   };
 
-  // НОВОЕ: Функция для оценки силы пароля
+  // Функция для оценки силы пароля
   const getPasswordStrength = (pass) => {
     if (!pass) return { width: 'w-0', color: 'bg-gray-200', text: '' };
     if (pass.length < 6) return { width: 'w-1/3', color: 'bg-error', text: 'Слабый' };
@@ -46,10 +38,6 @@ const Register = () => {
     e.preventDefault();
     setError("");
 
-    if (formData.iin && formData.iin.length !== 12) {
-      setError("ИИН должен состоять ровно из 12 цифр!");
-      return;
-    }
     if (formData.password.length < 6) {
       setError("Пароль должен содержать минимум 6 символов.");
       return;
@@ -65,8 +53,7 @@ const Register = () => {
       await api.post("users/register/", {
         username: formData.username,
         email: formData.email,
-        password: formData.password,
-        iin: formData.iin
+        password: formData.password
       });
       
       toast.success("Отлично! Остался один шаг: проверьте почту.");
@@ -125,23 +112,8 @@ const Register = () => {
 
             <div className="form-control w-full">
               <label className="label pt-0">
-                <span className="label-text font-semibold text-gray-600">ИИН (необязательно)</span>
-              </label>
-              <input 
-                type="text" 
-                name="iin" 
-                value={formData.iin} 
-                placeholder="12 цифр"
-                className="input input-bordered w-full focus:input-primary bg-gray-50" 
-                onChange={handleChange} 
-              />
-            </div>
-
-            <div className="form-control w-full">
-              <label className="label pt-0">
                 <span className="label-text font-semibold text-gray-600">Пароль <span className="text-error">*</span></span>
               </label>
-              {/* НОВОЕ: Глазик и индикатор пароля */}
               <div className="relative">
                 <input 
                   type={showPassword ? "text" : "password"}
@@ -164,7 +136,6 @@ const Register = () => {
                 </button>
               </div>
               
-              {/* НОВОЕ: Индикатор силы пароля */}
               {formData.password && (
                  <div className="mt-2">
                      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
