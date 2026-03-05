@@ -67,3 +67,29 @@ class EmailVerification(models.Model):
         cls.objects.filter(user=user).delete()
         # Создаем новый код
         return cls.objects.create(user=user, code=code)
+
+
+# Модель для заявок на статус преподавателя
+class TeacherApplication(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'На рассмотрении'),
+        ('approved', 'Одобрено'),
+        ('rejected', 'Отклонено'),
+    )
+    # Используем OneToOne, чтобы один юзер не мог спамить заявками
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='teacher_application', verbose_name="Пользователь")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
+    
+    # === НОВЫЕ ПОЛЯ ДЛЯ АНКЕТЫ ===
+    cv_text = models.TextField(verbose_name="Опыт работы", blank=True)
+    portfolio_url = models.URLField(verbose_name="Ссылка на портфолио", blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата подачи")
+
+    class Meta:
+        verbose_name = "Заявка на автора"
+        verbose_name_plural = "Заявки на авторов"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Заявка от {self.user.username} - {self.get_status_display()}"

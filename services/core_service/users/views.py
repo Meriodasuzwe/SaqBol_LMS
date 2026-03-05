@@ -10,8 +10,10 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Q
-
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from .models import EmailVerification
+from .models import TeacherApplication
 from .serializers import (
     RegisterSerializer, 
     UserSerializer,
@@ -269,3 +271,32 @@ class CustomLoginView(generics.GenericAPIView):
             'username': user.username,
             'role': user.role
         }, status=status.HTTP_200_OK)
+
+class ApplyTeacherView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        
+        # 1. Защита: вдруг он уже препод?
+        if user.role in ['teacher', 'admin']:
+            return Response({"error": "Вы уже являетесь автором курсов."}, status=400)
+        
+        # 2. Ищем заявку или создаем новую
+        application, created = TeacherApplication.objects.get_or_create(user=user)
+        
+        # 3. Если заявка УЖЕ БЫЛА, проверяем статус
+        if not created:
+            if application.status == 'pending':
+                return Response({"error": "Ваша заявка уже находится на рассмотрении."}, status=400)
+            elif application.status == 'rejected':
+                return Response({"error": "Ваша заявка была отклонена модератором."}, status=400)
+            elif application.status == 'approved':
+                return Response({"error": "Ваша заявка уже одобрена! Перезайдите в аккаунт."}, status=400)
+
+        # === 4. САМОЕ ГЛАВНОЕ: СОХРАНЯЕМ ТЕКСТ ИЗ REACT В БАЗУ ===
+        application.cv_text = request.data.get('cv_text', '')
+        application.portfolio_url = request.data.get('portfolio_url', '')
+        application.save()
+
+        return Response({"message": "Заявка успешно отправлена! Ожидайте решения модератора."}, status=201)

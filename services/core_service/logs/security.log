@@ -797,3 +797,81 @@ WARNING 2026-03-05 10:34:31,878 | ACCESS DENIED: [401] GET /api/courses/categori
 WARNING 2026-03-05 10:34:31,882 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 WARNING 2026-03-05 10:34:31,885 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 INFO 2026-03-05 10:34:40,564 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-03-05 10:52:52,411 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.298s
+INFO 2026-03-05 11:04:55,146 | ACTION: [201] POST /api/users/apply-teacher/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-05 11:05:04,285 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.101s
+INFO 2026-03-05 11:10:10,398 | ACTION: [200] GET /api/admin/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.066s
+INFO 2026-03-05 11:10:13,211 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.036s
+INFO 2026-03-05 11:10:13,243 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-05 11:10:15,070 | ACTION: [200] GET /api/admin/users/teacherapplication/1/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.034s
+INFO 2026-03-05 11:10:15,096 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:10:18,453 | ACTION: [302] POST /api/admin/users/teacherapplication/1/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+INFO 2026-03-05 11:10:18,477 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.018s
+INFO 2026-03-05 11:10:18,499 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:10:27,658 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.294s
+WARNING 2026-03-05 11:10:33,706 | CLIENT ERROR: [400] POST /api/users/apply-teacher/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:10:55,137 | ACTION: [200] GET /api/admin/users/teacherapplication/1/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.025s
+INFO 2026-03-05 11:10:55,162 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:13:11,493 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.269s
+INFO 2026-03-05 11:13:20,149 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.027s
+INFO 2026-03-05 11:13:20,175 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:13:22,800 | ACTION: [200] GET /api/admin/users/user/22/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.050s
+INFO 2026-03-05 11:13:22,827 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-05 11:13:31,535 | ACTION: [302] POST /api/admin/users/user/22/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-05 11:13:31,558 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-05 11:13:31,581 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:14:09,677 | ACTION: [200] GET /api/admin/users/user/22/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.042s
+INFO 2026-03-05 11:14:09,701 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:16:38,622 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.060s
+INFO 2026-03-05 11:16:51,090 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.285s
+INFO 2026-03-05 11:17:03,933 | ACTION: [201] POST /api/users/apply-teacher/ (User: dev.saqbol [ID:28], IP: 172.18.0.1) - 0.011s
+INFO 2026-03-05 11:17:08,174 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.051s
+INFO 2026-03-05 11:17:08,198 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:17:10,007 | ACTION: [200] GET /api/admin/users/teacherapplication/2/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.029s
+INFO 2026-03-05 11:17:10,034 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:17:14,514 | ACTION: [302] POST /api/admin/users/teacherapplication/2/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-03-05 11:17:14,538 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.019s
+INFO 2026-03-05 11:17:14,562 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:18:54,965 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.027s
+INFO 2026-03-05 11:18:54,990 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:19:01,822 | ACTION: [200] GET /api/admin/users/user/28/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.047s
+INFO 2026-03-05 11:19:01,850 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-05 11:21:35,209 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.273s
+INFO 2026-03-05 11:22:19,537 | ACTION: [201] POST /api/users/apply-teacher/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-05 11:22:24,391 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-05 11:22:24,415 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:22:27,527 | ACTION: [200] GET /api/admin/users/teacherapplication/3/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-05 11:22:27,550 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:25:33,724 | ACTION: [200] GET /api/admin/users/teacherapplication/3/delete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.056s
+INFO 2026-03-05 11:25:35,734 | ACTION: [302] POST /api/admin/users/teacherapplication/3/delete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+INFO 2026-03-05 11:25:35,768 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.030s
+INFO 2026-03-05 11:25:35,793 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-05 11:25:55,689 | ACTION: [201] POST /api/users/apply-teacher/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.011s
+INFO 2026-03-05 11:25:58,938 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-05 11:25:58,962 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-05 11:26:00,788 | ACTION: [200] GET /api/admin/users/teacherapplication/4/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.035s
+INFO 2026-03-05 11:26:00,812 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:26:07,428 | ACTION: [302] POST /api/admin/users/teacherapplication/4/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-03-05 11:26:07,448 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-03-05 11:26:07,471 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:26:12,636 | ACTION: [200] GET /api/admin/users/teacherapplication/4/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.024s
+INFO 2026-03-05 11:26:12,659 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:26:17,375 | ACTION: [302] POST /api/admin/users/teacherapplication/4/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-05 11:26:17,400 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.021s
+INFO 2026-03-05 11:26:17,426 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:26:24,661 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.026s
+INFO 2026-03-05 11:26:24,685 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:26:27,723 | ACTION: [200] GET /api/admin/users/user/25/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.044s
+INFO 2026-03-05 11:26:27,747 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:26:32,521 | ACTION: [302] POST /api/admin/users/user/25/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.029s
+INFO 2026-03-05 11:26:32,547 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.022s
+INFO 2026-03-05 11:26:32,573 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-05 11:26:38,436 | ACTION: [200] GET /api/admin/users/user/28/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.041s
+INFO 2026-03-05 11:26:38,461 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:26:50,332 | ACTION: [302] POST /api/admin/users/user/28/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.021s
+INFO 2026-03-05 11:26:50,363 | ACTION: [200] GET /api/admin/users/user/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.026s
+INFO 2026-03-05 11:26:50,388 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-05 11:27:24,441 | ACTION: [200] GET /api/admin/users/teacherapplication/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.028s
+INFO 2026-03-05 11:27:24,468 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-05 11:27:26,234 | ACTION: [200] GET /api/admin/users/teacherapplication/4/change/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.029s
+INFO 2026-03-05 11:27:26,258 | ACTION: [200] GET /api/admin/jsi18n/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s

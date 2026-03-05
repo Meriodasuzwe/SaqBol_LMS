@@ -12,6 +12,7 @@ from .views import (
     VerifyEmailView,
     ResendVerificationView,
     CustomLoginView,
+    ApplyTeacherView,
     GoogleLoginView
 )
 
@@ -28,6 +29,8 @@ urlpatterns = [
     
     # Профиль (GET - получить инфо, PATCH - обновить инфо/фото)
     path('me/', MeView.as_view(), name='user_me'),
+    # Заявка на роль Учителя
+    path('apply-teacher/', ApplyTeacherView.as_view(), name='apply_teacher'),
     
     # Сброс пароля
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
