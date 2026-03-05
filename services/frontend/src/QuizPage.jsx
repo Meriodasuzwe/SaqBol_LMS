@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
+import confetti from 'canvas-confetti'; 
 
 function QuizPage() {
     const { lessonId } = useParams();
@@ -94,6 +95,14 @@ function QuizPage() {
             .then(res => {
                 setCurrentResult(res.data);
                 if (res.data.score >= 70) {
+                    // 👈 ЗАПУСКАЕМ СУЕТУ (КОНФЕТТИ)
+                    confetti({
+                        particleCount: 150, // Количество конфеттинок
+                        spread: 80,         // Угол разброса
+                        origin: { y: 0.6 }, // Откуда стрелять (чуть ниже центра экрана)
+                        zIndex: 9999        // Чтобы было поверх всего
+                    });
+                    
                     toast.success(`🎉 Тест сдан! Ваш результат: ${res.data.score}%`);
                 } else {
                     toast.error(`📚 Тест провален. Ваш результат: ${res.data.score}%`);
