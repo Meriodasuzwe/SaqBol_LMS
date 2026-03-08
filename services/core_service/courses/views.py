@@ -4,6 +4,10 @@ from django.http import HttpResponse # Добавлен импорт для ве
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser
+from django.core.files.storage import default_storage
+import uuid
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
@@ -337,3 +341,23 @@ def stripe_webhook(request):
 
     print("="*40 + "\n", flush=True)
     return HttpResponse(status=200)
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def upload_image(request):
+    if 'file' not in request.FILES:
+        return Response({'error': 'Файл не найден'}, status=400)
+
+    file = request.FILES['file']
+    # Генерируем уникальное имя, чтобы файлы с одинаковыми названиями не перезаписывали друг друга
+    ext = file.name.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    
+    # Сохраняем файл
+    saved_path = default_storage.save(f'course_images/{filename}', file)
+    
+    # Формируем полный URL (например, http://localhost:8000/media/course_images/123.jpg)
+    file_url = request.build_absolute_uri(default_storage.url(saved_path))
+    
+    return Response({'url': file_url})

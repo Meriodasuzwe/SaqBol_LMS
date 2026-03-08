@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import api from './api';      
-import aiApi from './aiApi';  
-import ReactQuill from 'react-quill-new';         
-import 'react-quill-new/dist/quill.snow.css';      
+import aiApi from './aiApi';    
 import { toast } from 'react-toastify'; 
 
 const quillModules = {

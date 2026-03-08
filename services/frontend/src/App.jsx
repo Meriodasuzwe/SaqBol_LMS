@@ -6,7 +6,7 @@ import api from './api';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// 👇 НОВОЕ: Импортируем провайдер Google
+
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Импорты страниц
@@ -21,7 +21,7 @@ import QuizPage from './QuizPage';
 import Profile from './Profile';
 import LessonPage from './LessonPage';
 import TeacherPanel from './TeacherPanel';
-import CourseBuilder from './CourseBuilder';
+import CourseBuilder from './CourseBuilder/CourseBuilder';
 import Navbar from './Navbar';
 
 function App() {

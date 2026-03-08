@@ -70,12 +70,14 @@ class Lesson(models.Model):
 class LessonStep(models.Model):
     # step types для разных форматов контента в уроке текст видео симуляция тест и тд для удобства админки и логики отображения
     STEP_TYPES = (
-        ('text', 'Теория (Текст)'),
+        ('text', 'Теория (Текст + Markdown + Код)'),
         ('video_url', 'Видео (YouTube/Ссылка)'),
         ('video_file', 'Локальное видео (Загрузка файла)'), # Важно для ИБ (храним у себя)
         ('simulation_chat', 'Симуляция: Чат (WhatsApp/Telegram)'),
         ('simulation_email', 'Симуляция: Email (Фишинг)'),
         ('quiz', 'Тест/Опрос'),
+        ('interactive_code', 'Тренажер кода (Написание скрипта)'), # НОВОЕ: Для практики Python/Bash
+        ('terminal', 'Эмулятор терминала (Linux/Хак)'), # НОВОЕ: Для командной строки
     )
     # урок связан с шагом через внешний ключ и если урок удаляется удаляются все шаги а так же related name для получения всех шагов урока verbose_name для админки
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='steps', verbose_name="Урок")

@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from './api';
+import { 
+    ChevronLeft, 
+    Check, 
+    PlayCircle, 
+    ShieldCheck, 
+    HelpCircle, 
+    Code2, 
+    FileText, 
+    ArrowRight,
+    ArrowLeft
+} from 'lucide-react';
+
 import FakeMessenger from './FakeMessenger';
 import FakeEmail from './FakeEmail';
+import PythonEditor from './PythonEditor'; 
 
 function LessonPage() {
     const { lessonId } = useParams();
@@ -33,8 +47,6 @@ function LessonPage() {
                 const lessonRes = await api.get(`courses/lessons/${lessonId}/`);
                 setLesson(lessonRes.data);
                 
-                // Ищем первый НЕПРОЙДЕННЫЙ шаг, чтобы открыть его по умолчанию
-                // Если все пройдены, откроется первый (0)
                 const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
                 setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
 
@@ -59,227 +71,213 @@ function LessonPage() {
         const currentStep = lesson.steps[activeStepIndex];
         
         try {
-            // 1. Отправляем на бэкенд инфу о прохождении
             await api.post(`courses/steps/${currentStep.id}/complete/`, { score });
             
-            // 🔥 2. ИСПРАВЛЕНИЕ: Обновляем локальное состояние, ставим галочку мгновенно!
             setLesson(prevLesson => {
                 const updatedSteps = [...prevLesson.steps];
                 updatedSteps[activeStepIndex] = { ...updatedSteps[activeStepIndex], is_completed: true };
                 return { ...prevLesson, steps: updatedSteps };
             });
             
-            // 3. Переход дальше
             const currentIndexInCourse = courseLessons.findIndex(l => l.id === lesson.id);
             const nextLessonObj = currentIndexInCourse < courseLessons.length - 1 ? courseLessons[currentIndexInCourse + 1] : null;
 
             if (activeStepIndex < lesson.steps.length - 1) {
                 setActiveStepIndex(activeStepIndex + 1);
-                // Прокручиваем страницу наверх при переходе на новый шаг
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 if (nextLessonObj) {
+                    toast.success("Урок завершен! Переходим к следующему");
                     navigate(`/lesson/${nextLessonObj.id}`);
                 } else {
-                    alert("Поздравляем! Вы успешно завершили все шаги курса! 🎉");
-                    navigate(`/courses/${lesson.course}`);
+                    toast.success("Поздравляем! Вы завершили курс! 🎉");
+                    navigate(`/course/${lesson.course}`);
                 }
             }
         } catch (err) {
-            console.error("Ошибка завершения шага", err);
-            if (err.response?.data?.error) alert(err.response.data.error);
+            if (err.response?.data?.error) toast.error(err.response.data.error);
+        }
+    };
+
+    const getStepIcon = (type, isCompleted, isActive) => {
+        if (isCompleted && !isActive) return <Check size={18} />;
+        const props = { size: 18 };
+        switch (type) {
+            case 'video_url':
+            case 'video_file': return <PlayCircle {...props} />;
+            case 'simulation_chat':
+            case 'simulation_email': return <ShieldCheck {...props} />;
+            case 'quiz': return <HelpCircle {...props} />;
+            case 'interactive_code': return <Code2 {...props} />;
+            default: return <FileText {...props} />;
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
+        <div className="flex items-center justify-center min-h-screen bg-white">
+            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
         </div>
     );
 
-    if (!lesson) return <div className="p-10 text-center text-error">Урок не найден</div>;
+    if (!lesson) return <div className="p-10 text-center font-bold text-slate-400">Урок не найден</div>;
 
-    const currentIndex = courseLessons.findIndex(l => l.id === lesson.id);
-    const nextLesson = currentIndex < courseLessons.length - 1 ? courseLessons[currentIndex + 1] : null;
     const currentStep = lesson.steps && lesson.steps.length > 0 ? lesson.steps[activeStepIndex] : null;
     const isSimulation = currentStep && ['simulation_chat', 'simulation_email'].includes(currentStep.step_type);
 
     return (
-        // Главный контейнер (Серый фон, чтобы белый контент выделялся)
-        <div className="min-h-screen bg-gray-100 flex justify-center pb-12">
+        <div className="min-h-screen bg-slate-50/50 flex justify-center pb-20 font-sans text-slate-900">
             
-            {/* Макет с боковым меню (Сайдбаром) */}
-            <div className="flex w-full max-w-7xl mx-auto pt-6 px-4 lg:px-8 gap-8">
+            <div className="flex w-full max-w-7xl mx-auto pt-8 px-6 lg:px-8 gap-12">
                 
-                {/* --- ЛЕВЫЙ САЙДБАР (План курса) - Скрыт на мобилках --- */}
-                <aside className="hidden lg:flex flex-col w-1/4 shrink-0">
-                    <Link to={`/courses/${lesson.course}`} className="text-sm font-bold text-gray-500 hover:text-primary mb-4 flex items-center gap-2 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                        Назад к курсу
-                    </Link>
+                {/* --- ЛЕВЫЙ САЙДБАР --- */}
+                <aside className="hidden lg:flex flex-col w-[300px] shrink-0">
+                    <button 
+                        onClick={() => navigate(`/course/${lesson.course}`)}
+                        className="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 mb-8 flex items-center gap-2 transition-all group"
+                    >
+                        <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                        Вернуться к курсу
+                    </button>
                     
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-6">
-                        <div className="bg-base-200 p-4 border-b border-gray-200">
-                            <h2 className="font-bold text-gray-800 line-clamp-2">{course?.title || 'Содержание курса'}</h2>
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden sticky top-8">
+                        <div className="p-6 border-b border-slate-100">
+                            <h2 className="font-black text-sm uppercase tracking-tight text-slate-900 leading-tight mb-4">
+                                {course?.title}
+                            </h2>
                             {course && (
-                                <div className="mt-3">
-                                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                         <span>Прогресс</span>
                                         <span>{course.progress}%</span>
                                     </div>
-                                    <progress className="progress progress-success w-full h-1.5" value={course.progress} max="100"></progress>
+                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-slate-900 transition-all duration-500" style={{ width: `${course.progress}%` }}></div>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        <ul className="max-h-[70vh] overflow-y-auto">
+                        <nav className="p-2 overflow-y-auto max-h-[50vh] custom-scrollbar">
                             {courseLessons.map((l, idx) => (
-                                <li key={l.id}>
-                                    <Link 
-                                        to={`/lesson/${l.id}`}
-                                        className={`flex items-start gap-3 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${l.id === lesson.id ? 'bg-primary/5 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'}`}
-                                    >
-                                        <div className={`mt-0.5 text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full ${l.id === lesson.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'}`}>
-                                            {idx + 1}
-                                        </div>
-                                        <span className={`text-sm ${l.id === lesson.id ? 'font-bold text-primary' : 'text-gray-700'}`}>
-                                            {l.title}
-                                        </span>
-                                    </Link>
-                                </li>
+                                <Link 
+                                    key={l.id}
+                                    to={`/lesson/${l.id}`}
+                                    className={`flex items-center gap-4 p-3 rounded-xl transition-all ${l.id === lesson.id ? 'bg-slate-900 text-white shadow-md' : 'hover:bg-slate-50 text-slate-600'}`}
+                                >
+                                    <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border ${l.id === lesson.id ? 'border-white/20' : 'border-slate-200 text-slate-400'}`}>
+                                        {idx + 1}
+                                    </span>
+                                    <span className="text-xs font-bold truncate">{l.title}</span>
+                                </Link>
                             ))}
-                        </ul>
+                        </nav>
                     </div>
                 </aside>
 
-                {/* --- ПРАВАЯ ЧАСТЬ (Основной контент) --- */}
-                <main className="w-full lg:w-3/4 flex flex-col">
-                    
-                    <h1 className="text-3xl font-extrabold text-gray-900 mb-6">{lesson.title}</h1>
+                {/* --- ЦЕНТРАЛЬНЫЙ КОНТЕНТ --- */}
+                <main className="flex-1 max-w-4xl">
+                    <header className="mb-8">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Урок {courseLessons.findIndex(l => l.id === lesson.id) + 1}</span>
+                            <div className="h-px flex-1 bg-slate-100"></div>
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{lesson.title}</h1>
+                    </header>
 
-                    {/* Блок Контента (Белая карточка с тенью) */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6 flex-1 flex flex-col">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
                         
-                        {/* Верхняя панель шагов (Stepik Квадратики) */}
-                        <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-center sm:justify-start gap-2 overflow-x-auto">
+                        {/* Timeline шагов (Tabs) */}
+                        <div className="bg-slate-50/50 border-b border-slate-200 px-6 py-4 flex items-center gap-3 overflow-x-auto no-scrollbar">
                             {lesson.steps?.map((step, index) => {
                                 const isActive = index === activeStepIndex;
-                                const isPassed = step.is_completed === true; 
-                                
-                                let icon = "📝";
-                                if (step.step_type === 'video_url' || step.step_type === 'video_file') icon = "▶️";
-                                // 🔥 ВОТ ОНО ИСПРАВЛЕНИЕ: Безопасная проверка с ?
-                                if (step.step_type?.includes('simulation')) icon = "🛡️";
-                                if (step.step_type === 'quiz') icon = "❓";
-
+                                const isPassed = step.is_completed; 
                                 return (
                                     <button 
                                         key={step.id}
                                         onClick={() => setActiveStepIndex(index)}
-                                        className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-lg font-medium transition-all duration-200 ease-in-out border-b-4
+                                        className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 border-2
                                             ${isActive 
-                                                ? 'bg-white border-primary text-primary shadow-sm scale-105' 
+                                                ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-105' 
                                                 : isPassed 
-                                                    ? 'bg-success/10 border-success text-success hover:bg-success/20' 
-                                                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600' 
+                                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                                                    : 'bg-white border-slate-100 text-slate-300 hover:border-slate-300' 
                                             }`}
-                                        title={step.title || `Шаг ${index + 1}`}
+                                        title={step.title}
                                     >
-                                        {isPassed && !isActive ? <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> : <span className="text-lg">{icon}</span>}
+                                        {getStepIcon(step.step_type, isPassed, isActive)}
                                     </button>
                                 );
                             })}
                         </div>
 
-                        {/* Само тело шага */}
-                        {currentStep ? (
-                            <div className="flex-1 animate-fade-in flex flex-col">
-                                
-                                {/* Заголовок конкретного шага */}
-                                {currentStep.title && (
-                                    <div className="px-8 pt-8 pb-4">
-                                        <h2 className="text-2xl font-bold text-gray-800">{currentStep.title}</h2>
-                                    </div>
-                                )}
-
-                                {/* Рендер контента */}
-                                <div className="flex-1">
-                                    {currentStep.step_type === 'simulation_chat' ? (
-                                        <div className="py-12 bg-gray-50 flex justify-center">
-                                            <FakeMessenger scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
-                                        </div>
-                                    ) : currentStep.step_type === 'simulation_email' ? (
-                                        <div className="py-12 bg-gray-50 flex justify-center">
-                                            <FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
-                                        </div>
-                                    ) : currentStep.step_type === 'video_url' ? (
-                                        <div className="flex flex-col">
-                                            <div className="w-full bg-black aspect-video relative">
-                                                <iframe src={getYoutubeEmbedUrl(currentStep.content)} className="w-full h-full absolute top-0 left-0" frameBorder="0" allowFullScreen></iframe>
-                                            </div>
-                                            <div className="p-8 prose prose-lg max-w-none prose-headings:text-primary">
-                                                <div dangerouslySetInnerHTML={{ __html: currentStep.content }} />
-                                            </div>
-                                        </div>
-                                    ) : currentStep.step_type === 'video_file' ? (
-                                        <div className="flex flex-col">
-                                            {currentStep.file && (
-                                                <div className="w-full bg-black aspect-video flex justify-center items-center">
-                                                    <video src={currentStep.file} controls className="max-h-full max-w-full" />
-                                                </div>
-                                            )}
-                                            <div className="p-8 prose prose-lg max-w-none prose-headings:text-primary">
-                                                {currentStep.content && <div dangerouslySetInnerHTML={{ __html: currentStep.content }} />}
-                                            </div>
-                                        </div>
-                                    ) : currentStep.step_type === 'quiz' ? (
-                                        <div className="flex flex-col items-center justify-center text-center py-20 px-4">
-                                            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                                                <span className="text-5xl">❓</span>
-                                            </div>
-                                            <h3 className="text-3xl font-bold mb-4 text-gray-800">Проверка знаний</h3>
-                                            <p className="mb-8 text-gray-600 max-w-md">Вам необходимо успешно пройти тестирование, чтобы подтвердить знания и двигаться дальше.</p>
-                                            <Link to={`/quiz/lesson/${lesson.id}`} className="btn btn-primary btn-wide btn-lg shadow-lg hover:shadow-xl transition-shadow">
-                                                Начать тест
-                                            </Link>
-                                        </div>
-                                    ) : (
-                                        /* ТЕКСТОВЫЙ ШАГ */
-                                        <div className="p-8 sm:px-12 py-10 prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl">
-                                            {currentStep.content ? (
-                                                <div dangerouslySetInnerHTML={{ __html: currentStep.content }} />
+                        {/* Контент шага */}
+                        <div className="flex-1 flex flex-col">
+                            {currentStep ? (
+                                <div className="animate-in fade-in duration-500">
+                                    
+                                    {/* Видео блок */}
+                                    {(currentStep.step_type === 'video_url' || currentStep.step_type === 'video_file') && (
+                                        <div className="bg-black aspect-video w-full overflow-hidden">
+                                            {currentStep.step_type === 'video_url' ? (
+                                                <iframe src={getYoutubeEmbedUrl(currentStep.content)} className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
                                             ) : (
-                                                <p className="text-gray-400 italic text-center py-10">Контент отсутствует</p>
+                                                <video src={currentStep.file} controls className="w-full h-full" />
                                             )}
                                         </div>
                                     )}
+
+                                    <div className="p-8 sm:p-12">
+                                        {currentStep.title && (
+                                            <h2 className="text-2xl font-black text-slate-900 mb-6">{currentStep.title}</h2>
+                                        )}
+
+                                        {/* Рендер контента */}
+                                        <div className="text-slate-700">
+                                            {currentStep.step_type === 'simulation_chat' ? (
+                                                <div className="flex justify-center py-4"><FakeMessenger scenario={currentStep.scenario_data} onComplete={handleStepComplete} /></div>
+                                            ) : currentStep.step_type === 'simulation_email' ? (
+                                                <div className="flex justify-center py-4"><FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} /></div>
+                                            ) : currentStep.step_type === 'interactive_code' ? (
+                                                <div className="rounded-xl overflow-hidden border border-slate-800"><PythonEditor stepData={currentStep} onSuccess={() => handleStepComplete(20)} /></div>
+                                            ) : currentStep.step_type === 'quiz' ? (
+                                                <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                                    <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-6"><HelpCircle className="text-slate-900" size={32} /></div>
+                                                    <h3 className="text-xl font-black mb-2">Проверка знаний</h3>
+                                                    <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.</p>
+                                                    <Link to={`/quiz/lesson/${lesson.id}`} className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all">Начать тест <ArrowRight size={18} /></Link>
+                                                </div>
+                                            ) : (
+                                                <div className="prose prose-slate max-w-none prose-headings:font-black prose-img:rounded-2xl" dangerouslySetInnerHTML={{ __html: currentStep.content }} />
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center text-slate-300 italic">Контент шага пуст</div>
+                            )}
+                        </div>
+
+                        {/* Футер навигации (только для текстовых/видео шагов) */}
+                        {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
+                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                                {activeStepIndex > 0 ? (
+                                    <button onClick={() => {setActiveStepIndex(activeStepIndex - 1); window.scrollTo(0,0)}} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
+                                        <ArrowLeft size={16} /> Назад
+                                    </button>
+                                ) : <div />}
+
+                                <button 
+                                    onClick={() => handleStepComplete(10)}
+                                    className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-slate-200"
+                                >
+                                    {activeStepIndex < lesson.steps.length - 1 ? (
+                                        <>Следующий шаг <ArrowRight size={18} /></>
+                                    ) : (
+                                        <>Завершить урок <Check size={18} /></>
+                                    )}
+                                </button>
                             </div>
-                        ) : (
-                            <div className="p-20 text-center text-gray-500">В этом уроке пока нет контента.</div>
                         )}
                     </div>
-
-                    {/* Нижняя панель с большой зелёной кнопкой (если это не симуляция и не тест) */}
-                    {!isSimulation && currentStep && currentStep.step_type !== 'quiz' && (
-                        <div className="flex justify-between items-center bg-transparent mt-2">
-                            {/* Кнопка "Назад" */}
-                            {activeStepIndex > 0 ? (
-                                <button onClick={() => { setActiveStepIndex(activeStepIndex - 1); window.scrollTo(0,0); }} className="btn btn-ghost text-gray-500 hover:text-gray-800">
-                                    ← Предыдущий шаг
-                                </button>
-                            ) : (
-                                <div></div> // Пустышка для flex-between
-                            )}
-
-                            {/* Главная кнопка "Следующий шаг" */}
-                            <button 
-                                onClick={() => handleStepComplete(10)} 
-                                className="btn btn-success text-white px-8 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                            >
-                                {activeStepIndex < lesson.steps.length - 1 ? 'Следующий шаг →' : 'Завершить урок ✔️'}
-                            </button>
-                        </div>
-                    )}
                 </main>
             </div>
         </div>

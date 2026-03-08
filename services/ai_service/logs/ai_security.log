@@ -188,3 +188,12 @@ INFO 2026-02-26 16:32:31,606 | AI ACTION: [200] POST /generate-course-from-file 
 INFO 2026-02-26 16:33:16,052 | User 1 запросил сценарий: атака на сервер | type=chat
 INFO 2026-02-26 16:33:18,342 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-02-26 16:33:18,344 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 2.300s
+INFO 2026-03-06 14:08:23,720 | AI ACTION: [200] GET /docs (IP: 172.18.0.8) - 0.000s
+INFO 2026-03-06 14:08:24,268 | AI ACTION: [200] GET /openapi.json (IP: 172.18.0.8) - 0.010s
+WARNING 2026-03-06 14:08:53,030 | CLIENT ERROR: [401] POST /generate-quiz (IP: 172.18.0.8) - 0.022s
+INFO 2026-03-06 14:18:41,625 | User 1 запросил квиз.
+INFO 2026-03-06 14:18:42,560 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-06 14:18:42,576 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.966s
+INFO 2026-03-06 15:05:05,945 | User 1 запросил квиз.
+INFO 2026-03-06 15:05:06,727 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-06 15:05:06,733 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.807s

@@ -11,6 +11,7 @@ from .views import (
     LessonStepDetailView,
     LessonStepCreateView,
     MarkStepCompleteView,
+    upload_image,
     CreateStripeCheckoutSessionView,
     stripe_webhook # <-- ИМПОРТИРУЕМ ФУНКЦИЮ
 )
@@ -34,4 +35,6 @@ urlpatterns = [
     path('lessons/<int:lesson_id>/steps/', LessonStepCreateView.as_view(), name='step-create'),
     path('steps/<int:pk>/complete/', MarkStepCompleteView.as_view(), name='step-complete'),
     path('steps/<int:pk>/', LessonStepDetailView.as_view(), name='step-detail'),
+    
+    path('upload-image/', upload_image, name='upload-image'),
 ]

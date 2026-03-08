@@ -8,7 +8,7 @@ export default {
     extend: {},
   },
   // Подключаем плагин daisyui
-  plugins: [require("daisyui")],
+  plugins: [require("daisyui"), require('@tailwindcss/typography')],
   
   // Настройка тем
   daisyui: {
