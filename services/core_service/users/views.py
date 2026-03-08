@@ -10,6 +10,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Q
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import EmailVerification
@@ -220,7 +221,7 @@ class GoogleLoginView(generics.GenericAPIView):
 # ---------------------------
 class CustomLoginView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
-    
+    serializer_class = TokenObtainPairSerializer
     def post(self, request, *args, **kwargs):
         # Фронтенд может прислать как 'email', так и 'username' (в зависимости от инпута)
         login_data = request.data.get('email') or request.data.get('username')

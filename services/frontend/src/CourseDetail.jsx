@@ -1,53 +1,52 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from './api';
+import { 
+    FileText, 
+    PlayCircle, 
+    ShieldCheck, 
+    HelpCircle, 
+    Code2, 
+    ChevronRight, 
+    CheckCircle2,
+    Lock,
+    Clock
+} from 'lucide-react';
 
 function CourseDetail({ isLoggedIn }) { 
     const { id } = useParams();
     const navigate = useNavigate();
 
-    // --- СОСТОЯНИЯ ---
     const [course, setCourse] = useState(null);
     const [lessons, setLessons] = useState([]); 
     const [isEnrolled, setIsEnrolled] = useState(false); 
     const [loading, setLoading] = useState(true);
     const [enrollLoading, setEnrollLoading] = useState(false); 
 
-    // ХИТРЫЙ ТРЮК: Читаем URL напрямую при загрузке страницы
     const [showSuccessToast, setShowSuccessToast] = useState(() => {
         return new URLSearchParams(window.location.search).get('success') === 'true';
     });
 
-    // --- 1. ПРОВЕРКА УСПЕШНОЙ ОПЛАТЫ (УВЕДОМЛЕНИЕ) ---
     useEffect(() => {
         if (showSuccessToast) {
-            // Тихо стираем ?success=true из адресной строки, чтобы при F5 плашка не вылезала снова
             window.history.replaceState(null, '', window.location.pathname);
-            
-            // Прячем плашку через 5 секунд
-            const timer = setTimeout(() => {
-                setShowSuccessToast(false);
-            }, 5000);
+            const timer = setTimeout(() => setShowSuccessToast(false), 5000);
             return () => clearTimeout(timer);
         }
     }, [showSuccessToast]);
 
-    // --- 2. ЗАГРУЗКА ДАННЫХ БЕЗ ОШИБКИ 403 ---
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Грузим инфо о курсе (доступно всем)
                 const courseRes = await api.get(`courses/${id}/`);
                 setCourse(courseRes.data);
 
                 if (isLoggedIn) {
                     try {
-                        // СНАЧАЛА проверяем, куплен ли курс (чтобы не было 403)
                         const myCoursesRes = await api.get(`courses/my_courses/`);
                         const isUserEnrolled = myCoursesRes.data.some(c => c.id === parseInt(id));
 
                         if (isUserEnrolled) {
-                            // Если куплен - грузим уроки
                             const lessonsRes = await api.get(`courses/${id}/lessons/`);
                             const sortedLessons = lessonsRes.data.sort((a, b) => a.id - b.id);
                             setLessons(sortedLessons);
@@ -56,7 +55,6 @@ function CourseDetail({ isLoggedIn }) {
                             setIsEnrolled(false);
                         }
                     } catch (error) {
-                        console.error("Ошибка при проверке записи:", error);
                         setIsEnrolled(false);
                     }
                 } else {
@@ -68,29 +66,23 @@ function CourseDetail({ isLoggedIn }) {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, [id, isLoggedIn]);
 
-    // --- ХЕЛПЕР: СТРОГИЙ B2B ДИЗАЙН УРОКОВ ---
-    const getLessonStyle = (type) => {
+    const getStepStyle = (type) => {
+        const iconProps = { size: 18, className: "group-hover:text-slate-900 transition-colors" };
         switch (type) {
-            case 'simulation_chat':
-                return { icon: '⌘', label: 'Интерактив', bg: 'bg-blue-50 text-blue-700 border-blue-200' };
-            case 'simulation_email':
-                return { icon: '✉', label: 'Фишинг', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
-            default: 
-                return { icon: '📄', label: 'Теория', bg: 'bg-slate-100 text-slate-700 border-slate-200' };
+            case 'simulation_chat': return { icon: <ShieldCheck {...iconProps} />, label: 'Интерактив' };
+            case 'simulation_email': return { icon: <ShieldCheck {...iconProps} />, label: 'Фишинг' };
+            case 'video_url': return { icon: <PlayCircle {...iconProps} />, label: 'Видео' };
+            case 'quiz': return { icon: <HelpCircle {...iconProps} />, label: 'Тест' };
+            case 'interactive_code': return { icon: <Code2 {...iconProps} />, label: 'Код' };
+            default: return { icon: <FileText {...iconProps} />, label: 'Теория' };
         }
     };
 
-    // --- ФУНКЦИЯ ЗАПИСИ ИЛИ ОПЛАТЫ (STRIPE) ---
     const handleEnrollClick = async () => {
-        if (!isLoggedIn) {
-            navigate('/login');
-            return;
-        }
-
+        if (!isLoggedIn) { navigate('/login'); return; }
         setEnrollLoading(true);
         try {
             if (course.price && parseFloat(course.price) > 0) {
@@ -98,232 +90,172 @@ function CourseDetail({ isLoggedIn }) {
                 window.location.href = response.data.checkout_url; 
             } else {
                 await api.post(`courses/${id}/enroll/`);
-                // Добавляем ?success=true даже для бесплатных курсов
                 window.location.href = `/course/${id}?success=true`; 
             }
         } catch (err) {
-            console.error("Ошибка при записи/оплате:", err);
-            alert("Произошла ошибка. Пожалуйста, попробуйте позже.");
             setEnrollLoading(false);
         }
     };
 
-    // --- ФОРМАТИРОВАНИЕ ЦЕНЫ ---
-    const formatPrice = (price) => {
-        const num = parseFloat(price);
-        if (isNaN(num) || num <= 0) return 'Бесплатно';
-        return new Intl.NumberFormat('ru-RU').format(num) + ' ₸';
-    };
-
-    // --- САМЫЙ ГЛАВНЫЙ КОМПОНЕНТ: ПЛАШКА УВЕДОМЛЕНИЯ ---
-    // Вынесли отдельно, чтобы показывать её на любом этапе (даже во время загрузки)
-    const SuccessToast = () => {
-        if (!showSuccessToast) return null;
-        return (
-            <div className="toast toast-top toast-center z-[9999] animate-bounce mt-4 fixed">
-                <div className="alert alert-success text-white shadow-xl flex items-center gap-3 px-6 py-4 rounded-2xl bg-emerald-500 border-none">
-                    <span className="text-2xl">🎉</span>
-                    <div>
-                        <h3 className="font-bold text-lg">Оплата прошла успешно!</h3>
-                        <div className="text-sm opacity-90">Доступ к материалам курса открыт.</div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    // --- ЛОАДЕР ---
     if (loading) return (
-        <div className="min-h-[70vh] flex items-center justify-center bg-slate-50 relative">
-            <SuccessToast />
-            <div className="w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
-        </div>
-    );
-    
-    if (!course) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 relative">
-            <SuccessToast />
-            <div className="text-center text-slate-500 font-medium">Курс не найден</div>
+        <div className="min-h-[70vh] flex items-center justify-center bg-white">
+            <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
         </div>
     );
 
-    const isPaid = course.price && parseFloat(course.price) > 0;
-
-    // ============================================================
-    // ВАРИАНТ 1: ЛЕНДИНГ ПРОДАЖ (Если НЕ записан или Гость)
-    // ============================================================
-    if (!isEnrolled) {
-        return (
-            <div className="min-h-screen bg-slate-50 pt-16 pb-24 font-sans text-slate-900 relative">
-                <SuccessToast />
-                <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row gap-16 items-start">
-                    
-                    {/* ЛЕВАЯ ЧАСТЬ: ОПИСАНИЕ */}
-                    <div className="flex-1 lg:max-w-2xl">
-                        <div className="mb-8">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-slate-200 text-slate-800 mb-4 border border-slate-300">
-                                {isPaid ? 'Премиум программа' : 'Открытый доступ'}
-                            </span>
-                            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-6 leading-[1.15]">
-                                {course.title}
-                            </h1>
-                            <p className="text-lg text-slate-600 leading-relaxed mb-10">
-                                {course.description || "Подробное описание курса формируется. Но вы уже можете получить доступ к эксклюзивным материалам и практическим заданиям."}
-                            </p>
-                        </div>
-
-                        {/* Блок автора */}
-                        <div className="flex items-center gap-4 py-6 border-y border-slate-200">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 text-white flex items-center justify-center text-lg font-bold shadow-sm">
-                                {course.teacher_name?.[0]?.toUpperCase() || "T"}
-                            </div>
-                            <div>
-                                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-0.5">Автор курса</p>
-                                <p className="text-base font-medium text-slate-900">{course.teacher_name || "Преподаватель SaqBol"}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ПРАВАЯ ЧАСТЬ: КАРТОЧКА ПОКУПКИ (Липкая) */}
-                    <div className="w-full lg:w-[400px] sticky top-24 shrink-0">
-                        <div className="bg-white rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
-                            <h3 className="text-slate-500 text-sm font-semibold uppercase tracking-wider mb-2">Стоимость участия</h3>
-                            <div className="text-4xl font-extrabold text-slate-900 mb-6">
-                                {formatPrice(course.price)}
-                            </div>
-
-                            <button 
-                                onClick={handleEnrollClick} 
-                                disabled={enrollLoading || showSuccessToast}
-                                className="w-full bg-slate-900 hover:bg-slate-800 text-white transition-all duration-200 py-4 px-6 rounded-xl font-semibold text-lg flex justify-center items-center shadow-md disabled:bg-slate-300 disabled:cursor-not-allowed"
-                            >
-                                {enrollLoading ? (
-                                    <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                ) : (
-                                    !isLoggedIn ? 'Войти для доступа' : 
-                                    (isPaid ? 'Оплатить курс' : 'Начать обучение')
-                                )}
-                            </button>
-                            
-                            <p className="text-xs text-center text-slate-400 mt-4 font-medium">
-                                {isPaid ? 'Безопасная оплата через Stripe' : 'Мгновенный доступ ко всем материалам'}
-                            </p>
-
-                            <div className="mt-8 pt-6 border-t border-slate-100">
-                                <p className="text-sm font-semibold text-slate-900 mb-4">Что включает программа:</p>
-                                <ul className="space-y-3">
-                                    {['Доступ ко всем лекциям', 'Интерактивные симуляции атак', 'Оценка прогресса и аналитика', 'Сертификат по завершении'].map((item, i) => (
-                                        <li key={i} className="flex items-start text-sm text-slate-600">
-                                            <svg className="w-5 h-5 text-slate-800 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        );
-    }
-
-    // ============================================================
-    // ВАРИАНТ 2: ПЛЕЕР УРОКОВ (Если ЗАПИСАН)
-    // ============================================================
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 py-10 relative">
-            <SuccessToast />
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8">
-                
-                {/* ЛЕВАЯ ЧАСТЬ: ИНФО О КУРСЕ */}
-                <div className="flex-1 order-2 lg:order-1">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full">
-                        <div className="p-8 sm:p-10">
-                            {/* Хлебные крошки */}
-                            <nav className="flex text-sm text-slate-500 mb-8 font-medium">
-                                <button onClick={() => navigate('/courses')} className="hover:text-slate-900 transition-colors">Курсы</button>
-                                <span className="mx-3 text-slate-300">/</span>
-                                <span className="text-slate-900 truncate max-w-[200px]">{course.title}</span>
-                            </nav>
+        <div className="min-h-screen bg-white font-sans text-slate-900 pb-20 relative">
+            {showSuccessToast && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                    <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
+                        <CheckCircle2 className="text-emerald-400" />
+                        <div>
+                            <p className="font-bold text-sm">Доступ открыт</p>
+                            <p className="text-xs text-slate-400">Курс успешно добавлен в ваше обучение</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-8">
-                                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-                                    {course.title}
-                                </h1>
-                                <span className="inline-flex shrink-0 items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-900 text-white">
-                                    Вы записаны
-                                </span>
-                            </div>
+            <div className="max-w-6xl mx-auto px-6 pt-12">
+                <div className="flex flex-col lg:flex-row gap-16 items-start">
+                    
+                    {/* ЛЕВАЯ КОЛОНКА */}
+                    <div className="flex-1 lg:max-w-2xl">
+                        <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">
+                            <button onClick={() => navigate('/courses')} className="hover:text-slate-900 transition-colors">Библиотека</button>
+                            <ChevronRight size={12} />
+                            <span className="text-slate-900">{course.title}</span>
+                        </nav>
 
-                            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-10">
-                                {course.description}
-                            </div>
-                            
-                            <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 flex items-start gap-4">
-                                <div className="text-2xl mt-0.5">ℹ️</div>
+                        <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-8 leading-tight">
+                            {course.title}
+                        </h1>
+
+                        <div 
+                            className="prose prose-slate prose-sm sm:prose-base max-w-none text-slate-600 mb-12 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: course.description }}
+                        />
+
+                        <div className="flex items-center gap-6 py-8 border-t border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 border border-slate-200">
+                                    {course.teacher_name?.[0] || 'S'}
+                                </div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-900 mb-1">Как проходить курс?</h4>
-                                    <p className="text-sm text-slate-600 leading-relaxed">
-                                        Выберите урок из программы справа. Ваш прогресс сохраняется автоматически. Рекомендуем проходить уроки последовательно.
-                                    </p>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Инструктор</p>
+                                    <p className="text-sm font-bold text-slate-900">{course.teacher_name || "SaqBol Team"}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* ПРАВАЯ ЧАСТЬ: САЙДБАР (ПРОГРАММА) */}
-                <div className="w-full lg:w-[400px] order-1 lg:order-2 shrink-0">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 sticky top-24 overflow-hidden flex flex-col max-h-[calc(100vh-8rem)]">
-                        
-                        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                            <h3 className="font-bold text-slate-900 text-lg">Программа</h3>
-                            <span className="text-xs font-semibold px-2 py-1 bg-white border border-slate-200 rounded-md text-slate-500">
-                                {lessons.length} уроков
-                            </span>
-                        </div>
-                        
-                        <div className="overflow-y-auto p-3">
-                            {lessons.length === 0 ? (
-                                <div className="text-center py-12 text-slate-400 text-sm">Программа формируется...</div>
-                            ) : (
-                                <div className="flex flex-col gap-1">
-                                    {lessons.map((lesson, index) => {
-                                        const style = getLessonStyle(lesson.lesson_type);
-                                        return (
-                                            <button 
-                                                key={lesson.id}
-                                                onClick={() => navigate(`/lesson/${lesson.id}`)}
-                                                className="group flex items-start text-left p-3 rounded-xl hover:bg-slate-50 transition-all duration-200 w-full"
-                                            >
-                                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-sm mr-4 mt-0.5 group-hover:border-slate-300 transition-colors">
-                                                    {style.icon}
-                                                </div>
-                                                <div className="flex-1 min-w-0 pr-2">
-                                                    <div className="flex items-center gap-2 mb-1.5">
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Урок {index + 1}</span>
-                                                        <span className={`text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded border ${style.bg}`}>
-                                                            {style.label}
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="font-semibold text-sm text-slate-700 leading-snug group-hover:text-slate-900 transition-colors">
-                                                        {lesson.title}
-                                                    </h4>
-                                                </div>
-                                                <div className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity mt-2">
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                    {/* ПРАВАЯ КОЛОНКА */}
+                    <div className="w-full lg:w-[400px] sticky top-24">
+                        {!isEnrolled ? (
+                            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Стоимость доступа</p>
+                                <div className="text-4xl font-black text-slate-900 mb-8">
+                                    {parseFloat(course.price) > 0 ? `${new Intl.NumberFormat('ru-RU').format(course.price)} ₸` : 'Бесплатно'}
                                 </div>
-                            )}
-                        </div>
+
+                                <button 
+                                    onClick={handleEnrollClick} 
+                                    disabled={enrollLoading}
+                                    className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all disabled:bg-slate-200 flex justify-center items-center gap-2 group"
+                                >
+                                    {enrollLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : (
+                                        <>
+                                            {isLoggedIn ? 'Записаться на курс' : 'Войти и начать'}
+                                            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                        </>
+                                    )}
+                                </button>
+                                
+                                <div className="mt-8 pt-8 border-t border-slate-100 space-y-4">
+                                    <div className="flex gap-4 text-xs text-slate-600 font-medium leading-tight">
+                                        <div className="w-5 h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                                            <CheckCircle2 size={12} className="text-slate-900" />
+                                        </div>
+                                        <span>Полный доступ ко всем интерактивным модулям</span>
+                                    </div>
+                                    <div className="flex gap-4 text-xs text-slate-600 font-medium leading-tight">
+                                        <div className="w-5 h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                                            <Clock size={12} className="text-slate-900" />
+                                        </div>
+                                        <span>Обучение в собственном темпе</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                                <div className="px-6 py-5 bg-slate-50 border-b border-slate-200">
+                                    <h3 className="font-black text-xs uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                        <FileText size={14} /> Программа обучения
+                                    </h3>
+                                </div>
+
+                                <div className="max-h-[65vh] overflow-y-auto custom-scrollbar">
+                                    {lessons.map((lesson, lIdx) => (
+                                        <div key={lesson.id} className="bg-white">
+                                            {/* Заголовок Модуля */}
+                                            <div className="px-6 py-4 bg-slate-50/40 border-b border-slate-100 flex items-center justify-between group cursor-default">
+                                                <div className="min-w-0">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Раздел {lIdx + 1}</p>
+                                                    <p className="text-sm font-black text-slate-800 truncate">{lesson.title}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Список Шагов с Timeline */}
+                                            <div className="flex flex-col relative">
+                                                {lesson.steps?.map((step, sIdx) => {
+                                                    const { icon, label } = getStepStyle(step.step_type);
+                                                    return (
+                                                        <button 
+                                                            key={step.id}
+                                                            onClick={() => navigate(`/lesson/${lesson.id}`)}
+                                                            className="group flex items-start gap-4 px-6 py-5 hover:bg-slate-50 transition-all text-left relative"
+                                                        >
+                                                            {/* Вертикальная линия Timeline */}
+                                                            <div className="absolute left-[39px] top-0 bottom-0 w-px bg-slate-100 group-first:top-1/2 group-last:bottom-1/2"></div>
+                                                            
+                                                            {/* Контейнер иконки */}
+                                                            <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center group-hover:border-slate-300 group-hover:bg-slate-50 transition-all">
+                                                                {icon}
+                                                            </div>
+
+                                                            {/* Текстовый контент */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                                                                        {label}
+                                                                    </span>
+                                                                </div>
+                                                                <h4 className="text-[13px] font-bold text-slate-700 group-hover:text-slate-900 transition-colors leading-snug">
+                                                                    {step.title || `Шаг ${sIdx + 1}`}
+                                                                </h4>
+                                                            </div>
+
+                                                            {/* Иконка перехода */}
+                                                            <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all mt-3" />
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="p-4 bg-slate-50 border-t border-slate-200">
+                                    <button 
+                                        onClick={() => navigate(`/lesson/${lessons[0]?.id}`)}
+                                        className="w-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest py-3 rounded-lg hover:bg-black transition-colors"
+                                    >
+                                        Начать обучение
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
