@@ -197,3 +197,15 @@ INFO 2026-03-06 14:18:42,576 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.
 INFO 2026-03-06 15:05:05,945 | User 1 запросил квиз.
 INFO 2026-03-06 15:05:06,727 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-06 15:05:06,733 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.807s
+INFO 2026-03-08 18:34:46,447 | User 1 запросил сценарий: Ребята хотят хакнуть сайт | type=chat
+INFO 2026-03-08 18:34:48,299 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-08 18:34:48,316 | AI ACTION: [200] POST /generate-scenario (IP: 172.18.0.8) - 1.910s
+INFO 2026-03-08 18:35:06,738 | User 1 запросил квиз.
+INFO 2026-03-08 18:35:07,251 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-08 18:35:07,253 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.520s
+INFO 2026-03-08 18:35:26,245 | User 1 запросил квиз.
+INFO 2026-03-08 18:35:26,823 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-08 18:35:26,825 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.581s
+INFO 2026-03-08 18:35:42,760 | User 1 запросил квиз.
+INFO 2026-03-08 18:35:43,897 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-08 18:35:43,899 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.141s

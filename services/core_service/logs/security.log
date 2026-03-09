@@ -986,3 +986,109 @@ WARNING 2026-03-08 17:02:06,685 | ACCESS DENIED: [401] GET /api/users/me/ (User:
 INFO 2026-03-08 17:02:15,090 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
 INFO 2026-03-08 17:02:45,986 | ACTION: [201] POST /api/courses/lessons/4/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
 INFO 2026-03-08 17:08:20,931 | ACTION: [200] PATCH /api/courses/steps/35/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+WARNING 2026-03-08 17:36:02,718 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.010s
+WARNING 2026-03-08 17:36:02,722 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 17:36:02,725 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 17:36:02,729 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 17:36:02,731 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 17:36:02,733 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 17:36:02,738 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 17:36:02,739 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-08 17:36:09,740 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.092s
+INFO 2026-03-08 17:36:41,726 | ACTION: [200] POST /api/courses/upload-image/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-08 17:37:35,481 | ACTION: [200] POST /api/courses/upload-image/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-08 17:37:44,087 | ACTION: [200] PATCH /api/courses/steps/35/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
+INFO 2026-03-08 17:45:19,607 | ACTION: [200] PATCH /api/courses/steps/35/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.018s
+INFO 2026-03-08 17:49:47,479 | ACTION: [201] POST /api/courses/lessons/4/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-08 17:49:56,896 | ACTION: [204] DELETE /api/courses/steps/36/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-08 17:52:15,592 | ACTION: [200] POST /api/courses/steps/35/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.033s
+INFO 2026-03-08 17:55:04,203 | ACTION: [200] POST /api/courses/steps/34/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+INFO 2026-03-08 17:58:19,841 | ACTION: [200] POST /api/courses/steps/34/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+INFO 2026-03-08 17:58:22,450 | ACTION: [200] POST /api/courses/steps/35/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-08 18:00:12,757 | ACTION: [200] POST /api/courses/steps/35/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-08 18:00:29,728 | ACTION: [201] POST /api/courses/lessons/6/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-08 18:00:41,987 | ACTION: [200] PATCH /api/courses/steps/37/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+INFO 2026-03-08 18:00:50,224 | ACTION: [200] POST /api/courses/steps/37/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-08 18:01:06,595 | ACTION: [200] POST /api/quizzes/79/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+WARNING 2026-03-08 18:08:38,469 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,471 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,473 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,477 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,479 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,481 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,485 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:08:38,490 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-08 18:09:53,897 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.091s
+INFO 2026-03-08 18:17:11,254 | ACTION: [200] PATCH /api/courses/5/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.030s
+INFO 2026-03-08 18:26:58,962 | ACTION: [200] PATCH /api/courses/steps/35/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-03-08 18:34:54,886 | ACTION: [200] PATCH /api/courses/steps/32/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.021s
+INFO 2026-03-08 18:35:58,273 | ACTION: [200] PATCH /api/courses/steps/14/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.019s
+INFO 2026-03-08 18:35:58,350 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.021s
+INFO 2026-03-08 18:36:10,051 | ACTION: [200] POST /api/courses/upload-image/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-03-08 18:36:12,810 | ACTION: [200] PATCH /api/courses/5/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-03-08 18:37:09,195 | ACTION: [200] PATCH /api/courses/steps/35/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-08 18:41:29,597 | ACCESS DENIED: [401] GET /api/courses/5/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:41:29,599 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:41:29,604 | ACCESS DENIED: [401] GET /api/courses/5/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:41:29,606 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:41:29,611 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-08 18:41:29,619 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-08 18:43:18,041 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.098s
+INFO 2026-03-08 18:44:32,650 | ACTION: [201] POST /api/courses/5/lessons/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.021s
+INFO 2026-03-08 18:44:35,706 | ACTION: [201] POST /api/courses/lessons/70/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-03-08 18:44:42,521 | ACTION: [200] PATCH /api/courses/steps/38/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-09 17:33:56,828 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-03-09 17:33:56,829 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.012s
+WARNING 2026-03-09 17:33:56,829 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.012s
+WARNING 2026-03-09 17:33:56,833 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 17:33:56,835 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 17:33:56,837 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 17:33:56,841 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 17:33:56,845 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-09 17:34:10,217 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.098s
+INFO 2026-03-09 17:35:02,245 | ACTION: [200] PATCH /api/courses/steps/14/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+WARNING 2026-03-09 17:35:02,297 | CLIENT ERROR: [400] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.006s
+INFO 2026-03-09 17:43:16,093 | ACTION: [200] PATCH /api/courses/steps/14/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+INFO 2026-03-09 17:43:16,166 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.019s
+INFO 2026-03-09 17:43:50,533 | ACTION: [200] POST /api/quizzes/81/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-03-09 17:52:25,591 | ACTION: [200] PATCH /api/courses/steps/14/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-03-09 17:52:25,655 | ACTION: [201] POST /api/quizzes/save-generated/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-09 17:52:37,303 | ACTION: [200] POST /api/quizzes/82/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.017s
+WARNING 2026-03-09 18:04:18,959 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:04:18,962 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:04:18,966 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:04:18,969 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:04:18,975 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:04:18,976 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-03-09 18:04:18,980 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:04:18,982 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-09 18:04:27,137 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-03-09 18:08:04,212 | ACTION: [200] PATCH /api/courses/steps/32/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.019s
+INFO 2026-03-09 18:08:21,465 | ACTION: [200] PATCH /api/courses/steps/34/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-09 18:23:43,259 | ACTION: [200] PATCH /api/courses/5/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.033s
+ERROR 2026-03-09 18:26:52,617 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.114s
+ERROR 2026-03-09 18:26:52,669 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.046s
+ERROR 2026-03-09 18:26:56,853 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.075s
+ERROR 2026-03-09 18:26:56,904 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.048s
+ERROR 2026-03-09 18:27:50,835 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.110s
+ERROR 2026-03-09 18:27:50,885 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.046s
+ERROR 2026-03-09 18:27:51,769 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.069s
+ERROR 2026-03-09 18:27:51,824 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.051s
+ERROR 2026-03-09 18:29:12,411 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.072s
+ERROR 2026-03-09 18:29:12,461 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.047s
+ERROR 2026-03-09 18:29:13,228 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.065s
+ERROR 2026-03-09 18:29:13,282 | SERVER ERROR: [500] GET /api/courses/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.050s
+WARNING 2026-03-09 18:34:30,457 | ACCESS DENIED: [401] PATCH /api/courses/5/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,399 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,403 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,407 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,410 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,422 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,424 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-09 18:34:33,432 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.003s
+WARNING 2026-03-09 18:34:33,434 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-09 18:34:40,471 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.096s
+WARNING 2026-03-09 18:35:01,077 | CLIENT ERROR: [400] PATCH /api/courses/5/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+INFO 2026-03-09 18:40:44,902 | ACTION: [200] PATCH /api/courses/6/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.089s
+INFO 2026-03-09 18:41:44,776 | ACTION: [200] POST /api/courses/upload-image/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-03-09 18:41:49,903 | ACTION: [200] PATCH /api/courses/steps/35/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s

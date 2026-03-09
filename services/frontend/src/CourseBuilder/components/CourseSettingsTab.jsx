@@ -1,84 +1,140 @@
-import React from 'react';
-import TiptapEditor from './TiptapEditor';
+import React, { useRef, useState } from 'react';
+import { Save, ImagePlus, X, FileText } from 'lucide-react';
+import TiptapEditor from './TiptapEditor'; 
 
 const CourseSettingsTab = ({ courseData, setCourseData, onSave, loading }) => {
-    const maxTitleLen = 60;
-    const titleLen = courseData.title?.length || 0;
-    const isTitleOverLimit = titleLen > maxTitleLen;
+    const fileInputRef = useRef(null);
+    const [previewUrl, setPreviewUrl] = useState(courseData.image || courseData.cover_image || null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setCourseData({ ...courseData, newImageFile: file });
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
+    const removeImage = () => {
+        setCourseData({ ...courseData, newImageFile: null, image: null, cover_image: null });
+        setPreviewUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     return (
-        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-base-200/20">
-            <div className="max-w-4xl mx-auto animate-fade-in pb-20">
-                
-                <div className="mb-8">
-                    <h2 className="text-3xl font-extrabold text-base-content tracking-tight">Настройки курса</h2>
-                    <p className="text-base-content/60 mt-2 text-sm">Основная информация, которую увидят студенты на странице описания и в поиске.</p>
-                </div>
+        // 🔥 ФИКС: Добавили h-full и overflow-y-auto, чтобы страница скроллилась! 🔥
+        <div className="h-full overflow-y-auto custom-scrollbar bg-white">
+            {/* Добавили pb-32 для комфортного отступа снизу */}
+            <div className="max-w-3xl mx-auto py-10 px-6 pb-32 animate-in fade-in duration-300">
+                <h2 className="text-3xl font-black text-slate-900 mb-8 tracking-tight">Настройки курса</h2>
 
-                <div className="bg-base-100 rounded-3xl shadow-sm border border-base-200 p-8 sm:p-10 space-y-10">
-                    <div className="form-control w-full">
-                        <label className="label py-0 pb-2">
-                            <span className="font-bold text-base-content text-base">Название курса</span>
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-8">
+                    
+                    {/* ОБЛОЖКА КУРСА */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">
+                            Обложка курса
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-6 items-start">
+                            {previewUrl ? (
+                                <div className="relative w-full sm:w-64 aspect-video rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 group shrink-0">
+                                    <img src={previewUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                                    <button 
+                                        onClick={removeImage}
+                                        className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors shadow-sm backdrop-blur-sm opacity-0 group-hover:opacity-100"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-full sm:w-64 aspect-video rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-slate-600 shrink-0"
+                                >
+                                    <ImagePlus size={32} strokeWidth={1.5} className="mb-2" />
+                                    <span className="text-xs font-bold">Загрузить обложку</span>
+                                </div>
+                            )}
+                            
+                            <div className="flex-1">
+                                <p className="text-sm text-slate-500 mb-4 font-medium leading-relaxed">
+                                    Рекомендуемый размер: 1280x720. Поддерживаются форматы JPG, PNG. Максимальный размер файла — 5 МБ.
+                                </p>
+                                <input 
+                                    type="file" 
+                                    accept="image/jpeg, image/png, image/webp" 
+                                    className="hidden" 
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                />
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                                >
+                                    Выбрать файл
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-px w-full bg-slate-100"></div>
+
+                    {/* ОСНОВНАЯ ИНФОРМАЦИЯ */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+                            Название курса
                         </label>
                         <input 
                             type="text" 
-                            className={`input input-lg input-bordered w-full bg-base-50 focus:bg-white transition-colors ${isTitleOverLimit ? 'border-error focus:border-error' : 'focus:border-primary'}`}
-                            value={courseData.title} 
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold focus:bg-white focus:border-slate-900 outline-none transition-all" 
+                            value={courseData.title || ""} 
                             onChange={(e) => setCourseData({...courseData, title: e.target.value})} 
-                            placeholder="Например: Основы Python для начинающих"
+                            placeholder="Например: Основы кибербезопасности"
                         />
-                        <div className="label py-1 pt-2">
-                            <span className="text-xs text-base-content/50">Четкое и привлекающее внимание название.</span>
-                            <span className={`text-xs font-bold ${isTitleOverLimit ? 'text-error' : 'text-base-content/40'}`}>
-                                {titleLen} / {maxTitleLen}
+                    </div>
+
+                    {/* ОПИСАНИЕ */}
+                    <div>
+                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-3 rounded-t-xl border border-b-0">
+                            <FileText size={18} className="text-slate-500" />
+                            <span className="text-sm font-bold text-slate-700">
+                                Описание курса
                             </span>
                         </div>
-                    </div>
-
-                    <div className="form-control w-full max-w-xs">
-                        <label className="label py-0 pb-2">
-                            <span className="font-bold text-base-content text-base">Стоимость участия</span>
-                        </label>
-                        <label className="input input-lg input-bordered bg-base-50 focus-within:bg-white flex items-center gap-4">
-                            <input 
-                                type="number" 
-                                className="grow font-bold" 
-                                value={courseData.price || ''} 
-                                onChange={(e) => setCourseData({...courseData, price: e.target.value})}
-                                placeholder="0"
-                            />
-                            <span className="text-base-content/40 font-bold uppercase text-sm tracking-widest">KZT</span>
-                        </label>
-                        <div className="label py-1 pt-2">
-                            <span className="text-xs text-base-content/50">Оставьте 0 или пустым, чтобы сделать курс бесплатным.</span>
-                        </div>
-                    </div>
-
-                    <div className="divider opacity-30"></div>
-
-                    <div className="form-control w-full">
-                        <label className="label py-0 pb-3 flex-col items-start gap-1">
-                            <span className="font-bold text-base-content text-base">Подробное описание (Визитка)</span>
-                            <span className="text-sm text-base-content/50 font-normal">Расскажите, для кого этот курс, чему научатся студенты и какие навыки получат. Это ваш главный продающий текст.</span>
-                        </label>
-                        
-                        <div className="mt-2 border border-base-200 rounded-3xl overflow-hidden shadow-sm">
+                        <div className="border border-slate-200 rounded-b-xl overflow-hidden bg-white">
                             <TiptapEditor 
                                 content={courseData.description || ""} 
-                                onChange={(html) => setCourseData({...courseData, description: html})} 
+                                onChange={(newContent) => setCourseData({...courseData, description: newContent})} 
                             />
                         </div>
                     </div>
-                </div>
 
-                <div className="flex justify-end mt-8">
-                    <button 
-                        className={`btn btn-primary btn-lg px-10 shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all ${loading ? 'loading' : ''}`} 
-                        onClick={onSave} 
-                        disabled={loading || !courseData.title?.trim() || isTitleOverLimit}
-                    >
-                        Сохранить изменения
-                    </button>
+                    {/* ЦЕНА */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+                            Цена (в тенге)
+                        </label>
+                        <input 
+                            type="number" 
+                            className="w-full sm:w-48 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold focus:bg-white focus:border-slate-900 outline-none transition-all" 
+                            value={courseData.price || 0} 
+                            onChange={(e) => setCourseData({...courseData, price: e.target.value})} 
+                            min="0"
+                        />
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100">
+                        <button 
+                            className="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md disabled:opacity-70 disabled:pointer-events-none w-full sm:w-auto" 
+                            onClick={onSave} 
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                <><Save size={18} /> Сохранить настройки</>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
