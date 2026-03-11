@@ -209,3 +209,45 @@ INFO 2026-03-08 18:35:26,825 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.
 INFO 2026-03-08 18:35:42,760 | User 1 запросил квиз.
 INFO 2026-03-08 18:35:43,897 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-08 18:35:43,899 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.141s
+INFO 2026-03-09 17:38:48,358 | User 1 запросил квиз.
+INFO 2026-03-09 17:38:49,076 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:38:49,092 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.780s
+INFO 2026-03-09 17:38:55,658 | User 1 запросил квиз.
+INFO 2026-03-09 17:38:56,523 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:38:56,525 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.867s
+INFO 2026-03-09 17:42:55,810 | User 1 запросил квиз.
+INFO 2026-03-09 17:42:56,486 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:42:56,487 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.679s
+INFO 2026-03-09 17:43:12,996 | User 1 запросил квиз.
+INFO 2026-03-09 17:43:13,901 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:43:13,902 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.908s
+INFO 2026-03-09 17:52:18,071 | User 1 запросил квиз.
+INFO 2026-03-09 17:52:18,961 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:52:18,963 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.894s
+INFO 2026-03-09 17:58:36,612 | User 1 запросил квиз.
+INFO 2026-03-09 17:58:37,064 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:58:37,065 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.454s
+INFO 2026-03-09 17:58:41,306 | User 1 запросил квиз.
+INFO 2026-03-09 17:58:41,729 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-09 17:58:41,731 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 0.426s
+INFO 2026-03-10 12:31:19,270 | FILE UPLOAD: User ID 22 uploaded ходатайство Арман.docx
+INFO 2026-03-10 12:31:19,280 | AI PARSING: Sending 1007 chars to Groq...
+INFO 2026-03-10 12:31:20,449 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-10 12:31:20,463 | AI PARSING SUCCESS: Course 'Система информационной безопасности' generated.
+INFO 2026-03-10 12:31:20,463 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 1.217s
+INFO 2026-03-10 19:25:13,996 | FILE UPLOAD: User ID 1 uploaded 11 сынып. Қазақ тілі. ТЖБ. ҚГБ.docx
+INFO 2026-03-10 19:25:14,057 | AI PARSING: Sending 30000 chars to Groq...
+INFO 2026-03-10 19:25:14,326 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 413 Payload Too Large"
+ERROR 2026-03-10 19:25:14,327 | AI PARSING ERROR: Error code: 413 - {'error': {'message': 'Request too large for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Requested 19044, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-03-10 19:25:14,328 | SERVER ERROR: [500] POST /generate-course-from-file (IP: 172.18.0.8) - 0.382s
+INFO 2026-03-10 19:25:19,463 | FILE UPLOAD: User ID 1 uploaded ходатайство Арман.docx
+INFO 2026-03-10 19:25:19,468 | AI PARSING: Sending 1007 chars to Groq...
+INFO 2026-03-10 19:25:20,519 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-10 19:25:20,539 | AI PARSING SUCCESS: Course 'Система информационной безопасности' generated.
+INFO 2026-03-10 19:25:20,540 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 1.078s
+INFO 2026-03-11 16:34:03,908 | User 22 запросил квиз.
+INFO 2026-03-11 16:34:04,911 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-11 16:34:04,927 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.047s
+INFO 2026-03-11 16:34:28,668 | User 22 запросил квиз.
+INFO 2026-03-11 16:34:29,741 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-11 16:34:29,742 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.075s
