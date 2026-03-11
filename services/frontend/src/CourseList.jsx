@@ -37,23 +37,26 @@ const CARD_ACCENTS = [
     'from-sky-500 to-sky-700',
 ];
 
-// ─── Compact Course Card (Stepik style) ──────────────────────────────────────
+// ─── Compact Course Card (Responsive) ──────────────────────────────────────
 function CourseCard({ course }) {
     const imageUrl   = course.image || course.cover_image || course.image_url;
     const price      = parseFloat(course.price);
     const isFree     = price === 0;
     const hasProgress = course.progress > 0;
-    const rating     = (4.4 + (seeded(course.id, 0, 8) / 10)).toFixed(1);
-    const students   = seeded(course.id, 80, 4200);
-    const hours      = seeded(course.id, 2, 20);
+    
+    // 🔥 Плавный переход на реальные данные: если бэкенд прислал данные, берем их, иначе генерируем
+    const rating     = course.rating ? parseFloat(course.rating).toFixed(1) : (4.4 + (seeded(course.id, 0, 8) / 10)).toFixed(1);
+    const students   = course.students_count || seeded(course.id, 80, 4200);
+    const hours      = course.duration || seeded(course.id, 2, 20);
     const accent     = CARD_ACCENTS[course.id % CARD_ACCENTS.length];
 
     return (
         <Link
             to={`/courses/${course.id}`}
-            className="group flex gap-4 bg-white border border-slate-100 rounded-2xl p-4 hover:border-slate-200 hover:shadow-lg hover:shadow-slate-100 transition-all duration-200"
+            // 🔥 Исправлено: на мобилках картинка сверху (flex-col-reverse), на ПК картинка справа (sm:flex-row)
+            className="group flex flex-col-reverse sm:flex-row gap-4 bg-white border border-slate-100 rounded-2xl p-4 hover:border-slate-200 hover:shadow-lg hover:shadow-slate-100 transition-all duration-200"
         >
-            {/* Left: info */}
+            {/* Left: info (на ПК) / Bottom (на мобилках) */}
             <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
                     {course.category_title && (
@@ -61,15 +64,15 @@ function CourseCard({ course }) {
                             {course.category_title}
                         </span>
                     )}
-                    <h3 className="font-bold text-slate-900 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {course.title}
                     </h3>
-                    <p className="text-xs text-slate-400 line-clamp-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 line-clamp-2 sm:line-clamp-1 leading-relaxed">
                         {stripHtml(course.description) || 'Описание скоро появится'}
                     </p>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between">
+                <div className="mt-4 sm:mt-3 flex flex-wrap items-center justify-between gap-3">
                     {/* Meta */}
                     <div className="flex items-center gap-3 text-[11px] text-slate-400">
                         <span className="flex items-center gap-1 font-semibold text-amber-500">
@@ -84,23 +87,23 @@ function CourseCard({ course }) {
                     </div>
 
                     {/* Price + button */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
                         <span className="font-extrabold text-sm text-slate-900">
                             {isFree
                                 ? <span className="text-emerald-600">Бесплатно</span>
                                 : `${new Intl.NumberFormat('ru-RU').format(price)} ₸`
                             }
                         </span>
-                        <span className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap
+                        <span className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-lg text-[11px] font-bold transition-all whitespace-nowrap
                             ${hasProgress ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                            {hasProgress ? <><PlayCircle size={11} />Продолжить</> : <>Открыть <ArrowRight size={11} /></>}
+                            {hasProgress ? <><PlayCircle size={12} />Продолжить</> : <>Открыть <ArrowRight size={12} /></>}
                         </span>
                     </div>
                 </div>
 
                 {/* Progress bar */}
                 {hasProgress && (
-                    <div className="mt-2.5">
+                    <div className="mt-3.5 sm:mt-2.5">
                         <div className="flex justify-between text-[10px] font-semibold mb-1">
                             <span className="text-slate-400">Прогресс</span>
                             <span className="text-blue-600">{course.progress}%</span>
@@ -112,22 +115,22 @@ function CourseCard({ course }) {
                 )}
             </div>
 
-            {/* Right: thumbnail */}
-            <div className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden relative">
+            {/* Right: thumbnail (на ПК) / Top (на мобилках) */}
+            <div className="flex-shrink-0 w-full h-40 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative">
                 {imageUrl ? (
                     <img
                         src={imageUrl}
                         alt={course.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : (
                     <div className={`w-full h-full bg-gradient-to-br ${accent} flex items-center justify-center`}>
-                        <BookOpen size={28} className="text-white/80" strokeWidth={1.5} />
+                        <BookOpen size={32} className="text-white/80 sm:w-7 sm:h-7" strokeWidth={1.5} />
                     </div>
                 )}
                 {isFree && (
-                    <div className="absolute top-1.5 right-1.5">
-                        <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded-full">Free</span>
+                    <div className="absolute top-2 right-2 sm:top-1.5 sm:right-1.5">
+                        <span className="px-2 py-1 sm:px-1.5 sm:py-0.5 bg-emerald-500 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-sm">Free</span>
                     </div>
                 )}
             </div>
@@ -153,7 +156,6 @@ function FilterBlock({ title, children, defaultOpen = true }) {
 function PromoBanner() {
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 p-6 mb-8 flex items-center justify-between gap-6">
-            {/* BG decoration */}
             <div className="absolute -top-6 -right-6 w-40 h-40 rounded-full bg-white/5"></div>
             <div className="absolute bottom-0 right-24 w-24 h-24 rounded-full bg-white/5"></div>
 
@@ -175,7 +177,6 @@ function PromoBanner() {
                 </Link>
             </div>
 
-            {/* Floating visual */}
             <div className="relative z-10 hidden lg:flex flex-col gap-2 flex-shrink-0">
                 {[
                     { icon: <Shield size={14} className="text-blue-400" />, label: 'Фишинг-симулятор', color: 'bg-blue-50' },
@@ -199,28 +200,43 @@ export default function CourseList() {
     const [courses, setCourses]       = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading]       = useState(true);
+    
+    // Стейты для поиска
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(''); // 🔥 Стейт для debounce
+
     const [selectedCategory, setSelectedCategory] = useState('');
     const [sortBy, setSortBy]         = useState('popular');
     const [selectedLevels, setSelectedLevels] = useState([]);
     const [onlyFree, setOnlyFree]     = useState(false);
     const [mobileSidebar, setMobileSidebar] = useState(false);
 
+    // Загрузка категорий
     useEffect(() => {
         api.get('courses/categories/')
             .then(res => setCategories(res.data))
             .catch(() => {});
     }, []);
 
+    // 🔥 Логика Debounce: ждем 400мс после того как юзер перестал печатать
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Загрузка курсов (теперь реагирует на debouncedSearch)
     useEffect(() => {
         setLoading(true);
         const params = new URLSearchParams();
-        if (searchTerm) params.append('search', searchTerm);
+        if (debouncedSearch) params.append('search', debouncedSearch);
         if (selectedCategory) params.append('category', selectedCategory);
+        
         api.get(`courses/?${params.toString()}`)
             .then(res => { setCourses(res.data); setLoading(false); })
             .catch(() => setLoading(false));
-    }, [searchTerm, selectedCategory]);
+    }, [debouncedSearch, selectedCategory]);
 
     const filtered = useMemo(() => {
         let r = [...courses];
@@ -233,11 +249,11 @@ export default function CourseList() {
 
     const clearAll = () => {
         setSelectedCategory(''); setOnlyFree(false);
-        setSelectedLevels([]); setSearchTerm('');
+        setSelectedLevels([]); setSearchTerm(''); setDebouncedSearch('');
     };
     const toggleLevel = l => setSelectedLevels(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l]);
 
-    // Sidebar content (reused for mobile drawer)
+    // Sidebar content
     const SidebarContent = () => (
         <>
             <div className="flex items-center justify-between mb-1 px-1">
@@ -346,17 +362,11 @@ export default function CourseList() {
                                 <CheckCircle size={11} className={onlyFree ? 'text-emerald-500' : 'text-slate-300'} />
                                 Бесплатные
                             </button>
-                            <button
-                                onClick={() => setSelectedCategory('')}
-                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:border-slate-300 transition-all"
-                            >
-                                С сертификатом
-                            </button>
                         </div>
 
                         {/* Sort + mobile filter */}
                         <div className="flex items-center gap-2 ml-auto">
-                            <div className="relative">
+                            <div className="relative hidden sm:block">
                                 <select
                                     value={sortBy}
                                     onChange={e => setSortBy(e.target.value)}
@@ -380,7 +390,7 @@ export default function CourseList() {
                 </div>
 
                 {/* ── BODY ── */}
-                <div className="max-w-7xl mx-auto px-6 pt-8 pb-16 flex gap-7">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 flex gap-7">
 
                     {/* ── SIDEBAR ── */}
                     <aside className="hidden lg:block w-64 flex-shrink-0">
@@ -392,7 +402,7 @@ export default function CourseList() {
                     {/* ── MAIN ── */}
                     <div className="flex-1 min-w-0">
 
-                        {/* Promo banner — only when no filters */}
+                        {/* Promo banner */}
                         {!searchTerm && !selectedCategory && !onlyFree && !selectedLevels.length && (
                             <PromoBanner />
                         )}
@@ -421,27 +431,26 @@ export default function CourseList() {
 
                         {/* Count */}
                         <p className="text-xs text-slate-400 font-medium mb-4">
-                            {loading ? 'Загрузка...' : `${filtered.length} ${filtered.length === 1 ? 'курс' : 'курсов'}`}
+                            {loading ? 'Ищем курсы...' : `${filtered.length} ${filtered.length === 1 ? 'курс' : 'курсов'}`}
                         </p>
 
                         {loading ? (
                             <div className="flex flex-col gap-3">
                                 {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="flex gap-4 bg-white rounded-2xl border border-slate-100 p-4 animate-pulse">
-                                        <div className="flex-1 space-y-3">
+                                    <div key={i} className="flex flex-col sm:flex-row gap-4 bg-white rounded-2xl border border-slate-100 p-4 animate-pulse">
+                                        <div className="w-full h-40 sm:w-28 sm:h-28 bg-slate-100 rounded-xl flex-shrink-0"></div>
+                                        <div className="flex-1 space-y-3 mt-2 sm:mt-0">
                                             <div className="h-3 bg-slate-100 rounded w-1/5"></div>
                                             <div className="h-4 bg-slate-100 rounded w-3/4"></div>
                                             <div className="h-3 bg-slate-100 rounded w-2/3"></div>
-                                            <div className="h-3 bg-slate-100 rounded w-1/3 mt-4"></div>
                                         </div>
-                                        <div className="w-24 h-24 bg-slate-100 rounded-xl flex-shrink-0"></div>
                                     </div>
                                 ))}
                             </div>
                         ) : filtered.length > 0 ? (
                             <>
                                 {/* In progress */}
-                                {inProgress.length > 0 && !searchTerm && !selectedCategory && (
+                                {inProgress.length > 0 && !debouncedSearch && !selectedCategory && (
                                     <div className="mb-8">
                                         <h2 className="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
                                             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
@@ -464,7 +473,7 @@ export default function CourseList() {
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-24 text-center">
+                            <div className="flex flex-col items-center justify-center py-24 text-center px-4">
                                 <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
                                     <Search size={24} className="text-slate-400" />
                                 </div>
@@ -472,7 +481,7 @@ export default function CourseList() {
                                 <p className="text-sm text-slate-400 max-w-xs mb-5 leading-relaxed">
                                     Попробуйте другой запрос или сбросьте фильтры.
                                 </p>
-                                <button onClick={clearAll} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">
+                                <button onClick={clearAll} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
                                     Сбросить фильтры
                                 </button>
                             </div>
@@ -483,18 +492,18 @@ export default function CourseList() {
                 {/* ── MOBILE DRAWER ── */}
                 {mobileSidebar && (
                     <div className="fixed inset-0 z-50 lg:hidden">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileSidebar(false)}></div>
-                        <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl overflow-y-auto">
-                            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setMobileSidebar(false)}></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-200">
+                            <div className="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur z-10">
                                 <span className="font-extrabold text-slate-900">Фильтры</span>
-                                <button onClick={() => setMobileSidebar(false)} className="p-1.5 rounded-lg hover:bg-slate-100">
-                                    <X size={16} className="text-slate-600" />
+                                <button onClick={() => setMobileSidebar(false)} className="p-2 -mr-2 rounded-xl hover:bg-slate-100 transition-colors">
+                                    <X size={18} className="text-slate-500" />
                                 </button>
                             </div>
                             <div className="p-5"><SidebarContent /></div>
-                            <div className="sticky bottom-0 p-4 bg-white border-t border-slate-100">
-                                <button onClick={() => setMobileSidebar(false)} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">
-                                    Применить
+                            <div className="sticky bottom-0 p-5 bg-white border-t border-slate-100">
+                                <button onClick={() => setMobileSidebar(false)} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                                    Показать курсы
                                 </button>
                             </div>
                         </div>
