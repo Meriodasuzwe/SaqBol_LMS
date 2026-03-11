@@ -1,218 +1,393 @@
-import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import api from './api';
 import { toast } from 'react-toastify';
+import {
+    BookOpen, LayoutDashboard, User, LogOut, ChevronDown,
+    Sun, Moon, GraduationCap, ExternalLink, X, Sparkles
+} from 'lucide-react';
 
 function Navbar({ isLoggedIn, userRole, onLogout }) {
     const isTeacher = userRole === 'teacher' || userRole === 'admin';
-    const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-    const [user, setUser] = useState(null);
+    const location  = useLocation();
 
-    // Стейты для анкеты препода
-    const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
-    const [cvText, setCvText] = useState("");
-    const [portfolioUrl, setPortfolioUrl] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [theme, setTheme]       = useState(localStorage.getItem('theme') || 'light');
+    const [user, setUser]         = useState(null);
+    const [dropOpen, setDropOpen] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const dropRef = useRef(null);
+
+    const [modalOpen, setModalOpen]    = useState(false);
+    const [cvText, setCvText]          = useState('');
+    const [portfolioUrl, setPortfolio] = useState('');
+    const [submitting, setSubmitting]  = useState(false);
+
+    const isDark = theme === 'dark';
 
     useEffect(() => {
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
     }, [theme]);
 
     useEffect(() => {
-        if (isLoggedIn) {
-            api.get('users/me/')
-                .then(res => setUser(res.data))
-                .catch(err => console.error("Ошибка загрузки данных в Navbar", err));
-        } else {
-            setUser(null);
-        }
+        if (isLoggedIn) api.get('users/me/').then(r => setUser(r.data)).catch(() => {});
+        else setUser(null);
     }, [isLoggedIn]);
 
-    const toggleTheme = () => {
-        setTheme((prev) => (prev === "light" ? "dark" : "light"));
-    };
+    useEffect(() => {
+        const fn = () => setScrolled(window.scrollY > 8);
+        window.addEventListener('scroll', fn, { passive: true });
+        return () => window.removeEventListener('scroll', fn);
+    }, []);
 
-    const getAvatarUrl = (path) => {
+    useEffect(() => {
+        const fn = e => { if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false); };
+        document.addEventListener('mousedown', fn);
+        return () => document.removeEventListener('mousedown', fn);
+    }, []);
+
+    useEffect(() => { setMobileOpen(false); setDropOpen(false); }, [location.pathname]);
+
+    const getAvatarUrl = path => {
         if (!path) return null;
-        if (path.startsWith('http://') || path.startsWith('https://')) return path;
-        const baseUrl = 'http://localhost:8000'; 
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        return `${baseUrl}${cleanPath}`;
+        if (path.startsWith('http')) return path;
+        return `http://localhost:8000${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
-    // Отправка заявки на сервер
-    const submitAuthorApplication = async () => {
-        if (!cvText) {
-            toast.warning("Пожалуйста, расскажите немного о своем опыте.");
-            return;
-        }
-        setIsSubmitting(true);
+    const submitAuthor = async () => {
+        if (!cvText) { toast.warning('Расскажите о своём опыте'); return; }
+        setSubmitting(true);
         try {
-            const res = await api.post('users/apply-teacher/', {
-                cv_text: cvText,
-                portfolio_url: portfolioUrl
-            });
-            toast.success("🎓 " + res.data.message);
-            setIsAuthorModalOpen(false); // Закрываем модалку при успехе
-            setCvText(""); // Очищаем форму
-            setPortfolioUrl("");
-        } catch (err) {
-            if (err.response?.data?.error) {
-                toast.error("⚠️ " + err.response.data.error);
-            } else {
-                toast.error("Произошла ошибка при отправке заявки.");
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
+            const r = await api.post('users/apply-teacher/', { cv_text: cvText, portfolio_url: portfolioUrl });
+            toast.success('🎓 ' + r.data.message);
+            setModalOpen(false); setCvText(''); setPortfolio('');
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Ошибка при отправке заявки');
+        } finally { setSubmitting(false); }
+    };
+
+    const isActive = path => location.pathname === path || location.pathname.startsWith(path + '/');
+
+    const displayName = user?.first_name
+        ? `${user.first_name} ${user.last_name || ''}`.trim()
+        : user?.username || 'Пользователь';
+    const initials = displayName.split(' ').map(w => w[0]?.toUpperCase()).slice(0, 2).join('');
+
+    // Theme-aware inline style tokens — работают поверх DaisyUI
+    const t = {
+        nav:      isDark ? 'rgba(30,30,35,0.97)'  : 'rgba(255,255,255,0.97)',
+        border:   isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
+        shadow:   isDark ? '0 1px 0 rgba(255,255,255,0.05)' : '0 1px 0 rgba(0,0,0,0.07)',
+        text:     isDark ? '#f1f5f9' : '#0f172a',
+        textMute: isDark ? '#94a3b8' : '#64748b',
+        hover:    isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+        panel:    isDark ? '#1e1e24' : '#ffffff',
+        panelBdr: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.09)',
+        panelHdr: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+        itemHov:  isDark ? 'rgba(255,255,255,0.06)' : '#f8fafc',
+        iconBg:   isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
+        input:    isDark ? 'rgba(255,255,255,0.06)' : '#f8fafc',
+        inputBdr: isDark ? 'rgba(255,255,255,0.1)'  : '#e2e8f0',
+        divider:  isDark ? 'rgba(255,255,255,0.07)' : '#f1f5f9',
+    };
+
+    const NavLink = ({ to, icon, children }) => {
+        const active = isActive(to);
+        return (
+            <Link to={to} style={{ color: active ? '#3b82f6' : t.textMute, fontFamily: 'inherit' }}
+                className="relative flex items-center gap-1.5 px-1 py-1.5 text-sm font-semibold transition-colors duration-150 group hover:opacity-100"
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = t.text; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = t.textMute; }}>
+                {icon}
+                {children}
+                <span style={{
+                    position: 'absolute', bottom: -1, left: 0, right: 0, height: 2,
+                    borderRadius: 9, background: '#3b82f6',
+                    transform: active ? 'scaleX(1)' : 'scaleX(0)',
+                    opacity: active ? 1 : 0,
+                    transition: 'transform 0.2s, opacity 0.2s',
+                }} />
+            </Link>
+        );
     };
 
     return (
         <>
-            <div className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-40 shadow-sm px-4 lg:px-8">
-                <div className="navbar-start">
-                    <div className="dropdown">
-                        <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden mr-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+                @keyframes dropIn {
+                    from { opacity:0; transform:translateY(-6px) scale(0.97); }
+                    to   { opacity:1; transform:none; }
+                }
+                .sq-drop  { animation: dropIn 0.15s cubic-bezier(0.16,1,0.3,1) both; }
+                @keyframes slideD {
+                    from { opacity:0; transform:translateY(-8px); }
+                    to   { opacity:1; transform:none; }
+                }
+                .sq-slide { animation: slideD 0.2s cubic-bezier(0.16,1,0.3,1) both; }
+            `}</style>
+
+            {/* ── NAVBAR ── */}
+            <header style={{
+                position: 'sticky', top: 0, zIndex: 40, width: '100%',
+                background: t.nav,
+                borderBottom: `1px solid ${t.border}`,
+                boxShadow: scrolled ? (isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.06)') : 'none',
+                backdropFilter: 'blur(16px)',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                transition: 'box-shadow 0.2s',
+            }}>
+                <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem', height: 64, display: 'flex', alignItems: 'center', gap: 24 }}>
+
+                    {/* Logo */}
+                    <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
+                        <div style={{ width: 32, height: 32, background: '#2563eb', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(37,99,235,0.35)' }}>
+                            <span style={{ color: '#fff', fontWeight: 900, fontSize: 11, letterSpacing: '-0.5px' }}>SQ</span>
                         </div>
-                        <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg border border-base-200 bg-base-100 rounded-lg w-52">
-                            {isLoggedIn ? (
-                                <>
-                                    <li><Link to="/courses" className="font-medium">Каталог курсов</Link></li>
-                                    <li><Link to="/profile" className="font-medium">Личный кабинет</Link></li>
-                                    {isTeacher && <li><Link to="/teacher" className="font-medium">Панель управления</Link></li>}
-                                </>
-                            ) : (
-                                <>
-                                    <li><Link to="/login" className="font-medium">Войти</Link></li>
-                                    <li><Link to="/register" className="font-medium">Регистрация</Link></li>
-                                </>
-                            )}
-                        </ul>
-                    </div>
-                    <Link to="/" className="text-xl font-bold tracking-tight text-base-content hover:opacity-80 transition-opacity flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary text-white flex items-center justify-center rounded-md font-black text-sm">SQ</div>
-                        SaqBol <span className="font-normal text-base-content/60">LMS</span>
+                        <span style={{ fontWeight: 800, color: t.text, fontSize: 15, letterSpacing: '-0.3px' }}>
+                            SaqBol <span style={{ fontWeight: 400, color: t.textMute }}>LMS</span>
+                        </span>
                     </Link>
-                </div>
 
-                <div className="navbar-center hidden lg:flex">
+                    {/* Nav links */}
                     {isLoggedIn && (
-                        <ul className="flex items-center gap-8 font-medium text-sm text-base-content/80">
-                            <li><Link to="/courses" className="hover:text-primary transition-colors">Каталог курсов</Link></li>
-                            {isTeacher && (
-                                 <li>
-                                    <Link to="/teacher" className="hover:text-primary transition-colors">
-                                         Панель управления
-                                    </Link>
-                                </li>
-                            )}
-                        </ul>
+                        <nav style={{ display: 'flex', alignItems: 'center', gap: 24, marginLeft: 8 }} className="hidden lg:flex">
+                            <NavLink to="/courses" icon={<BookOpen size={14} style={{ opacity: 0.7 }} />}>Каталог курсов</NavLink>
+                            {isTeacher && <NavLink to="/teacher" icon={<LayoutDashboard size={14} style={{ opacity: 0.7 }} />}>Панель управления</NavLink>}
+                        </nav>
                     )}
-                </div>
 
-                <div className="navbar-end gap-3">
-                    <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm text-base-content/70">
-                        <input type="checkbox" onChange={toggleTheme} checked={theme === "dark"} />
-                        <svg className="swap-on fill-current w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>
-                        <svg className="swap-off fill-current w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/></svg>
-                    </label>
+                    {/* Right */}
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
 
-                    {isLoggedIn ? (
-                        <div className="dropdown dropdown-end">
-                            <div tabIndex={0} role="button" className="avatar transition-opacity hover:opacity-80">
-                                <div className="w-9 h-9 rounded-full border border-base-300 bg-base-200 flex items-center justify-center overflow-hidden">
-                                    {user?.avatar ? (
-                                        <img alt="User" src={getAvatarUrl(user.avatar)} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <span className="text-sm font-bold uppercase text-base-content/60">
-                                            {user?.username?.[0] || 'U'}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <ul tabIndex={0} className="mt-4 z-[1] p-2 shadow-xl border border-base-200 menu menu-sm dropdown-content bg-base-100 rounded-xl w-64">
-                                <div className="px-4 py-3 mb-1">
-                                    <p className="text-sm font-semibold text-base-content truncate">{user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}</p>
-                                    <p className="text-xs text-base-content/50 truncate mt-0.5">{user?.email}</p>
-                                </div>
-                                <div className="divider my-0 opacity-50"></div>
-                                
-                                <li className="mt-1">
-                                    <Link to="/profile" className="py-2.5 px-4 font-medium rounded-lg text-base-content/80 hover:text-base-content hover:bg-base-200/50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                        Личный кабинет
-                                    </Link>
-                                </li>
-                                
-                                {!isTeacher && (
-                                    <li>
-                                        <button onClick={() => setIsAuthorModalOpen(true)} className="py-2.5 px-4 font-medium rounded-lg text-primary hover:bg-primary/5 mt-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                                            Стать автором
-                                        </button>
-                                    </li>
+                        {/* Theme toggle */}
+                        <button onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
+                            style={{ width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textMute, transition: 'background 0.15s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = t.hover}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            title="Сменить тему">
+                            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                        </button>
+
+                        {isLoggedIn ? (
+                            /* User dropdown trigger */
+                            <div style={{ position: 'relative' }} ref={dropRef}>
+                                <button onClick={() => setDropOpen(o => !o)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', transition: 'background 0.15s' }}
+                                    onMouseEnter={e => e.currentTarget.style.background = t.hover}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 10, overflow: 'hidden', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `2px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#fff'}`, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' }}>
+                                        {user?.avatar
+                                            ? <img src={getAvatarUrl(user.avatar)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            : <span style={{ fontSize: 11, fontWeight: 800, color: '#2563eb' }}>{initials}</span>
+                                        }
+                                    </div>
+                                    <div className="hidden md:block" style={{ textAlign: 'left' }}>
+                                        <p style={{ fontSize: 12, fontWeight: 700, color: t.text, lineHeight: 1.2, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</p>
+                                        <p style={{ fontSize: 10, color: t.textMute, fontWeight: 500, textTransform: 'capitalize' }}>{userRole || 'студент'}</p>
+                                    </div>
+                                    <ChevronDown size={14} style={{ color: t.textMute, transform: dropOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                </button>
+
+                                {dropOpen && (
+                                    <div className="sq-drop" style={{
+                                        position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+                                        width: 260, background: t.panel,
+                                        border: `1px solid ${t.panelBdr}`,
+                                        borderRadius: 18, overflow: 'hidden',
+                                        boxShadow: isDark ? '0 20px 60px rgba(0,0,0,0.6)' : '0 20px 60px rgba(0,0,0,0.12)',
+                                        zIndex: 50,
+                                    }}>
+                                        {/* Header */}
+                                        <div style={{ padding: '16px', borderBottom: `1px solid ${t.divider}`, background: t.panelHdr }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                <div style={{ width: 40, height: 40, borderRadius: 12, overflow: 'hidden', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                    {user?.avatar
+                                                        ? <img src={getAvatarUrl(user.avatar)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        : <span style={{ fontSize: 13, fontWeight: 800, color: '#2563eb' }}>{initials}</span>
+                                                    }
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <p style={{ fontSize: 13, fontWeight: 700, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</p>
+                                                    <p style={{ fontSize: 11, color: t.textMute, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Items */}
+                                        <div style={{ padding: '6px' }}>
+                                            {[
+                                                { to: '/profile', icon: <User size={14} />, label: 'Личный кабинет', show: true },
+                                                { to: '/teacher', icon: <LayoutDashboard size={14} />, label: 'Панель управления', show: isTeacher },
+                                            ].filter(i => i.show).map(item => (
+                                                <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', color: t.text, fontSize: 13, fontWeight: 500, transition: 'background 0.12s' }}
+                                                    onMouseEnter={e => e.currentTarget.style.background = t.itemHov}
+                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: t.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textMute, flexShrink: 0 }}>
+                                                        {item.icon}
+                                                    </div>
+                                                    {item.label}
+                                                </Link>
+                                            ))}
+
+                                            {!isTeacher && (
+                                                <button onClick={() => { setDropOpen(false); setModalOpen(true); }}
+                                                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: t.text, fontSize: 13, fontWeight: 500, transition: 'background 0.12s', textAlign: 'left' }}
+                                                    onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(59,130,246,0.12)' : '#eff6ff'}
+                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? 'rgba(59,130,246,0.15)' : '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
+                                                        <Sparkles size={14} />
+                                                    </div>
+                                                    Стать автором
+                                                    <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: '#3b82f6', background: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff', border: '1px solid rgba(59,130,246,0.3)', padding: '2px 6px', borderRadius: 99 }}>NEW</span>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Logout */}
+                                        <div style={{ padding: '6px', borderTop: `1px solid ${t.divider}` }}>
+                                            <button onClick={() => { setDropOpen(false); onLogout(); }}
+                                                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 500, transition: 'background 0.12s', textAlign: 'left' }}
+                                                onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? 'rgba(239,68,68,0.1)' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                                                    <LogOut size={14} />
+                                                </div>
+                                                Выйти
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
-                                
-                                <div className="divider my-1 opacity-50"></div>
-                                <li className="mb-1">
-                                    <button onClick={onLogout} className="py-2.5 px-4 font-medium text-error hover:bg-error/10 rounded-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                        Выйти
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    ) : (
-                        <div className="flex gap-3">
-                            <Link to="/login" className="btn btn-ghost btn-sm font-medium">Войти</Link>
-                            <Link to="/register" className="btn btn-primary btn-sm font-medium px-5">Регистрация</Link>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* --- МОДАЛКА "СТАТЬ АВТОРОМ" --- */}
-            {isAuthorModalOpen && (
-                <div className="fixed inset-0 bg-base-300/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
-                    <div className="bg-base-100 rounded-2xl shadow-2xl border border-base-200 w-full max-w-lg p-8 animate-fade-in">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h3 className="font-bold text-2xl text-base-content">Заявка на авторство</h3>
-                                <p className="text-sm text-base-content/60 mt-1">Поделитесь своими знаниями со студентами SaqBol LMS.</p>
                             </div>
-                            <button onClick={() => setIsAuthorModalOpen(false)} className="btn btn-ghost btn-sm btn-circle text-base-content/50 hover:text-base-content hover:bg-base-200">
-                                ✕
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Link to="/login" className="hidden sm:block"
+                                    style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600, color: t.textMute, borderRadius: 10, textDecoration: 'none', transition: 'background 0.15s' }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = t.hover; e.currentTarget.style.color = t.text; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.textMute; }}>
+                                    Войти
+                                </Link>
+                                <Link to="/register"
+                                    style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, background: '#2563eb', color: '#fff', borderRadius: 10, textDecoration: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.3)', transition: 'background 0.15s' }}
+                                    onMouseEnter={e => e.currentTarget.style.background = '#1d4ed8'}
+                                    onMouseLeave={e => e.currentTarget.style.background = '#2563eb'}>
+                                    Регистрация
+                                </Link>
+                            </div>
+                        )}
+
+                        {/* Mobile burger */}
+                        {isLoggedIn && (
+                            <button onClick={() => setMobileOpen(o => !o)} className="lg:hidden"
+                                style={{ width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                                {[0,1,2].map(i => (
+                                    <span key={i} style={{
+                                        display: 'block', width: 16, height: 2, background: t.textMute, borderRadius: 2, transition: 'all 0.2s',
+                                        transform: mobileOpen ? (i === 0 ? 'rotate(45deg) translate(5px,5px)' : i === 2 ? 'rotate(-45deg) translate(5px,-5px)' : 'scaleX(0)') : 'none',
+                                        opacity: mobileOpen && i === 1 ? 0 : 1,
+                                    }} />
+                                ))}
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Mobile menu */}
+                {mobileOpen && isLoggedIn && (
+                    <div className="sq-slide lg:hidden" style={{ borderTop: `1px solid ${t.border}`, background: t.nav, padding: '8px 20px 16px' }}>
+                        {[
+                            { to: '/courses', icon: <BookOpen size={15} />, label: 'Каталог курсов', show: true },
+                            { to: '/profile', icon: <User size={15} />, label: 'Личный кабинет', show: true },
+                            { to: '/teacher', icon: <LayoutDashboard size={15} />, label: 'Панель управления', show: isTeacher },
+                        ].filter(i => i.show).map(item => (
+                            <Link key={item.to} to={item.to}
+                                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, textDecoration: 'none', marginBottom: 2, fontSize: 13, fontWeight: 600, color: isActive(item.to) ? '#3b82f6' : t.text, background: isActive(item.to) ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent', transition: 'background 0.15s' }}
+                                onMouseEnter={e => { if (!isActive(item.to)) e.currentTarget.style.background = t.hover; }}
+                                onMouseLeave={e => { if (!isActive(item.to)) e.currentTarget.style.background = 'transparent'; }}>
+                                {item.icon}{item.label}
+                            </Link>
+                        ))}
+                        <div style={{ borderTop: `1px solid ${t.divider}`, marginTop: 8, paddingTop: 8 }}>
+                            <button onClick={onLogout}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+                                <LogOut size={15} /> Выйти
                             </button>
                         </div>
-                        
-                        <div className="space-y-5">
-                            <div>
-                                <label className="label py-0 pb-1.5"><span className="text-sm font-semibold text-base-content/80">О себе и вашем опыте <span className="text-error">*</span></span></label>
-                                <textarea 
-                                    className="textarea textarea-bordered w-full h-28 focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-base-50" 
-                                    placeholder="Расскажите о вашем опыте. Какие курсы вы планируете создать?"
-                                    value={cvText}
-                                    onChange={(e) => setCvText(e.target.value)}
-                                ></textarea>
-                            </div>
-                            <div>
-                                <label className="label py-0 pb-1.5"><span className="text-sm font-semibold text-base-content/80">Ссылка на профиль / портфолио</span></label>
-                                <input 
-                                    type="url" 
-                                    className="input input-sm input-bordered w-full focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-base-50 h-10" 
-                                    placeholder="https://linkedin.com/in/ваше-имя (необязательно)"
-                                    value={portfolioUrl}
-                                    onChange={(e) => setPortfolioUrl(e.target.value)}
-                                />
+                    </div>
+                )}
+            </header>
+
+            {/* ── MODAL ── */}
+            {modalOpen && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                    <div style={{ position: 'absolute', inset: 0, background: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)' }} onClick={() => setModalOpen(false)} />
+                    <div className="sq-drop" style={{ position: 'relative', background: t.panel, border: `1px solid ${t.panelBdr}`, borderRadius: 20, width: '100%', maxWidth: 440, overflow: 'hidden', boxShadow: isDark ? '0 25px 80px rgba(0,0,0,0.7)' : '0 25px 80px rgba(0,0,0,0.15)' }}>
+
+                        {/* Header */}
+                        <div style={{ padding: '20px 24px 18px', borderBottom: `1px solid ${t.divider}` }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: isDark ? 'rgba(59,130,246,0.15)' : '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <GraduationCap size={18} style={{ color: '#3b82f6' }} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ fontSize: 16, fontWeight: 800, color: t.text, margin: 0 }}>Стать автором</h3>
+                                        <p style={{ fontSize: 12, color: t.textMute, margin: 0 }}>Поделитесь знаниями со студентами</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setModalOpen(false)}
+                                    style={{ width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textMute, transition: 'background 0.15s' }}
+                                    onMouseEnter={e => e.currentTarget.style.background = t.hover}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    <X size={14} />
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-base-200">
-                            <button className="btn btn-ghost" onClick={() => setIsAuthorModalOpen(false)}>Отмена</button>
-                            <button className={`btn btn-primary px-6 shadow-md ${isSubmitting ? 'loading' : ''}`} onClick={submitAuthorApplication} disabled={isSubmitting || !cvText}>
-                                Отправить заявку
+                        {/* Body */}
+                        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 700, color: t.textMute, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>
+                                    О вас и вашем опыте <span style={{ color: '#ef4444' }}>*</span>
+                                </label>
+                                <textarea rows={4}
+                                    placeholder="Расскажите о вашем опыте. Какие курсы планируете создать?"
+                                    value={cvText} onChange={e => setCvText(e.target.value)}
+                                    style={{ width: '100%', padding: '12px 14px', background: t.input, border: `1px solid ${t.inputBdr}`, borderRadius: 12, fontSize: 13, fontWeight: 500, color: t.text, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border 0.15s' }}
+                                    onFocus={e => e.target.style.borderColor = '#3b82f6'}
+                                    onBlur={e => e.target.style.borderColor = t.inputBdr}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 700, color: t.textMute, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>
+                                    Портфолио / LinkedIn
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <ExternalLink size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: t.textMute, pointerEvents: 'none' }} />
+                                    <input type="url" placeholder="https://linkedin.com/in/ваше-имя"
+                                        value={portfolioUrl} onChange={e => setPortfolio(e.target.value)}
+                                        style={{ width: '100%', padding: '12px 14px 12px 36px', background: t.input, border: `1px solid ${t.inputBdr}`, borderRadius: 12, fontSize: 13, fontWeight: 500, color: t.text, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border 0.15s' }}
+                                        onFocus={e => e.target.style.borderColor = '#3b82f6'}
+                                        onBlur={e => e.target.style.borderColor = t.inputBdr}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{ padding: '0 24px 24px', display: 'flex', gap: 10 }}>
+                            <button onClick={() => setModalOpen(false)}
+                                style={{ flex: 1, padding: '12px', border: `1px solid ${t.inputBdr}`, borderRadius: 12, fontSize: 13, fontWeight: 700, color: t.text, background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = t.hover}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                Отмена
+                            </button>
+                            <button onClick={submitAuthor} disabled={submitting || !cvText}
+                                style={{ flex: 1, padding: '12px', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: submitting || !cvText ? '#93c5fd' : '#2563eb', cursor: submitting || !cvText ? 'not-allowed' : 'pointer', transition: 'background 0.15s', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}
+                                onMouseEnter={e => { if (!submitting && cvText) e.currentTarget.style.background = '#1d4ed8'; }}
+                                onMouseLeave={e => { if (!submitting && cvText) e.currentTarget.style.background = '#2563eb'; }}>
+                                {submitting ? 'Отправка...' : 'Отправить заявку'}
                             </button>
                         </div>
                     </div>

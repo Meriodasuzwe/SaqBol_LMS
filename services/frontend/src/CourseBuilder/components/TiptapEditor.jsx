@@ -98,36 +98,43 @@ const TiptapEditor = ({ content, onChange }) => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 gap-2 border-b border-base-200 bg-base-50/30 backdrop-blur-sm sticky top-0 z-20">
                 <div className="flex items-center flex-wrap gap-1">
                     <div className="join bg-base-100 border border-base-200 shadow-sm mr-1">
-                        <button onClick={() => editor.chain().focus().toggleBold().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('bold') ? 'bg-primary/10 text-primary' : ''}`} title="Жирный"><b>B</b></button>
-                        <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('italic') ? 'bg-primary/10 text-primary' : ''}`} title="Курсив"><i>I</i></button>
-                        <button onClick={() => editor.chain().focus().toggleCode().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('code') ? 'bg-primary/10 text-primary' : ''}`} title="Код">{`<>`}</button>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleBold().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('bold') ? 'bg-primary/10 text-primary' : ''}`} title="Жирный"><b>B</b></button>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleItalic().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('italic') ? 'bg-primary/10 text-primary' : ''}`} title="Курсив"><i>I</i></button>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleCode().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('code') ? 'bg-primary/10 text-primary' : ''}`} title="Код">{`<>`}</button>
                     </div>
                     <div className="join bg-base-100 border border-base-200 shadow-sm mr-1">
-                        <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive({ textAlign: 'left' }) ? 'bg-primary/10 text-primary' : ''}`}>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive({ textAlign: 'left' }) ? 'bg-primary/10 text-primary' : ''}`} title="По левому краю">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h10M4 18h16" /></svg>
                         </button>
-                        <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive({ textAlign: 'center' }) ? 'bg-primary/10 text-primary' : ''}`}>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive({ textAlign: 'center' }) ? 'bg-primary/10 text-primary' : ''}`} title="По центру">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M7 12h10M4 18h16" /></svg>
                         </button>
-                        <button onClick={() => editor.chain().focus().setTextAlign('justify').run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive({ textAlign: 'justify' }) ? 'bg-primary/10 text-primary' : ''}`}>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().setTextAlign('justify').run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive({ textAlign: 'justify' }) ? 'bg-primary/10 text-primary' : ''}`} title="По ширине">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
                     </div>
                     <div className="join bg-base-100 border border-base-200 shadow-sm">
-                        <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('heading', { level: 2 }) ? 'bg-primary/10 text-primary' : ''}`}>H2</button>
-                        <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('bulletList') ? 'bg-primary/10 text-primary' : ''}`}>
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('heading', { level: 2 }) ? 'bg-primary/10 text-primary' : ''}`} title="Заголовок">H2</button>
+                        
+                        {/* Кнопка Маркированного списка (Точки) */}
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleBulletList().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('bulletList') ? 'bg-primary/10 text-primary' : ''}`} title="Маркированный список">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+                        </button>
+
+                        {/* Кнопка Нумерованного списка (Цифры) */}
+                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('orderedList') ? 'bg-primary/10 text-primary' : ''}`} title="Нумерованный список">
+                            <span className="font-bold text-xs">1.</span>
                         </button>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                    <button onClick={() => setMediaModal({ isOpen: true, type: 'image', url: '' })} className="btn btn-sm btn-outline border-base-300 gap-2 font-medium normal-case hover:bg-primary hover:border-primary">
+                    <button type="button" onClick={() => setMediaModal({ isOpen: true, type: 'image', url: '' })} className="btn btn-sm btn-outline border-base-300 gap-2 font-medium normal-case hover:bg-primary hover:border-primary">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Фото
                     </button>
-                    <button onClick={() => setMediaModal({ isOpen: true, type: 'video', url: '' })} className="btn btn-sm btn-outline border-base-300 gap-2 font-medium normal-case hover:bg-error hover:border-error">
+                    <button type="button" onClick={() => setMediaModal({ isOpen: true, type: 'video', url: '' })} className="btn btn-sm btn-outline border-base-300 gap-2 font-medium normal-case hover:bg-error hover:border-error">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> Видео
                     </button>
-                    <button onClick={() => setMediaModal({ isOpen: true, type: 'link', url: editor.getAttributes('link').href || '' })} className={`btn btn-sm gap-2 font-medium normal-case ${editor.isActive('link') ? 'btn-primary' : 'btn-outline border-base-300'}`}>
+                    <button type="button" onClick={() => setMediaModal({ isOpen: true, type: 'link', url: editor.getAttributes('link').href || '' })} className={`btn btn-sm gap-2 font-medium normal-case ${editor.isActive('link') ? 'btn-primary' : 'btn-outline border-base-300'}`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg> Ссылка
                     </button>
                 </div>
@@ -141,7 +148,7 @@ const TiptapEditor = ({ content, onChange }) => {
                 <div className="text-[10px] text-base-content/40 uppercase font-bold tracking-wider">
                     Слов: {editor.storage.characterCount.words()} | Символов: {editor.storage.characterCount.characters()}
                 </div>
-                <button onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} className="btn btn-xs btn-ghost text-base-content/40 hover:text-error">
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} className="btn btn-xs btn-ghost text-base-content/40 hover:text-error">
                     Сбросить форматирование
                 </button>
             </div>
@@ -165,8 +172,8 @@ const TiptapEditor = ({ content, onChange }) => {
                             </div>
                         </div>
                         <div className="p-4 bg-base-50 flex gap-2 justify-end">
-                            <button onClick={() => setMediaModal({ isOpen: false, type: 'image', url: '' })} className="btn btn-ghost btn-sm px-6">Отмена</button>
-                            <button onClick={handleMediaSubmit} className="btn btn-primary btn-sm px-8 shadow-lg shadow-primary/20">Добавить</button>
+                            <button type="button" onClick={() => setMediaModal({ isOpen: false, type: 'image', url: '' })} className="btn btn-ghost btn-sm px-6">Отмена</button>
+                            <button type="button" onClick={handleMediaSubmit} className="btn btn-primary btn-sm px-8 shadow-lg shadow-primary/20">Добавить</button>
                         </div>
                     </div>
                 </div>

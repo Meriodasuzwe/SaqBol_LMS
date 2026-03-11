@@ -24,8 +24,8 @@ class Course(models.Model):
     title = models.CharField(max_length=255, verbose_name="Название курса")
     # Краткое описание визитки курса можно оставить пустым Null=true так как это не обязательно verbose_name для админки
     short_description = models.TextField(blank=True, null=True, verbose_name="Краткое описание (визитка)")
-    # Поле для ссылки на обложку курса так же не обязательное blank=true null=true verbose_name для админки
-    cover_image = models.URLField(blank=True, null=True, verbose_name="Ссылка на обложку")
+    # Поле для загрузки обложки курса с указанием папки для хранения и разрешением на пустое значение blank и null verbose_name для админки
+    cover_image = models.ImageField(upload_to='course_covers/', blank=True, null=True, verbose_name="Обложка курса")
     # Поле для полного описания курса
     description = models.TextField(verbose_name="Описание курса")
     # Поле для цены курса

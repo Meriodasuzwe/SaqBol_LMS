@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'; // 👈 Добавил useLocation
 import { toast } from 'react-toastify';
 import api from './api';
 import { 
@@ -21,6 +21,7 @@ import PythonEditor from './PythonEditor';
 function LessonPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation(); // 👈 Достал хук для чтения URL-параметров
     
     const [lesson, setLesson] = useState(null);
     const [courseLessons, setCourseLessons] = useState([]);
@@ -47,8 +48,25 @@ function LessonPage() {
                 const lessonRes = await api.get(`courses/lessons/${lessonId}/`);
                 setLesson(lessonRes.data);
                 
-                const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
-                setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
+                // 🔥 ФИКС: Читаем параметр ?step=... из ссылки
+                const searchParams = new URLSearchParams(location.search);
+                const targetStepId = searchParams.get('step');
+                
+                if (targetStepId && lessonRes.data.steps) {
+                    // Ищем индекс шага по переданному ID
+                    const stepIndex = lessonRes.data.steps.findIndex(step => step.id === parseInt(targetStepId));
+                    if (stepIndex !== -1) {
+                        setActiveStepIndex(stepIndex); // Устанавливаем конкретный шаг
+                    } else {
+                        // Если ID неправильный (шаг удален), падаем на дефолтную логику
+                        const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
+                        setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
+                    }
+                } else {
+                    // Если параметра нет (пользователь просто нажал "Начать обучение")
+                    const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
+                    setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
+                }
 
                 const allLessonsRes = await api.get(`courses/${lessonRes.data.course}/lessons/`);
                 setCourseLessons(allLessonsRes.data);
@@ -64,7 +82,7 @@ function LessonPage() {
         };
 
         if (lessonId) fetchLessonData();
-    }, [lessonId]);
+    }, [lessonId, location.search]); // 👈 Добавил location.search в зависимости
 
     const handleStepComplete = async (score = 10) => {
         if (!lesson || !lesson.steps || lesson.steps.length === 0) return;
@@ -84,6 +102,11 @@ function LessonPage() {
 
             if (activeStepIndex < lesson.steps.length - 1) {
                 setActiveStepIndex(activeStepIndex + 1);
+                
+                // Обновляем URL в браузере (чтобы при рефреше он оставался на новом шаге)
+                const nextStepId = lesson.steps[activeStepIndex + 1].id;
+                window.history.replaceState(null, '', `/lesson/${lessonId}?step=${nextStepId}`);
+                
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 if (nextLessonObj) {
@@ -97,6 +120,12 @@ function LessonPage() {
         } catch (err) {
             if (err.response?.data?.error) toast.error(err.response.data.error);
         }
+    };
+
+    // Чтобы клик по "квадратикам" сверху (таймлайн) тоже менял URL (полезно для копирования ссылок)
+    const handleTabClick = (index, stepId) => {
+        setActiveStepIndex(index);
+        window.history.replaceState(null, '', `/lesson/${lessonId}?step=${stepId}`);
     };
 
     const getStepIcon = (type, isCompleted, isActive) => {
@@ -193,7 +222,7 @@ function LessonPage() {
                                 return (
                                     <button 
                                         key={step.id}
-                                        onClick={() => setActiveStepIndex(index)}
+                                        onClick={() => handleTabClick(index, step.id)} // 👈 Использовал новую функцию для смены URL
                                         className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 border-2
                                             ${isActive 
                                                 ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-105' 
@@ -260,7 +289,11 @@ function LessonPage() {
                         {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
                             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                                 {activeStepIndex > 0 ? (
-                                    <button onClick={() => {setActiveStepIndex(activeStepIndex - 1); window.scrollTo(0,0)}} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
+                                    <button onClick={() => {
+                                        setActiveStepIndex(activeStepIndex - 1); 
+                                        window.history.replaceState(null, '', `/lesson/${lessonId}?step=${lesson.steps[activeStepIndex - 1].id}`);
+                                        window.scrollTo(0,0);
+                                    }} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
                                         <ArrowLeft size={16} /> Назад
                                     </button>
                                 ) : <div />}

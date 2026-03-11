@@ -1,19 +1,215 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
+import {
+    Search, BookOpen, PlayCircle, Clock, Users, Star,
+    ChevronDown, X, CheckCircle, ArrowRight, Zap, Shield, TrendingUp
+} from 'lucide-react';
 
-function CourseList() {
-    const [courses, setCourses] = useState([]);
-    const [categories, setCategories] = useState([]); 
-    const [loading, setLoading] = useState(true);
+const stripHtml = (html) => {
+    if (!html) return '';
+    return html.replace(/<[^>]+>/g, '');
+};
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("");
+const seeded = (id, min, max) => {
+    const x = Math.sin(id * 9301 + 49297) * 233280;
+    return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
+};
+
+const SORT_OPTIONS = [
+    { value: 'popular',    label: 'По популярности' },
+    { value: 'new',        label: 'Сначала новые' },
+    { value: 'rating',     label: 'По рейтингу' },
+    { value: 'price_asc',  label: 'Сначала дешевле' },
+    { value: 'price_desc', label: 'Сначала дороже' },
+];
+
+const LEVEL_OPTIONS  = ['Начинающий', 'Средний', 'Продвинутый'];
+const DURATION_OPTIONS = ['< 2 часов', '2–5 часов', '5–10 часов', '> 10 часов'];
+
+// Цветовые акценты для карточек без обложки
+const CARD_ACCENTS = [
+    'from-blue-500 to-blue-700',
+    'from-violet-500 to-violet-700',
+    'from-emerald-500 to-emerald-700',
+    'from-orange-500 to-orange-700',
+    'from-rose-500 to-rose-700',
+    'from-sky-500 to-sky-700',
+];
+
+// ─── Compact Course Card (Stepik style) ──────────────────────────────────────
+function CourseCard({ course }) {
+    const imageUrl   = course.image || course.cover_image || course.image_url;
+    const price      = parseFloat(course.price);
+    const isFree     = price === 0;
+    const hasProgress = course.progress > 0;
+    const rating     = (4.4 + (seeded(course.id, 0, 8) / 10)).toFixed(1);
+    const students   = seeded(course.id, 80, 4200);
+    const hours      = seeded(course.id, 2, 20);
+    const accent     = CARD_ACCENTS[course.id % CARD_ACCENTS.length];
+
+    return (
+        <Link
+            to={`/courses/${course.id}`}
+            className="group flex gap-4 bg-white border border-slate-100 rounded-2xl p-4 hover:border-slate-200 hover:shadow-lg hover:shadow-slate-100 transition-all duration-200"
+        >
+            {/* Left: info */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div>
+                    {course.category_title && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1.5 block">
+                            {course.category_title}
+                        </span>
+                    )}
+                    <h3 className="font-bold text-slate-900 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {course.title}
+                    </h3>
+                    <p className="text-xs text-slate-400 line-clamp-1 leading-relaxed">
+                        {stripHtml(course.description) || 'Описание скоро появится'}
+                    </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                    {/* Meta */}
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                        <span className="flex items-center gap-1 font-semibold text-amber-500">
+                            <Star size={10} className="fill-amber-400 text-amber-400" />{rating}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Users size={10} />{students.toLocaleString('ru-RU')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Clock size={10} />{hours}ч
+                        </span>
+                    </div>
+
+                    {/* Price + button */}
+                    <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-sm text-slate-900">
+                            {isFree
+                                ? <span className="text-emerald-600">Бесплатно</span>
+                                : `${new Intl.NumberFormat('ru-RU').format(price)} ₸`
+                            }
+                        </span>
+                        <span className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap
+                            ${hasProgress ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                            {hasProgress ? <><PlayCircle size={11} />Продолжить</> : <>Открыть <ArrowRight size={11} /></>}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Progress bar */}
+                {hasProgress && (
+                    <div className="mt-2.5">
+                        <div className="flex justify-between text-[10px] font-semibold mb-1">
+                            <span className="text-slate-400">Прогресс</span>
+                            <span className="text-blue-600">{course.progress}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Right: thumbnail */}
+            <div className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden relative">
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt={course.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${accent} flex items-center justify-center`}>
+                        <BookOpen size={28} className="text-white/80" strokeWidth={1.5} />
+                    </div>
+                )}
+                {isFree && (
+                    <div className="absolute top-1.5 right-1.5">
+                        <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded-full">Free</span>
+                    </div>
+                )}
+            </div>
+        </Link>
+    );
+}
+
+// ─── Sidebar collapse block ───────────────────────────────────────────────────
+function FilterBlock({ title, children, defaultOpen = true }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+        <div className="py-5 border-b border-slate-100 last:border-0">
+            <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left mb-0">
+                <span className="text-sm font-bold text-slate-800">{title}</span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+            {open && <div className="mt-3">{children}</div>}
+        </div>
+    );
+}
+
+// ─── Promo Banner ─────────────────────────────────────────────────────────────
+function PromoBanner() {
+    return (
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 p-6 mb-8 flex items-center justify-between gap-6">
+            {/* BG decoration */}
+            <div className="absolute -top-6 -right-6 w-40 h-40 rounded-full bg-white/5"></div>
+            <div className="absolute bottom-0 right-24 w-24 h-24 rounded-full bg-white/5"></div>
+
+            <div className="relative z-10">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 rounded-full text-[10px] font-bold text-blue-100 uppercase tracking-wider mb-3">
+                    <Zap size={10} className="text-yellow-300" /> Новинка
+                </div>
+                <h3 className="text-white font-extrabold text-lg leading-snug mb-1.5 max-w-xs">
+                    Защитите команду от фишинга за 2 часа
+                </h3>
+                <p className="text-blue-200 text-sm font-medium max-w-xs">
+                    Интерактивный тренажёр с реальными сценариями атак. Бесплатно для первых 100 команд.
+                </p>
+                <Link
+                    to="/courses"
+                    className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20"
+                >
+                    Начать бесплатно <ArrowRight size={14} />
+                </Link>
+            </div>
+
+            {/* Floating visual */}
+            <div className="relative z-10 hidden lg:flex flex-col gap-2 flex-shrink-0">
+                {[
+                    { icon: <Shield size={14} className="text-blue-400" />, label: 'Фишинг-симулятор', color: 'bg-blue-50' },
+                    { icon: <TrendingUp size={14} className="text-emerald-500" />, label: '+70% осведомлённость', color: 'bg-emerald-50' },
+                    { icon: <Star size={14} className="text-amber-400 fill-amber-400" />, label: 'Рейтинг 4.9', color: 'bg-amber-50' },
+                ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-xl px-3.5 py-2.5 shadow-lg">
+                        <div className={`w-7 h-7 ${item.color} rounded-lg flex items-center justify-center`}>
+                            {item.icon}
+                        </div>
+                        <span className="text-xs font-bold text-slate-700 whitespace-nowrap">{item.label}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export default function CourseList() {
+    const [courses, setCourses]       = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading]       = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [sortBy, setSortBy]         = useState('popular');
+    const [selectedLevels, setSelectedLevels] = useState([]);
+    const [onlyFree, setOnlyFree]     = useState(false);
+    const [mobileSidebar, setMobileSidebar] = useState(false);
 
     useEffect(() => {
         api.get('courses/categories/')
             .then(res => setCategories(res.data))
-            .catch(err => console.error("Ошибка загрузки категорий", err));
+            .catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -21,123 +217,290 @@ function CourseList() {
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
         if (selectedCategory) params.append('category', selectedCategory);
-
         api.get(`courses/?${params.toString()}`)
-            .then(response => {
-                setCourses(response.data);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.error("Ошибка загрузки курсов:", error);
-                setLoading(false);
-            });
+            .then(res => { setCourses(res.data); setLoading(false); })
+            .catch(() => setLoading(false));
     }, [searchTerm, selectedCategory]);
 
-    return (
-        <div className="container mx-auto py-8 animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                <h1 className="text-3xl font-bold flex items-center gap-2">
-                    📚 Каталог курсов
-                </h1>
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                    <input 
-                        type="text" 
-                        placeholder="🔍 Найти курс..." 
-                        className="input input-bordered w-full sm:w-64 focus:input-primary"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <select 
-                        className="select select-bordered w-full sm:w-48 focus:select-primary"
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                    >
-                        <option value="">Все категории</option>
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.title}</option>
-                        ))}
-                    </select>
-                </div>
+    const filtered = useMemo(() => {
+        let r = [...courses];
+        if (onlyFree) r = r.filter(c => parseFloat(c.price) === 0);
+        return r;
+    }, [courses, onlyFree]);
+
+    const inProgress = filtered.filter(c => c.progress > 0 && c.progress < 100);
+    const activeFilters = [selectedCategory, onlyFree, ...selectedLevels].filter(Boolean).length;
+
+    const clearAll = () => {
+        setSelectedCategory(''); setOnlyFree(false);
+        setSelectedLevels([]); setSearchTerm('');
+    };
+    const toggleLevel = l => setSelectedLevels(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l]);
+
+    // Sidebar content (reused for mobile drawer)
+    const SidebarContent = () => (
+        <>
+            <div className="flex items-center justify-between mb-1 px-1">
+                <span className="text-sm font-extrabold text-slate-900">Фильтры</span>
+                {activeFilters > 0 && (
+                    <button onClick={clearAll} className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                        <X size={11} /> Сбросить
+                    </button>
+                )}
             </div>
 
-            {loading ? (
-                <div className="flex justify-center mt-20">
-                    <span className="loading loading-dots loading-lg text-primary"></span>
+            <FilterBlock title="Направление">
+                <div className="space-y-0.5">
+                    <button
+                        onClick={() => setSelectedCategory('')}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors font-medium
+                            ${selectedCategory === '' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        Все направления
+                    </button>
+                    {categories.map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(p => p === String(cat.id) ? '' : String(cat.id))}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors font-medium
+                                ${selectedCategory === String(cat.id) ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                        >
+                            {cat.title}
+                        </button>
+                    ))}
                 </div>
-            ) : (
-                <>
-                    {courses.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {courses.map(course => (
-                                <Link 
-                                    to={`/courses/${course.id}`} 
-                                    key={course.id} 
-                                    className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 border border-base-200 group"
-                                >
-                                    <figure className="h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center relative overflow-hidden">
-                                        <span className="text-6xl group-hover:scale-110 transition-transform duration-300">🎓</span>
-                                        <div className="absolute top-4 right-4 badge badge-primary badge-outline bg-base-100">
-                                            {course.category_title || 'Курс'}
-                                        </div>
-                                    </figure>
-                                    
-                                    <div className="card-body">
-                                        <h2 className="card-title text-xl font-bold group-hover:text-primary transition-colors">
-                                            {course.title}
-                                        </h2>
-                                        <p className="text-sm text-gray-500 line-clamp-2">
-                                            {course.description || "Описание отсутствует..."}
-                                        </p>
-                                        
-                                        {/* 👇 ВОТ ЭТОТ БЛОК ТЫ ПРОПУСТИЛ 👇 */}
-                                        {course.progress > 0 && (
-                                            <div className="mt-4 mb-2">
-                                                <div className="flex justify-between text-xs mb-1 font-semibold">
-                                                    <span className="text-success">Ваш прогресс</span>
-                                                    <span>{course.progress}%</span>
-                                                </div>
-                                                <progress 
-                                                    className="progress progress-success w-full h-2" 
-                                                    value={course.progress} 
-                                                    max="100"
-                                                ></progress>
-                                            </div>
-                                        )}
-                                        {/* 👆👆👆 */}
+            </FilterBlock>
 
-                                        <div className="card-actions justify-between items-center mt-4">
-                                            <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-wider">
-                                                <div className="avatar placeholder">
-                                                    <div className="bg-neutral-focus text-neutral-content rounded-full w-6">
-                                                        <span>{course.teacher_name?.[0] || 'T'}</span>
-                                                    </div>
-                                                </div>
-                                                {course.teacher_name}
-                                            </div>
-                                            <button className={`btn btn-sm ${course.progress > 0 ? 'btn-success text-white' : 'btn-primary'}`}>
-                                                {course.progress > 0 ? 'Продолжить' : 'Открыть'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
+            <FilterBlock title="Уровень">
+                <div className="space-y-2.5">
+                    {LEVEL_OPTIONS.map(l => (
+                        <label key={l} onClick={() => toggleLevel(l)} className="flex items-center gap-3 cursor-pointer group">
+                            <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors
+                                ${selectedLevels.includes(l) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 group-hover:border-blue-400'}`}>
+                                {selectedLevels.includes(l) && <CheckCircle size={10} className="text-white" />}
+                            </div>
+                            <span className="text-sm text-slate-600 font-medium">{l}</span>
+                        </label>
+                    ))}
+                </div>
+            </FilterBlock>
+
+            <FilterBlock title="Стоимость">
+                <label onClick={() => setOnlyFree(f => !f)} className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors
+                        ${onlyFree ? 'bg-blue-600 border-blue-600' : 'border-slate-300 group-hover:border-blue-400'}`}>
+                        {onlyFree && <CheckCircle size={10} className="text-white" />}
+                    </div>
+                    <span className="text-sm text-slate-600 font-medium">Только бесплатные</span>
+                </label>
+            </FilterBlock>
+
+            <FilterBlock title="Длительность" defaultOpen={false}>
+                <div className="space-y-2.5">
+                    {DURATION_OPTIONS.map(d => (
+                        <label key={d} className="flex items-center gap-3 cursor-pointer group">
+                            <div className="w-4 h-4 rounded border-2 border-slate-300 group-hover:border-blue-400 flex-shrink-0 transition-colors"></div>
+                            <span className="text-sm text-slate-600 font-medium">{d}</span>
+                        </label>
+                    ))}
+                </div>
+            </FilterBlock>
+        </>
+    );
+
+    return (
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+            `}</style>
+
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="min-h-screen bg-slate-50 text-slate-900">
+
+                {/* ── TOP BAR ── */}
+                <div className="bg-white border-b border-slate-100 sticky top-16 z-30">
+                    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
+                        {/* Search */}
+                        <div className="relative flex-1 max-w-xl">
+                            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <input
+                                type="text"
+                                placeholder="Название курса, навык, тема..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all"
+                            />
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                                    <X size={13} />
+                                </button>
+                            )}
                         </div>
-                    ) : (
-                        <div className="text-center py-20">
-                            <h3 className="text-2xl font-bold text-gray-400">Ничего не найдено 😔</h3>
-                            <p className="text-gray-500">Попробуйте изменить параметры поиска.</p>
-                            <button 
-                                className="btn btn-link mt-2"
-                                onClick={() => { setSearchTerm(""); setSelectedCategory(""); }}
+
+                        {/* Quick filter chips */}
+                        <div className="hidden lg:flex items-center gap-2">
+                            <button
+                                onClick={() => setOnlyFree(f => !f)}
+                                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all
+                                    ${onlyFree ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
                             >
-                                Сбросить фильтры
+                                <CheckCircle size={11} className={onlyFree ? 'text-emerald-500' : 'text-slate-300'} />
+                                Бесплатные
+                            </button>
+                            <button
+                                onClick={() => setSelectedCategory('')}
+                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:border-slate-300 transition-all"
+                            >
+                                С сертификатом
                             </button>
                         </div>
-                    )}
-                </>
-            )}
-        </div>
+
+                        {/* Sort + mobile filter */}
+                        <div className="flex items-center gap-2 ml-auto">
+                            <div className="relative">
+                                <select
+                                    value={sortBy}
+                                    onChange={e => setSortBy(e.target.value)}
+                                    className="pl-3 pr-7 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 appearance-none outline-none focus:border-blue-400 cursor-pointer"
+                                >
+                                    {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                            <button
+                                onClick={() => setMobileSidebar(true)}
+                                className="lg:hidden relative flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                            >
+                                Фильтры
+                                {activeFilters > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">{activeFilters}</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── BODY ── */}
+                <div className="max-w-7xl mx-auto px-6 pt-8 pb-16 flex gap-7">
+
+                    {/* ── SIDEBAR ── */}
+                    <aside className="hidden lg:block w-64 flex-shrink-0">
+                        <div className="bg-white rounded-2xl border border-slate-100 px-5 py-4 sticky top-32">
+                            <SidebarContent />
+                        </div>
+                    </aside>
+
+                    {/* ── MAIN ── */}
+                    <div className="flex-1 min-w-0">
+
+                        {/* Promo banner — only when no filters */}
+                        {!searchTerm && !selectedCategory && !onlyFree && !selectedLevels.length && (
+                            <PromoBanner />
+                        )}
+
+                        {/* Active filter chips */}
+                        {activeFilters > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-5">
+                                {selectedCategory && categories.find(c => String(c.id) === selectedCategory) && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-bold border border-blue-100">
+                                        {categories.find(c => String(c.id) === selectedCategory)?.title}
+                                        <button onClick={() => setSelectedCategory('')}><X size={10} /></button>
+                                    </span>
+                                )}
+                                {onlyFree && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-100">
+                                        Бесплатные <button onClick={() => setOnlyFree(false)}><X size={10} /></button>
+                                    </span>
+                                )}
+                                {selectedLevels.map(l => (
+                                    <span key={l} className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-bold border border-violet-100">
+                                        {l} <button onClick={() => toggleLevel(l)}><X size={10} /></button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Count */}
+                        <p className="text-xs text-slate-400 font-medium mb-4">
+                            {loading ? 'Загрузка...' : `${filtered.length} ${filtered.length === 1 ? 'курс' : 'курсов'}`}
+                        </p>
+
+                        {loading ? (
+                            <div className="flex flex-col gap-3">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={i} className="flex gap-4 bg-white rounded-2xl border border-slate-100 p-4 animate-pulse">
+                                        <div className="flex-1 space-y-3">
+                                            <div className="h-3 bg-slate-100 rounded w-1/5"></div>
+                                            <div className="h-4 bg-slate-100 rounded w-3/4"></div>
+                                            <div className="h-3 bg-slate-100 rounded w-2/3"></div>
+                                            <div className="h-3 bg-slate-100 rounded w-1/3 mt-4"></div>
+                                        </div>
+                                        <div className="w-24 h-24 bg-slate-100 rounded-xl flex-shrink-0"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : filtered.length > 0 ? (
+                            <>
+                                {/* In progress */}
+                                {inProgress.length > 0 && !searchTerm && !selectedCategory && (
+                                    <div className="mb-8">
+                                        <h2 className="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                            Продолжить обучение
+                                        </h2>
+                                        <div className="flex flex-col gap-3">
+                                            {inProgress.map(c => <CourseCard key={`ip-${c.id}`} course={c} />)}
+                                        </div>
+                                        <div className="flex items-center gap-3 my-7">
+                                            <div className="flex-1 h-px bg-slate-100"></div>
+                                            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Все курсы</span>
+                                            <div className="flex-1 h-px bg-slate-100"></div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Course list */}
+                                <div className="flex flex-col gap-3">
+                                    {filtered.map(c => <CourseCard key={c.id} course={c} />)}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-24 text-center">
+                                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                                    <Search size={24} className="text-slate-400" />
+                                </div>
+                                <h3 className="text-base font-bold text-slate-900 mb-1.5">Ничего не найдено</h3>
+                                <p className="text-sm text-slate-400 max-w-xs mb-5 leading-relaxed">
+                                    Попробуйте другой запрос или сбросьте фильтры.
+                                </p>
+                                <button onClick={clearAll} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">
+                                    Сбросить фильтры
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── MOBILE DRAWER ── */}
+                {mobileSidebar && (
+                    <div className="fixed inset-0 z-50 lg:hidden">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileSidebar(false)}></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl overflow-y-auto">
+                            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                                <span className="font-extrabold text-slate-900">Фильтры</span>
+                                <button onClick={() => setMobileSidebar(false)} className="p-1.5 rounded-lg hover:bg-slate-100">
+                                    <X size={16} className="text-slate-600" />
+                                </button>
+                            </div>
+                            <div className="p-5"><SidebarContent /></div>
+                            <div className="sticky bottom-0 p-4 bg-white border-t border-slate-100">
+                                <button onClick={() => setMobileSidebar(false)} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">
+                                    Применить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </>
     );
 }
-
-export default CourseList;

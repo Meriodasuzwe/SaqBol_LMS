@@ -5,6 +5,22 @@ import aiApi from '../aiApi';
 import { toast } from 'react-toastify'; 
 import CourseSettingsTab from './components/CourseSettingsTab';
 import StepEditor from './components/StepEditor';
+import { 
+    Settings, 
+    Eye, 
+    Plus, 
+    Trash2, 
+    FileText, 
+    PlayCircle, 
+    HelpCircle, 
+    ShieldAlert, 
+    Code2, 
+    AlertTriangle,
+    LayoutGrid,
+    CheckCircle2,
+    X,
+    ChevronRight
+} from 'lucide-react';
 
 function CourseBuilder() {
     const { courseId } = useParams();
@@ -80,20 +96,43 @@ function CourseBuilder() {
 
     const fetchQuizForLesson = async (lessonId) => {
         try {
-            const res = await api.get(`quizzes/lesson/${lessonId}/`);
+            const res = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`);
             let data = res.data;
             if (!Array.isArray(data)) data = data.results ? data.results : [data];
             
-            if (data.length > 0) {
-                const quiz = data[0];
+            const validQuizzes = data.filter(q => q && q.id).sort((a, b) => b.id - a.id);
+            
+            if (validQuizzes.length > 0) {
+                const quiz = validQuizzes[0];
                 setCurrentQuizId(quiz.id); 
+                
                 if (quiz.questions && quiz.questions.length > 0) {
-                    const mapped = quiz.questions.map(q => ({
-                        id: q.id, question: q.text || q.question, options: q.options || ["", "", "", ""],
-                        correct_answer: q.correct_answer || "",
-                        user_selected_index: q.options?.indexOf(q.correct_answer) !== -1 ? q.options.indexOf(q.correct_answer) : 0,
-                        ai_suggested_index: -1 
-                    }));
+                    const mapped = quiz.questions.map(q => {
+                        let optionsList = [];
+                        let correctIdx = 0;
+
+                        if (q.choices && q.choices.length > 0) {
+                            optionsList = q.choices.map(c => c.text);
+                            correctIdx = q.choices.findIndex(c => c.is_correct);
+                            if (correctIdx === -1) correctIdx = 0;
+                        } else if (q.options && q.options.length > 0) {
+                            optionsList = q.options;
+                            correctIdx = optionsList.indexOf(q.correct_answer);
+                            if (correctIdx === -1) correctIdx = 0;
+                        } else {
+                            optionsList = ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"];
+                        }
+
+                        return {
+                            id: q.id, 
+                            question: q.text || q.question || "", 
+                            options: optionsList,
+                            correct_answer: optionsList[correctIdx] || "",
+                            user_selected_index: correctIdx,
+                            correct_option_index: correctIdx,
+                            ai_suggested_index: -1 
+                        };
+                    });
                     setQuizQuestions(mapped);
                 } else setQuizQuestions([]);
             } else { setCurrentQuizId(null); setQuizQuestions([]); }
@@ -104,9 +143,32 @@ function CourseBuilder() {
     const handleSaveCourseSettings = async () => {
         setLoading(true);
         try {
-            await api.patch(`courses/${courseId}/`, courseData);
+            // Если есть новый файл картинки, отправляем как FormData
+            if (courseData.newImageFile) {
+                const formData = new FormData();
+                formData.append('title', courseData.title);
+                formData.append('description', courseData.description);
+                formData.append('price', courseData.price);
+                formData.append('cover_image', courseData.newImageFile);
+
+                await api.patch(`courses/${courseId}/`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                // Если картинку не меняли, отправляем как обычно
+                await api.patch(`courses/${courseId}/`, {
+                    title: courseData.title,
+                    description: courseData.description,
+                    price: courseData.price
+                });
+            }
             toast.success("Настройки курса успешно сохранены!");
-        } catch (err) { toast.error("Ошибка сохранения курса"); } finally { setLoading(false); }
+        } catch (err) { 
+            toast.error("Ошибка сохранения курса"); 
+            console.error(err);
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     const handleCreateLesson = async () => {
@@ -165,7 +227,7 @@ function CourseBuilder() {
             if (activeStep.step_type === 'quiz' && quizQuestions) {
                 const payloadQuestions = quizQuestions.map(q => {
                     const options = q.options.map(s => String(s || '').trim()).filter(Boolean);
-                    let userIndex = q.user_selected_index ?? 0;
+                    let userIndex = q.user_selected_index ?? q.correct_option_index ?? 0;
                     if (userIndex >= options.length) userIndex = 0;
                     const mappedQ = { question: String(q.question), options, correct_answer: String(userIndex), correct_index: userIndex, explanation: "" };
                     if (q.id) mappedQ.id = q.id; 
@@ -212,7 +274,7 @@ function CourseBuilder() {
                 if (options.length < 2) options = [correct || "Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"];
                 let aiSuggestedIndex = options.indexOf(correct);
                 if (aiSuggestedIndex === -1) { aiSuggestedIndex = 0; correct = options[0]; }
-                return { id: null, question: questionText, options, correct_answer: correct, user_selected_index: aiSuggestedIndex, ai_suggested_index: aiSuggestedIndex };
+                return { id: null, question: questionText, options, correct_answer: correct, user_selected_index: aiSuggestedIndex, correct_option_index: aiSuggestedIndex, ai_suggested_index: aiSuggestedIndex };
             }) : [];
             setQuizQuestions(normalized); toast.success('Тест успешно сгенерирован');
         } catch (err) { toast.error("Не удалось сгенерировать тест."); } finally { setIsGeneratingQuiz(false); }
@@ -221,15 +283,19 @@ function CourseBuilder() {
     const handleQuestionChange = (index, field, value) => { const updated = [...quizQuestions]; updated[index][field] = value; setQuizQuestions(updated); };
     const handleOptionChange = (qIndex, oIndex, value) => {
         const updated = [...quizQuestions]; updated[qIndex].options[oIndex] = value;
-        if (updated[qIndex].user_selected_index === oIndex) updated[qIndex].correct_answer = value;
+        const correctIdx = updated[qIndex].correct_option_index !== undefined ? updated[qIndex].correct_option_index : updated[qIndex].user_selected_index;
+        if (correctIdx === oIndex) updated[qIndex].correct_answer = value;
         setQuizQuestions(updated);
     };
     const handleCorrectSelect = (qIndex, oIndex) => {
-        const updated = [...quizQuestions]; updated[qIndex].user_selected_index = oIndex; updated[qIndex].correct_answer = updated[qIndex].options[oIndex] || '';
+        const updated = [...quizQuestions]; 
+        updated[qIndex].user_selected_index = oIndex; 
+        updated[qIndex].correct_option_index = oIndex;
+        updated[qIndex].correct_answer = updated[qIndex].options[oIndex] || '';
         setQuizQuestions(updated);
     };
     const handleAddManualQuestion = () => {
-        const newQuestion = { id: null, question: "Новый вопрос", options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], correct_answer: "Вариант 1", user_selected_index: 0, ai_suggested_index: -1 };
+        const newQuestion = { id: null, question: "Новый вопрос", options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], correct_answer: "Вариант 1", user_selected_index: 0, correct_option_index: 0, ai_suggested_index: -1 };
         setQuizQuestions(quizQuestions ? [...quizQuestions, newQuestion] : [newQuestion]);
     };
     const handleDeleteQuestion = (index) => { const updated = quizQuestions.filter((_, i) => i !== index); setQuizQuestions(updated); };
@@ -244,63 +310,94 @@ function CourseBuilder() {
         } catch (err) { toast.error("Ошибка генерации симуляции"); } finally { setAiLoading(false); }
     };  
 
+    // Утилита для иконок шагов
+    const getStepIcon = (type, size = 20) => {
+        if (type === 'video_url') return <PlayCircle size={size} />;
+        if (type.includes('simulation')) return <ShieldAlert size={size} />;
+        if (type === 'quiz') return <HelpCircle size={size} />;
+        if (type === 'interactive_code') return <Code2 size={size} />;
+        return <FileText size={size} />;
+    };
+
     if (loading && lessons.length === 0) {
-        return <div className="flex min-h-[50vh] items-center justify-center"><span className="loading loading-spinner text-primary"></span></div>;
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+            </div>
+        );
     }
 
     return (
-        <div className="flex h-[calc(100vh-64px)] max-w-7xl mx-auto text-base-content animate-fade-in"> 
+        <div className="flex h-screen bg-white font-sans text-slate-900 animate-in fade-in"> 
             
             {/* === ЛЕВАЯ КОЛОНКА (САЙДБАР) === */}
-            <div className="w-80 bg-base-100 border-r border-base-200 flex flex-col h-full shrink-0 shadow-sm z-20">
-                <div className="px-6 py-5 border-b border-base-200 flex justify-between items-center bg-base-50/50">
-                    <h2 className="font-bold text-base-content truncate pr-4 text-lg" title={courseData.title}>
-                        {courseData.title || "Конструктор курса"}
+            <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col h-full shrink-0 z-20">
+                <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-white">
+                    <h2 className="font-black text-slate-900 truncate pr-4 text-lg" title={courseData.title}>
+                        {courseData.title || "Настройка курса"}
                     </h2>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-1 shrink-0">
                         <button 
-                            className={`btn btn-sm btn-ghost btn-square ${isSettingsMode ? 'bg-primary/10 text-primary' : 'text-base-content/60'}`} 
+                            className={`p-2 rounded-xl transition-colors ${isSettingsMode ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'}`} 
                             onClick={() => { setIsSettingsMode(true); setActiveLesson(null); }} 
                             title="Настройки курса"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <Settings size={18} />
                         </button>
-                        <RouterLink to={`/courses/${courseId}`} className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-primary" title="Предпросмотр курса">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <RouterLink 
+                            to={`/courses/${courseId}`} 
+                            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
+                            title="Предпросмотр курса"
+                        >
+                            <Eye size={18} />
                         </RouterLink>
                     </div>
                 </div>
                 
-                <div className="overflow-y-auto flex-1 p-4 space-y-2 bg-base-200/30">
-                    <div className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-2 pl-2">Программа курса</div>
+                <div className="overflow-y-auto flex-1 p-4 space-y-2 custom-scrollbar">
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 pl-2 mt-2">Программа курса</div>
                     {lessons.map((lesson, index) => (
                         <div 
                             key={lesson.id}
-                            className={`p-3 rounded-xl cursor-pointer transition-colors border ${activeLesson?.id === lesson.id && !isSettingsMode ? "bg-primary/10 border-primary/20 text-primary shadow-sm" : "bg-base-100 border-base-200 text-base-content hover:border-base-300"}`}
+                            className={`p-3 rounded-xl cursor-pointer transition-all border 
+                                ${activeLesson?.id === lesson.id && !isSettingsMode 
+                                    ? "bg-slate-900 border-slate-900 text-white shadow-md" 
+                                    : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:shadow-sm"}`}
                             onClick={() => { setActiveLesson(lesson); setActiveStep(lesson.steps?.[0] || null); setIsSettingsMode(false); }}
                         >
-                            <div className="font-semibold text-sm truncate flex items-center gap-2">
-                                <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-[11px] ${activeLesson?.id === lesson.id && !isSettingsMode ? 'bg-primary/20 text-primary' : 'bg-base-200 text-base-content/50'}`}>{index + 1}</span>
+                            <div className="font-bold text-sm truncate flex items-center gap-3">
+                                <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-[11px] font-black 
+                                    ${activeLesson?.id === lesson.id && !isSettingsMode ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    {index + 1}
+                                </span>
                                 {lesson.title}
                             </div>
-                            <div className={`text-xs mt-2 font-medium flex items-center gap-1 ${activeLesson?.id === lesson.id && !isSettingsMode ? 'text-primary/70' : 'text-base-content/40'}`}>
+                            <div className={`text-xs mt-2 font-medium flex items-center gap-1 pl-9
+                                ${activeLesson?.id === lesson.id && !isSettingsMode ? 'text-white/60' : 'text-slate-400'}`}>
                                 Шагов внутри: {lesson.steps?.length || 0}
                             </div>
                         </div>
                     ))}
-                    {lessons.length === 0 && <div className="text-center mt-10 text-base-content/40 text-sm font-medium">Разделов пока нет</div>}
+                    {lessons.length === 0 && (
+                        <div className="text-center mt-10 p-6 border-2 border-dashed border-slate-200 rounded-2xl">
+                            <LayoutGrid size={24} className="text-slate-300 mx-auto mb-2" />
+                            <p className="text-sm font-bold text-slate-400">Разделов пока нет</p>
+                        </div>
+                    )}
                 </div>
 
-                <div className="p-4 border-t border-base-200 bg-base-50">
-                    <button className="btn btn-outline border-base-300 w-full text-base-content/70 hover:bg-base-200 hover:border-base-300" onClick={() => setIsLessonModalOpen(true)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                        Добавить раздел
+                <div className="p-4 border-t border-slate-200 bg-white">
+                    <button 
+                        className="w-full py-3 border border-slate-200 bg-white text-slate-600 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all flex items-center justify-center gap-2 shadow-sm" 
+                        onClick={() => setIsLessonModalOpen(true)}
+                    >
+                        <Plus size={16} strokeWidth={2.5} /> Добавить раздел
                     </button>
                 </div>
             </div>
 
             {/* === ПРАВАЯ КОЛОНКА === */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden bg-base-100 relative border-r border-base-200">
+            <div className="flex-1 flex flex-col h-full overflow-hidden bg-white relative">
                 
                 {isSettingsMode ? (
                     <CourseSettingsTab 
@@ -311,43 +408,49 @@ function CourseBuilder() {
                     />
                 ) : activeLesson ? (
                     <>
-                        <div className="bg-base-100 border-b border-base-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 sticky top-0">
+                        {/* Панель навигации по шагам */}
+                        <div className="bg-slate-50/50 border-b border-slate-200 px-8 py-4 flex items-center justify-between z-10 sticky top-0 backdrop-blur-sm">
                             <div className="flex items-center gap-3 flex-1 overflow-x-auto no-scrollbar">
-                                <span className="text-sm font-semibold text-base-content/60 mr-2 shrink-0">Шаги:</span>
-                                <div className="flex gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2 shrink-0">Шаги:</span>
+                                <div className="flex gap-2 items-center">
                                     {activeLesson.steps?.map((step, index) => {
-                                        let icon = "📝";
-                                        if (step.step_type === 'video_url') icon = "▶️";
-                                        if (step.step_type.includes('simulation')) icon = "🛡️";
-                                        if (step.step_type === 'quiz') icon = "❓";
-                                        if (step.step_type === 'interactive_code') icon = "💻";
-
                                         const isActive = activeStep?.id === step.id;
-
                                         return (
                                             <button 
                                                 key={step.id}
                                                 onClick={() => setActiveStep(step)}
-                                                className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-xl text-2xl transition-all border-2 
-                                                    ${isActive ? 'bg-base-100 border-b-4 border-b-primary border-t-base-200 border-x-base-200 shadow-sm scale-105' : 'bg-base-100 border-base-200 hover:border-base-300 hover:bg-base-50 opacity-70 hover:opacity-100'}`}
+                                                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all border-2 
+                                                    ${isActive 
+                                                        ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-105' 
+                                                        : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-700'}`}
                                                 title={step.title || `Шаг ${index + 1}`}
                                             >
-                                                {icon}
+                                                {getStepIcon(step.step_type, 18)}
                                             </button>
                                         );
                                     })}
-                                    <button onClick={() => setIsStepModalOpen(true)} className="w-12 h-12 shrink-0 flex items-center justify-center rounded-xl bg-base-50 border-2 border-dashed border-base-300 text-base-content/40 hover:border-primary hover:text-primary transition-colors text-2xl font-light">
-                                        +
+                                    <button 
+                                        onClick={() => setIsStepModalOpen(true)} 
+                                        className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-white border-2 border-dashed border-slate-300 text-slate-400 hover:border-slate-900 hover:text-slate-900 transition-colors ml-2"
+                                        title="Добавить шаг"
+                                    >
+                                        <Plus size={20} strokeWidth={2.5} />
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="shrink-0 ml-4 pl-4 border-l border-base-200">
-                                <button onClick={handleDeleteLesson} className="btn btn-sm btn-ghost text-error hover:bg-error/10">Удалить раздел</button>
+                            <div className="shrink-0 ml-6 pl-6 border-l border-slate-200">
+                                <button 
+                                    onClick={handleDeleteLesson} 
+                                    className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
+                                >
+                                    <Trash2 size={14} /> Удалить раздел
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-base-200/20">
+                        {/* Рабочая область */}
+                        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-slate-50/30">
                             {activeStep ? (
                                 <StepEditor 
                                     activeStep={activeStep} 
@@ -368,95 +471,116 @@ function CourseBuilder() {
                                     }}
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-base-content/40">
-                                    <div className="bg-base-200 p-4 rounded-full mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+                                <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 text-slate-300">
+                                        <Plus size={32} />
                                     </div>
-                                    <h3 className="text-lg font-bold text-base-content/60">Выберите шаг для редактирования</h3>
+                                    <h3 className="text-xl font-black text-slate-900 mb-2">Создайте первый шаг</h3>
+                                    <p className="text-sm text-slate-500 font-medium">Нажмите на плюсик в верхней панели, чтобы добавить материал.</p>
                                 </div>
                             )}
                         </div>
                     </>
                 ) : (
-                    <div className="flex h-full flex-col items-center justify-center text-base-content/40 bg-base-200/10">
-                        <div className="bg-base-200 p-4 rounded-full mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    <div className="flex flex-col items-center justify-center h-[80vh] text-center bg-slate-50">
+                        <div className="w-20 h-20 bg-white border border-slate-200 shadow-sm rounded-3xl flex items-center justify-center mb-6 text-slate-300">
+                            <ChevronRight size={40} />
                         </div>
-                        <h3 className="text-lg font-bold text-base-content/60">Выберите раздел курса слева</h3>
+                        <h3 className="text-2xl font-black text-slate-900 mb-2">Выберите раздел</h3>
+                        <p className="text-sm text-slate-500 font-medium max-w-sm">Выберите раздел в меню слева или создайте новый, чтобы начать наполнение курса.</p>
                     </div>
                 )}
             </div>
 
-            {/* МОДАЛКИ (Раздел) */}
+            {/* === МОДАЛКИ === */}
+
+            {/* Модалка: Новый раздел */}
             {isLessonModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/50 backdrop-blur-sm animate-fade-in px-4">
-                    <div className="bg-base-100 rounded-2xl shadow-xl border border-base-200 max-w-sm w-full p-6 animate-slide-up">
-                        <h3 className="font-bold text-lg mb-4">Новый раздел</h3>
-                        <div className="form-control mb-6">
-                            <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Название раздела</span></label>
-                            <input type="text" className="input input-bordered border-base-300 w-full shadow-sm" autoFocus value={newLessonTitle} onChange={(e) => setNewLessonTitle(e.target.value)} />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in px-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-black text-xl text-slate-900">Новый раздел</h3>
+                            <button onClick={() => setIsLessonModalOpen(false)} className="text-slate-400 hover:text-slate-900 transition-colors"><X size={20} /></button>
                         </div>
-                        <div className="flex justify-end gap-3">
-                            <button className="btn btn-ghost btn-sm" onClick={() => setIsLessonModalOpen(false)}>Отмена</button>
-                            <button className="btn btn-primary btn-sm shadow-sm" onClick={handleCreateLesson} disabled={!newLessonTitle.trim()}>Создать</button>
+                        <div className="mb-8">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Название раздела</label>
+                            <input 
+                                type="text" 
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white focus:border-slate-900 outline-none transition-all" 
+                                autoFocus 
+                                placeholder="Например: Введение в Python"
+                                value={newLessonTitle} 
+                                onChange={(e) => setNewLessonTitle(e.target.value)} 
+                            />
                         </div>
+                        <button 
+                            className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-black transition-all shadow-md disabled:bg-slate-200 disabled:text-slate-400" 
+                            onClick={handleCreateLesson} 
+                            disabled={!newLessonTitle.trim()}
+                        >
+                            Создать раздел
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* МОДАЛКИ (Шаг) */}
+            {/* Модалка: Новый шаг */}
             {isStepModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/50 backdrop-blur-sm animate-fade-in px-4">
-                    <div className="bg-base-100 rounded-3xl shadow-2xl border border-base-200 max-w-2xl w-full p-8 md:p-10 animate-slide-up">
-                        <div className="text-center mb-8">
-                            <h3 className="font-extrabold text-2xl text-base-content">Что добавим в урок?</h3>
-                            <p className="text-sm text-base-content/60 mt-2">Выберите формат обучающего материала</p>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in px-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 md:p-12 animate-in zoom-in-95 duration-200">
+                        <div className="text-center mb-10">
+                            <h3 className="font-black text-3xl text-slate-900 mb-2">Что добавим в урок?</h3>
+                            <p className="text-sm text-slate-500 font-medium">Выберите формат обучающего материала</p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {[
-                                { type: 'text', icon: '📝', title: 'Текстовая теория', desc: 'Статьи, инструкции, картинки' },
-                                { type: 'video_url', icon: '▶️', title: 'Видеоролик', desc: 'Вставка видео из YouTube' },
-                                { type: 'quiz', icon: '❓', title: 'Тестирование', desc: 'Проверка знаний с AI генерацией' },
-                                { type: 'simulation_chat', icon: '🛡️', title: 'Симуляция атаки', desc: 'Тренажеры фишинга и СИ', badge: 'AI' },
-                                { type: 'interactive_code', icon: '💻', title: 'Тренажер кода', desc: 'Интерактивный Python IDE' },
+                                { type: 'text', icon: <FileText size={32} strokeWidth={1.5} />, title: 'Текстовая теория', desc: 'Статьи и материалы' },
+                                { type: 'video_url', icon: <PlayCircle size={32} strokeWidth={1.5} />, title: 'Видеоролик', desc: 'Вставка из YouTube' },
+                                { type: 'quiz', icon: <HelpCircle size={32} strokeWidth={1.5} />, title: 'Тестирование', desc: 'С AI-генератором' },
+                                { type: 'simulation_chat', icon: <ShieldAlert size={32} strokeWidth={1.5} />, title: 'Симуляция', desc: 'Тренажеры фишинга', badge: 'AI' },
+                                { type: 'interactive_code', icon: <Code2 size={32} strokeWidth={1.5} />, title: 'Код', desc: 'Интерактивный IDE' },
                             ].map((item) => (
                                 <button 
                                     key={item.type} onClick={() => handleCreateStep(item.type)} 
-                                    className="flex flex-col items-center justify-center p-6 border-2 border-base-200 rounded-2xl hover:border-primary hover:bg-base-50 hover:shadow-md transition-all group relative bg-base-100"
+                                    className="flex flex-col items-center justify-center p-6 border-2 border-slate-100 bg-slate-50/50 rounded-2xl hover:border-slate-900 hover:bg-white hover:shadow-lg transition-all group relative text-center"
                                 >
-                                    {item.badge && <span className="absolute top-3 right-3 badge badge-sm bg-accent text-white border-none font-bold text-[10px]">{item.badge}</span>}
-                                    <span className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{item.icon}</span>
-                                    <span className="font-bold text-base-content mb-1">{item.title}</span>
-                                    <span className="text-xs text-base-content/50 text-center">{item.desc}</span>
+                                    {item.badge && <span className="absolute top-4 right-4 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-black uppercase tracking-widest">{item.badge}</span>}
+                                    <div className="text-slate-400 group-hover:text-slate-900 group-hover:scale-110 transition-all duration-300 mb-4">
+                                        {item.icon}
+                                    </div>
+                                    <span className="font-bold text-slate-900 mb-1">{item.title}</span>
+                                    <span className="text-xs text-slate-500 font-medium">{item.desc}</span>
                                 </button>
                             ))}
                         </div>
-                        <div className="mt-8 text-center">
-                            <button className="btn btn-ghost font-bold text-base-content/70 hover:bg-base-200 w-full sm:w-auto px-8" onClick={() => setIsStepModalOpen(false)}>Отмена</button>
+                        <div className="mt-10 text-center">
+                            <button className="text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors" onClick={() => setIsStepModalOpen(false)}>Отмена</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ДИАЛОГ ПОДТВЕРЖДЕНИЯ */}
+            {/* Диалог подтверждения (Удаление) */}
             {confirmDialog.isOpen && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-base-300/50 backdrop-blur-sm animate-fade-in px-4">
-                    <div className="bg-base-100 rounded-2xl shadow-xl border border-base-200 max-w-sm w-full p-6 animate-slide-up">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${confirmDialog.isDanger ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'}`}>
-                                {confirmDialog.isDanger ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                )}
-                            </div>
-                            <h3 className="text-lg font-bold text-base-content">{confirmDialog.title}</h3>
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in px-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200 text-center">
+                        <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-6">
+                            <AlertTriangle size={32} strokeWidth={2} />
                         </div>
-                        <p className="text-sm text-base-content/70 mb-6 pl-[52px]">{confirmDialog.message}</p>
-                        <div className="flex justify-end gap-3">
-                            <button className="btn btn-ghost btn-sm" onClick={closeDialog}>Отмена</button>
-                            <button className={`btn btn-sm shadow-sm ${confirmDialog.isDanger ? 'btn-error' : 'btn-primary'}`} onClick={confirmDialog.onConfirm}>
+                        <h3 className="text-xl font-black text-slate-900 mb-3">{confirmDialog.title}</h3>
+                        <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">{confirmDialog.message}</p>
+                        <div className="flex flex-col gap-3">
+                            <button 
+                                className="w-full py-3.5 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors shadow-md shadow-red-500/20" 
+                                onClick={confirmDialog.onConfirm}
+                            >
                                 {confirmDialog.confirmText}
+                            </button>
+                            <button 
+                                className="w-full py-3.5 bg-slate-50 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-colors" 
+                                onClick={closeDialog}
+                            >
+                                Отмена
                             </button>
                         </div>
                     </div>

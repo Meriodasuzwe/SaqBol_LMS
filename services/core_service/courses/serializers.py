@@ -40,13 +40,11 @@ class LessonStepSerializer(serializers.ModelSerializer):
         ).exists()
         
 class LessonSerializer(serializers.ModelSerializer):
-    # ДОБАВЛЕНО: Вкладываем шаги внутрь урока (матрешка)
     steps = LessonStepSerializer(many=True, read_only=True)
 
     class Meta:
         model = Lesson
-        # Убрали content и video_url (они теперь в шагах), добавили steps
-        fields = ['id', 'title', 'order', 'course', 'steps']
+        fields = ['id', 'title', 'order', 'course', 'steps'] 
 
 class CourseSerializer(serializers.ModelSerializer):
     category_title = serializers.ReadOnlyField(source='category.title')

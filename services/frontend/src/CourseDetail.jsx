@@ -9,7 +9,6 @@ import {
     Code2, 
     ChevronRight, 
     CheckCircle2,
-    Lock,
     Clock
 } from 'lucide-react';
 
@@ -213,8 +212,9 @@ function CourseDetail({ isLoggedIn }) {
                                                     return (
                                                         <button 
                                                             key={step.id}
-                                                            onClick={() => navigate(`/lesson/${lesson.id}`)}
-                                                            className="group flex items-start gap-4 px-6 py-5 hover:bg-slate-50 transition-all text-left relative"
+                                                            // 👇 ВОТ ЗДЕСЬ ДОБАВЛЕН ПАРАМЕТР ?step=ID 👇
+                                                            onClick={() => navigate(`/lesson/${lesson.id}?step=${step.id}`)}
+                                                            className="w-full group flex items-start gap-4 px-6 py-5 hover:bg-slate-50 transition-all text-left relative"
                                                         >
                                                             {/* Вертикальная линия Timeline */}
                                                             <div className="absolute left-[39px] top-0 bottom-0 w-px bg-slate-100 group-first:top-1/2 group-last:bottom-1/2"></div>
