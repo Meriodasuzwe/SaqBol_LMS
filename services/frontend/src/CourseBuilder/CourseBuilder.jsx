@@ -84,30 +84,43 @@ function CourseBuilder() {
         fetchData();
     }, [courseId]);
 
-    // Загрузка квиза при смене шага
+    // Изолируем тесты
     useEffect(() => {
         if (activeStep?.step_type === 'quiz' && activeLesson) {
-            fetchQuizForLesson(activeLesson.id);
+            const stepQuizId = activeStep.scenario_data?.quiz_id;
+            
+            if (stepQuizId) {
+                fetchQuizForStep(activeLesson.id, stepQuizId);
+            } else {
+                setQuizQuestions([]);
+                setCurrentQuizId(null);
+            }
         } else {
             setQuizQuestions(null);
             setCurrentQuizId(null);
         }
     }, [activeStep, activeLesson]);
 
-    const fetchQuizForLesson = async (lessonId) => {
+    const fetchQuizForStep = async (lessonId, targetQuizId) => {
         try {
-            const res = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`);
+            // Стало (явно просим не кешировать через заголовки):
+            const res = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+
             let data = res.data;
             if (!Array.isArray(data)) data = data.results ? data.results : [data];
             
-            const validQuizzes = data.filter(q => q && q.id).sort((a, b) => b.id - a.id);
+            const targetQuiz = data.find(q => q.id === targetQuizId);
             
-            if (validQuizzes.length > 0) {
-                const quiz = validQuizzes[0];
-                setCurrentQuizId(quiz.id); 
+            if (targetQuiz) {
+                setCurrentQuizId(targetQuiz.id); 
                 
-                if (quiz.questions && quiz.questions.length > 0) {
-                    const mapped = quiz.questions.map(q => {
+                if (targetQuiz.questions && targetQuiz.questions.length > 0) {
+                    const mapped = targetQuiz.questions.map(q => {
                         let optionsList = [];
                         let correctIdx = 0;
 
@@ -135,15 +148,20 @@ function CourseBuilder() {
                     });
                     setQuizQuestions(mapped);
                 } else setQuizQuestions([]);
-            } else { setCurrentQuizId(null); setQuizQuestions([]); }
-        } catch (err) { setCurrentQuizId(null); setQuizQuestions([]); }
+            } else { 
+                setCurrentQuizId(null); 
+                setQuizQuestions([]); 
+            }
+        } catch (err) { 
+            setCurrentQuizId(null); 
+            setQuizQuestions([]); 
+        }
     };
 
     // --- ЛОГИКА СОХРАНЕНИЯ / УДАЛЕНИЯ ---
     const handleSaveCourseSettings = async () => {
         setLoading(true);
         try {
-            // Если есть новый файл картинки, отправляем как FormData
             if (courseData.newImageFile) {
                 const formData = new FormData();
                 formData.append('title', courseData.title);
@@ -155,7 +173,6 @@ function CourseBuilder() {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             } else {
-                // Если картинку не меняли, отправляем как обычно
                 await api.patch(`courses/${courseId}/`, {
                     title: courseData.title,
                     description: courseData.description,
@@ -223,24 +240,58 @@ function CourseBuilder() {
         if (!activeStep) return;
         setLoading(true);
         try {
-            const res = await api.patch(`courses/steps/${activeStep.id}/`, { title: activeStep.title, content: activeStep.content, step_type: activeStep.step_type, scenario_data: activeStep.scenario_data });
+            let savedQuizId = currentQuizId;
+
             if (activeStep.step_type === 'quiz' && quizQuestions) {
                 const payloadQuestions = quizQuestions.map(q => {
                     const options = q.options.map(s => String(s || '').trim()).filter(Boolean);
                     let userIndex = q.user_selected_index ?? q.correct_option_index ?? 0;
                     if (userIndex >= options.length) userIndex = 0;
-                    const mappedQ = { question: String(q.question), options, correct_answer: String(userIndex), correct_index: userIndex, explanation: "" };
+                    
+                    // 🔥 ФИКС: Берем ТЕКСТ правильного ответа
+                    const correctAnswerText = options[userIndex] || "";
+
+                    const mappedQ = { 
+                        question: String(q.question), 
+                        options, 
+                        correct_answer: correctAnswerText, // Теперь шлём текст (например "Рахат")
+                        correct_index: userIndex, // На всякий случай дублируем индексом
+                        explanation: "" 
+                    };
                     if (q.id) mappedQ.id = q.id; 
                     return mappedQ;
                 });
+                
                 const payload = { lesson_id: Number(activeLesson.id), quiz_title: activeStep.title || `Тест к уроку: ${activeLesson.title}`, questions: payloadQuestions };
                 if (currentQuizId) payload.quiz_id = currentQuizId;
-                await api.post(`quizzes/save-generated/`, payload);
+                
+                const quizRes = await api.post(`quizzes/save-generated/`, payload);
+                savedQuizId = quizRes.data.quiz_id; 
+                setCurrentQuizId(savedQuizId);
             }
+
+            const updatedScenarioData = {
+                ...(activeStep.scenario_data || {})
+            };
+            if (savedQuizId) {
+                updatedScenarioData.quiz_id = savedQuizId;
+            }
+
+            const res = await api.patch(`courses/steps/${activeStep.id}/`, { 
+                title: activeStep.title, 
+                content: activeStep.content, 
+                step_type: activeStep.step_type, 
+                scenario_data: updatedScenarioData 
+            });
+            
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? res.data : s) } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data);
             toast.success("Шаг сохранен");
-        } catch (err) { toast.error("Ошибка сохранения"); } finally { setLoading(false); }
+        } catch (err) { 
+            toast.error("Ошибка сохранения"); 
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     // --- ЛОГИКА ГЕНЕРАЦИИ (КВИЗЫ И СИМУЛЯЦИИ) ---
@@ -310,7 +361,6 @@ function CourseBuilder() {
         } catch (err) { toast.error("Ошибка генерации симуляции"); } finally { setAiLoading(false); }
     };  
 
-    // Утилита для иконок шагов
     const getStepIcon = (type, size = 20) => {
         if (type === 'video_url') return <PlayCircle size={size} />;
         if (type.includes('simulation')) return <ShieldAlert size={size} />;

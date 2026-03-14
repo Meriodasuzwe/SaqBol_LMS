@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'; // 👈 Добавил useSearchParams
 import api from './api';
 import { toast } from 'react-toastify';
 import confetti from 'canvas-confetti';
@@ -16,6 +16,10 @@ import {
 function QuizPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
+    
+    // 🔥 Достаем quiz_id из ссылки
+    const [searchParams] = useSearchParams();
+    const targetQuizId = searchParams.get('quiz_id');
 
     // Данные
     const [quiz, setQuiz] = useState(null); 
@@ -39,15 +43,21 @@ function QuizPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Добавляем timestamp, чтобы сбросить жесткий кэш браузера (если он есть)
+                // Добавляем timestamp, чтобы сбросить жесткий кэш браузера
                 const quizzesRes = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`);
                 const quizList = Array.isArray(quizzesRes.data) ? quizzesRes.data : [quizzesRes.data];
                 
-                // Берем ПОСЛЕДНИЙ созданный тест
                 const validQuizzes = quizList.filter(q => q && q.id).sort((a, b) => b.id - a.id);
                 
                 if (validQuizzes.length > 0) {
-                    setQuiz(validQuizzes[0]);
+                    // 🔥 Ищем ИМЕННО ТОТ тест, который передали в URL
+                    if (targetQuizId) {
+                        const specificQuiz = validQuizzes.find(q => String(q.id) === String(targetQuizId));
+                        setQuiz(specificQuiz || validQuizzes[0]);
+                    } else {
+                        // Фолбэк на старую логику, если вдруг перешли по старой ссылке
+                        setQuiz(validQuizzes[0]);
+                    }
                 }
             } catch (err) {
                 console.error("Ошибка загрузки данных:", err);
@@ -57,7 +67,7 @@ function QuizPage() {
             }
         };
         fetchData();
-    }, [lessonId]);
+    }, [lessonId, targetQuizId]); // Добавили targetQuizId в зависимости
 
     // 2. Анти-чит (Отслеживание вкладок)
     useEffect(() => {
@@ -108,7 +118,7 @@ function QuizPage() {
                         spread: 80,
                         origin: { y: 0.6 },
                         zIndex: 9999,
-                        colors: ['#10B981', '#047857', '#059669'] // Строгие изумрудные цвета конфетти
+                        colors: ['#10B981', '#047857', '#059669'] 
                     });
                     toast.success(`Тест успешно сдан! Результат: ${res.data.score}%`);
                 } else {
@@ -209,7 +219,7 @@ function QuizPage() {
                                 <div className="h-px flex-1 bg-slate-100"></div>
                             </div>
                             <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
-                                {currentQuestion?.text}
+                                {currentQuestion?.question || currentQuestion?.text}
                             </h1>
                         </div>
 
