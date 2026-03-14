@@ -25,43 +25,31 @@ class QuizListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
 # 2. Получение тестов по конкретному уроку
-# Этот View будет обрабатывать путь: quizzes/lesson/<lesson_id>/
-# ListAPIView дает возможность легко реализовать получение списка объектов
 class QuizByLessonView(generics.ListAPIView):
-    #serializer_class = QuizSerializer для получения тестов вместе с их вопросами и вариантами ответов
     serializer_class = QuizSerializer
-    #permission_classes = [IsAuthenticated] для защиты данных тестов от неавторизованных пользователей
     permission_classes = [IsAuthenticated]
 
-# Получение тестов по конкретному уроку
     def get_queryset(self):
-        # Берем lesson_id из URL (из urls.py)
         lesson_id = self.kwargs.get('lesson_id')
         if lesson_id:
-            # Получаем тесты, связанные с конкретным уроком, и сортируем их по ID для стабильного порядка отображения
             return Quiz.objects.filter(lesson_id=lesson_id).order_by('id')
         return Quiz.objects.none()
 
 # 3. Детальный просмотр теста по ID теста
-# RetrieveAPIView позволяет получить один объект по его ID (pk) и возвращает 404, если объект не найден
 class QuizDetailView(generics.RetrieveAPIView):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
 
 # 4. Сдача теста
-# ApiView позволяет нам создать кастомную логику для обработки POST-запросов, которые будут содержать ответы на тест и логику вычисления результатов.
 class QuizSubmitView(APIView):
     permission_classes = [IsAuthenticated]
-    # Этот класс будет обрабатывать отправку ответов на тест и вычисление результатов.
+    
     @extend_schema(request=QuizSubmissionSerializer, responses={200: QuizResultSerializer})
     def post(self, request, quiz_id):
-        # Получаем данные из запроса
         serializer = QuizSubmissionSerializer(data=request.data)
         if serializer.is_valid():
-            # Получаем ответы из сериализатора
             answers = serializer.validated_data.get('answers')
-            # Получаем все вопросы теста и их количество для вычисления результатов
             questions = Question.objects.filter(quiz_id=quiz_id)
             total_questions = questions.count()
             
@@ -71,8 +59,6 @@ class QuizSubmitView(APIView):
             correct_answers_count = 0
             for ans in answers:
                 is_correct = Choice.objects.filter(
-                    # ans.get('choice_id') это айди выбранного варианта ответа, ans.get('question_id') это айди вопроса на который был дан ответ.
-                    # Мы проверяем существует ли такой вариант ответа который соответствует этому вопросу и является правильным (is_correct=True) 
                     id=ans.get('choice_id'), 
                     question_id=ans.get('question_id'), 
                     is_correct=True
@@ -87,7 +73,7 @@ class QuizSubmitView(APIView):
                 quiz_id=quiz_id,
                 score=score
             )
-
+            
             return Response({
                 "score": score,
                 "correct_count": correct_answers_count,
@@ -106,7 +92,6 @@ class MyQuizResultsView(generics.ListAPIView):
         return Result.objects.filter(student=self.request.user).order_by('-completed_at')
 
 # --- AI ФУНКЦИОНАЛ ---
-
 class GeneratePreviewView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -131,7 +116,6 @@ class GeneratePreviewView(APIView):
             return Response({"error": "Слишком короткий текст"}, status=400)
 
         try:
-            # Стучимся в AI сервис через внутреннюю сеть Docker
             ai_url = "http://saqbol_ai_service:8000/generate-quiz"
             payload = {"text": content, "count": int(count), "difficulty": difficulty}
             response = requests.post(ai_url, json=payload, timeout=60)
@@ -145,7 +129,7 @@ class GeneratePreviewView(APIView):
 
 class SaveGeneratedView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     @transaction.atomic
     def post(self, request):
         lesson_id = request.data.get('lesson_id')
@@ -161,6 +145,13 @@ class SaveGeneratedView(APIView):
             
             if quiz_id:
                 quiz = Quiz.objects.get(id=quiz_id)
+                if quiz_title:
+                    quiz.title = quiz_title
+                    quiz.save()
+                
+                # 🔥 ГЛАВНЫЙ ФИКС: Удаляем старые вопросы перед сохранением новых!
+                # Без этой строки старые неправильные варианты копились дубликатами в БД.
+                Question.objects.filter(quiz=quiz).delete()
             else:
                 title = quiz_title or f"Тест: {lesson.title}"
                 quiz = Quiz.objects.create(title=title, lesson=lesson)
@@ -177,12 +168,26 @@ class SaveGeneratedView(APIView):
                 )
 
                 options = q_item.get('options', [])
-                correct_idx_str = str(q_item.get('correct_answer', '0'))
                 
-                # Логика определения правильного ответа
+                
                 correct_index = 0
-                if correct_idx_str.isdigit():
-                    correct_index = int(correct_idx_str)
+                
+                # Ищем ключи, которые реально присылает React-фронтенд
+                if 'correct_option_index' in q_item and q_item['correct_option_index'] is not None:
+                    correct_index = int(q_item['correct_option_index'])
+                elif 'user_selected_index' in q_item and q_item['user_selected_index'] is not None:
+                    correct_index = int(q_item['user_selected_index'])
+                elif 'correct_index' in q_item and q_item['correct_index'] is not None:
+                    correct_index = int(q_item['correct_index'])
+                else:
+                    # Фолбек на старый 'correct_answer' от AI
+                    correct_idx_str = str(q_item.get('correct_answer', '0'))
+                    if correct_idx_str.isdigit():
+                        correct_index = int(correct_idx_str)
+
+                # Защита от багов фронтенда: если индекс больше количества вариантов, ставим 0
+                if correct_index < 0 or correct_index >= len(options):
+                    correct_index = 0
 
                 for i, opt_text in enumerate(options):
                     Choice.objects.create(

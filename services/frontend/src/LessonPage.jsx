@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'; // 👈 Добавил useLocation
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from './api';
 import { 
@@ -21,7 +21,7 @@ import PythonEditor from './PythonEditor';
 function LessonPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
-    const location = useLocation(); // 👈 Достал хук для чтения URL-параметров
+    const location = useLocation();
     
     const [lesson, setLesson] = useState(null);
     const [courseLessons, setCourseLessons] = useState([]);
@@ -48,22 +48,18 @@ function LessonPage() {
                 const lessonRes = await api.get(`courses/lessons/${lessonId}/`);
                 setLesson(lessonRes.data);
                 
-                // 🔥 ФИКС: Читаем параметр ?step=... из ссылки
                 const searchParams = new URLSearchParams(location.search);
                 const targetStepId = searchParams.get('step');
                 
                 if (targetStepId && lessonRes.data.steps) {
-                    // Ищем индекс шага по переданному ID
                     const stepIndex = lessonRes.data.steps.findIndex(step => step.id === parseInt(targetStepId));
                     if (stepIndex !== -1) {
-                        setActiveStepIndex(stepIndex); // Устанавливаем конкретный шаг
+                        setActiveStepIndex(stepIndex);
                     } else {
-                        // Если ID неправильный (шаг удален), падаем на дефолтную логику
                         const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
                         setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
                     }
                 } else {
-                    // Если параметра нет (пользователь просто нажал "Начать обучение")
                     const firstUncompletedIndex = lessonRes.data.steps?.findIndex(step => !step.is_completed);
                     setActiveStepIndex(firstUncompletedIndex !== -1 ? firstUncompletedIndex : 0);
                 }
@@ -82,7 +78,7 @@ function LessonPage() {
         };
 
         if (lessonId) fetchLessonData();
-    }, [lessonId, location.search]); // 👈 Добавил location.search в зависимости
+    }, [lessonId, location.search]);
 
     const handleStepComplete = async (score = 10) => {
         if (!lesson || !lesson.steps || lesson.steps.length === 0) return;
@@ -103,7 +99,6 @@ function LessonPage() {
             if (activeStepIndex < lesson.steps.length - 1) {
                 setActiveStepIndex(activeStepIndex + 1);
                 
-                // Обновляем URL в браузере (чтобы при рефреше он оставался на новом шаге)
                 const nextStepId = lesson.steps[activeStepIndex + 1].id;
                 window.history.replaceState(null, '', `/lesson/${lessonId}?step=${nextStepId}`);
                 
@@ -122,7 +117,6 @@ function LessonPage() {
         }
     };
 
-    // Чтобы клик по "квадратикам" сверху (таймлайн) тоже менял URL (полезно для копирования ссылок)
     const handleTabClick = (index, stepId) => {
         setActiveStepIndex(index);
         window.history.replaceState(null, '', `/lesson/${lessonId}?step=${stepId}`);
@@ -155,7 +149,6 @@ function LessonPage() {
 
     return (
         <div className="min-h-screen bg-slate-50/50 flex justify-center pb-20 font-sans text-slate-900">
-            
             <div className="flex w-full max-w-7xl mx-auto pt-8 px-6 lg:px-8 gap-12">
                 
                 {/* --- ЛЕВЫЙ САЙДБАР --- */}
@@ -222,7 +215,7 @@ function LessonPage() {
                                 return (
                                     <button 
                                         key={step.id}
-                                        onClick={() => handleTabClick(index, step.id)} // 👈 Использовал новую функцию для смены URL
+                                        onClick={() => handleTabClick(index, step.id)} 
                                         className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 border-2
                                             ${isActive 
                                                 ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-105' 
@@ -272,7 +265,13 @@ function LessonPage() {
                                                     <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-6"><HelpCircle className="text-slate-900" size={32} /></div>
                                                     <h3 className="text-xl font-black mb-2">Проверка знаний</h3>
                                                     <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.</p>
-                                                    <Link to={`/quiz/lesson/${lesson.id}`} className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all">Начать тест <ArrowRight size={18} /></Link>
+                                                    {/* 🔥 ГЛАВНЫЙ ФИКС: Передаем quiz_id в URL! */}
+                                                    <Link 
+                                                        to={`/quiz/lesson/${lesson.id}?quiz_id=${currentStep.scenario_data?.quiz_id || ''}`} 
+                                                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all"
+                                                    >
+                                                        Начать тест <ArrowRight size={18} />
+                                                    </Link>
                                                 </div>
                                             ) : (
                                                 <div className="prose prose-slate max-w-none prose-headings:font-black prose-img:rounded-2xl" dangerouslySetInnerHTML={{ __html: currentStep.content }} />
@@ -285,7 +284,7 @@ function LessonPage() {
                             )}
                         </div>
 
-                        {/* Футер навигации (только для текстовых/видео шагов) */}
+                        {/* Футер навигации */}
                         {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
                             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                                 {activeStepIndex > 0 ? (

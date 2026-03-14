@@ -8,8 +8,23 @@ from .models import Quiz, Question, Choice, Result
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
-        # Поле is_correct не включается в сериализатор, чтобы студенты не видели правильные ответы при получении данных теста.
-        fields = ['id', 'text'] # is_correct скрыт от студентов
+        fields = ['id', 'text', 'is_correct']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        show_answer = False
+        
+        if request and request.user.is_authenticated:
+            if request.user.is_staff:
+                show_answer = True
+            elif hasattr(instance.question.quiz.lesson.course, 'teacher'):
+                if request.user == instance.question.quiz.lesson.course.teacher:
+                    show_answer = True
+
+        if not show_answer:
+            ret.pop('is_correct', None)
+        return ret
 
 # Сериализатор вопросов теста
 # choices = ChoiceSerializer(many=True, read_only=True) позволяет вложить список вариантов ответа внутри каждого вопроса при сериализации.
