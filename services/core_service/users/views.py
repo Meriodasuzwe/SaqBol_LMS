@@ -4,8 +4,10 @@ import os
 import hashlib
 import hmac
 import time
+import random
 from django.conf import settings
 from django.core.mail import send_mail
+from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, status, permissions
@@ -436,3 +438,68 @@ class ChangePasswordView(APIView):
         user.save()
 
         return Response({"message": "Пароль успешно обновлен!"}, status=status.HTTP_200_OK)
+
+
+# Изменение email для авторизованных пользователей (двухэтапная верификация через код на новый email)
+
+class RequestEmailChangeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        new_email = request.data.get('new_email')
+        
+        if not new_email:
+            return Response({"error": "Укажите новый email"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Проверяем, не занят ли email другим человеком
+        if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+            return Response({"error": "Этот email уже используется другим пользователем"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Генерируем 6-значный код
+        otp_code = str(random.randint(100000, 999999))
+
+        # Сохраняем в кэш Django (живет 10 минут)
+        cache_key = f"email_change_{request.user.id}"
+        cache.set(cache_key, {'new_email': new_email, 'otp': otp_code}, timeout=600)
+
+        # Отправляем письмо с кодом
+        # Отправляем письмо с кодом
+        try:
+            send_mail(
+                subject='Код подтверждения SaqBol',
+                message=f'Ваш код для подтверждения нового email: {otp_code}\n\nКод действителен 10 минут. Никому не сообщайте его.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[new_email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # 🔥 ТЕПЕРЬ ОН ПОКАЖЕТ ИСТИННУЮ ПРИЧИНУ ПОЧЕМУ НЕ ОТПРАВИЛОСЬ ПИСЬМО
+            logger.error(f"Ошибка SMTP: {str(e)}")
+            return Response({"error": f"Ошибка почты: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"message": "Код отправлен на новый email"}, status=status.HTTP_200_OK)
+
+
+class VerifyEmailChangeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        code = request.data.get('code')
+        cache_key = f"email_change_{request.user.id}"
+        cache_data = cache.get(cache_key)
+
+        if not cache_data:
+            return Response({"error": "Код истек или не был запрошен"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if cache_data['otp'] != code:
+            return Response({"error": "Неверный код"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Если код верный — меняем почту в БД
+        user = request.user
+        user.email = cache_data['new_email']
+        user.save()
+
+        # Удаляем использованный код из кэша
+        cache.delete(cache_key)
+
+        return Response({"message": "Email успешно изменен!"}, status=status.HTTP_200_OK)
