@@ -278,3 +278,20 @@ INFO 2026-03-13 12:08:23,677 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.
 INFO 2026-03-13 12:08:31,816 | User 22 запросил квиз.
 INFO 2026-03-13 12:08:32,959 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-13 12:08:32,960 | AI ACTION: [200] POST /generate-quiz (IP: 172.18.0.8) - 1.145s
+INFO 2026-03-15 09:56:48,969 | FILE UPLOAD: User ID 22 uploaded Келгенов Алмас 4 лаб Разработка.docx
+INFO 2026-03-15 09:56:48,994 | AI PARSING: Sending 5986 chars to Groq...
+INFO 2026-03-15 09:56:51,292 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-15 09:56:51,308 | AI PARSING SUCCESS: Course 'Мобилді қосымшаларды әзірлеу және қауіпсіздік' generated.
+INFO 2026-03-15 09:56:51,309 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 2.385s
+INFO 2026-03-15 11:09:03,390 | AI ACTION: [200] GET /docs (IP: 172.18.0.8) - 0.000s
+INFO 2026-03-15 11:09:04,117 | AI ACTION: [200] GET /openapi.json (IP: 172.18.0.8) - 0.021s
+INFO 2026-03-16 12:36:56,924 | FILE UPLOAD: User ID 22 uploaded ЛР1.pdf
+INFO 2026-03-16 12:36:56,985 | AI PARSING: Sending 19547 chars to Groq...
+INFO 2026-03-16 12:36:59,330 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-16 12:36:59,343 | AI PARSING SUCCESS: Course 'Основы тестирования программного обеспечения' generated.
+INFO 2026-03-16 12:36:59,344 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 2.465s
+INFO 2026-03-16 12:46:30,777 | FILE UPLOAD: User ID 22 uploaded 3 лаб Алиев Рахат .docx
+INFO 2026-03-16 12:46:30,796 | AI PARSING: Sending 5963 chars to Groq...
+INFO 2026-03-16 12:46:32,472 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-16 12:46:32,473 | AI PARSING SUCCESS: Course 'Тестирование программного обеспечения' generated.
+INFO 2026-03-16 12:46:32,474 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 1.699s

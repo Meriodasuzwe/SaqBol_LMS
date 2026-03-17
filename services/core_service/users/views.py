@@ -1,9 +1,13 @@
 import logging
 import uuid
 import os
+import hashlib
+import hmac
+import time
 from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from google.oauth2 import id_token
@@ -222,6 +226,7 @@ class GoogleLoginView(generics.GenericAPIView):
 class CustomLoginView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = TokenObtainPairSerializer
+    
     def post(self, request, *args, **kwargs):
         # Фронтенд может прислать как 'email', так и 'username' (в зависимости от инпута)
         login_data = request.data.get('email') or request.data.get('username')
@@ -245,7 +250,7 @@ class CustomLoginView(generics.GenericAPIView):
         # ПРОВЕРКА НА GOOGLE: Если у юзера нет пароля в НАШЕЙ базе
         if not user.has_usable_password():
             return Response(
-                {"error": "Вы регистрировались через Google. Войдите через Google или нажмите 'Забыли пароль', чтобы создать локальный пароль."}, 
+                {"error": "Вы регистрировались через Google или Telegram. Войдите через эти сервисы или восстановите пароль."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -273,6 +278,9 @@ class CustomLoginView(generics.GenericAPIView):
             'role': user.role
         }, status=status.HTTP_200_OK)
 
+# ---------------------------
+# Заявка на преподавателя
+# ---------------------------
 class ApplyTeacherView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -301,3 +309,130 @@ class ApplyTeacherView(APIView):
         application.save()
 
         return Response({"message": "Заявка успешно отправлена! Ожидайте решения модератора."}, status=201)
+
+# ---------------------------
+# Авторизация через Telegram
+# ---------------------------
+class TelegramAuthView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        try: # 🔥 Обернули всё в try, чтобы ловить точную ошибку
+            # Копируем QueryDict
+            data = request.data.copy()
+            
+            # Возвращаем нормальное получение токена (можешь оставить жесткий, если хочешь)
+            bot_token = getattr(settings, 'TELEGRAM_BOT_TOKEN', None)
+            
+            if not bot_token:
+                return Response({"error": "TELEGRAM_BOT_TOKEN не настроен"}, status=500)
+            
+            # 1. Проверка подлинности данных
+            if 'hash' not in data:
+                return Response({"error": "Отсутствует hash Telegram"}, status=status.HTTP_400_BAD_REQUEST)
+
+            tg_hash = data.pop('hash')
+            if isinstance(tg_hash, list):
+                tg_hash = tg_hash[0]
+            
+            data_check_list = []
+            for key, value in data.items():
+                val = value[0] if isinstance(value, list) else value
+                if val is not None:
+                    data_check_list.append(f"{key}={val}")
+                    
+            data_check_string = '\n'.join(sorted(data_check_list))
+
+            secret_key = hashlib.sha256(bot_token.encode()).digest()
+            expected_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+            if expected_hash != tg_hash:
+                return Response({"error": "Данные подделаны или недействительны"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 2. Проверка устаревания
+            auth_date_val = data.get('auth_date')
+            auth_date = int(auth_date_val[0] if isinstance(auth_date_val, list) else auth_date_val or 0)
+            
+            if time.time() - auth_date > 86400:
+                return Response({"error": "Данные авторизации устарели"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 3. Авторизация или Регистрация юзера
+            tg_id_val = data.get('id')
+            tg_id = str(tg_id_val[0] if isinstance(tg_id_val, list) else tg_id_val)
+            
+            first_name_val = data.get('first_name', '')
+            first_name = first_name_val[0] if isinstance(first_name_val, list) else first_name_val
+            
+            last_name_val = data.get('last_name', '')
+            last_name = last_name_val[0] if isinstance(last_name_val, list) else last_name_val
+            
+            username_val = data.get('username')
+            username = username_val[0] if isinstance(username_val, list) else username_val
+            if not username:
+                username = f"tg_user_{tg_id}"
+
+            # Ищем юзера по telegram_id
+            user = User.objects.filter(telegram_id=tg_id).first()
+            
+            if not user:
+                # 🔥 ИСПРАВЛЕНИЕ 1: Защита от дубликатов username (как в Google)
+                import uuid
+                if User.objects.filter(username=username).exists():
+                    username = f"{username}_{uuid.uuid4().hex[:5]}"
+
+                # 🔥 ИСПРАВЛЕНИЕ 2: Даем фейковый email, если база его требует
+                fake_email = f"{tg_id}@telegram.com"
+                
+                user = User.objects.create_user(
+                    username=username,
+                    email=fake_email, 
+                    first_name=first_name,
+                    last_name=last_name,
+                    
+                )
+                user.set_unusable_password()
+                user.telegram_id = tg_id
+                user.is_active = True 
+                user.save()
+
+            # 4. Выдаем JWT токены
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'role': getattr(user, 'role', 'student'),
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            # 🔥 ИСПРАВЛЕНИЕ 3: Теперь мы точно увидим, из-за чего падает сервер!
+            logger.error(f"Ошибка Telegram логина: {str(e)}")
+            return Response({"error": f"Критическая ошибка БД: {str(e)}"}, status=500)
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+
+        # 1. Если у пользователя УЖЕ ЕСТЬ нормальный пароль (он регался сам)
+        if user.has_usable_password():
+            if not old_password:
+                return Response({"error": "Пожалуйста, введите текущий пароль."}, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(old_password):
+                return Response({"error": "Текущий пароль введен неверно."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Проверяем новый пароль
+        if not new_password or len(new_password) < 6:
+            return Response({"error": "Новый пароль должен содержать минимум 6 символов."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Сохраняем новый пароль
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Пароль успешно обновлен!"}, status=status.HTTP_200_OK)

@@ -64,8 +64,9 @@ class CourseSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 
             'short_description', 'cover_image', 
             'price', 'category', 'category_title', 
-            'teacher_name', 'lessons', 'progress'
+            'teacher_name', 'lessons', 'progress', 'status'
         ]
+        
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)

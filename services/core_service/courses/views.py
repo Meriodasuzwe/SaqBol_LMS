@@ -1,6 +1,6 @@
 import stripe
 from django.conf import settings
-from django.http import HttpResponse # Добавлен импорт для вебхука
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -36,7 +36,9 @@ class CourseListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        queryset = Course.objects.all()
+        # В общем каталоге показываем ТОЛЬКО опубликованные курсы
+        queryset = Course.objects.filter(status='published')
+        
         search_query = self.request.query_params.get('search', None)
         category_id = self.request.query_params.get('category', None)
 
@@ -47,6 +49,7 @@ class CourseListView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
+        # При создании курса статус по умолчанию будет 'draft' (берется из модели)
         serializer.save(teacher=self.request.user)
 
 
@@ -57,9 +60,16 @@ class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         course = super().get_object()
+        
+        # Если пытаются просто посмотреть курс (GET запрос)
         if self.request.method in permissions.SAFE_METHODS:
+            # Если курс НЕ опубликован, пускаем только автора или админа
+            if course.status != 'published':
+                if not self.request.user.is_authenticated or (course.teacher != self.request.user and not self.request.user.is_staff):
+                    raise PermissionDenied("Этот курс скрыт или находится на модерации.")
             return course
 
+        # Если пытаются изменить/удалить курс (PUT, PATCH, DELETE)
         if course.teacher != self.request.user and not self.request.user.is_staff:
             raise PermissionDenied("Только преподаватель может редактировать этот курс.")
         return course
@@ -71,7 +81,11 @@ class EnrollCourseView(APIView):
     def post(self, request, pk):
         course = get_object_or_404(Course, pk=pk)
         
-        # Если курс платный, требуем оплаты через Stripe (не даем записаться бесплатно)
+        # Защита: нельзя записаться на неопубликованный курс (даже если знаешь ID)
+        if course.status != 'published' and course.teacher != request.user and not request.user.is_staff:
+            raise PermissionDenied("Нельзя записаться на неопубликованный курс.")
+
+        # Если курс платный, требуем оплаты через Stripe
         if course.price > 0:
             return Response(
                 {"error": "Этот курс платный. Пожалуйста, оплатите его перед записью."}, 
@@ -93,10 +107,12 @@ class CreateStripeCheckoutSessionView(APIView):
     def post(self, request, course_id):
         course = get_object_or_404(Course, id=course_id)
         
+        if course.status != 'published' and course.teacher != request.user and not request.user.is_staff:
+            raise PermissionDenied("Курс недоступен для покупки.")
+
         if course.price <= 0:
             return Response({"error": "Этот курс бесплатный!"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Переводим в минимальные единицы (тиын/центы)
         price_in_cents = int(course.price * 100)
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost')
 
@@ -204,6 +220,7 @@ class MyCoursesView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        # Авторы видят все свои курсы (и опубликованные, и черновики)
         if user.role in ['teacher', 'admin'] or user.is_staff:
             return Course.objects.filter(teacher=user)
         
@@ -259,7 +276,8 @@ class BulkCreateCourseView(APIView):
                 title=title, 
                 description=description,
                 teacher=request.user,
-                category=category 
+                category=category,
+                status='draft' # Сгенерированные курсы тоже сначала черновики
             )
 
             for i, lesson_data in enumerate(lessons_data):
@@ -286,7 +304,7 @@ class BulkCreateCourseView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# --- STRIPE WEBHOOK (ОБНОВЛЕННЫЙ: ТЕПЕРЬ ЭТО ФУНКЦИЯ) ---
+# --- STRIPE WEBHOOK ---
 @csrf_exempt
 def stripe_webhook(request):
     import sys
@@ -350,14 +368,10 @@ def upload_image(request):
         return Response({'error': 'Файл не найден'}, status=400)
 
     file = request.FILES['file']
-    # Генерируем уникальное имя, чтобы файлы с одинаковыми названиями не перезаписывали друг друга
     ext = file.name.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
     
-    # Сохраняем файл
     saved_path = default_storage.save(f'course_images/{filename}', file)
-    
-    # Формируем полный URL (например, http://localhost:8000/media/course_images/123.jpg)
     file_url = request.build_absolute_uri(default_storage.url(saved_path))
     
     return Response({'url': file_url})

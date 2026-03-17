@@ -2,18 +2,18 @@ import { useState } from 'react';
 import api from './api';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-// НОВОЕ: Импортируем компонент кнопки Google
 import { GoogleLogin } from '@react-oauth/google';
+import TelegramLoginButton from 'react-telegram-login'; // 🔥 Добавили импорт
+import { Eye, EyeOff } from 'lucide-react';
 
 function Login({ onLoginSuccess }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    
+    const [username, setUsername]         = useState('');
+    const [password, setPassword]         = useState('');
+    const [error, setError]               = useState('');
+    const [loading, setLoading]           = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
-    
+    const [rememberMe, setRememberMe]     = useState(false);
+
     const navigate = useNavigate();
 
     // Стандартный логин по паролю
@@ -25,7 +25,6 @@ function Login({ onLoginSuccess }) {
             const response = await api.post('users/login/', { username, password });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            
             toast.success(`👋 С возвращением, ${username}!`);
             onLoginSuccess();
             navigate('/courses');
@@ -36,20 +35,16 @@ function Login({ onLoginSuccess }) {
         }
     };
 
-    // НОВОЕ: Логин через Google
+    // Логин через Google
     const handleGoogleSuccess = async (credentialResponse) => {
         setLoading(true);
         setError('');
         try {
-            // Отправляем Google-токен на наш бэкенд
-            const response = await api.post('users/google-login/', { 
-                credential: credentialResponse.credential 
+            const response = await api.post('users/google-login/', {
+                credential: credentialResponse.credential
             });
-            
-            // Бэкенд проверил токен и вернул НАШИ токены системы SaqBol
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            
             toast.success(`👋 Привет, ${response.data.username}!`);
             onLoginSuccess();
             navigate('/courses');
@@ -62,96 +57,247 @@ function Login({ onLoginSuccess }) {
         }
     };
 
+    // 🔥 Логин через Telegram 🔥
+    const handleTelegramResponse = async (tgData) => {
+        setLoading(true);
+        setError('');
+        try {
+            const response = await api.post('users/telegram-auth/', tgData);
+            
+            localStorage.setItem('access', response.data.access);
+            localStorage.setItem('refresh', response.data.refresh);
+            
+            toast.success(`👋 Привет, ${response.data.user.username}!`);
+            onLoginSuccess();
+            navigate('/courses');
+        } catch (err) {
+            console.error(err);
+            setError('Ошибка авторизации через Telegram');
+            toast.error('Сбой при входе через Telegram');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="flex min-h-screen items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="card w-full max-w-md bg-base-100 shadow-xl border border-base-200">
-                <div className="card-body p-8">
-                    <h2 className="text-3xl font-bold text-center text-primary mb-6">
-                        Вход в SaqBol
-                    </h2>
-                    
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+                .auth-input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    background: #f8fafc;
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #0f172a;
+                    outline: none;
+                    box-sizing: border-box;
+                    font-family: inherit;
+                    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+                }
+                .auth-input::placeholder { color: #94a3b8; }
+                .auth-input:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+                    background: #fff;
+                }
+                .auth-input.has-error { border-color: #fca5a5; }
+
+                [data-theme='dark'] .auth-page  { background-color: #111318 !important; }
+                [data-theme='dark'] .auth-card  { background-color: #1e2028 !important; border-color: rgba(255,255,255,0.08) !important; box-shadow: 0 24px 64px rgba(0,0,0,0.5) !important; }
+                [data-theme='dark'] .auth-title { color: #f1f5f9 !important; }
+                [data-theme='dark'] .auth-sub   { color: #475569 !important; }
+                [data-theme='dark'] .auth-label { color: #64748b !important; }
+                [data-theme='dark'] .auth-input { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.1) !important; color: #f1f5f9 !important; }
+                [data-theme='dark'] .auth-input::placeholder { color: #475569 !important; }
+                [data-theme='dark'] .auth-input:focus { border-color: #3b82f6 !important; background: rgba(255,255,255,0.09) !important; }
+                [data-theme='dark'] .auth-sep   { background: rgba(255,255,255,0.07) !important; }
+                [data-theme='dark'] .auth-sep-t { color: #334155 !important; }
+                [data-theme='dark'] .auth-hint  { color: #475569 !important; }
+                [data-theme='dark'] .auth-remember { color: #475569 !important; }
+                [data-theme='dark'] .auth-version  { color: #1e293b !important; }
+                
+                /* 🔥 Центрируем кнопку Telegram */
+                .tg-wrapper {
+                    display: flex;
+                    justify-content: center;
+                    width: 100%;
+                    margin-top: 12px;
+                }
+            `}</style>
+
+            <div className="auth-page" style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#f1f5f9',
+                padding: '24px 16px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+            }}>
+                <div className="auth-card" style={{
+                    width: '100%',
+                    maxWidth: 420,
+                    background: '#fff',
+                    borderRadius: 24,
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.07)',
+                    padding: '40px 36px',
+                }}>
+
+                    {/* ── Header ── */}
+                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                        <h1 className="auth-title" style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
+                            Вход в SaqBol
+                        </h1>
+                        <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500 }}>
+                            Корпоративная платформа цифровой безопасности
+                        </p>
+                    </div>
+
+                    {/* ── Error ── */}
                     {error && (
-                        <div className="alert alert-error mb-4 text-sm shadow-sm">
-                            <span>{error}</span>
+                        <div style={{
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            borderRadius: 12,
+                            padding: '11px 14px',
+                            marginBottom: 20,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                        }}>
+                            <span style={{ fontSize: 15 }}>⚠️</span>
+                            <span style={{ fontSize: 13, color: '#dc2626', fontWeight: 600 }}>{error}</span>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="form-control w-full">
-                            <label className="label pt-0">
-                                <span className="label-text font-semibold text-gray-600">Логин или Email</span>
+                    {/* ── Form ── */}
+                    <form onSubmit={handleSubmit}>
+
+                        {/* Username */}
+                        <div style={{ marginBottom: 16 }}>
+                            <label className="auth-label" style={{
+                                display: 'block', fontSize: 11, fontWeight: 700,
+                                color: '#475569', textTransform: 'uppercase',
+                                letterSpacing: '0.07em', marginBottom: 7,
+                            }}>
+                                Логин или Email
                             </label>
                             <input
                                 type="text"
+                                className={`auth-input${error ? ' has-error' : ''}`}
                                 placeholder="Введите логин или почту"
-                                className="input input-bordered w-full focus:input-primary bg-gray-50"
                                 value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                onChange={e => setUsername(e.target.value)}
                                 required
                             />
                         </div>
 
-                        <div className="form-control w-full relative">
-                            <label className="label pt-0">
-                                <span className="label-text font-semibold text-gray-600">Пароль</span>
+                        {/* Password */}
+                        <div style={{ marginBottom: 10 }}>
+                            <label className="auth-label" style={{
+                                display: 'block', fontSize: 11, fontWeight: 700,
+                                color: '#475569', textTransform: 'uppercase',
+                                letterSpacing: '0.07em', marginBottom: 7,
+                            }}>
+                                Пароль
                             </label>
-                            
-                            <div className="relative">
+                            <div style={{ position: 'relative' }}>
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showPassword ? 'text' : 'password'}
+                                    className={`auth-input${error ? ' has-error' : ''}`}
                                     placeholder="••••••••"
-                                    className="input input-bordered w-full focus:input-primary bg-gray-50 pr-10"
+                                    style={{ paddingRight: 44 }}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={e => setPassword(e.target.value)}
                                     required
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-primary transition-colors"
+                                    onClick={() => setShowPassword(s => !s)}
+                                    style={{
+                                        position: 'absolute', right: 13, top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none', border: 'none',
+                                        cursor: 'pointer', color: '#94a3b8',
+                                        display: 'flex', alignItems: 'center',
+                                        padding: 2, borderRadius: 6,
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.color = '#64748b'}
+                                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
                                 >
-                                    {showPassword ? (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                                        </svg>
-                                    ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    )}
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
-                            </div>
-
-                            <div className="flex justify-between items-center mt-3 px-1">
-                                <label className="cursor-pointer flex items-center space-x-2">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={rememberMe}
-                                        onChange={() => setRememberMe(!rememberMe)}
-                                        className="checkbox checkbox-xs checkbox-primary rounded-sm" 
-                                    />
-                                    <span className="text-xs text-gray-600 font-medium">Запомнить меня</span>
-                                </label>
-                                <Link to="/forgot-password" className="text-xs text-primary font-bold hover:underline">
-                                    Забыли пароль?
-                                </Link>
                             </div>
                         </div>
 
-                        <button 
-                            type="submit" 
-                            className={`btn btn-primary w-full text-lg mt-6 shadow-md ${loading ? 'loading' : ''}`}
+                        {/* Remember + Forgot */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                            <label
+                                className="auth-remember"
+                                style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12, color: '#64748b', fontWeight: 500, userSelect: 'none' }}
+                                onClick={() => setRememberMe(r => !r)}
+                            >
+                                <div style={{
+                                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                    border: `2px solid ${rememberMe ? '#3b82f6' : '#cbd5e1'}`,
+                                    background: rememberMe ? '#3b82f6' : 'transparent',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'all 0.15s',
+                                }}>
+                                    {rememberMe && (
+                                        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                            <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    )}
+                                </div>
+                                Запомнить меня
+                            </label>
+                            <Link
+                                to="/forgot-password"
+                                style={{ fontSize: 12, fontWeight: 700, color: '#3b82f6', textDecoration: 'none' }}
+                                onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                            >
+                                Забыли пароль?
+                            </Link>
+                        </div>
+
+                        {/* Submit */}
+                        <button
+                            type="submit"
                             disabled={loading}
+                            style={{
+                                width: '100%', padding: '13px',
+                                background: loading ? '#93c5fd' : '#2563eb',
+                                color: '#fff', border: 'none', borderRadius: 12,
+                                fontSize: 14, fontWeight: 700,
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                transition: 'background 0.15s',
+                                boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
+                                fontFamily: 'inherit',
+                            }}
+                            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#1d4ed8'; }}
+                            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = loading ? '#93c5fd' : '#2563eb'; }}
                         >
                             {loading ? 'Входим...' : 'Войти'}
                         </button>
                     </form>
 
-                    {/* НОВОЕ: Секция входа через Google */}
-                    <div className="divider my-6 text-gray-400 text-sm">ИЛИ</div>
+                    {/* ── Divider ── */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
+                        <div className="auth-sep" style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                        <span className="auth-sep-t" style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>или</span>
+                        <div className="auth-sep" style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                    </div>
 
-                    <div className="flex justify-center mb-6">
+                    {/* ── Social Logins ── */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                        {/* Google */}
                         <GoogleLogin
                             onSuccess={handleGoogleSuccess}
                             onError={() => {
@@ -163,25 +309,41 @@ function Login({ onLoginSuccess }) {
                             theme="outline"
                             text="continue_with"
                             size="large"
-                            width="100%"
+                            width="348"
                         />
+
+                        {/* Telegram 🔥 */}
+                        <div className="tg-wrapper">
+                            <TelegramLoginButton 
+                                dataOnauth={handleTelegramResponse} 
+                                botName="saqbol_authorization_bot" // Твой бот!
+                                buttonSize="large" 
+                                cornerRadius={12}
+                                usePic={true} 
+                            />
+                        </div>
                     </div>
 
-                    <p className="text-center text-sm text-gray-600 mt-2">
+                    {/* ── Footer ── */}
+                    <p className="auth-hint" style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: '20px 0', fontWeight: 500 }}>
                         Нет аккаунта?{' '}
-                        <Link to="/register" className="link link-primary font-bold hover:text-primary-focus transition-colors">
+                        <Link
+                            to="/register"
+                            style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}
+                            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                        >
                             Зарегистрироваться
                         </Link>
                     </p>
 
-                    <div className="text-center mt-6">
-                        <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">
-                            SaqBol LMS v1.0
-                        </p>
-                    </div>
+                    <p className="auth-version" style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#cbd5e1', margin: 0 }}>
+                        SAQBOL LMS V1.0
+                    </p>
+
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 

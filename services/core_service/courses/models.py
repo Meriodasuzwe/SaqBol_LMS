@@ -16,6 +16,12 @@ class Category(models.Model):
 
 # 2. Сам Курс (Без изменений)
 class Course(models.Model):
+    STATUS_CHOICES = (
+        ('draft', 'Черновик (Видит только автор)'),
+        ('review', 'На модерации (Проверяется админом)'),
+        ('published', 'Опубликован (Видят все студенты)'),
+        ('rejected', 'Отклонен (Нужны правки)'),
+    )
     #  Категория связана через внешний ключ удаление через каскад что бы при удалении все курсы удалялись related имя для удобного доступа к курсам категории verbose_name для отображения в админке
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='courses', verbose_name="Категория")
     # Преподаватель так же связан через внешний ключ вход через auth_user_model удаление аналогично категории и related имя для доступа к курсам преподавателя verbose_name для админки
@@ -31,6 +37,13 @@ class Course(models.Model):
     # Поле для цены курса
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Цена")
 
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='draft', 
+        verbose_name="Статус модерации"
+    )
+    
     # Даты создания и обновления auto_now_add для автоматической установки при создании и auto_now для обновления при каждом сохранении verbose_name для админки
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -4,7 +4,7 @@ import api from './api';
 import { toast } from 'react-toastify';
 import {
     BookOpen, LayoutDashboard, User, LogOut, ChevronDown,
-    Sun, Moon, GraduationCap, ExternalLink, X, Sparkles
+    Sun, Moon, GraduationCap, ExternalLink, X, Sparkles, Settings // 🔥 Добавили Settings
 } from 'lucide-react';
 
 function Navbar({ isLoggedIn, userRole, onLogout }) {
@@ -219,6 +219,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                         <div style={{ padding: '6px' }}>
                                             {[
                                                 { to: '/profile', icon: <User size={14} />, label: 'Личный кабинет', show: true },
+                                                { to: '/settings', icon: <Settings size={14} />, label: 'Настройки', show: true }, // 🔥 Ссылка на настройки
                                                 { to: '/teacher', icon: <LayoutDashboard size={14} />, label: 'Панель управления', show: isTeacher },
                                             ].filter(i => i.show).map(item => (
                                                 <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', color: t.text, fontSize: 13, fontWeight: 500, transition: 'background 0.12s' }}
@@ -299,6 +300,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         {[
                             { to: '/courses', icon: <BookOpen size={15} />, label: 'Каталог курсов', show: true },
                             { to: '/profile', icon: <User size={15} />, label: 'Личный кабинет', show: true },
+                            { to: '/settings', icon: <Settings size={15} />, label: 'Настройки', show: true }, // 🔥 Ссылка на настройки в мобильном меню
                             { to: '/teacher', icon: <LayoutDashboard size={15} />, label: 'Панель управления', show: isTeacher },
                         ].filter(i => i.show).map(item => (
                             <Link key={item.to} to={item.to}
@@ -319,6 +321,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
             </header>
 
             {/* ── MODAL ── */}
+            {/* Оставляю твой модал без изменений... */}
             {modalOpen && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     <div style={{ position: 'absolute', inset: 0, background: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)' }} onClick={() => setModalOpen(false)} />

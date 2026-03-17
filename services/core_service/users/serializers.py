@@ -81,8 +81,20 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'age', 'avatar'] # ИИН УДАЛЕН ОТСЮДА
-        read_only_fields = ['role', 'username', 'email'] # Роль и логин менять через профиль нельзя
+        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'age', 'avatar']
+        read_only_fields = ['role', 'username'] 
+
+    
+    def validate_email(self, value):
+        # Если юзер просто сохраняет профиль, не меняя свою старую почту — всё ок
+        if self.instance and self.instance.email == value:
+            return value
+        
+        # Проверяем, есть ли уже в базе ДРУГОЙ пользователь с таким email
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Этот email уже используется другим пользователем.")
+        
+        return value
 
 
 # ---------------------------

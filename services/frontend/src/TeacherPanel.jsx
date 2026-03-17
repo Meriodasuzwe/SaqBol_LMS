@@ -94,11 +94,12 @@ function TeacherPanel() {
         setIsSaving(true);
         try {
             await api.post('courses/bulk-create/', generatedCourse);
-            toast.success('🚀 Курс опубликован!');
+            toast.success(' Черновик сохранен! Не забудьте отправить его на модерацию после доработки.');
             
             setGeneratedCourse(null); 
             setSelectedFile(null);
             setCourseContext("");
+            setTimeout(() => navigate('/teacher/courses'), 1500);
             
         } catch (err) {
             console.error("Ошибка сохранения:", err);
@@ -331,7 +332,7 @@ function TeacherPanel() {
                                     onClick={handleSaveCourse}
                                     disabled={isSaving || !generatedCourse.lessons?.length}
                                 >
-                                    {isSaving ? 'Сохранение...' : <> Опубликовать курс <ChevronRight size={16} /> </>}
+                                    {isSaving ? 'Сохранение...' : <> Сохранить черновик <ChevronRight size={16} /> </>}
                                 </button>
                             </div>
 
