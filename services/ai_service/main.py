@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from pydantic import BaseModel
-from groq import Groq
+from groq import AsyncGroq # 🔥 ИЗМЕНЕНО: Импортируем асинхронный клиент
 
 
 # --- LOGGING ---
@@ -90,7 +90,8 @@ def verify_token(auth: HTTPAuthorizationCredentials = Depends(security)):
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     logger.critical("❌ GROQ_API_KEY не найден!")
-client = Groq(api_key=GROQ_API_KEY)
+# 🔥 ИЗМЕНЕНО: Создаем асинхронный клиент
+aclient = AsyncGroq(api_key=GROQ_API_KEY)
 
 
 # --- DATA MODELS ---
@@ -107,7 +108,6 @@ class ScenarioRequest(BaseModel):
 
 
 # --- HELPERS ---
-
 def safe_json_loads(s: str) -> Dict[str, Any]:
     """Parse JSON safely, stripping code fences."""
     if not s:
@@ -116,14 +116,11 @@ def safe_json_loads(s: str) -> Dict[str, Any]:
     return json.loads(clean)
 
 def is_interactive_chat_format(scenario: Dict[str, Any]) -> bool:
-    """Check if scenario looks like correct interactive format."""
     steps = scenario.get("steps", [])
     if not isinstance(steps, list) or len(steps) == 0:
         return False
-    # must have type keys
     if any("type" not in step for step in steps if isinstance(step, dict)):
         return False
-    # must alternate message/choice
     for i, step in enumerate(steps):
         if not isinstance(step, dict):
             return False
@@ -147,14 +144,9 @@ def has_speaker_format(scenario: Dict[str, Any]) -> bool:
     return any(isinstance(s, dict) and "speaker" in s for s in steps)
 
 def convert_speaker_to_interactive(scenario: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Convert legacy speaker/text dialogue into interactive message/choice.
-    We keep only scammer/attacker lines as message, after each message we insert a choice.
-    """
     steps_in = scenario.get("steps", [])
     out_steps: List[Dict[str, Any]] = []
 
-    # базовые варианты (можешь усилить/усложнить потом)
     default_choice = {
         "type": "choice",
         "options": [
@@ -179,22 +171,19 @@ def convert_speaker_to_interactive(scenario: Dict[str, Any]) -> Dict[str, Any]:
         if not text:
             continue
 
-        # считаем мошенником всё, что не "пользователь"
         is_user = ("польз" in speaker) or ("user" in speaker) or ("victim" in speaker)
         if is_user:
             continue
 
         out_steps.append({"type": "message", "text": text})
-        out_steps.append(json.loads(json.dumps(default_choice)))  # копия
+        out_steps.append(json.loads(json.dumps(default_choice))) 
 
-    # если вообще ничего не собрали — вернём как есть (пусть дальше упадёт)
     return {
         "contact_name": scenario.get("contact_name", "Служба безопасности"),
-        "steps": out_steps[:12]  # 6 сообщений -> 12 шагов
+        "steps": out_steps[:12] 
     }
 
 def validate_choice_options_have_one_correct(scenario: Dict[str, Any]) -> None:
-    """Optional strict validation: each choice should have at least one true and one false."""
     steps = scenario.get("steps", [])
     for step in steps:
         if step.get("type") == "choice":
@@ -207,9 +196,10 @@ def validate_choice_options_have_one_correct(scenario: Dict[str, Any]) -> None:
                     detail="AI вернул choice без нормальной разметки правильного/неправильного варианта."
                 )
 
-def groq_chat_json(system_prompt: str, user_prompt: str, temperature: float = 0.2) -> Dict[str, Any]:
-    """One Groq call that expects json_object."""
-    chat_completion = client.chat.completions.create(
+# 🔥 ИЗМЕНЕНО: Теперь функция работает асинхронно, сервер не зависнет!
+async def async_groq_chat_json(system_prompt: str, user_prompt: str, temperature: float = 0.2) -> Dict[str, Any]:
+    """Asynchronous Groq call that expects json_object."""
+    chat_completion = await aclient.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": system_prompt},
@@ -244,7 +234,7 @@ async def generate_quiz(request: QuizRequest, user_data=Depends(verify_token)):
             f"Составь {request.count} вопросов по тексту: '{request.text}'. "
             f"Формат JSON: {{'generated_questions': [...]}}"
         )
-        return groq_chat_json(system_prompt, user_prompt, temperature=0.3)
+        return await async_groq_chat_json(system_prompt, user_prompt, temperature=0.3)
     except Exception as e:
         logger.error(f"Error Quiz: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -259,25 +249,13 @@ async def generate_scenario(request: ScenarioRequest, user_data=Depends(verify_t
     if request.scenario_type not in ("chat", "email"):
         raise HTTPException(status_code=400, detail="Тип должен быть 'chat' или 'email'")
 
-    # --- PROMPTS ---
     if request.scenario_type == "chat":
         system_prompt = f"""
 ВЫ — СТРОГИЙ REST API СЕРВЕР. ВЕРНИ ВАЛИДНЫЙ JSON ДЛЯ ИНТЕРАКТИВНОГО ТРЕНАЖЕРА.
-
 ОБЯЗАТЕЛЬНО:
 - Используй ТОЛЬКО ключи: contact_name, steps, type, text, options, is_correct, feedback.
-- НЕ используй: step, speaker, moshenik, polzovatel, user, victim.
-- В steps строго чередуй:
-  0) {{ "type": "message", "text": "..." }}
-  1) {{ "type": "choice", "options": [ ... ] }}
-  2) message
-  3) choice
-  ...
-- В message текст ТОЛЬКО от злоумышленника (никаких "Вы:", "Пользователь:" и т.п.)
-- В choice минимум 2 options: хотя бы 1 is_correct:true и 1 is_correct:false.
-
+- В steps строго чередуй message и choice.
 Уровень сложности: {request.difficulty}
-
 ФОРМАТ:
 {{
   "contact_name": "Имя злоумышленника",
@@ -290,12 +268,7 @@ async def generate_scenario(request: ScenarioRequest, user_data=Depends(verify_t
   ]
 }}
 """.strip()
-
-        user_prompt = (
-            f"Сгенерируй сценарий из 4-6 шагов (строго чередуя message и choice) "
-            f"на тему: '{request.topic}'. Язык: русский. Верни ТОЛЬКО JSON."
-        )
-
+        user_prompt = f"Сгенерируй сценарий из 4-6 шагов на тему: '{request.topic}'. Язык: русский. Верни ТОЛЬКО JSON."
     else:
         system_prompt = "Ты эксперт по фишингу. Отвечай СТРОГО в формате JSON."
         user_prompt = f"""
@@ -305,36 +278,20 @@ async def generate_scenario(request: ScenarioRequest, user_data=Depends(verify_t
 Верни ТОЛЬКО JSON.
 """.strip()
 
-    # --- GENERATION WITH RETRY ---
     try:
-        # 1) первый вызов
-        scenario = groq_chat_json(system_prompt, user_prompt, temperature=0.05)
+        scenario = await async_groq_chat_json(system_prompt, user_prompt, temperature=0.05)
 
         if request.scenario_type == "chat":
-            # если AI вернул speaker-формат — конвертим
             if has_speaker_format(scenario):
-                logger.warning("AI returned speaker-format. Converting to interactive.")
                 scenario = convert_speaker_to_interactive(scenario)
-
-            # если не интерактивный — ретрай один раз жёстко
             if not is_interactive_chat_format(scenario):
-                logger.warning("AI returned invalid chat format. Retrying with stricter prompt.")
-                strict_user_prompt = (
-                    user_prompt
-                    + "\n\nВАЖНО: запрещено использовать speaker. Каждый шаг обязан иметь поле type."
-                )
-                scenario = groq_chat_json(system_prompt, strict_user_prompt, temperature=0.01)
-
+                strict_user_prompt = user_prompt + "\n\nВАЖНО: запрещено использовать speaker. Каждый шаг обязан иметь поле type."
+                scenario = await async_groq_chat_json(system_prompt, strict_user_prompt, temperature=0.01)
                 if has_speaker_format(scenario):
-                    logger.warning("Retry returned speaker-format. Converting to interactive.")
                     scenario = convert_speaker_to_interactive(scenario)
 
-            # финальная проверка
             if not is_interactive_chat_format(scenario):
-                logger.error("SCENARIO FORMAT ERROR: AI did not follow required message/choice alternation.")
-                raise HTTPException(status_code=500, detail="AI не сгенерировал правильный формат сценария. Попробуйте снова.")
-
-            # доп. строгая проверка правильных/неправильных вариантов
+                raise HTTPException(status_code=500, detail="AI не сгенерировал правильный формат сценария.")
             validate_choice_options_have_one_correct(scenario)
 
         return scenario
@@ -355,7 +312,6 @@ async def generate_course_from_file(file: UploadFile = File(...), user_data=Depe
     file_ext = os.path.splitext(file.filename)[1].lower()
 
     if file_ext not in allowed_extensions:
-        logger.warning(f"FILE ERROR: Unsupported extension {file_ext}")
         raise HTTPException(400, "Неподдерживаемый формат. Загрузите PDF или DOCX.")
 
     try:
@@ -372,26 +328,29 @@ async def generate_course_from_file(file: UploadFile = File(...), user_data=Depe
             extracted_text = "\n".join([para.text for para in doc.paragraphs])
 
     except Exception as e:
-        logger.error(f"FILE PARSE ERROR: {str(e)}")
         raise HTTPException(500, f"Ошибка при чтении файла: {str(e)}")
 
     extracted_text = extracted_text.strip()
     if len(extracted_text) < 100:
-        raise HTTPException(400, "Файл пуст или текст не удалось распознать (возможно, это сканы без OCR).")
+        raise HTTPException(400, "Файл пуст или текст не удалось распознать.")
 
-    extracted_text = extracted_text[:30000]
+    # 🔥 ЗАЩИТА ОТ ЛИМИТОВ: Берем только первые 15 000 символов (введение и оглавление)
+    extracted_text = extracted_text[:15000]
 
+    # 🔥 ИЗМЕНЕННЫЙ ПРОМПТ С АНОНСОМ И ПЛАНОМ
     system_prompt = """
-Ты профессиональный методист и проектировщик образовательных программ.
-Тебе на вход дается сырой текст из документа (рабочей программы или лекций).
-Твоя задача — проанализировать его и составить полноценную структуру курса.
+Ты профессиональный методист. Твоя задача — создать СТРУКТУРУ курса (черновик) на основе переданного текста.
+Не пиши полные лекции! Вместо этого напиши краткий план для каждого урока.
 
 Верни СТРОГО валидный JSON:
 {
-  "course_title": "...",
-  "course_description": "...",
+  "course_title": "Название курса",
+  "course_description": "Описание курса",
   "lessons": [
-    {"title": "...", "content": "..."}
+    {
+      "title": "Название урока",
+      "content": "<h2>План урока</h2><ul><li>Тезис 1</li><li>Тезис 2</li></ul><br><blockquote>⚠️ <b>Внимание:</b> Это черновик структуры, сгенерированный ИИ. Курс скрыт от студентов. Пожалуйста, дополните этот урок своими материалами и отправьте курс на модерацию.</blockquote>"
+    }
   ]
 }
 Сделай от 3 до 7 уроков в зависимости от объема исходного текста.
@@ -400,9 +359,9 @@ async def generate_course_from_file(file: UploadFile = File(...), user_data=Depe
     try:
         logger.info(f"AI PARSING: Sending {len(extracted_text)} chars to Groq...")
 
-        result = groq_chat_json(
+        result = await async_groq_chat_json(
             system_prompt,
-            f"Сгенерируй структуру курса на основе этого текста:\n\n{extracted_text}",
+            f"Сгенерируй черновик курса на основе этого текста:\n\n{extracted_text}",
             temperature=0.2
         )
 

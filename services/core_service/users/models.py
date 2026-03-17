@@ -28,6 +28,8 @@ class User(AbstractUser):
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Возраст")
     # Аватар пользователя (необязательно) null разрешение для базы данных и blank разрешение для Django админки verbose_name для админки
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватарка")
+    # ID в Telegram (необязательно) null разрешение для базы данных и blank разрешение для Django админки verbose_name для админки
+    telegram_id = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="ID в Telegram")
     # dunder str для удобного отображения объектов пользователя в админке и при отладке возвращает имя пользователя и его роль для контекста
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

@@ -23,6 +23,7 @@ import CourseBuilder from './CourseBuilder/CourseBuilder';
 import Terms from './pages/legal/Terms';
 import Privacy from './pages/legal/Privacy';
 import Cookies from './pages/legal/Cookies';
+import Settings from './pages/Settings';
 import DataProcessing from './pages/legal/DataProcessing';
 import Navbar from './Navbar';
 
@@ -81,7 +82,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
               ) : <Navigate to="/login" />
             } />
-            
+            <Route path="/settings" element={<Settings />} />
             
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />

@@ -39,7 +39,7 @@ const REVIEWS = [
 
 function HeroVisual() {
     return (
-        <div className="relative w-full max-w-md">
+        <div className="relative w-full max-w-md" style={{ paddingTop: 16, paddingRight: 20, paddingBottom: 20 }}>
             <div className="lms-hero-card bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/70 p-6 relative z-10">
                 <div className="flex items-center justify-between mb-5">
                     <div>
@@ -64,7 +64,7 @@ function HeroVisual() {
                         { title: 'Основы фишинга',       done: true },
                         { title: 'Социальная инженерия', done: true },
                         { title: 'Защита паролей',       done: false, active: true },
-                        { title: 'Безопасность email',   done: false,active:true },
+                        { title: 'Безопасность email',   done: false },
                     ].map((m, i) => (
                         <div key={i} className={`lms-hero-module${m.active ? '-active' : ''} flex items-center gap-3 p-3 rounded-xl ${m.active ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}>
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${m.done ? 'bg-emerald-500' : m.active ? 'bg-blue-600' : 'bg-slate-200'}`}>
@@ -78,7 +78,7 @@ function HeroVisual() {
                     ))}
                 </div>
             </div>
-            <div className="lms-float-card absolute -bottom-4 -left-5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
+            <div className="lms-float-card absolute -bottom-2 -left-4 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
                     <Users size={16} className="text-emerald-600" />
                 </div>
@@ -87,7 +87,7 @@ function HeroVisual() {
                     <p className="text-sm font-extrabold text-slate-900">2 841 сотрудник</p>
                 </div>
             </div>
-            <div className="lms-float-card absolute -top-3 -right-4 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
+            <div className="lms-float-card absolute -top-2 -right-2 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
                 <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
                     <Award size={16} className="text-amber-500" />
                 </div>
@@ -151,9 +151,9 @@ export default function Landing() {
             >
 
                 {/* ── HERO ── */}
-                <section className="lms-hero lms-section-white pt-14 pb-24 px-6 md:px-10 bg-gradient-to-b from-slate-50/70 to-white">
+                <section className="lms-hero lms-section-white pt-20 pb-28 px-6 md:px-10 bg-gradient-to-b from-slate-50/70 to-white">
                     <div className="max-w-7xl mx-auto">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center" style={{ overflow: "visible" }}>
                             <div className="lms-fade">
                                 <h1 className="text-4xl md:text-5xl xl:text-[3.4rem] font-extrabold tracking-tight leading-[1.1] mb-5 text-slate-900">
                                     Обучите команду<br />
@@ -180,7 +180,7 @@ export default function Landing() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="lms-fade-d2 hidden lg:flex justify-end items-center">
+                            <div className="lms-fade-d2 hidden lg:flex justify-end items-center" style={{ paddingTop: 16, paddingRight: 20 }}>
                                 <HeroVisual />
                             </div>
                         </div>

@@ -98,10 +98,8 @@ function LessonPage() {
 
             if (activeStepIndex < lesson.steps.length - 1) {
                 setActiveStepIndex(activeStepIndex + 1);
-                
                 const nextStepId = lesson.steps[activeStepIndex + 1].id;
                 window.history.replaceState(null, '', `/lesson/${lessonId}?step=${nextStepId}`);
-                
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 if (nextLessonObj) {
@@ -138,7 +136,7 @@ function LessonPage() {
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-white">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
         </div>
     );
 
@@ -148,10 +146,10 @@ function LessonPage() {
     const isSimulation = currentStep && ['simulation_chat', 'simulation_email'].includes(currentStep.step_type);
 
     return (
-        <div className="min-h-screen bg-slate-50/50 flex justify-center pb-20 font-sans text-slate-900">
+        <div className="min-h-screen bg-slate-50 flex justify-center pb-20 font-sans text-slate-900">
             <div className="flex w-full max-w-7xl mx-auto pt-8 px-6 lg:px-8 gap-12">
                 
-                {/* --- ЛЕВЫЙ САЙДБАР --- */}
+                {/* ── ЛЕВЫЙ САЙДБАР ── */}
                 <aside className="hidden lg:flex flex-col w-[300px] shrink-0">
                     <button 
                         onClick={() => navigate(`/course/${lesson.course}`)}
@@ -162,6 +160,7 @@ function LessonPage() {
                     </button>
                     
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden sticky top-8">
+                        {/* Course header */}
                         <div className="p-6 border-b border-slate-100">
                             <h2 className="font-black text-sm uppercase tracking-tight text-slate-900 leading-tight mb-4">
                                 {course?.title}
@@ -170,22 +169,32 @@ function LessonPage() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                         <span>Прогресс</span>
-                                        <span>{course.progress}%</span>
+                                        <span className="text-blue-600">{course.progress}%</span>
                                     </div>
                                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-slate-900 transition-all duration-500" style={{ width: `${course.progress}%` }}></div>
+                                        <div
+                                            className="h-full bg-blue-600 transition-all duration-500"
+                                            style={{ width: `${course.progress}%` }}
+                                        ></div>
                                     </div>
                                 </div>
                             )}
                         </div>
-                        <nav className="p-2 overflow-y-auto max-h-[50vh] custom-scrollbar">
+
+                        {/* Lesson list */}
+                        <nav className="p-2 overflow-y-auto max-h-[50vh]">
                             {courseLessons.map((l, idx) => (
                                 <Link 
                                     key={l.id}
                                     to={`/lesson/${l.id}`}
-                                    className={`flex items-center gap-4 p-3 rounded-xl transition-all ${l.id === lesson.id ? 'bg-slate-900 text-white shadow-md' : 'hover:bg-slate-50 text-slate-600'}`}
+                                    className={`flex items-center gap-4 p-3 rounded-xl transition-all
+                                        ${l.id === lesson.id
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                            : 'hover:bg-slate-50 text-slate-600'
+                                        }`}
                                 >
-                                    <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border ${l.id === lesson.id ? 'border-white/20' : 'border-slate-200 text-slate-400'}`}>
+                                    <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border
+                                        ${l.id === lesson.id ? 'border-white/30' : 'border-slate-200 text-slate-400'}`}>
                                         {idx + 1}
                                     </span>
                                     <span className="text-xs font-bold truncate">{l.title}</span>
@@ -195,11 +204,13 @@ function LessonPage() {
                     </div>
                 </aside>
 
-                {/* --- ЦЕНТРАЛЬНЫЙ КОНТЕНТ --- */}
+                {/* ── ЦЕНТРАЛЬНЫЙ КОНТЕНТ ── */}
                 <main className="flex-1 max-w-4xl">
                     <header className="mb-8">
                         <div className="flex items-center gap-3 mb-2">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Урок {courseLessons.findIndex(l => l.id === lesson.id) + 1}</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                Урок {courseLessons.findIndex(l => l.id === lesson.id) + 1}
+                            </span>
                             <div className="h-px flex-1 bg-slate-100"></div>
                         </div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{lesson.title}</h1>
@@ -207,21 +218,21 @@ function LessonPage() {
 
                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
                         
-                        {/* Timeline шагов (Tabs) */}
-                        <div className="bg-slate-50/50 border-b border-slate-200 px-6 py-4 flex items-center gap-3 overflow-x-auto no-scrollbar">
+                        {/* ── Step tabs ── */}
+                        <div className="bg-slate-50/50 border-b border-slate-200 px-6 py-4 flex items-center gap-3 overflow-x-auto">
                             {lesson.steps?.map((step, index) => {
-                                const isActive = index === activeStepIndex;
-                                const isPassed = step.is_completed; 
+                                const isActive  = index === activeStepIndex;
+                                const isPassed  = step.is_completed;
                                 return (
                                     <button 
                                         key={step.id}
                                         onClick={() => handleTabClick(index, step.id)} 
                                         className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 border-2
-                                            ${isActive 
-                                                ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-105' 
-                                                : isPassed 
-                                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
-                                                    : 'bg-white border-slate-100 text-slate-300 hover:border-slate-300' 
+                                            ${isActive
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105'
+                                                : isPassed
+                                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                                                    : 'bg-white border-slate-100 text-slate-300 hover:border-slate-300'
                                             }`}
                                         title={step.title}
                                     >
@@ -231,12 +242,12 @@ function LessonPage() {
                             })}
                         </div>
 
-                        {/* Контент шага */}
+                        {/* ── Step content ── */}
                         <div className="flex-1 flex flex-col">
                             {currentStep ? (
                                 <div className="animate-in fade-in duration-500">
                                     
-                                    {/* Видео блок */}
+                                    {/* Video */}
                                     {(currentStep.step_type === 'video_url' || currentStep.step_type === 'video_file') && (
                                         <div className="bg-black aspect-video w-full overflow-hidden">
                                             {currentStep.step_type === 'video_url' ? (
@@ -252,54 +263,69 @@ function LessonPage() {
                                             <h2 className="text-2xl font-black text-slate-900 mb-6">{currentStep.title}</h2>
                                         )}
 
-                                        {/* Рендер контента */}
                                         <div className="text-slate-700">
                                             {currentStep.step_type === 'simulation_chat' ? (
-                                                <div className="flex justify-center py-4"><FakeMessenger scenario={currentStep.scenario_data} onComplete={handleStepComplete} /></div>
+                                                <div className="flex justify-center py-4">
+                                                    <FakeMessenger scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
+                                                </div>
                                             ) : currentStep.step_type === 'simulation_email' ? (
-                                                <div className="flex justify-center py-4"><FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} /></div>
+                                                <div className="flex justify-center py-4">
+                                                    <FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
+                                                </div>
                                             ) : currentStep.step_type === 'interactive_code' ? (
-                                                <div className="rounded-xl overflow-hidden border border-slate-800"><PythonEditor stepData={currentStep} onSuccess={() => handleStepComplete(20)} /></div>
+                                                <div className="rounded-xl overflow-hidden border border-slate-800">
+                                                    <PythonEditor stepData={currentStep} onSuccess={() => handleStepComplete(20)} />
+                                                </div>
                                             ) : currentStep.step_type === 'quiz' ? (
                                                 <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                                    <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-6"><HelpCircle className="text-slate-900" size={32} /></div>
+                                                    <div className="w-16 h-16 bg-blue-50 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6">
+                                                        <HelpCircle className="text-blue-600" size={32} />
+                                                    </div>
                                                     <h3 className="text-xl font-black mb-2">Проверка знаний</h3>
-                                                    <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.</p>
-                                                    {/* 🔥 ГЛАВНЫЙ ФИКС: Передаем quiz_id в URL! */}
+                                                    <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+                                                        Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.
+                                                    </p>
                                                     <Link 
                                                         to={`/quiz/lesson/${lesson.id}?quiz_id=${currentStep.scenario_data?.quiz_id || ''}`} 
-                                                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all"
+                                                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200"
                                                     >
                                                         Начать тест <ArrowRight size={18} />
                                                     </Link>
                                                 </div>
                                             ) : (
-                                                <div className="prose prose-slate max-w-none prose-headings:font-black prose-img:rounded-2xl" dangerouslySetInnerHTML={{ __html: currentStep.content }} />
+                                                <div
+                                                    className="prose prose-slate max-w-none prose-headings:font-black prose-img:rounded-2xl"
+                                                    dangerouslySetInnerHTML={{ __html: currentStep.content }}
+                                                />
                                             )}
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex items-center justify-center text-slate-300 italic">Контент шага пуст</div>
+                                <div className="flex-1 flex items-center justify-center text-slate-300 italic">
+                                    Контент шага пуст
+                                </div>
                             )}
                         </div>
 
-                        {/* Футер навигации */}
+                        {/* ── Footer navigation ── */}
                         {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
                             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                                 {activeStepIndex > 0 ? (
                                     <button onClick={() => {
                                         setActiveStepIndex(activeStepIndex - 1); 
                                         window.history.replaceState(null, '', `/lesson/${lessonId}?step=${lesson.steps[activeStepIndex - 1].id}`);
-                                        window.scrollTo(0,0);
-                                    }} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
+                                        window.scrollTo(0, 0);
+                                    }}
+                                        className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest"
+                                    >
                                         <ArrowLeft size={16} /> Назад
                                     </button>
                                 ) : <div />}
 
                                 <button 
                                     onClick={() => handleStepComplete(10)}
-                                    className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-slate-200"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
                                 >
                                     {activeStepIndex < lesson.steps.length - 1 ? (
                                         <>Следующий шаг <ArrowRight size={18} /></>
