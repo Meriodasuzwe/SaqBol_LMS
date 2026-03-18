@@ -67,7 +67,7 @@ function CourseDetail({ isLoggedIn }) {
     }, [id, isLoggedIn]);
 
     const getStepStyle = (type) => {
-        const iconProps = { size: 18, className: "group-hover:text-slate-900 transition-colors" };
+        const iconProps = { size: 18, className: "text-base-content/70 group-hover:text-blue-600 transition-colors" };
         switch (type) {
             case 'simulation_chat':  return { icon: <ShieldCheck {...iconProps} />, label: 'Интерактив' };
             case 'simulation_email': return { icon: <ShieldCheck {...iconProps} />, label: 'Фишинг' };
@@ -95,18 +95,18 @@ function CourseDetail({ isLoggedIn }) {
     };
 
     if (loading) return (
-        <div className="min-h-[70vh] flex items-center justify-center bg-white">
-            <div className="w-6 h-6 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <div className="min-h-[70vh] flex items-center justify-center bg-base-200">
+            <div className="w-6 h-6 border-2 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900 pb-20 relative">
+        <div className="min-h-screen bg-base-100 font-sans text-base-content pb-20 relative transition-colors duration-200">
 
             {/* ── Success toast ── */}
             {showSuccessToast && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                    <div className="bg-blue-600 text-white p-4 rounded-xl shadow-2xl shadow-blue-200 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-blue-600 text-white p-4 rounded-xl shadow-2xl shadow-blue-900/20 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
                         <CheckCircle2 className="text-white/80 flex-shrink-0" />
                         <div>
                             <p className="font-bold text-sm">Доступ открыт</p>
@@ -121,31 +121,32 @@ function CourseDetail({ isLoggedIn }) {
 
                     {/* ── Левая колонка ── */}
                     <div className="flex-1 lg:max-w-2xl">
-                        <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">
-                            <button onClick={() => navigate('/courses')} className="hover:text-slate-900 transition-colors">
+                        <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-base-content/50 mb-6">
+                            <button onClick={() => navigate('/courses')} className="hover:text-base-content transition-colors">
                                 Библиотека
                             </button>
                             <ChevronRight size={12} />
-                            <span className="text-slate-900">{course.title}</span>
+                            <span className="text-base-content">{course.title}</span>
                         </nav>
 
-                        <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-8 leading-tight">
+                        <h1 className="text-4xl font-black tracking-tight text-base-content mb-8 leading-tight">
                             {course.title}
                         </h1>
 
+                        {/* 🔥 Добавлен dark:prose-invert для корректного отображения текста из редактора в темной теме */}
                         <div 
-                            className="prose prose-slate prose-sm sm:prose-base max-w-none text-slate-600 mb-12 leading-relaxed"
+                            className="prose prose-sm sm:prose-base max-w-none text-base-content/80 mb-12 leading-relaxed dark:prose-invert prose-a:text-blue-600 hover:prose-a:text-blue-500"
                             dangerouslySetInnerHTML={{ __html: course.description }}
                         />
 
-                        <div className="flex items-center gap-6 py-8 border-t border-slate-100">
+                        <div className="flex items-center gap-6 py-8 border-t border-base-300">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-600 border border-blue-100">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                                     {course.teacher_name?.[0] || 'S'}
                                 </div>
                                 <div>
-                                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Инструктор</p>
-                                    <p className="text-sm font-bold text-slate-900">{course.teacher_name || "SaqBol Team"}</p>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-base-content/50">Инструктор</p>
+                                    <p className="text-sm font-bold text-base-content">{course.teacher_name || "SaqBol Team"}</p>
                                 </div>
                             </div>
                         </div>
@@ -155,21 +156,21 @@ function CourseDetail({ isLoggedIn }) {
                     <div className="w-full lg:w-[400px] sticky top-24">
                         {!isEnrolled ? (
                             /* Карточка записи */
-                            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                            <div className="bg-base-100 border border-base-300 rounded-2xl p-8 shadow-xl shadow-base-300/30">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-base-content/50 mb-2">
                                     Стоимость доступа
                                 </p>
-                                <div className="text-4xl font-black text-slate-900 mb-8">
+                                <div className="text-4xl font-black text-base-content mb-8">
                                     {parseFloat(course.price) > 0
                                         ? `${new Intl.NumberFormat('ru-RU').format(course.price)} ₸`
-                                        : <span className="text-emerald-600">Бесплатно</span>
+                                        : <span className="text-emerald-600 dark:text-emerald-400">Бесплатно</span>
                                     }
                                 </div>
 
                                 <button 
                                     onClick={handleEnrollClick} 
                                     disabled={enrollLoading}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 group shadow-lg shadow-blue-200"
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 group shadow-lg shadow-blue-900/20"
                                 >
                                     {enrollLoading ? (
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -181,16 +182,16 @@ function CourseDetail({ isLoggedIn }) {
                                     )}
                                 </button>
                                 
-                                <div className="mt-8 pt-8 border-t border-slate-100 space-y-4">
-                                    <div className="flex gap-4 text-xs text-slate-600 font-medium leading-tight">
-                                        <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                                            <CheckCircle2 size={12} className="text-blue-600" />
+                                <div className="mt-8 pt-8 border-t border-base-300 space-y-4">
+                                    <div className="flex gap-4 text-xs text-base-content/80 font-medium leading-tight">
+                                        <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 flex items-center justify-center shrink-0">
+                                            <CheckCircle2 size={12} className="text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <span>Полный доступ ко всем интерактивным модулям</span>
                                     </div>
-                                    <div className="flex gap-4 text-xs text-slate-600 font-medium leading-tight">
-                                        <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                                            <Clock size={12} className="text-blue-600" />
+                                    <div className="flex gap-4 text-xs text-base-content/80 font-medium leading-tight">
+                                        <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 flex items-center justify-center shrink-0">
+                                            <Clock size={12} className="text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <span>Обучение в собственном темпе</span>
                                     </div>
@@ -198,23 +199,23 @@ function CourseDetail({ isLoggedIn }) {
                             </div>
                         ) : (
                             /* Программа курса */
-                            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                                <div className="px-6 py-5 bg-slate-50 border-b border-slate-200">
-                                    <h3 className="font-black text-xs uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                            <div className="bg-base-100 border border-base-300 rounded-2xl overflow-hidden shadow-lg shadow-base-300/30">
+                                <div className="px-6 py-5 bg-base-200 border-b border-base-300">
+                                    <h3 className="font-black text-xs uppercase tracking-widest text-base-content flex items-center gap-2">
                                         <FileText size={14} /> Программа обучения
                                     </h3>
                                 </div>
 
                                 <div className="max-h-[65vh] overflow-y-auto">
                                     {lessons.map((lesson, lIdx) => (
-                                        <div key={lesson.id} className="bg-white">
+                                        <div key={lesson.id} className="bg-base-100">
                                             {/* Заголовок модуля */}
-                                            <div className="px-6 py-4 bg-slate-50/40 border-b border-slate-100 flex items-center justify-between">
+                                            <div className="px-6 py-4 bg-base-200/50 border-b border-base-300 flex items-center justify-between">
                                                 <div className="min-w-0">
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                                                    <p className="text-[9px] font-black text-base-content/50 uppercase tracking-widest mb-0.5">
                                                         Раздел {lIdx + 1}
                                                     </p>
-                                                    <p className="text-sm font-black text-slate-800 truncate">{lesson.title}</p>
+                                                    <p className="text-sm font-black text-base-content truncate">{lesson.title}</p>
                                                 </div>
                                             </div>
 
@@ -226,27 +227,27 @@ function CourseDetail({ isLoggedIn }) {
                                                         <button 
                                                             key={step.id}
                                                             onClick={() => navigate(`/lesson/${lesson.id}?step=${step.id}`)}
-                                                            className="w-full group flex items-start gap-4 px-6 py-5 hover:bg-slate-50 transition-all text-left relative"
+                                                            className="w-full group flex items-start gap-4 px-6 py-5 hover:bg-base-200 transition-all text-left relative"
                                                         >
                                                             {/* Timeline line */}
-                                                            <div className="absolute left-[39px] top-0 bottom-0 w-px bg-slate-100 group-first:top-1/2 group-last:bottom-1/2"></div>
+                                                            <div className="absolute left-[39px] top-0 bottom-0 w-px bg-base-300 group-first:top-1/2 group-last:bottom-1/2"></div>
                                                             
                                                             {/* Icon */}
-                                                            <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center group-hover:border-blue-200 group-hover:bg-blue-50 transition-all">
+                                                            <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-xl bg-base-100 border border-base-300 shadow-sm flex items-center justify-center group-hover:border-blue-300/50 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
                                                                 {icon}
                                                             </div>
 
                                                             {/* Text */}
                                                             <div className="flex-1 min-w-0">
-                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none block mb-1">
+                                                                <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest leading-none block mb-1">
                                                                     {label}
                                                                 </span>
-                                                                <h4 className="text-[13px] font-bold text-slate-700 group-hover:text-slate-900 transition-colors leading-snug">
+                                                                <h4 className="text-[13px] font-bold text-base-content/80 group-hover:text-base-content transition-colors leading-snug">
                                                                     {step.title || `Шаг ${sIdx + 1}`}
                                                                 </h4>
                                                             </div>
 
-                                                            <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all mt-3" />
+                                                            <ChevronRight size={14} className="text-base-content/30 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all mt-3" />
                                                         </button>
                                                     );
                                                 })}
@@ -256,10 +257,10 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
 
                                 {/* Start button */}
-                                <div className="p-4 bg-slate-50 border-t border-slate-200">
+                                <div className="p-4 bg-base-200 border-t border-base-300">
                                     <button 
                                         onClick={() => navigate(`/lesson/${lessons[0]?.id}`)}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors shadow-lg shadow-blue-200"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors shadow-lg shadow-blue-900/20"
                                     >
                                         Начать обучение
                                     </button>

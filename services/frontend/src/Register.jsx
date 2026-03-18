@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Info } from 'lucide-react'; // 🔥 Добавили Info
 
 const Register = () => {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
@@ -23,7 +23,7 @@ const Register = () => {
         if (!pass) return null;
         if (pass.length < 6)                        return { label: 'Слабый',   color: '#f87171', width: '33%' };
         if (pass.length < 10 || !/\d/.test(pass))  return { label: 'Средний',  color: '#fb923c', width: '66%' };
-        return                                             { label: 'Надёжный', color: '#34d399', width: '100%' };
+        return                                     { label: 'Надёжный', color: '#34d399', width: '100%' };
     };
     const strength = getPasswordStrength(formData.password);
 
@@ -138,6 +138,24 @@ const Register = () => {
                                 Email <span style={{ color: '#f87171' }}>*</span>
                             </label>
                             <input type="email" name="email" className="auth-input" placeholder="example@mail.com" onChange={handleChange} required />
+                            
+                            {/* 🔥 КРАСИВАЯ ПОДСКАЗКА О РЕАЛЬНОМ EMAIL 🔥 */}
+                            <div style={{ 
+                                marginTop: 8, 
+                                display: 'flex', 
+                                gap: 8, 
+                                fontSize: 12, 
+                                color: '#1e40af', 
+                                background: '#eff6ff', 
+                                padding: '10px 12px', 
+                                borderRadius: 8, 
+                                border: '1px solid #bfdbfe', 
+                                alignItems: 'flex-start', 
+                                lineHeight: 1.4 
+                            }}>
+                                <Info size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                                <span>Укажите ваш реальный email. На него будет отправлен <strong>6-значный код</strong> для активации аккаунта.</span>
+                            </div>
                         </div>
 
                         {/* Password */}

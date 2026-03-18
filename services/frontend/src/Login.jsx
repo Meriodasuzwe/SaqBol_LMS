@@ -3,7 +3,7 @@ import api from './api';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
-import TelegramLoginButton from 'react-telegram-login'; // 🔥 Добавили импорт
+import TelegramLoginButton from 'react-telegram-login';
 import { Eye, EyeOff } from 'lucide-react';
 
 function Login({ onLoginSuccess }) {
@@ -57,7 +57,7 @@ function Login({ onLoginSuccess }) {
         }
     };
 
-    // 🔥 Логин через Telegram 🔥
+    // 🔥 Логин через Telegram
     const handleTelegramResponse = async (tgData) => {
         setLoading(true);
         setError('');
@@ -120,12 +120,27 @@ function Login({ onLoginSuccess }) {
                 [data-theme='dark'] .auth-remember { color: #475569 !important; }
                 [data-theme='dark'] .auth-version  { color: #1e293b !important; }
                 
-                /* 🔥 Центрируем кнопку Telegram */
+                /* 🔥 Магия для кнопки Telegram: делаем единый размер с Google 🔥 */
                 .tg-wrapper {
                     display: flex;
                     justify-content: center;
-                    width: 100%;
-                    margin-top: 12px;
+                    align-items: center;
+                    width: 348px; /* Ширина в точности как у Google кнопки */
+                    min-height: 44px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 4px; /* У Google кнопки shape="rectangular" обычно радиус 4px */
+                    padding: 4px 0;
+                    transition: all 0.2s;
+                    box-sizing: border-box;
+                }
+                .tg-wrapper:hover {
+                    background: #f1f5f9;
+                    border-color: #cbd5e1;
+                }
+                [data-theme='dark'] .tg-wrapper {
+                    background: rgba(255,255,255,0.03) !important;
+                    border-color: rgba(255,255,255,0.08) !important;
                 }
             `}</style>
 
@@ -316,7 +331,7 @@ function Login({ onLoginSuccess }) {
                         <div className="tg-wrapper">
                             <TelegramLoginButton 
                                 dataOnauth={handleTelegramResponse} 
-                                botName="saqbol_authorization_bot" // Твой бот!
+                                botName="saqbol_authorization_bot" 
                                 buttonSize="large" 
                                 cornerRadius={12}
                                 usePic={true} 
@@ -325,7 +340,7 @@ function Login({ onLoginSuccess }) {
                     </div>
 
                     {/* ── Footer ── */}
-                    <p className="auth-hint" style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: '20px 0', fontWeight: 500 }}>
+                    <p className="auth-hint" style={{ textAlign: 'center', fontSize: 13, color: '#64748b', marginTop: 36, marginBottom: 20, fontWeight: 500 }}>
                         Нет аккаунта?{' '}
                         <Link
                             to="/register"
