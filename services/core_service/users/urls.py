@@ -15,6 +15,8 @@ from .views import (
     ApplyTeacherView,
     TelegramAuthView,
     ChangePasswordView,
+    RequestEmailChangeView,
+    VerifyEmailChangeView,
     GoogleLoginView
 )
 
@@ -39,6 +41,9 @@ urlpatterns = [
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     
+    
+    path('request-email-change/', RequestEmailChangeView.as_view(), name='request-email-change'),
+    path('verify-email-change/', VerifyEmailChangeView.as_view(), name='verify-email-change'),
     # Подтверждение email
     path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
     path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),

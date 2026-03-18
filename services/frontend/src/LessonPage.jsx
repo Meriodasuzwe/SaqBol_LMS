@@ -135,43 +135,43 @@ function LessonPage() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center min-h-screen bg-white">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <div className="flex items-center justify-center min-h-screen bg-base-200">
+            <div className="w-8 h-8 border-4 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
         </div>
     );
 
-    if (!lesson) return <div className="p-10 text-center font-bold text-slate-400">Урок не найден</div>;
+    if (!lesson) return <div className="p-10 text-center font-bold text-base-content/50">Урок не найден</div>;
 
     const currentStep = lesson.steps && lesson.steps.length > 0 ? lesson.steps[activeStepIndex] : null;
     const isSimulation = currentStep && ['simulation_chat', 'simulation_email'].includes(currentStep.step_type);
 
     return (
-        <div className="min-h-screen bg-slate-50 flex justify-center pb-20 font-sans text-slate-900">
+        <div className="min-h-screen bg-base-200 flex justify-center pb-20 font-sans text-base-content transition-colors duration-200">
             <div className="flex w-full max-w-7xl mx-auto pt-8 px-6 lg:px-8 gap-12">
                 
                 {/* ── ЛЕВЫЙ САЙДБАР ── */}
                 <aside className="hidden lg:flex flex-col w-[300px] shrink-0">
                     <button 
                         onClick={() => navigate(`/course/${lesson.course}`)}
-                        className="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 mb-8 flex items-center gap-2 transition-all group"
+                        className="text-[11px] font-black uppercase tracking-widest text-base-content/50 hover:text-base-content mb-8 flex items-center gap-2 transition-all group"
                     >
                         <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                         Вернуться к курсу
                     </button>
                     
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden sticky top-8">
+                    <div className="bg-base-100 rounded-2xl border border-base-300 shadow-sm overflow-hidden sticky top-8 transition-colors duration-200">
                         {/* Course header */}
-                        <div className="p-6 border-b border-slate-100">
-                            <h2 className="font-black text-sm uppercase tracking-tight text-slate-900 leading-tight mb-4">
+                        <div className="p-6 border-b border-base-200">
+                            <h2 className="font-black text-sm uppercase tracking-tight text-base-content leading-tight mb-4">
                                 {course?.title}
                             </h2>
                             {course && (
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <div className="flex justify-between text-[10px] font-bold text-base-content/50 uppercase tracking-widest">
                                         <span>Прогресс</span>
-                                        <span className="text-blue-600">{course.progress}%</span>
+                                        <span className="text-blue-600 dark:text-blue-400">{course.progress}%</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-base-300 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-blue-600 transition-all duration-500"
                                             style={{ width: `${course.progress}%` }}
@@ -189,12 +189,12 @@ function LessonPage() {
                                     to={`/lesson/${l.id}`}
                                     className={`flex items-center gap-4 p-3 rounded-xl transition-all
                                         ${l.id === lesson.id
-                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                            : 'hover:bg-slate-50 text-slate-600'
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20'
+                                            : 'hover:bg-base-200 text-base-content/80 hover:text-base-content'
                                         }`}
                                 >
                                     <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border
-                                        ${l.id === lesson.id ? 'border-white/30' : 'border-slate-200 text-slate-400'}`}>
+                                        ${l.id === lesson.id ? 'border-white/30' : 'border-base-300 text-base-content/50'}`}>
                                         {idx + 1}
                                     </span>
                                     <span className="text-xs font-bold truncate">{l.title}</span>
@@ -208,18 +208,18 @@ function LessonPage() {
                 <main className="flex-1 max-w-4xl">
                     <header className="mb-8">
                         <div className="flex items-center gap-3 mb-2">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/50">
                                 Урок {courseLessons.findIndex(l => l.id === lesson.id) + 1}
                             </span>
-                            <div className="h-px flex-1 bg-slate-100"></div>
+                            <div className="h-px flex-1 bg-base-300"></div>
                         </div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{lesson.title}</h1>
+                        <h1 className="text-3xl font-black text-base-content tracking-tight leading-tight">{lesson.title}</h1>
                     </header>
 
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
+                    <div className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden flex flex-col min-h-[600px] transition-colors duration-200">
                         
                         {/* ── Step tabs ── */}
-                        <div className="bg-slate-50/50 border-b border-slate-200 px-6 py-4 flex items-center gap-3 overflow-x-auto">
+                        <div className="bg-base-200/50 border-b border-base-300 px-6 py-4 flex items-center gap-3 overflow-x-auto">
                             {lesson.steps?.map((step, index) => {
                                 const isActive  = index === activeStepIndex;
                                 const isPassed  = step.is_completed;
@@ -229,10 +229,10 @@ function LessonPage() {
                                         onClick={() => handleTabClick(index, step.id)} 
                                         className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 border-2
                                             ${isActive
-                                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105'
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-900/20 scale-105'
                                                 : isPassed
-                                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
-                                                    : 'bg-white border-slate-100 text-slate-300 hover:border-slate-300'
+                                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400'
+                                                    : 'bg-base-100 border-base-200 text-base-content/30 hover:border-base-300 hover:text-base-content/60'
                                             }`}
                                         title={step.title}
                                     >
@@ -260,10 +260,10 @@ function LessonPage() {
 
                                     <div className="p-8 sm:p-12">
                                         {currentStep.title && (
-                                            <h2 className="text-2xl font-black text-slate-900 mb-6">{currentStep.title}</h2>
+                                            <h2 className="text-2xl font-black text-base-content mb-6">{currentStep.title}</h2>
                                         )}
 
-                                        <div className="text-slate-700">
+                                        <div className="text-base-content/80">
                                             {currentStep.step_type === 'simulation_chat' ? (
                                                 <div className="flex justify-center py-4">
                                                     <FakeMessenger scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
@@ -273,28 +273,28 @@ function LessonPage() {
                                                     <FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
                                                 </div>
                                             ) : currentStep.step_type === 'interactive_code' ? (
-                                                <div className="rounded-xl overflow-hidden border border-slate-800">
+                                                <div className="rounded-xl overflow-hidden border border-base-300 dark:border-slate-700">
                                                     <PythonEditor stepData={currentStep} onSuccess={() => handleStepComplete(20)} />
                                                 </div>
                                             ) : currentStep.step_type === 'quiz' ? (
-                                                <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                                    <div className="w-16 h-16 bg-blue-50 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6">
-                                                        <HelpCircle className="text-blue-600" size={32} />
+                                                <div className="text-center py-16 bg-base-200 rounded-2xl border border-dashed border-base-300">
+                                                    <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6">
+                                                        <HelpCircle className="text-blue-600 dark:text-blue-400" size={32} />
                                                     </div>
-                                                    <h3 className="text-xl font-black mb-2">Проверка знаний</h3>
-                                                    <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+                                                    <h3 className="text-xl font-black mb-2 text-base-content">Проверка знаний</h3>
+                                                    <p className="text-base-content/60 text-sm mb-8 max-w-xs mx-auto">
                                                         Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.
                                                     </p>
                                                     <Link 
                                                         to={`/quiz/lesson/${lesson.id}?quiz_id=${currentStep.scenario_data?.quiz_id || ''}`} 
-                                                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200"
+                                                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
                                                     >
                                                         Начать тест <ArrowRight size={18} />
                                                     </Link>
                                                 </div>
                                             ) : (
                                                 <div
-                                                    className="prose prose-slate max-w-none prose-headings:font-black prose-img:rounded-2xl"
+                                                    className="prose prose-sm sm:prose-base max-w-none prose-headings:font-black prose-img:rounded-2xl dark:prose-invert prose-a:text-blue-600 hover:prose-a:text-blue-500"
                                                     dangerouslySetInnerHTML={{ __html: currentStep.content }}
                                                 />
                                             )}
@@ -302,7 +302,7 @@ function LessonPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex items-center justify-center text-slate-300 italic">
+                                <div className="flex-1 flex items-center justify-center text-base-content/30 italic">
                                     Контент шага пуст
                                 </div>
                             )}
@@ -310,14 +310,14 @@ function LessonPage() {
 
                         {/* ── Footer navigation ── */}
                         {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
-                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                            <div className="p-6 bg-base-200/50 border-t border-base-300 flex items-center justify-between mt-auto">
                                 {activeStepIndex > 0 ? (
                                     <button onClick={() => {
                                         setActiveStepIndex(activeStepIndex - 1); 
                                         window.history.replaceState(null, '', `/lesson/${lessonId}?step=${lesson.steps[activeStepIndex - 1].id}`);
                                         window.scrollTo(0, 0);
                                     }}
-                                        className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest"
+                                        className="flex items-center gap-2 text-xs font-bold text-base-content/50 hover:text-base-content transition-colors uppercase tracking-widest"
                                     >
                                         <ArrowLeft size={16} /> Назад
                                     </button>
@@ -325,7 +325,7 @@ function LessonPage() {
 
                                 <button 
                                     onClick={() => handleStepComplete(10)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20 ml-auto"
                                 >
                                     {activeStepIndex < lesson.steps.length - 1 ? (
                                         <>Следующий шаг <ArrowRight size={18} /></>

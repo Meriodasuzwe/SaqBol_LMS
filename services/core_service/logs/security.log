@@ -1463,3 +1463,50 @@ WARNING 2026-03-17 16:19:22,470 | CLIENT ERROR: [400] POST /api/users/change-pas
 WARNING 2026-03-17 16:21:03,024 | CLIENT ERROR: [400] POST /api/users/change-password/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.095s
 INFO 2026-03-17 16:21:13,460 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
 WARNING 2026-03-17 16:21:23,108 | CLIENT ERROR: [400] POST /api/users/change-password/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.006s
+INFO 2026-03-17 16:25:18,843 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-17 16:25:35,200 | ACTION: [200] POST /api/users/change-password/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.098s
+INFO 2026-03-17 16:25:48,560 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-03-17 16:26:17,873 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-03-17 16:27:46,034 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.097s
+WARNING 2026-03-17 16:32:32,403 | CLIENT ERROR: [400] POST /api/users/change-password/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.093s
+INFO 2026-03-17 16:32:38,327 | ACTION: [200] POST /api/users/change-password/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.191s
+INFO 2026-03-17 16:38:30,225 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.013s
+WARNING 2026-03-17 16:38:30,237 | CLIENT ERROR: [400] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-17 16:40:01,040 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.012s
+ERROR 2026-03-17 16:40:01,089 | SERVER ERROR: [500] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.045s
+INFO 2026-03-17 16:41:39,634 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.010s
+ERROR 2026-03-17 16:41:39,675 | SERVER ERROR: [500] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.037s
+INFO 2026-03-17 16:42:29,460 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.015s
+ERROR 2026-03-17 16:42:29,491 | SERVER ERROR: [500] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.027s
+INFO 2026-03-17 16:43:36,760 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.022s
+ERROR 2026-03-17 16:43:36,803 | SERVER ERROR: [500] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.038s
+INFO 2026-03-17 16:43:50,086 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.010s
+ERROR 2026-03-17 16:43:50,129 | SERVER ERROR: [500] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.035s
+INFO 2026-03-17 16:45:10,576 | ACTION: [200] PATCH /api/users/me/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.020s
+INFO 2026-03-17 16:45:14,687 | ACTION: [200] POST /api/users/request-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 4.105s
+INFO 2026-03-17 16:46:00,359 | ACTION: [200] POST /api/users/verify-email-change/ (User: zulqar99 [ID:36], IP: 172.18.0.1) - 0.018s
+INFO 2026-03-17 16:55:17,797 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.052s
+WARNING 2026-03-17 17:12:53,256 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-17 17:13:31,451 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.096s
+INFO 2026-03-17 17:14:16,730 | ACTION: [200] POST /api/quizzes/82/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-17 17:17:41,199 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.308s
+INFO 2026-03-17 17:18:06,955 | ACTION: [200] PATCH /api/users/me/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.084s
+WARNING 2026-03-17 17:47:59,021 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.003s
+WARNING 2026-03-17 17:47:59,024 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-17 17:47:59,027 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-17 17:47:59,031 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-17 17:47:59,033 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-17 17:47:59,035 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-17 17:47:59,042 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-17 17:47:59,045 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-17 17:54:31,222 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.011s
+INFO 2026-03-17 17:55:22,927 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.017s
+INFO 2026-03-17 17:56:04,474 | ACTION: [200] PATCH /api/users/me/ (User: almatt7 [ID:38], IP: 172.18.0.1) - 0.017s
+WARNING 2026-03-17 17:56:04,487 | CLIENT ERROR: [400] POST /api/users/request-email-change/ (User: almatt7 [ID:38], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-17 17:56:23,061 | ACTION: [200] POST /api/users/change-password/ (User: almatt7 [ID:38], IP: 172.18.0.1) - 0.116s
+INFO 2026-03-17 17:56:37,188 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.099s
+WARNING 2026-03-18 19:11:40,123 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.009s
+WARNING 2026-03-18 19:11:40,127 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:11:40,130 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:11:40,133 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-18 19:22:03,792 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.108s

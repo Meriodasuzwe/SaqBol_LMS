@@ -9,10 +9,6 @@ function Profile() {
     const [myCourses, setMyCourses] = useState([]); 
     const [categories, setCategories] = useState([]); 
     const [loading, setLoading] = useState(true);
-    
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [editData, setEditData] = useState({ first_name: '', last_name: '', age: '' });
-    const [saving, setSaving] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCourseTitle, setNewCourseTitle] = useState("");
@@ -28,16 +24,14 @@ function Profile() {
             try {
                 const userRes = await api.get('users/me/');
                 setUser(userRes.data);
-                setEditData({
-                    first_name: userRes.data.first_name || '',
-                    last_name: userRes.data.last_name || '',
-                    age: userRes.data.age || '',
-                });
+                
                 const resultsRes = await api.get('quizzes/my-results/'); 
                 setResults(resultsRes.data);
+                
                 const catRes = await api.get('courses/categories/'); 
                 setCategories(catRes.data);
                 if (catRes.data.length > 0) setSelectedCategory(catRes.data[0].id);
+                
                 const coursesRes = await api.get('courses/my_courses/');
                 setMyCourses(coursesRes.data);
             } catch (err) {
@@ -72,21 +66,6 @@ function Profile() {
         return `http://localhost:8000${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
-    const handleSaveProfile = async () => {
-        setSaving(true);
-        try {
-            const res = await api.patch('users/me/', editData);
-            setUser(res.data);
-            toast.success("Личные данные сохранены");
-            setIsSettingsOpen(false);
-        } catch (err) {
-            console.error(err);
-            toast.error("Ошибка при сохранении");
-        } finally {
-            setSaving(false);
-        }
-    };
-
     const handleCreateCourse = async () => {
         setIsCreating(true);
         try {
@@ -105,6 +84,10 @@ function Profile() {
     const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
     const totalTests = results.length;
     const averageScore = totalTests > 0 ? Math.round(results.reduce((acc, c) => acc + c.score, 0) / totalTests) : 0;
+
+    // Логика отображения почты или Telegram-юзернейма
+    const isFakeEmail = user?.email?.includes('@telegram.fake') || user?.email?.includes('@telegram.com');
+    const displaySubtext = isFakeEmail ? `@${user?.username} (Telegram)` : user?.email;
 
     const activityMap = useMemo(() => {
         const days = [];
@@ -167,52 +150,28 @@ function Profile() {
                     <div className="flex-1 pb-1">
                         <div className="flex items-center gap-3">
                             <h1 className="text-2xl font-bold text-base-content">
-                                {editData.first_name || user?.username} {editData.last_name}
+                                {user?.first_name || user?.username} {user?.last_name}
                             </h1>
                             <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                                 {isTeacher ? 'Преподаватель' : 'Студент'}
                             </span>
                         </div>
-                        <p className="text-sm text-base-content/50 mt-1">{user?.email}</p>
+                        {/* Фейковая почта теперь скрыта, выводим юзернейм */}
+                        <p className="text-sm text-base-content/50 mt-1">{displaySubtext}</p>
                     </div>
 
-                    {/* Кнопка настроек */}
+                    {/* Кнопка настроек (теперь ссылка на страницу /settings) */}
                     <div className="pb-2">
-                        <button onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                        <Link to="/settings"
                             className="btn btn-sm btn-outline border-base-300 text-base-content/80 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             Настройки
-                        </button>
+                        </Link>
                     </div>
                 </div>
-
-                {/* Настройки */}
-                {isSettingsOpen && (
-                    <div className="px-8 py-6 bg-base-200/30 border-t border-base-200 animate-fade-in">
-                        <h3 className="text-xs font-bold mb-4 uppercase tracking-widest text-base-content/50">Редактирование профиля</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-                            <div className="form-control">
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Имя</span></label>
-                                <input type="text" className="input input-sm input-bordered border-base-300 bg-base-100 shadow-sm" value={editData.first_name} onChange={(e) => setEditData({...editData, first_name: e.target.value})} />
-                            </div>
-                            <div className="form-control">
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Фамилия</span></label>
-                                <input type="text" className="input input-sm input-bordered border-base-300 bg-base-100 shadow-sm" value={editData.last_name} onChange={(e) => setEditData({...editData, last_name: e.target.value})} />
-                            </div>
-                            <div className="form-control">
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Возраст</span></label>
-                                <input type="number" className="input input-sm input-bordered border-base-300 bg-base-100 shadow-sm" value={editData.age} onChange={(e) => setEditData({...editData, age: e.target.value})} />
-                            </div>
-                        </div>
-                        <button className={`btn btn-sm px-6 shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-0 ${saving ? 'loading' : ''}`}
-                            onClick={handleSaveProfile} disabled={saving}>
-                            Сохранить изменения
-                        </button>
-                    </div>
-                )}
             </div>
 
             {/* ── АКТИВНОСТЬ ── */}
@@ -356,7 +315,7 @@ function Profile() {
                 </div>
             </div>
 
-            {/* ── МОДАЛКА ── */}
+            {/* ── МОДАЛКА СОЗДАНИЯ КУРСА ── */}
             {isModalOpen && isTeacher && (
                 <div className="fixed inset-0 bg-base-300/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-base-100 rounded-2xl shadow-xl border border-base-200 w-full max-w-md p-6">

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'; // 👈 Добавил useSearchParams
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
 import confetti from 'canvas-confetti';
@@ -132,19 +132,19 @@ function QuizPage() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-50">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+        <div className="flex items-center justify-center min-h-screen bg-base-200">
+            <div className="w-8 h-8 border-4 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
         </div>
     );
 
     if (!quiz || !quiz.questions || quiz.questions.length === 0) return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center pt-10">
-            <div className="max-w-md w-full text-center p-12 bg-white shadow-sm border border-slate-200 rounded-3xl">
-                <HelpCircle size={48} className="text-slate-200 mx-auto mb-6" />
-                <h2 className="text-2xl font-black text-slate-900 mb-2">Вопросы отсутствуют</h2>
-                <p className="text-slate-500 mb-8 font-medium">В этом модуле пока нет доступных тестов.</p>
+        <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center pt-10 transition-colors duration-200">
+            <div className="max-w-md w-full text-center p-12 bg-base-100 shadow-sm border border-base-300 rounded-3xl transition-colors duration-200">
+                <HelpCircle size={48} className="text-base-content/20 mx-auto mb-6" />
+                <h2 className="text-2xl font-black text-base-content mb-2">Вопросы отсутствуют</h2>
+                <p className="text-base-content/60 mb-8 font-medium">В этом модуле пока нет доступных тестов.</p>
                 <button 
-                    className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 w-full hover:bg-black transition-colors" 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 w-full transition-colors shadow-lg shadow-blue-900/20" 
                     onClick={() => navigate(`/lesson/${lessonId}`)}
                 >
                     <ChevronLeft size={18} /> Вернуться к уроку
@@ -159,40 +159,41 @@ function QuizPage() {
     const isAllAnswered = questions.every(q => selectedAnswers[q.id]);
 
     return (
-        <div className="min-h-screen bg-slate-50 py-10 px-6 font-sans text-slate-900">
+        <div className="min-h-screen bg-base-200 py-10 px-6 font-sans text-base-content transition-colors duration-200">
             <div className="max-w-3xl mx-auto">
                 
                 {/* 🔝 ВЕРХНЯЯ ПАНЕЛЬ */}
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
                     <button 
                         onClick={() => navigate(`/lesson/${lessonId}`)} 
-                        className="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 flex items-center gap-2 transition-colors w-fit"
+                        className="text-[11px] font-black uppercase tracking-widest text-base-content/50 hover:text-base-content flex items-center gap-2 transition-colors w-fit group"
                     >
-                        <ChevronLeft size={16} /> Покинуть тест
+                        <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Покинуть тест
                     </button>
                     {cheatWarnings > 0 && !currentResult && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-xs font-bold animate-pulse">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold animate-pulse">
                             <AlertTriangle size={14} /> Предупреждений: {cheatWarnings}/3
                         </div>
                     )}
                 </div>
 
                 {/* 🟦 НАВИГАЦИЯ ПО ВОПРОСАМ */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+                <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 mb-6 transition-colors duration-200">
                     <div className="flex flex-wrap gap-2 justify-center">
                         {questions.map((q, idx) => {
                             const isAnswered = !!selectedAnswers[q.id];
                             const isActive = idx === currentIndex;
                             
-                            let btnClass = "border-slate-200 text-slate-400 bg-white hover:border-slate-900 hover:text-slate-900";
+                            let btnClass = "border-base-300 text-base-content/50 bg-base-100 hover:border-base-content/30 hover:text-base-content/80";
                             
                             if (!currentResult) {
-                                if (isAnswered) btnClass = "bg-slate-900 border-slate-900 text-white"; 
-                                if (isActive) btnClass += " ring-4 ring-slate-900/10 scale-110 z-10"; 
+                                if (isAnswered) btnClass = "bg-blue-600 border-blue-600 text-white shadow-sm"; 
+                                if (isActive) btnClass += " ring-4 ring-blue-500/20 scale-110 z-10 border-blue-600 text-blue-600 dark:text-blue-400"; // Активный вопрос (даже если не отвечен) подсвечиваем синим
+                                if (isActive && isAnswered) btnClass += " text-white" // Если активный и отвеченный, то текст белый
                             } else {
                                 const isPassed = currentResult.score >= 70;
                                 btnClass = isPassed ? "bg-emerald-500 border-emerald-500 text-white" : "bg-red-500 border-red-500 text-white";
-                                if (isActive) btnClass += " ring-4 ring-slate-200 scale-110 z-10";
+                                if (isActive) btnClass += " ring-4 ring-base-content/20 scale-110 z-10";
                             }
 
                             return (
@@ -209,16 +210,16 @@ function QuizPage() {
                 </div>
 
                 {/* ОСНОВНОЙ БЛОК ВОПРОСА */}
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-base-100 rounded-3xl shadow-sm border border-base-300 overflow-hidden transition-colors duration-200">
                     <div className="p-8 md:p-12">
                         
                         {/* Заголовок вопроса */}
                         <div className="mb-10">
                             <div className="flex items-center gap-3 mb-4">
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Вопрос {currentIndex + 1} из {questions.length}</span>
-                                <div className="h-px flex-1 bg-slate-100"></div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/50">Вопрос {currentIndex + 1} из {questions.length}</span>
+                                <div className="h-px flex-1 bg-base-300"></div>
                             </div>
-                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                            <h1 className="text-2xl md:text-3xl font-black text-base-content leading-tight">
                                 {currentQuestion?.question || currentQuestion?.text}
                             </h1>
                         </div>
@@ -229,13 +230,13 @@ function QuizPage() {
                                 const isSelected = selectedAnswers[currentQuestion.id] === choice.id;
                                 
                                 let labelClass = isSelected 
-                                    ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900' 
-                                    : 'border-slate-200 bg-white hover:border-slate-400';
+                                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-600' 
+                                    : 'border-base-300 bg-base-100 hover:border-base-content/40';
 
                                 if (currentResult) {
                                     labelClass = isSelected 
-                                        ? 'border-slate-300 bg-slate-100 text-slate-500 opacity-70' 
-                                        : 'border-slate-100 text-slate-300 opacity-50';
+                                        ? 'border-base-300 bg-base-200 text-base-content/60 opacity-70' 
+                                        : 'border-base-200/50 text-base-content/40 opacity-50';
                                 }
 
                                 return (
@@ -244,14 +245,14 @@ function QuizPage() {
                                             <input 
                                                 type="radio" 
                                                 name={`q-${currentQuestion.id}`}
-                                                className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded-full checked:border-slate-900 checked:bg-slate-900 transition-all cursor-pointer disabled:cursor-not-allowed"
+                                                className="peer appearance-none w-5 h-5 border-2 border-base-300 rounded-full checked:border-blue-600 checked:bg-blue-600 transition-all cursor-pointer disabled:cursor-not-allowed"
                                                 checked={isSelected}
                                                 disabled={!!currentResult}
                                                 onChange={() => handleAnswer(currentQuestion.id, choice.id)}
                                             />
                                             {isSelected && <div className="absolute w-2 h-2 bg-white rounded-full pointer-events-none"></div>}
                                         </div>
-                                        <span className={`font-medium ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>
+                                        <span className={`font-medium ${isSelected ? 'text-blue-900 dark:text-blue-300 font-bold' : 'text-base-content/80'}`}>
                                             {choice.text}
                                         </span>
                                     </label>
@@ -263,7 +264,7 @@ function QuizPage() {
                         {!currentResult ? (
                             <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-12 gap-4">
                                 <button 
-                                    className={`text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors ${currentIndex === 0 ? 'invisible' : ''}`}
+                                    className={`text-xs font-bold uppercase tracking-widest text-base-content/50 hover:text-base-content flex items-center gap-2 transition-colors ${currentIndex === 0 ? 'invisible' : ''}`}
                                     onClick={() => setCurrentIndex(v => v - 1)}
                                 >
                                     <ChevronLeft size={16} /> Назад
@@ -271,7 +272,7 @@ function QuizPage() {
                                 
                                 {currentIndex < questions.length - 1 ? (
                                     <button 
-                                        className="w-full sm:w-auto bg-slate-100 text-slate-900 px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
+                                        className="w-full sm:w-auto bg-base-200 text-base-content px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-base-300 transition-all"
                                         onClick={() => setCurrentIndex(v => v + 1)}
                                     >
                                         Далее <ArrowRight size={16} />
@@ -279,7 +280,7 @@ function QuizPage() {
                                 ) : (
                                     <button 
                                         className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm
-                                            ${isAllAnswered ? 'bg-slate-900 text-white hover:bg-black hover:-translate-y-0.5' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                                            ${isAllAnswered ? 'bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-900/20' : 'bg-base-200 text-base-content/40 cursor-not-allowed'}`}
                                         disabled={!isAllAnswered}
                                         onClick={() => submitQuiz(false)}
                                     >
@@ -289,23 +290,23 @@ function QuizPage() {
                             </div>
                         ) : (
                             // ПАНЕЛЬ РЕЗУЛЬТАТОВ
-                            <div className={`mt-12 p-8 rounded-2xl border-2 text-center animate-in fade-in slide-in-from-bottom-4 ${currentResult.score >= 70 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+                            <div className={`mt-12 p-8 rounded-2xl border-2 text-center animate-in fade-in slide-in-from-bottom-4 ${currentResult.score >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50' : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50'}`}>
                                 <div className="flex justify-center mb-4">
                                     {currentResult.score >= 70 
                                         ? <CheckCircle2 size={48} className="text-emerald-500" />
                                         : <XCircle size={48} className="text-red-500" />
                                     }
                                 </div>
-                                <h3 className={`text-2xl font-black mb-2 ${currentResult.score >= 70 ? 'text-emerald-900' : 'text-red-900'}`}>
+                                <h3 className={`text-2xl font-black mb-2 ${currentResult.score >= 70 ? 'text-emerald-900 dark:text-emerald-400' : 'text-red-900 dark:text-red-400'}`}>
                                     {currentResult.score >= 70 ? 'Аттестация пройдена!' : 'Аттестация не пройдена'}
                                 </h3>
-                                <p className={`text-sm mb-8 font-medium ${currentResult.score >= 70 ? 'text-emerald-700' : 'text-red-700'}`}>
+                                <p className={`text-sm mb-8 font-medium ${currentResult.score >= 70 ? 'text-emerald-700 dark:text-emerald-500/80' : 'text-red-700 dark:text-red-500/80'}`}>
                                     Итоговый балл: <span className="text-2xl font-black ml-2">{currentResult.score}%</span>
                                 </p>
                                 
                                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                     <button 
-                                        className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+                                        className="px-6 py-3 bg-base-100 border border-base-300 text-base-content rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-base-200 transition-colors"
                                         onClick={() => {
                                             setCurrentResult(null);
                                             setCurrentIndex(0);
@@ -317,7 +318,7 @@ function QuizPage() {
                                     </button>
                                     {currentResult.score >= 70 && (
                                         <button 
-                                            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-sm"
+                                            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20"
                                             onClick={() => navigate(`/lesson/${lessonId}`)}
                                         >
                                             Продолжить обучение <ArrowRight size={16} />
