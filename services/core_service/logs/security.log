@@ -1510,3 +1510,17 @@ WARNING 2026-03-18 19:11:40,127 | ACCESS DENIED: [401] GET /api/users/me/ (User:
 WARNING 2026-03-18 19:11:40,130 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 WARNING 2026-03-18 19:11:40,133 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 INFO 2026-03-18 19:22:03,792 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.108s
+WARNING 2026-03-18 19:52:37,130 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:37,134 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:40,135 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:40,139 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:40,144 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:40,160 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:40,165 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-18 19:52:40,170 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-18 19:52:45,375 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-18 19:57:31,859 | ACTION: [201] POST /api/courses/11/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.028s
+INFO 2026-03-18 19:57:37,017 | ACTION: [201] POST /api/courses/16/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-18 20:01:52,619 | ACTION: [201] POST /api/users/register/ (User:  [ID:None], IP: 172.18.0.1) - 2.393s
+INFO 2026-03-18 20:03:15,315 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.295s
+INFO 2026-03-18 20:03:26,701 | ACTION: [200] POST /api/courses/6/enroll/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.008s
