@@ -19,7 +19,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from config import settings
-from routers import course, quiz, scenario
+from routers import course, quiz, scenario, insights
 
 # ---------------------------------------------------------------------------
 # LOGGING
@@ -96,6 +96,7 @@ async def log_requests(request: Request, call_next):
 app.include_router(quiz.router)
 app.include_router(scenario.router)
 app.include_router(course.router)
+app.include_router(insights.router)
 
 
 # ---------------------------------------------------------------------------

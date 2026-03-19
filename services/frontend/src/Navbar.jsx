@@ -4,7 +4,8 @@ import api from './api';
 import { toast } from 'react-toastify';
 import {
     BookOpen, LayoutDashboard, User, LogOut, ChevronDown,
-    Sun, Moon, GraduationCap, ExternalLink, X, Sparkles, Settings // 🔥 Добавили Settings
+    Sun, Moon, GraduationCap, ExternalLink, X, Sparkles, Settings,
+    BarChart2  // ✅ Иконка аналитики
 } from 'lucide-react';
 
 function Navbar({ isLoggedIn, userRole, onLogout }) {
@@ -74,7 +75,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         : user?.username || 'Пользователь';
     const initials = displayName.split(' ').map(w => w[0]?.toUpperCase()).slice(0, 2).join('');
 
-    // Theme-aware inline style tokens — работают поверх DaisyUI
     const t = {
         nav:      isDark ? 'rgba(30,30,35,0.97)'  : 'rgba(255,255,255,0.97)',
         border:   isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
@@ -111,6 +111,25 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
             </Link>
         );
     };
+
+    // ✅ Элементы дропдауна — отдельно для учителя и студента
+    const dropItems = [
+        { to: '/profile',            icon: <User size={14} />,         label: 'Личный кабинет',     show: true },
+        { to: '/settings',           icon: <Settings size={14} />,     label: 'Настройки',          show: true },
+        { to: '/analytics/teacher',  icon: <BarChart2 size={14} />,    label: 'Аналитика курсов',   show: isTeacher },
+        { to: '/analytics/student',  icon: <BarChart2 size={14} />,    label: 'Мой прогресс',       show: !isTeacher },
+        { to: '/teacher',            icon: <LayoutDashboard size={14}/>, label: 'Панель управления', show: isTeacher },
+    ].filter(i => i.show);
+
+    // ✅ Элементы мобильного меню
+    const mobileItems = [
+        { to: '/courses',           icon: <BookOpen size={15} />,       label: 'Каталог курсов',   show: true },
+        { to: '/profile',           icon: <User size={15} />,           label: 'Личный кабинет',   show: true },
+        { to: '/settings',          icon: <Settings size={15} />,       label: 'Настройки',        show: true },
+        { to: '/analytics/teacher', icon: <BarChart2 size={15} />,      label: 'Аналитика курсов', show: isTeacher },
+        { to: '/analytics/student', icon: <BarChart2 size={15} />,      label: 'Мой прогресс',     show: !isTeacher },
+        { to: '/teacher',           icon: <LayoutDashboard size={15} />, label: 'Панель управления', show: isTeacher },
+    ].filter(i => i.show);
 
     return (
         <>
@@ -150,15 +169,31 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         </span>
                     </Link>
 
-                    {/* Nav links */}
+                    {/* Nav links — десктоп */}
                     {isLoggedIn && (
                         <nav style={{ display: 'flex', alignItems: 'center', gap: 24, marginLeft: 8 }} className="hidden lg:flex">
-                            <NavLink to="/courses" icon={<BookOpen size={14} style={{ opacity: 0.7 }} />}>Каталог курсов</NavLink>
-                            {isTeacher && <NavLink to="/teacher" icon={<LayoutDashboard size={14} style={{ opacity: 0.7 }} />}>Панель управления</NavLink>}
+                            <NavLink to="/courses" icon={<BookOpen size={14} style={{ opacity: 0.7 }} />}>
+                                Каталог курсов
+                            </NavLink>
+                            {isTeacher && (
+                                <NavLink to="/teacher" icon={<LayoutDashboard size={14} style={{ opacity: 0.7 }} />}>
+                                    Панель управления
+                                </NavLink>
+                            )}
+                            {/* ✅ Аналитика в навбаре */}
+                            {isTeacher ? (
+                                <NavLink to="/analytics/teacher" icon={<BarChart2 size={14} style={{ opacity: 0.7 }} />}>
+                                    Аналитика
+                                </NavLink>
+                            ) : (
+                                <NavLink to="/analytics/student" icon={<BarChart2 size={14} style={{ opacity: 0.7 }} />}>
+                                    Мой прогресс
+                                </NavLink>
+                            )}
                         </nav>
                     )}
 
-                    {/* Right */}
+                    {/* Right side */}
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
 
                         {/* Theme toggle */}
@@ -171,7 +206,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         </button>
 
                         {isLoggedIn ? (
-                            /* User dropdown trigger */
                             <div style={{ position: 'relative' }} ref={dropRef}>
                                 <button onClick={() => setDropOpen(o => !o)}
                                     style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', transition: 'background 0.15s' }}
@@ -217,14 +251,14 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
 
                                         {/* Items */}
                                         <div style={{ padding: '6px' }}>
-                                            {[
-                                                { to: '/profile', icon: <User size={14} />, label: 'Личный кабинет', show: true },
-                                                { to: '/settings', icon: <Settings size={14} />, label: 'Настройки', show: true }, // 🔥 Ссылка на настройки
-                                                { to: '/teacher', icon: <LayoutDashboard size={14} />, label: 'Панель управления', show: isTeacher },
-                                            ].filter(i => i.show).map(item => (
-                                                <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', color: t.text, fontSize: 13, fontWeight: 500, transition: 'background 0.12s' }}
-                                                    onMouseEnter={e => e.currentTarget.style.background = t.itemHov}
-                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                            {dropItems.map(item => (
+                                                <Link key={item.to} to={item.to}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', color: t.text, fontSize: 13, fontWeight: 500, transition: 'background 0.12s',
+                                                        // ✅ Подсветка активного пункта
+                                                        background: isActive(item.to) ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent',
+                                                    }}
+                                                    onMouseEnter={e => { if (!isActive(item.to)) e.currentTarget.style.background = t.itemHov; }}
+                                                    onMouseLeave={e => { if (!isActive(item.to)) e.currentTarget.style.background = 'transparent'; }}>
                                                     <div style={{ width: 28, height: 28, borderRadius: 8, background: t.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textMute, flexShrink: 0 }}>
                                                         {item.icon}
                                                     </div>
@@ -297,12 +331,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                 {/* Mobile menu */}
                 {mobileOpen && isLoggedIn && (
                     <div className="sq-slide lg:hidden" style={{ borderTop: `1px solid ${t.border}`, background: t.nav, padding: '8px 20px 16px' }}>
-                        {[
-                            { to: '/courses', icon: <BookOpen size={15} />, label: 'Каталог курсов', show: true },
-                            { to: '/profile', icon: <User size={15} />, label: 'Личный кабинет', show: true },
-                            { to: '/settings', icon: <Settings size={15} />, label: 'Настройки', show: true }, // 🔥 Ссылка на настройки в мобильном меню
-                            { to: '/teacher', icon: <LayoutDashboard size={15} />, label: 'Панель управления', show: isTeacher },
-                        ].filter(i => i.show).map(item => (
+                        {mobileItems.map(item => (
                             <Link key={item.to} to={item.to}
                                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, textDecoration: 'none', marginBottom: 2, fontSize: 13, fontWeight: 600, color: isActive(item.to) ? '#3b82f6' : t.text, background: isActive(item.to) ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent', transition: 'background 0.15s' }}
                                 onMouseEnter={e => { if (!isActive(item.to)) e.currentTarget.style.background = t.hover; }}
@@ -321,13 +350,10 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
             </header>
 
             {/* ── MODAL ── */}
-            {/* Оставляю твой модал без изменений... */}
             {modalOpen && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     <div style={{ position: 'absolute', inset: 0, background: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)' }} onClick={() => setModalOpen(false)} />
                     <div className="sq-drop" style={{ position: 'relative', background: t.panel, border: `1px solid ${t.panelBdr}`, borderRadius: 20, width: '100%', maxWidth: 440, overflow: 'hidden', boxShadow: isDark ? '0 25px 80px rgba(0,0,0,0.7)' : '0 25px 80px rgba(0,0,0,0.15)' }}>
-
-                        {/* Header */}
                         <div style={{ padding: '20px 24px 18px', borderBottom: `1px solid ${t.divider}` }}>
                             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -347,8 +373,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Body */}
                         <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div>
                                 <label style={{ fontSize: 11, fontWeight: 700, color: t.textMute, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>
@@ -377,8 +401,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Footer */}
                         <div style={{ padding: '0 24px 24px', display: 'flex', gap: 10 }}>
                             <button onClick={() => setModalOpen(false)}
                                 style={{ flex: 1, padding: '12px', border: `1px solid ${t.inputBdr}`, borderRadius: 12, fontSize: 13, fontWeight: 700, color: t.text, background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}

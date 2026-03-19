@@ -1,0 +1,389 @@
+import { useState, useEffect, useCallback } from 'react';
+import api from './api';
+import aiApi from './aiApi';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const BLUE   = '#2563EB';
+const BLUE_L = '#EFF6FF';
+const BLUE_D = '#1D4ED8';
+const GRAY_1 = '#0F172A';
+const GRAY_2 = '#475569';
+const GRAY_3 = '#94A3B8';
+const GRAY_4 = '#F8FAFC';
+const GRAY_5 = '#E2E8F0';
+const GREEN  = '#059669';
+const GREEN_L= '#F0FDF4';
+const AMBER  = '#D97706';
+const RED    = '#DC2626';
+const RED_L  = '#FEF2F2';
+const BORDER = '1px solid #E2E8F0';
+const R      = 12;
+const SHADOW = '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)';
+
+function Card({ children, style = {} }) {
+  return <div style={{ background: '#fff', borderRadius: R, border: BORDER, boxShadow: SHADOW, ...style }}>{children}</div>;
+}
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: GRAY_1, margin: 0 }}>{title}</h2>
+      {subtitle && <p style={{ fontSize: 12, color: GRAY_3, margin: '3px 0 0' }}>{subtitle}</p>}
+    </div>
+  );
+}
+
+function Tag({ children, color = GRAY_2 }) {
+  return (
+    <span style={{
+      display: 'inline-block', padding: '2px 8px', borderRadius: 6,
+      fontSize: 11, fontWeight: 600,
+      background: color + '12', color, border: `1px solid ${color}22`,
+    }}>{children}</span>
+  );
+}
+
+function StatCard({ label, value, accent = BLUE }) {
+  return (
+    <Card style={{ padding: '20px 24px' }}>
+      <div style={{ fontSize: 26, fontWeight: 800, color: GRAY_1, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: GRAY_2 }}>{label}</div>
+      <div style={{ marginTop: 14, height: 2, background: GRAY_5, borderRadius: 99 }}>
+        <div style={{ width: 28, height: 2, background: accent, borderRadius: 99 }} />
+      </div>
+    </Card>
+  );
+}
+
+function ProgressRing({ value, size = 88, stroke = 7, color = BLUE, label }) {
+  const r    = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const off  = circ - (Math.min(100, value) / 100) * circ;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+      <svg width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={GRAY_5} strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round"
+          style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset .7s ease' }}
+        />
+        <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central"
+          style={{ fontSize: 15, fontWeight: 800, fill: GRAY_1 }}>
+          {value?.toFixed(0)}%
+        </text>
+      </svg>
+      {label && <span style={{ fontSize: 12, color: GRAY_3 }}>{label}</span>}
+    </div>
+  );
+}
+
+function ScoreDot({ score }) {
+  const color = score >= 80 ? GREEN : score >= 60 ? AMBER : RED;
+  return (
+    <div style={{
+      width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+      border: `2px solid ${color}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 11, fontWeight: 800, color,
+    }}>{score?.toFixed(0)}%</div>
+  );
+}
+
+function QuizHistory({ history }) {
+  if (!history?.length) return (
+    <p style={{ fontSize: 13, color: GRAY_3, textAlign: 'center', padding: '20px 0', margin: 0 }}>
+      Квизы ещё не пройдены
+    </p>
+  );
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {history.map((item, i) => (
+        <div key={i} style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '12px 14px', borderRadius: 10, background: GRAY_4,
+          transition: 'background .15s', cursor: 'default',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = GRAY_5}
+        onMouseLeave={e => e.currentTarget.style.background = GRAY_4}>
+          <ScoreDot score={item.score} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: GRAY_1, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {item.quiz_title}
+            </p>
+            <p style={{ fontSize: 12, color: GRAY_3, margin: '2px 0 0' }}>
+              {item.correct_answers}/{item.total_questions} правильных
+              {item.time_spent_seconds > 0 && ` · ${Math.round(item.time_spent_seconds / 60)} мин`}
+            </p>
+          </div>
+          <p style={{ fontSize: 11, color: GRAY_3, flexShrink: 0 }}>
+            {new Date(item.completed_at).toLocaleDateString('ru-RU')}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ScenarioHistory({ history }) {
+  if (!history?.length) return (
+    <p style={{ fontSize: 13, color: GRAY_3, textAlign: 'center', padding: '20px 0', margin: 0 }}>
+      Сценарии ещё не пройдены
+    </p>
+  );
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {history.map((item, i) => {
+        const color = item.result === 'passed' ? GREEN : item.result === 'failed' ? RED : AMBER;
+        const label = item.result === 'passed' ? 'Пройден' : item.result === 'failed' ? 'Провален' : 'Не завершён';
+        return (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 10, background: GRAY_4 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+              background: item.scenario_type === 'chat' ? BLUE_L : '#F5F3FF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700,
+              color: item.scenario_type === 'chat' ? BLUE : '#7C3AED',
+            }}>
+              {item.scenario_type === 'chat' ? 'ЧАТ' : 'EMAIL'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: GRAY_1, margin: 0 }}>
+                {item.scenario_topic || 'Сценарий'}
+              </p>
+              <p style={{ fontSize: 12, color: GRAY_3, margin: '2px 0 0' }}>
+                {item.success_rate?.toFixed(0)}% верных шагов
+              </p>
+            </div>
+            <Tag color={color}>{label}</Tag>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function WeakTopics({ topics }) {
+  if (!topics?.length) return (
+    <div style={{ padding: '24px', textAlign: 'center', background: GREEN_L, borderRadius: 10 }}>
+      <p style={{ fontSize: 13, color: GREEN, fontWeight: 600, margin: 0 }}>
+        Явных слабых тем нет — отличный результат
+      </p>
+    </div>
+  );
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {topics.map((t, i) => {
+        const c = t.error_rate >= 70 ? RED : t.error_rate >= 40 ? AMBER : GREEN;
+        return (
+          <div key={i}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, gap: 10 }}>
+              <span style={{ fontSize: 13, color: GRAY_2, flex: 1, lineHeight: 1.4 }}>
+                {t.question_text?.length > 90 ? t.question_text.slice(0, 90) + '…' : t.question_text}
+              </span>
+              <Tag color={c}>{t.error_rate.toFixed(0)}%</Tag>
+            </div>
+            <div style={{ height: 4, background: GRAY_5, borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.min(100, t.error_rate)}%`, height: '100%', background: c, borderRadius: 99, transition: 'width .5s ease' }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AIRecommendations({ data }) {
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    if (!data) return;
+    setLoading(true); setError(null);
+    try {
+      const res = await aiApi.post('analytics/insights/student/', {
+        avg_quiz_score: data.avg_quiz_score || 0,
+        weak_topics: (data.weak_topics || []).slice(0, 5).map(t => ({ question_text: t.question_text, error_rate: t.error_rate, total_answers: t.total_answers })),
+        scenario_pass_rate: data.scenario_pass_rate || 0,
+        total_quizzes: data.total_quizzes_taken || 0,
+      });
+      setResult(res.data);
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Сервис временно недоступен');
+    } finally { setLoading(false); }
+  }, [data]);
+
+  return (
+    <Card style={{ padding: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, gap: 16 }}>
+        <div>
+          <span style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: BLUE, background: BLUE_L, padding: '2px 8px', borderRadius: 4,
+            display: 'inline-block', marginBottom: 8,
+          }}>AI Студия</span>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: GRAY_1, margin: 0 }}>Персональные рекомендации</h2>
+          <p style={{ fontSize: 13, color: GRAY_3, margin: '4px 0 0' }}>
+            ИИ анализирует ваши ошибки и советует что повторить
+          </p>
+        </div>
+        <button onClick={load} disabled={loading} style={{
+          padding: '10px 20px', borderRadius: R, border: 'none', flexShrink: 0,
+          background: loading ? GRAY_4 : BLUE, color: loading ? GRAY_3 : '#fff',
+          fontWeight: 600, fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer',
+          fontFamily: 'inherit', transition: 'background .2s',
+        }}
+        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = BLUE_D; }}
+        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = BLUE; }}>
+          {loading ? 'Анализирую...' : result ? 'Обновить' : 'Получить рекомендации'}
+        </button>
+      </div>
+
+      {error && <div style={{ padding: '12px 16px', background: RED_L, borderRadius: 8, fontSize: 13, color: RED }}>{error}</div>}
+
+      {!result && !loading && !error && (
+        <div style={{ padding: '28px 24px', textAlign: 'center', background: GRAY_4, borderRadius: 10, border: `1px dashed ${GRAY_5}` }}>
+          <p style={{ fontSize: 13, color: GRAY_3, margin: 0 }}>
+            Нажмите «Получить рекомендации» — ИИ изучит ваши результаты
+          </p>
+        </div>
+      )}
+
+      {result && !loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {result.strengths && (
+            <div style={{ padding: '12px 16px', background: GREEN_L, borderRadius: 8, fontSize: 13, color: '#065F46', borderLeft: `3px solid ${GREEN}` }}>
+              {result.strengths}
+            </div>
+          )}
+          {result.recommendations?.map((rec, i) => (
+            <div key={i} style={{ display: 'flex', gap: 14, padding: 16, border: BORDER, borderRadius: R }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: GRAY_4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GRAY_3} strokeWidth="2">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: GRAY_1, margin: '0 0 4px' }}>{rec.topic}</p>
+                <p style={{ fontSize: 13, color: GRAY_2, margin: 0 }}>{rec.tip}</p>
+              </div>
+            </div>
+          ))}
+          {result.motivation && (
+            <div style={{ padding: '12px 16px', background: GRAY_4, borderRadius: 8, fontSize: 13, color: GRAY_2, textAlign: 'center', fontStyle: 'italic' }}>
+              {result.motivation}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export default function StudentDashboard() {
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState(null);
+  const [tab, setTab]       = useState('quizzes');
+
+  useEffect(() => {
+    api.get('analytics/student/dashboard/')
+      .then(r => { setData(r.data); setError(null); })
+      .catch(e => setError(e.response?.data?.detail || 'Ошибка загрузки'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const lineData = data?.quiz_history?.slice().reverse().map((item, i) => ({
+    name: `#${i + 1}`,
+    score: item.score,
+  })) || [];
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
+      <div style={{ width: 28, height: 28, border: `2px solid ${GRAY_5}`, borderTopColor: BLUE, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ padding: '48px 0', textAlign: 'center' }}>
+      <p style={{ color: RED, fontSize: 14, margin: 0 }}>{error}</p>
+    </div>
+  );
+
+  const TABS = [
+    { key: 'quizzes',   label: 'История квизов' },
+    { key: 'scenarios', label: 'История сценариев' },
+    { key: 'weak',      label: 'Слабые темы' },
+  ];
+
+  return (
+    <div style={{ maxWidth: 980, margin: '0 auto', padding: '4px 0 56px', fontFamily: 'inherit' }}>
+
+      <div style={{ marginBottom: 28 }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 6px' }}>Аналитика</p>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: GRAY_1, margin: 0 }}>Мой прогресс</h1>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14, marginBottom: 22 }}>
+        <StatCard label="Квизов пройдено" value={data?.total_quizzes_taken ?? 0} accent={BLUE} />
+        <StatCard label="Средний балл" value={data?.avg_quiz_score != null ? `${data.avg_quiz_score.toFixed(1)}%` : '—'} accent={data?.avg_quiz_score >= 70 ? GREEN : RED} />
+        <StatCard label="Сценариев пройдено" value={data?.total_scenarios_taken ?? 0} accent={AMBER} />
+        <StatCard label="Прошёл сценарии" value={data?.scenario_pass_rate != null ? `${data.scenario_pass_rate.toFixed(1)}%` : '—'} accent={data?.scenario_pass_rate >= 70 ? GREEN : RED} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginBottom: 18, alignItems: 'stretch' }}>
+        <Card style={{ padding: '20px 28px', display: 'flex', gap: 28, alignItems: 'center' }}>
+          <ProgressRing value={data?.avg_quiz_score ?? 0} color={data?.avg_quiz_score >= 70 ? GREEN : AMBER} label="Квизы" />
+          <ProgressRing value={data?.scenario_pass_rate ?? 0} color={data?.scenario_pass_rate >= 70 ? BLUE : RED} label="Сценарии" />
+        </Card>
+
+        <Card style={{ padding: 24 }}>
+          {lineData.length > 1 ? (
+            <>
+              <SectionHeader title="Динамика результатов" subtitle="Баллы по последним квизам" />
+              <ResponsiveContainer width="100%" height={110}>
+                <LineChart data={lineData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRAY_5} vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: GRAY_3 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0,100]} tick={{ fontSize: 11, fill: GRAY_3 }} unit="%" axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: 10, border: BORDER, fontSize: 12 }} formatter={v => [`${v.toFixed(1)}%`, 'Балл']} />
+                  <Line type="monotone" dataKey="score" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <p style={{ fontSize: 13, color: GRAY_3, textAlign: 'center', margin: 0 }}>
+                Пройдите больше квизов — здесь появится динамика прогресса
+              </p>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card style={{ marginBottom: 18 }}>
+        <div style={{ padding: '0 24px', borderBottom: BORDER }}>
+          <div style={{ display: 'flex', gap: 0 }}>
+            {TABS.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)} style={{
+                padding: '14px 18px', border: 'none', background: 'none', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color .15s',
+                color: tab === t.key ? BLUE : GRAY_3,
+                borderBottom: `2px solid ${tab === t.key ? BLUE : 'transparent'}`,
+                marginBottom: -1,
+              }}>{t.label}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: 24 }}>
+          {tab === 'quizzes'   && <QuizHistory     history={data?.quiz_history} />}
+          {tab === 'scenarios' && <ScenarioHistory history={data?.scenario_history} />}
+          {tab === 'weak'      && <WeakTopics      topics={data?.weak_topics} />}
+        </div>
+      </Card>
+
+      <AIRecommendations data={data} />
+    </div>
+  );
+}

@@ -295,3 +295,21 @@ INFO 2026-03-16 12:46:30,796 | AI PARSING: Sending 5963 chars to Groq...
 INFO 2026-03-16 12:46:32,472 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-16 12:46:32,473 | AI PARSING SUCCESS: Course 'Тестирование программного обеспечения' generated.
 INFO 2026-03-16 12:46:32,474 | AI ACTION: [200] POST /generate-course-from-file (IP: 172.18.0.8) - 1.699s
+INFO 2026-03-19 11:11:37,796 | OK: [200] GET /docs (IP: 172.18.0.8) — 0.001s
+INFO 2026-03-19 11:11:38,460 | OK: [200] GET /openapi.json (IP: 172.18.0.8) — 0.007s
+INFO 2026-03-19 11:12:24,847 | QUIZ REQUEST | user_id=1 | count=3 | difficulty=medium
+INFO 2026-03-19 11:12:25,876 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 11:12:25,881 | QUIZ SUCCESS | user_id=1 | questions_generated=3
+INFO 2026-03-19 11:12:25,881 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 1.039s
+INFO 2026-03-19 11:12:59,219 | SCENARIO REQUEST | user_id=1 | type=chat | topic=Звонок от службы безопасности банка | difficulty=medium
+INFO 2026-03-19 11:13:01,129 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 11:13:01,132 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-03-19 11:13:01,133 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 1.917s
+INFO 2026-03-19 11:13:53,928 | FILE UPLOAD | user_id=1 | filename=Ходатайство каз и рус для 4 курса.docx
+INFO 2026-03-19 11:13:53,937 | AI COURSE | user_id=1 | chars=1331
+INFO 2026-03-19 11:13:55,450 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 11:13:55,453 | AI COURSE SUCCESS | user_id=1 | title=Организация производственной практики в стоматологии
+INFO 2026-03-19 11:13:55,454 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 1.529s
+WARNING 2026-03-19 11:50:55,136 | CLIENT ERROR: [404] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 0.005s
+WARNING 2026-03-19 11:50:56,338 | CLIENT ERROR: [404] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 0.001s
+WARNING 2026-03-19 11:51:16,067 | CLIENT ERROR: [404] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 0.000s

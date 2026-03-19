@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom'; // 🔥 ДОБАВИЛИ Link
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from './api';
 
@@ -27,6 +27,10 @@ import Settings from './pages/Settings';
 import DataProcessing from './pages/legal/DataProcessing';
 import Navbar from './Navbar';
 
+// ✅ Новые дашборды аналитики
+import TeacherDashboard from './TeacherDashboard';
+import StudentDashboard from './StudentDashboard';
+
 function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }) {
   const location = useLocation();
   const isLanding = location.pathname === '/';
@@ -40,14 +44,12 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
       />
 
       {isLanding ? (
-        // Landing — без контейнера, на всю ширину
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Landing />} />
           </Routes>
         </main>
       ) : (
-        // Все остальные страницы — с обычным padding
         <main className="container mx-auto p-4 lg:p-8 flex-grow">
           <Routes>
             <Route path="/login" element={
@@ -83,12 +85,20 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
               ) : <Navigate to="/login" />
             } />
             <Route path="/settings" element={<Settings />} />
-            
+
+            {/* ✅ Аналитика */}
+            <Route path="/analytics/teacher" element={
+              isLoggedIn && isTeacher ? <TeacherDashboard /> : <Navigate to="/login" />
+            } />
+            <Route path="/analytics/student" element={
+              isLoggedIn ? <StudentDashboard /> : <Navigate to="/login" />
+            } />
+
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/cookies" element={<Cookies />} />
             <Route path="/data-processing" element={<DataProcessing />} />
-            
+
             <Route path="*" element={<Navigate to="/courses" />} />
           </Routes>
         </main>
@@ -97,8 +107,6 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
       <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-14">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-
-            {/* Brand */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
@@ -110,8 +118,6 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.
               </p>
             </div>
-
-            {/* Platform */}
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Платформа</p>
               <ul className="space-y-3 text-sm">
@@ -121,8 +127,6 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 <li><Link to="/register" className="hover:text-white transition-colors">Начать бесплатно</Link></li>
               </ul>
             </div>
-
-            {/* Company */}
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Компания</p>
               <ul className="space-y-3 text-sm">
@@ -132,22 +136,16 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 <li><a href="#" className="hover:text-white transition-colors">Контакты</a></li>
               </ul>
             </div>
-
-            {/* Legal */}
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Правовое</p>
               <ul className="space-y-3 text-sm">
-                
                 <li><Link to="/privacy" className="hover:text-white transition-colors">Политика конфиденциальности</Link></li>
                 <li><Link to="/terms" className="hover:text-white transition-colors">Пользовательское соглашение</Link></li>
                 <li><Link to="/data-processing" className="hover:text-white transition-colors">Обработка данных</Link></li>
-                <li><Link to="/cookies" className="hover:text-white transition-colors"> Cookie</Link></li>
+                <li><Link to="/cookies" className="hover:text-white transition-colors">Cookie</Link></li>
               </ul>
             </div>
-
           </div>
-
-          {/* Bottom bar */}
           <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-slate-600">© 2026 SaqBol LMS — AI Education Platform. Все права защищены.</p>
             <div className="flex items-center gap-4 text-xs text-slate-600">

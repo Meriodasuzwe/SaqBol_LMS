@@ -17,20 +17,19 @@ function QuizPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
     
-    // 🔥 Достаем quiz_id из ссылки
     const [searchParams] = useSearchParams();
     const targetQuizId = searchParams.get('quiz_id');
 
-    // Данные
     const [quiz, setQuiz] = useState(null); 
     const [loading, setLoading] = useState(true);
 
-    // Состояния прохождения
     const [currentIndex, setCurrentIndex] = useState(0); 
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [currentResult, setCurrentResult] = useState(null); 
 
-    // Анти-чит
+    // ✅ Время начала теста для аналитики
+    const startTimeRef = useRef(Date.now());
+
     const [cheatWarnings, setCheatWarnings] = useState(0);
     const cheatWarningsRef = useRef(cheatWarnings);
     const selectedAnswersRef = useRef(selectedAnswers);
@@ -38,24 +37,19 @@ function QuizPage() {
     useEffect(() => { cheatWarningsRef.current = cheatWarnings; }, [cheatWarnings]);
     useEffect(() => { selectedAnswersRef.current = selectedAnswers; }, [selectedAnswers]);
 
-    // 1. Загрузка данных
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Добавляем timestamp, чтобы сбросить жесткий кэш браузера
                 const quizzesRes = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`);
                 const quizList = Array.isArray(quizzesRes.data) ? quizzesRes.data : [quizzesRes.data];
-                
                 const validQuizzes = quizList.filter(q => q && q.id).sort((a, b) => b.id - a.id);
                 
                 if (validQuizzes.length > 0) {
-                    // 🔥 Ищем ИМЕННО ТОТ тест, который передали в URL
                     if (targetQuizId) {
                         const specificQuiz = validQuizzes.find(q => String(q.id) === String(targetQuizId));
                         setQuiz(specificQuiz || validQuizzes[0]);
                     } else {
-                        // Фолбэк на старую логику, если вдруг перешли по старой ссылке
                         setQuiz(validQuizzes[0]);
                     }
                 }
@@ -67,9 +61,10 @@ function QuizPage() {
             }
         };
         fetchData();
-    }, [lessonId, targetQuizId]); // Добавили targetQuizId в зависимости
+        // Сбрасываем таймер при загрузке нового теста
+        startTimeRef.current = Date.now();
+    }, [lessonId, targetQuizId]);
 
-    // 2. Анти-чит (Отслеживание вкладок)
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.hidden && !currentResult && quiz) {
@@ -78,14 +73,12 @@ function QuizPage() {
 
                 if (currentWarnings >= 3) {
                     toast.error("ТЕСТ ЗАВЕРШЕН: Зафиксировано переключение вкладок.", {
-                        autoClose: false,
-                        theme: "colored"
+                        autoClose: false, theme: "colored"
                     });
                     submitQuiz(true);
                 } else {
-                    toast.warning(`ПРЕДУПРЕЖДЕНИЕ (${currentWarnings}/3): Не покидайте вкладку с тестом! Система фиксирует нарушения.`, {
-                        autoClose: 7000,
-                        theme: "colored"
+                    toast.warning(`ПРЕДУПРЕЖДЕНИЕ (${currentWarnings}/3): Не покидайте вкладку с тестом!`, {
+                        autoClose: 7000, theme: "colored"
                     });
                 }
             }
@@ -97,6 +90,41 @@ function QuizPage() {
 
     const handleAnswer = (questionId, optionId) => {
         setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }));
+    };
+
+    // ✅ Отправка аналитики после завершения квиза
+    const submitAnalytics = async (quizData, resultData, answersMap) => {
+        try {
+            const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
+            const questions = quizData.questions || [];
+
+            // Считаем правильные ответы
+            let correctCount = 0;
+            const answersPayload = questions.map(q => {
+                const choiceId = answersMap[q.id];
+                const choice = q.choices?.find(c => c.id === choiceId);
+                const isCorrect = choice?.is_correct || false;
+                if (isCorrect) correctCount++;
+                return {
+                    question_id: q.id,
+                    selected_choice_id: choiceId || null,
+                    is_correct: isCorrect,
+                };
+            });
+
+            await api.post('analytics/quiz-attempt/', {
+                quiz_id: quizData.id,
+                result_id: resultData?.id || null,
+                score: resultData.score,
+                total_questions: questions.length,
+                correct_answers: correctCount,
+                time_spent_seconds: timeSpent,
+                answers: answersPayload,
+            });
+        } catch (err) {
+            // Не показываем ошибку пользователю — аналитика не должна мешать прохождению
+            console.warn('Analytics submit failed:', err);
+        }
     };
 
     const submitQuiz = (isForced = false) => {
@@ -112,12 +140,14 @@ function QuizPage() {
         api.post(`quizzes/${quiz.id}/submit/`, { answers })
             .then(res => {
                 setCurrentResult(res.data);
+
+                // ✅ Отправляем аналитику параллельно — не блокируем UI
+                submitAnalytics(quiz, res.data, answersToSubmit);
+
                 if (res.data.score >= 70) {
                     confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        zIndex: 9999,
+                        particleCount: 150, spread: 80,
+                        origin: { y: 0.6 }, zIndex: 9999,
                         colors: ['#10B981', '#047857', '#059669'] 
                     });
                     toast.success(`Тест успешно сдан! Результат: ${res.data.score}%`);
@@ -162,7 +192,6 @@ function QuizPage() {
         <div className="min-h-screen bg-base-200 py-10 px-6 font-sans text-base-content transition-colors duration-200">
             <div className="max-w-3xl mx-auto">
                 
-                {/* 🔝 ВЕРХНЯЯ ПАНЕЛЬ */}
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
                     <button 
                         onClick={() => navigate(`/lesson/${lessonId}`)} 
@@ -177,7 +206,6 @@ function QuizPage() {
                     )}
                 </div>
 
-                {/* 🟦 НАВИГАЦИЯ ПО ВОПРОСАМ */}
                 <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 mb-6 transition-colors duration-200">
                     <div className="flex flex-wrap gap-2 justify-center">
                         {questions.map((q, idx) => {
@@ -188,8 +216,8 @@ function QuizPage() {
                             
                             if (!currentResult) {
                                 if (isAnswered) btnClass = "bg-blue-600 border-blue-600 text-white shadow-sm"; 
-                                if (isActive) btnClass += " ring-4 ring-blue-500/20 scale-110 z-10 border-blue-600 text-blue-600 dark:text-blue-400"; // Активный вопрос (даже если не отвечен) подсвечиваем синим
-                                if (isActive && isAnswered) btnClass += " text-white" // Если активный и отвеченный, то текст белый
+                                if (isActive) btnClass += " ring-4 ring-blue-500/20 scale-110 z-10 border-blue-600 text-blue-600 dark:text-blue-400";
+                                if (isActive && isAnswered) btnClass += " text-white";
                             } else {
                                 const isPassed = currentResult.score >= 70;
                                 btnClass = isPassed ? "bg-emerald-500 border-emerald-500 text-white" : "bg-red-500 border-red-500 text-white";
@@ -209,11 +237,9 @@ function QuizPage() {
                     </div>
                 </div>
 
-                {/* ОСНОВНОЙ БЛОК ВОПРОСА */}
                 <div className="bg-base-100 rounded-3xl shadow-sm border border-base-300 overflow-hidden transition-colors duration-200">
                     <div className="p-8 md:p-12">
                         
-                        {/* Заголовок вопроса */}
                         <div className="mb-10">
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/50">Вопрос {currentIndex + 1} из {questions.length}</span>
@@ -224,7 +250,6 @@ function QuizPage() {
                             </h1>
                         </div>
 
-                        {/* Варианты ответов */}
                         <div className="grid gap-3">
                             {choices.map(choice => {
                                 const isSelected = selectedAnswers[currentQuestion.id] === choice.id;
@@ -256,11 +281,10 @@ function QuizPage() {
                                             {choice.text}
                                         </span>
                                     </label>
-                                )
+                                );
                             })}
                         </div>
 
-                        {/* === КНОПКИ УПРАВЛЕНИЯ === */}
                         {!currentResult ? (
                             <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-12 gap-4">
                                 <button 
@@ -289,7 +313,6 @@ function QuizPage() {
                                 )}
                             </div>
                         ) : (
-                            // ПАНЕЛЬ РЕЗУЛЬТАТОВ
                             <div className={`mt-12 p-8 rounded-2xl border-2 text-center animate-in fade-in slide-in-from-bottom-4 ${currentResult.score >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50' : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50'}`}>
                                 <div className="flex justify-center mb-4">
                                     {currentResult.score >= 70 
@@ -312,6 +335,7 @@ function QuizPage() {
                                             setCurrentIndex(0);
                                             setSelectedAnswers({});
                                             setCheatWarnings(0);
+                                            startTimeRef.current = Date.now(); // ✅ сброс таймера
                                         }}
                                     >
                                         <RefreshCcw size={16} /> Попробовать снова
