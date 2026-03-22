@@ -3,7 +3,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-# Вот здесь мы импортируем НАШИ вьюхи из соседнего файла views.py
+
+# Импортируем НАШИ вьюхи из соседнего файла views.py
 from .views import (
     RegisterView, 
     MeView,
@@ -17,7 +18,10 @@ from .views import (
     ChangePasswordView,
     RequestEmailChangeView,
     VerifyEmailChangeView,
-    GoogleLoginView
+    GoogleLoginView,
+    # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
+    PendingTeacherApplicationsView,
+    UpdateTeacherApplicationStatusView
 )
 
 urlpatterns = [
@@ -41,10 +45,13 @@ urlpatterns = [
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     
-    
     path('request-email-change/', RequestEmailChangeView.as_view(), name='request-email-change'),
     path('verify-email-change/', VerifyEmailChangeView.as_view(), name='verify-email-change'),
     # Подтверждение email
     path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
     path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
+
+    # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ ЗАЯВОК) ===
+    path('admin/applications/pending/', PendingTeacherApplicationsView.as_view(), name='admin_pending_applications'),
+    path('admin/applications/<int:pk>/update/', UpdateTeacherApplicationStatusView.as_view(), name='admin_update_application'),
 ]

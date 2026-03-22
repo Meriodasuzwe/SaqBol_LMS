@@ -31,10 +31,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'drf_spectacular',
+    'analytics',
     'django_prometheus', # ✅ Мониторинг
     'courses',
     'quizzes',
     'rest_framework',
+    'notifications',
     'users',
 ]
 

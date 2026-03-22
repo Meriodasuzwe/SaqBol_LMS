@@ -13,6 +13,7 @@ from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from notifications.service import send_notification
 
 User = get_user_model()
 
@@ -375,3 +376,65 @@ def upload_image(request):
     file_url = request.build_absolute_uri(default_storage.url(saved_path))
     
     return Response({'url': file_url})
+
+
+# ---------------------------
+# Админ-панель: Модерация курсов
+# ---------------------------
+class PendingCoursesView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = CourseSerializer
+
+    def get_queryset(self):
+        # Курсы со статусом draft (черновики), которые ожидают публикации
+        return Course.objects.filter(status='draft')
+
+class ApproveCourseView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Course.objects.all()
+ 
+    def patch(self, request, *args, **kwargs):
+        course = self.get_object()
+        course.status = 'published'
+        course.save()
+ 
+        # ✅ Уведомление автору
+        from notifications.service import send_notification
+        send_notification(
+            recipient=course.teacher,
+            notification_type='course_approved',
+            title='Курс опубликован',
+            message=(
+                f'Ваш курс «{course.title}» прошёл модерацию и теперь '
+                f'доступен всем студентам в каталоге. Поздравляем!'
+            ),
+        )
+ 
+        return Response({"message": "Курс успешно опубликован!"})
+ 
+ 
+class RejectCourseView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Course.objects.all()
+ 
+    def patch(self, request, *args, **kwargs):
+        course = self.get_object()
+        reason = request.data.get('rejection_reason', 'Причина не указана')
+ 
+        course.status = 'rejected'
+        course.save()
+ 
+        # ✅ Уведомление автору с причиной
+        from notifications.service import send_notification
+        send_notification(
+            recipient=course.teacher,
+            notification_type='course_rejected',
+            title='Курс отклонён',
+            message=(
+                f'К сожалению, ваш курс «{course.title}» не прошёл модерацию.\n\n'
+                f'Причина: {reason}\n\n'
+                f'Вы можете внести исправления и отправить курс на повторную проверку.'
+            ),
+        )
+ 
+        return Response({"message": "Курс отклонен, уведомление отправлено."})

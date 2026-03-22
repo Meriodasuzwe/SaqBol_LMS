@@ -19,6 +19,7 @@ from django.db.models import Q
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+
 from .models import EmailVerification
 from .models import TeacherApplication
 from .serializers import (
@@ -27,7 +28,8 @@ from .serializers import (
     PasswordResetRequestSerializer, 
     SetNewPasswordSerializer,
     VerifyEmailSerializer,
-    ResendVerificationSerializer
+    ResendVerificationSerializer,
+    TeacherApplicationSerializer # <-- Добавили этот импорт
 )
 
 # Инициализируем логгер
@@ -463,7 +465,6 @@ class RequestEmailChangeView(APIView):
         cache.set(cache_key, {'new_email': new_email, 'otp': otp_code}, timeout=600)
 
         # Отправляем письмо с кодом
-        # Отправляем письмо с кодом
         try:
             send_mail(
                 subject='Код подтверждения SaqBol',
@@ -503,3 +504,61 @@ class VerifyEmailChangeView(APIView):
         cache.delete(cache_key)
 
         return Response({"message": "Email успешно изменен!"}, status=status.HTTP_200_OK)
+
+# ---------------------------
+# Админ-панель: Модерация заявок
+# ---------------------------
+class PendingTeacherApplicationsView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = TeacherApplicationSerializer
+
+    def get_queryset(self):
+        # Возвращаем заявки, ожидающие проверки (статус 'pending')
+        return TeacherApplication.objects.filter(status='pending')
+
+class UpdateTeacherApplicationStatusView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = TeacherApplication.objects.all()
+ 
+    def patch(self, request, *args, **kwargs):
+        application = self.get_object()
+        new_status = request.data.get('status')
+        reason = request.data.get('rejection_reason', 'Причина не указана')
+ 
+        from notifications.service import send_notification
+ 
+        if new_status == 'accepted':
+            application.status = 'accepted'
+            user = application.user
+            user.role = 'teacher'
+            user.save()
+            application.save()
+ 
+            # ✅ Уведомление об одобрении
+            send_notification(
+                recipient=user,
+                notification_type='app_approved',
+                title='Заявка одобрена',
+                message=(
+                    'Поздравляем! Ваша заявка на статус автора одобрена. '
+                    'Теперь вы можете создавать и публиковать курсы. '
+                    'Перезайдите в аккаунт чтобы изменения применились.'
+                ),
+            )
+        else:
+            application.status = 'rejected'
+            application.save()
+ 
+            # ✅ Уведомление об отклонении с причиной
+            send_notification(
+                recipient=application.user,
+                notification_type='app_rejected',
+                title='Заявка отклонена',
+                message=(
+                    f'К сожалению, ваша заявка на статус автора была отклонена.\n\n'
+                    f'Причина: {reason}\n\n'
+                    f'Вы можете подать новую заявку после исправления замечаний.'
+                ),
+            )
+ 
+        return Response({"message": f"Статус заявки изменён на {new_status}"})
