@@ -26,6 +26,7 @@ import Cookies from './pages/legal/Cookies';
 import Settings from './pages/Settings';
 import DataProcessing from './pages/legal/DataProcessing';
 import Navbar from './Navbar';
+import AdminPanel from './AdminPanel';
 
 // ✅ Новые дашборды аналитики
 import TeacherDashboard from './TeacherDashboard';
@@ -86,7 +87,12 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             } />
             <Route path="/settings" element={<Settings />} />
 
-            {/* ✅ Аналитика */}
+            {/*  Админка */}
+            <Route path="/admin" element={
+              isLoggedIn && userRole === 'admin' ? <AdminPanel /> : <Navigate to="/login" />
+            } />
+
+            {/*  Аналитика */}
             <Route path="/analytics/teacher" element={
               isLoggedIn && isTeacher ? <TeacherDashboard /> : <Navigate to="/login" />
             } />

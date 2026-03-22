@@ -11,9 +11,14 @@ from .views import (
     LessonStepDetailView,
     LessonStepCreateView,
     MarkStepCompleteView,
+    RejectCourseView,
+
     upload_image,
     CreateStripeCheckoutSessionView,
-    stripe_webhook # <-- ИМПОРТИРУЕМ ФУНКЦИЮ
+    stripe_webhook,
+    # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
+    PendingCoursesView,
+    ApproveCourseView
 )
 
 urlpatterns = [
@@ -27,7 +32,7 @@ urlpatterns = [
     
     # ССЫЛКА НА ОПЛАТУ STRIPE И ВЕБХУК
     path('<int:course_id>/create-checkout-session/', CreateStripeCheckoutSessionView.as_view(), name='create-checkout-session'),
-    path('webhook/stripe/', stripe_webhook, name='stripe-webhook'), # <-- МАРШРУТ НА ФУНКЦИЮ
+    path('webhook/stripe/', stripe_webhook, name='stripe-webhook'),
 
     path('<int:course_id>/lessons/', LessonListCreateView.as_view(), name='course-lessons'),
     path('lessons/<int:pk>/', LessonDetailView.as_view(), name='lesson-detail'),
@@ -37,4 +42,9 @@ urlpatterns = [
     path('steps/<int:pk>/', LessonStepDetailView.as_view(), name='step-detail'),
     
     path('upload-image/', upload_image, name='upload-image'),
+
+    # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
+    path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),
+    path('admin/<int:pk>/approve/', ApproveCourseView.as_view(), name='admin_approve_course'),
+    path('admin/<int:pk>/reject/', RejectCourseView.as_view(), name='admin_reject_course'),
 ]

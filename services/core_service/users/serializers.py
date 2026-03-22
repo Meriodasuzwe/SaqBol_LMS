@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from .models import User, QuizAttempt, EmailVerification
+from .models import User, QuizAttempt, EmailVerification,TeacherApplication
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -224,3 +224,15 @@ class ResendVerificationSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+    
+    
+
+
+
+class TeacherApplicationSerializer(serializers.ModelSerializer):
+    # Достаем email пользователя, чтобы красиво показывать его в админке
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = TeacherApplication
+        fields = ['id', 'user_email', 'cv_text', 'portfolio_url', 'status']

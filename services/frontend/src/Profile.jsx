@@ -5,14 +5,14 @@ import { toast } from 'react-toastify';
 
 function Profile() {
     const [user, setUser] = useState(null);
-    const [results, setResults] = useState([]); 
-    const [myCourses, setMyCourses] = useState([]); 
-    const [categories, setCategories] = useState([]); 
+    const [results, setResults] = useState([]);
+    const [myCourses, setMyCourses] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCourseTitle, setNewCourseTitle] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState(""); 
+    const [selectedCategory, setSelectedCategory] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
     const [activityYear, setActivityYear] = useState(2026);
@@ -24,14 +24,14 @@ function Profile() {
             try {
                 const userRes = await api.get('users/me/');
                 setUser(userRes.data);
-                
-                const resultsRes = await api.get('quizzes/my-results/'); 
+
+                const resultsRes = await api.get('quizzes/my-results/');
                 setResults(resultsRes.data);
-                
-                const catRes = await api.get('courses/categories/'); 
+
+                const catRes = await api.get('courses/categories/');
                 setCategories(catRes.data);
                 if (catRes.data.length > 0) setSelectedCategory(catRes.data[0].id);
-                
+
                 const coursesRes = await api.get('courses/my_courses/');
                 setMyCourses(coursesRes.data);
             } catch (err) {
@@ -40,7 +40,7 @@ function Profile() {
             } finally {
                 setLoading(false);
             }
-        };  
+        };
         fetchData();
     }, []);
 
@@ -55,7 +55,6 @@ function Profile() {
             setUser(res.data);
             toast.success("Аватарка успешно обновлена");
         } catch (err) {
-            console.error(err);
             toast.error("Ошибка при обновлении аватарки");
         }
     };
@@ -83,14 +82,22 @@ function Profile() {
 
     const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
     const totalTests = results.length;
-    const averageScore = totalTests > 0 ? Math.round(results.reduce((acc, c) => acc + c.score, 0) / totalTests) : 0;
+    const averageScore = totalTests > 0
+        ? Math.round(results.reduce((acc, c) => acc + c.score, 0) / totalTests)
+        : 0;
 
-    // Логика отображения почты или Telegram-юзернейма
+    // ✅ Количество курсов в процессе (прогресс < 100%)
+    const inProgressCourses = myCourses.filter(c => !c.is_completed).length;
+
+    // ✅ Для учителя — суммарно студентов на курсах
+    const totalStudents = isTeacher
+        ? myCourses.reduce((acc, c) => acc + (c.enrolled_students_count || 0), 0)
+        : null;
+
     const isFakeEmail = user?.email?.includes('@telegram.fake') || user?.email?.includes('@telegram.com');
     const displaySubtext = isFakeEmail ? `@${user?.username} (Telegram)` : user?.email;
 
     const activityMap = useMemo(() => {
-        const days = [];
         const map = {};
         results.forEach(r => {
             if (r.completed_at) {
@@ -98,7 +105,8 @@ function Profile() {
                 map[date] = (map[date] || 0) + 1;
             }
         });
-        const endDate = new Date(activityYear, 11, 31); 
+        const endDate = new Date(activityYear, 11, 31);
+        const days = [];
         for (let i = 364; i >= 0; i--) {
             const d = new Date(endDate);
             d.setDate(d.getDate() - i);
@@ -118,13 +126,13 @@ function Profile() {
 
     return (
         <div className="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8 text-base-content animate-fade-in">
-            
+
             {/* ── ШАПКА ПРОФИЛЯ ── */}
             <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden mb-6">
                 <div className="h-32 bg-base-200/50 border-b border-base-200"></div>
-                
+
                 <div className="px-8 pb-8 flex flex-col sm:flex-row gap-6 items-start sm:items-end relative -mt-12">
-                    
+
                     {/* Аватарка */}
                     <div className="relative shrink-0 group">
                         <div className="w-28 h-28 rounded-full border-4 border-base-100 shadow-sm bg-base-200 overflow-hidden flex items-center justify-center">
@@ -156,11 +164,9 @@ function Profile() {
                                 {isTeacher ? 'Преподаватель' : 'Студент'}
                             </span>
                         </div>
-                        {/* Фейковая почта теперь скрыта, выводим юзернейм */}
                         <p className="text-sm text-base-content/50 mt-1">{displaySubtext}</p>
                     </div>
 
-                    {/* Кнопка настроек (теперь ссылка на страницу /settings) */}
                     <div className="pb-2">
                         <Link to="/settings"
                             className="btn btn-sm btn-outline border-base-300 text-base-content/80 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium">
@@ -175,24 +181,25 @@ function Profile() {
             </div>
 
             {/* ── АКТИВНОСТЬ ── */}
-            <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-8 flex flex-col md:flex-row gap-8">
+            <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6 flex flex-col md:flex-row gap-8">
                 <div className="flex-1 overflow-x-auto">
                     <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
                         Активность обучения
-                        <span className="text-xs font-normal text-base-content/50 border border-base-300 rounded px-2 py-0.5">{totalTests} тестов за год</span>
+                        <span className="text-xs font-normal text-base-content/50 border border-base-300 rounded px-2 py-0.5">
+                            {totalTests} тестов за год
+                        </span>
                     </h3>
                     <div className="pb-2 min-w-max">
                         <div className="grid grid-rows-7 grid-flow-col gap-[3px]">
                             {activityMap.map((day, idx) => {
-                                let bg = "bg-gray-200 dark:bg-base-300"; 
+                                let bg = "bg-gray-200 dark:bg-base-300";
                                 if (day.count === 1) bg = "bg-emerald-300 dark:bg-emerald-800";
                                 if (day.count === 2) bg = "bg-emerald-400 dark:bg-emerald-600";
                                 if (day.count >= 3) bg = "bg-emerald-500 dark:bg-emerald-500";
                                 return (
                                     <div key={idx}
                                         className={`w-[11px] h-[11px] rounded-[2px] transition-colors cursor-pointer hover:ring-1 hover:ring-base-content/30 ${bg}`}
-                                        title={`${day.date}: Пройдено тестов - ${day.count}`}>
-                                    </div>
+                                        title={`${day.date}: ${day.count} тестов`} />
                                 );
                             })}
                         </div>
@@ -218,23 +225,66 @@ function Profile() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                
+
                 {/* ── ЛЕВАЯ КОЛОНКА ── */}
                 <div className="xl:col-span-1 space-y-6">
+
+                    {/* ✅ УЛУЧШЕННЫЕ МЕТРИКИ */}
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
                         <h3 className="text-sm font-semibold mb-4">Успеваемость</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3 mb-3">
                             <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
                                 <div className="text-xs text-base-content/50 mb-1">Всего тестов</div>
                                 <div className="text-2xl font-bold">{totalTests}</div>
                             </div>
                             <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
                                 <div className="text-xs text-base-content/50 mb-1">Средний балл</div>
-                                <div className="text-2xl font-bold text-blue-600">{averageScore}%</div>
+                                <div className={`text-2xl font-bold ${averageScore >= 70 ? 'text-blue-600' : 'text-red-500'}`}>
+                                    {averageScore}%
+                                </div>
                             </div>
                         </div>
+
+                        {/* ✅ Третья метрика — полная строка */}
+                        <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
+                            <div className="flex justify-between items-center mb-2">
+                                <div className="text-xs text-base-content/50">
+                                    {isTeacher ? 'Студентов на курсах' : 'Курсов в процессе'}
+                                </div>
+                                <div className="text-lg font-bold">
+                                    {isTeacher ? (totalStudents ?? '—') : inProgressCourses}
+                                </div>
+                            </div>
+                            {!isTeacher && myCourses.length > 0 && (
+                                <div className="w-full bg-base-200 rounded-full h-1.5 mt-1">
+                                    <div
+                                        className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.round((inProgressCourses / myCourses.length) * 100)}%` }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ✅ Ссылка на детальную аналитику */}
+                        <Link
+                            to={isTeacher ? '/analytics/teacher' : '/analytics/student'}
+                            className="mt-4 flex items-center justify-between w-full px-4 py-3 rounded-xl border border-base-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                        >
+                            <div>
+                                <p className="text-xs font-semibold text-base-content/70 group-hover:text-blue-700 transition-colors">
+                                    {isTeacher ? 'Аналитика курсов' : 'Подробная аналитика'}
+                                </p>
+                                <p className="text-[11px] text-base-content/40 mt-0.5">
+                                    {isTeacher ? 'Слабые темы и AI-рекомендации' : 'Прогресс, слабые темы, советы AI'}
+                                </p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/30 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </Link>
                     </div>
 
+                    {/* ✅ УЛУЧШЕННЫЕ РЕЗУЛЬТАТЫ КВИЗОВ */}
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
                         <h3 className="text-sm font-semibold mb-4">Последние результаты</h3>
                         {results.length === 0 ? (
@@ -242,16 +292,28 @@ function Profile() {
                         ) : (
                             <div className="space-y-1">
                                 {results.slice(0, 5).map(r => (
-                                    <div key={r.id} className="flex justify-between items-center py-2.5 border-b border-base-100 last:border-0 hover:bg-base-50 px-2 -mx-2 rounded-lg transition-colors">
-                                        <div className="truncate pr-4">
-                                            <p className="text-sm font-medium truncate">{r.quiz_title || "Без названия"}</p>
-                                            <p className="text-[11px] text-base-content/50 mt-0.5">
-                                                {r.completed_at ? new Date(r.completed_at).toLocaleDateString() : '—'}
-                                            </p>
+                                    <div key={r.id}
+                                        className="py-3 px-2 -mx-2 rounded-lg hover:bg-base-50 transition-colors">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="truncate pr-3 flex-1">
+                                                <p className="text-sm font-medium truncate">{r.quiz_title || "Без названия"}</p>
+                                                <p className="text-[11px] text-base-content/50 mt-0.5">
+                                                    {r.completed_at ? new Date(r.completed_at).toLocaleDateString('ru-RU') : '—'}
+                                                </p>
+                                            </div>
+                                            <span className={`shrink-0 font-bold text-xs px-2 py-1 rounded border
+                                                ${r.score >= 70
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                                {r.score}%
+                                            </span>
                                         </div>
-                                        <div className={`shrink-0 font-bold text-xs px-2 py-1 rounded border
-                                            ${r.score >= 70 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
-                                            {r.score}%
+                                        {/* ✅ Прогресс-полоска */}
+                                        <div className="w-full bg-base-200 rounded-full h-1">
+                                            <div
+                                                className={`h-1 rounded-full transition-all duration-500 ${r.score >= 70 ? 'bg-emerald-500' : r.score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                                style={{ width: `${r.score}%` }}
+                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -265,7 +327,7 @@ function Profile() {
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8 min-h-full">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold">
-                                {isTeacher ? 'Управление курсами' : 'Мое обучение'}
+                                {isTeacher ? 'Управление курсами' : 'Моё обучение'}
                             </h3>
                             {isTeacher && (
                                 <button onClick={() => setIsModalOpen(true)}
@@ -286,8 +348,17 @@ function Profile() {
                                         <h4 className="font-semibold mb-4 line-clamp-2 text-sm group-hover:text-blue-600 transition-colors">
                                             {course.title}
                                         </h4>
+
+                                        {/* ✅ Количество студентов для учителя */}
+                                        {isTeacher && course.enrolled_students_count != null && (
+                                            <p className="text-xs text-base-content/40 mb-3">
+                                                {course.enrolled_students_count} студентов
+                                            </p>
+                                        )}
+
                                         <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
-                                            <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
+                                            <Link to={`/courses/${course.id}`}
+                                                className="text-xs font-bold text-blue-600 hover:underline">
                                                 {isTeacher ? 'Просмотр курса' : 'Продолжить'}
                                             </Link>
                                             {isTeacher && (
@@ -302,7 +373,9 @@ function Profile() {
                             </div>
                         ) : (
                             <div className="text-center py-16 border border-dashed border-base-300 rounded-xl bg-base-50/50">
-                                <p className="text-sm font-medium text-base-content/50 mb-4">У вас пока нет активных курсов.</p>
+                                <p className="text-sm font-medium text-base-content/50 mb-4">
+                                    У вас пока нет активных курсов.
+                                </p>
                                 {!isTeacher && (
                                     <Link to="/courses"
                                         className="btn btn-sm btn-outline border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 shadow-sm">
@@ -322,22 +395,33 @@ function Profile() {
                         <h3 className="font-bold text-lg mb-4">Новый курс</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Название</span></label>
-                                <input type="text" className="input input-sm input-bordered border-base-300 w-full shadow-sm"
-                                    value={newCourseTitle} onChange={(e) => setNewCourseTitle(e.target.value)} />
+                                <label className="label py-0 pb-1.5">
+                                    <span className="text-xs font-medium text-base-content/70">Название</span>
+                                </label>
+                                <input type="text"
+                                    className="input input-sm input-bordered border-base-300 w-full shadow-sm"
+                                    value={newCourseTitle}
+                                    onChange={(e) => setNewCourseTitle(e.target.value)} />
                             </div>
                             <div>
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Категория</span></label>
+                                <label className="label py-0 pb-1.5">
+                                    <span className="text-xs font-medium text-base-content/70">Категория</span>
+                                </label>
                                 <select className="select select-sm select-bordered border-base-300 w-full shadow-sm"
-                                    value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}>
                                     {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.title}</option>)}
                                 </select>
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-8">
-                            <button className="btn btn-sm btn-ghost" onClick={() => setIsModalOpen(false)}>Отмена</button>
-                            <button className={`btn btn-sm shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-0 ${isCreating ? 'loading' : ''}`}
-                                onClick={handleCreateCourse} disabled={isCreating || !newCourseTitle}>
+                            <button className="btn btn-sm btn-ghost" onClick={() => setIsModalOpen(false)}>
+                                Отмена
+                            </button>
+                            <button
+                                className={`btn btn-sm shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-0 ${isCreating ? 'loading' : ''}`}
+                                onClick={handleCreateCourse}
+                                disabled={isCreating || !newCourseTitle}>
                                 Создать
                             </button>
                         </div>

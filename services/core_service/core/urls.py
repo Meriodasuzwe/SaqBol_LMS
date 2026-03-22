@@ -17,7 +17,7 @@ urlpatterns = [
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     
     path('analytics/', include('analytics.urls')),
-    
+    path('notifications/', include('notifications.urls')),
     path('prometheus/', include('django_prometheus.urls')),
 ]
 

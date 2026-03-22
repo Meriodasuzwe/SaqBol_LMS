@@ -313,3 +313,60 @@ INFO 2026-03-19 11:13:55,454 | OK: [200] POST /generate-course-from-file (IP: 17
 WARNING 2026-03-19 11:50:55,136 | CLIENT ERROR: [404] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 0.005s
 WARNING 2026-03-19 11:50:56,338 | CLIENT ERROR: [404] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 0.001s
 WARNING 2026-03-19 11:51:16,067 | CLIENT ERROR: [404] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 0.000s
+INFO 2026-03-19 11:54:42,590 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-19 11:54:44,989 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 11:54:44,992 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-19 11:54:44,992 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.410s
+INFO 2026-03-19 11:54:53,725 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-19 11:54:55,049 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 11:54:55,051 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-19 11:54:55,052 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.329s
+INFO 2026-03-19 11:56:14,350 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-19 11:56:15,614 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 11:56:15,617 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-19 11:56:15,618 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.271s
+INFO 2026-03-19 12:02:20,707 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-19 12:02:22,064 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 12:02:22,066 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-19 12:02:22,067 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.362s
+INFO 2026-03-19 12:14:00,403 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-19 12:14:01,899 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 12:14:01,901 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-19 12:14:01,902 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.502s
+INFO 2026-03-19 12:15:16,863 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-19 12:15:18,602 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 12:15:18,603 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-19 12:15:18,604 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.743s
+INFO 2026-03-19 12:15:32,850 | INSIGHTS STUDENT | user_id=25
+INFO 2026-03-19 12:15:33,775 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 12:15:33,776 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-03-19 12:15:33,777 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 0.932s
+INFO 2026-03-19 12:17:17,364 | INSIGHTS STUDENT | user_id=25
+INFO 2026-03-19 12:17:18,535 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 12:17:18,537 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-03-19 12:17:18,538 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.176s
+INFO 2026-03-19 17:32:55,522 | INSIGHTS STUDENT | user_id=25
+INFO 2026-03-19 17:32:56,728 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 17:32:56,733 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-03-19 17:32:56,733 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.219s
+INFO 2026-03-19 17:38:45,772 | INSIGHTS STUDENT | user_id=26
+INFO 2026-03-19 17:38:46,909 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 17:38:46,911 | INSIGHTS STUDENT SUCCESS | user_id=26
+INFO 2026-03-19 17:38:46,911 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.142s
+INFO 2026-03-19 17:39:18,877 | INSIGHTS TEACHER | user_id=22 | course=Текущий курс
+INFO 2026-03-19 17:39:20,318 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 17:39:20,320 | INSIGHTS TEACHER SUCCESS | user_id=22
+INFO 2026-03-19 17:39:20,321 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.448s
+INFO 2026-03-19 17:39:36,047 | FILE UPLOAD | user_id=22 | filename=Заявление на практику.docx
+INFO 2026-03-19 17:39:36,057 | AI COURSE | user_id=22 | chars=2911
+INFO 2026-03-19 17:39:37,729 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-19 17:39:37,731 | AI COURSE SUCCESS | user_id=22 | title=Стоматология
+INFO 2026-03-19 17:39:37,732 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 1.687s
+INFO 2026-03-21 08:54:10,625 | INSIGHTS STUDENT | user_id=35
+INFO 2026-03-21 08:54:11,611 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-21 08:54:11,614 | INSIGHTS STUDENT SUCCESS | user_id=35
+INFO 2026-03-21 08:54:11,615 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.000s
+INFO 2026-03-22 11:10:42,059 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-22 11:10:43,635 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 11:10:43,640 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-22 11:10:43,641 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.592s

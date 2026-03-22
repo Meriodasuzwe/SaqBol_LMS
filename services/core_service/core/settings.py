@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'courses',
     'quizzes',
     'rest_framework',
+    'notifications',
     'users',
 ]
 
