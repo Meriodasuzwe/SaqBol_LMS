@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator # <-- НОВЫЙ ИМПОРТ
 
 # 1. Категории курсов (Без изменений)
 class Category(models.Model):
@@ -144,7 +145,7 @@ class Enrollment(models.Model):
         return f"{self.student.username} -> {self.course.title}"
 
 
-# 6. Прогресс по шагам урока для каждого студента (Новая модель для отслеживания прогресса и начисления очков за каждый шаг)
+# 6. Прогресс по шагам урока для каждого студента
 class StepProgress(models.Model):
     # Студент связанный через внешний ключ с моделью пользователя с каскадным удалением и related name для получения всех прогрессов студента verbose_name для админки
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -165,3 +166,26 @@ class StepProgress(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.step}"
+
+
+# === НОВОЕ: Отзывы и рейтинги (Звездочки) ===
+class Review(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews', verbose_name="Курс")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Пользователь")
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Оценка от 1 до 5",
+        verbose_name="Рейтинг"
+    )
+    text = models.TextField(blank=True, null=True, help_text="Текст отзыва", verbose_name="Текст отзыва")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+
+    class Meta:
+        # Защита: один пользователь может оставить только один отзыв на конкретный курс
+        unique_together = ('course', 'user')
+        ordering = ['-created_at']
+        verbose_name = "Отзыв"
+        verbose_name_plural = "Отзывы"
+
+    def __str__(self):
+        return f"Отзыв от {self.user.email} на курс {self.course.title} ({self.rating}/5)"
