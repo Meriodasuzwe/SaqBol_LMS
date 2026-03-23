@@ -36,6 +36,21 @@ const CARD_ACCENTS = [
     'from-sky-500 to-sky-700',
 ];
 
+// Функция для отрисовки звезд рейтинга
+const renderStars = (rating) => {
+    return (
+        <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                    key={star}
+                    size={11}
+                    className={star <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-base-content/20"}
+                />
+            ))}
+        </div>
+    );
+};
+
 // ─── Compact Course Card (Responsive) ──────────────────────────────────────
 function CourseCard({ course }) {
     const imageUrl   = course.image || course.cover_image || course.image_url;
@@ -43,7 +58,11 @@ function CourseCard({ course }) {
     const isFree     = price === 0;
     const hasProgress = course.progress > 0;
     
-    const rating     = course.rating ? parseFloat(course.rating).toFixed(1) : (4.4 + (seeded(course.id, 0, 8) / 10)).toFixed(1);
+    // Берем реальный рейтинг и количество отзывов с бэкенда
+    const ratingNum  = parseFloat(course.average_rating || 0);
+    const ratingStr  = ratingNum > 0 ? ratingNum.toFixed(1) : '0.0';
+    const reviews    = course.reviews_count || 0;
+
     const students   = course.students_count || seeded(course.id, 80, 4200);
     const hours      = course.duration || seeded(course.id, 2, 20);
     const accent     = CARD_ACCENTS[course.id % CARD_ACCENTS.length];
@@ -70,9 +89,14 @@ function CourseCard({ course }) {
 
                 <div className="mt-4 sm:mt-3 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3 text-[11px] text-base-content/50">
-                        <span className="flex items-center gap-1 font-semibold text-amber-500">
-                            <Star size={10} className="fill-amber-400 text-amber-400" />{rating}
-                        </span>
+                        
+                        {/* ✅ ОБНОВЛЕННЫЙ БЛОК РЕЙТИНГА */}
+                        <div className="flex items-center gap-1.5" title={`${reviews} отзывов`}>
+                            {renderStars(ratingNum)}
+                            <span className="font-bold text-amber-500">{ratingStr}</span>
+                            <span className="text-base-content/40">({reviews})</span>
+                        </div>
+
                         <span className="flex items-center gap-1">
                             <Users size={10} />{students.toLocaleString('ru-RU')}
                         </span>
@@ -222,7 +246,12 @@ export default function CourseList() {
         if (selectedCategory) params.append('category', selectedCategory);
         
         api.get(`courses/?${params.toString()}`)
-            .then(res => { setCourses(res.data); setLoading(false); })
+            .then(res => { 
+                // ✅ Оставляем ТОЛЬКО опубликованные курсы
+                const publishedCourses = res.data.filter(c => c.status === 'published');
+                setCourses(publishedCourses); 
+                setLoading(false); 
+            })
             .catch(() => setLoading(false));
     }, [debouncedSearch, selectedCategory]);
 

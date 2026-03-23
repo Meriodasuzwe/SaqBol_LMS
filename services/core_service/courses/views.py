@@ -14,12 +14,12 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from notifications.service import send_notification
-
+from rest_framework.exceptions import ValidationError
 User = get_user_model()
 
 # Импорты моделей и сериализаторов
-from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress
-from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer
+from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress, Review
+from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer,  ReviewSerializer
 from quizzes.models import Quiz, Result
 
 # Инициализация ключа Stripe
@@ -438,3 +438,50 @@ class RejectCourseView(generics.UpdateAPIView):
         )
  
         return Response({"message": "Курс отклонен, уведомление отправлено."})
+
+class ReviewListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return Review.objects.filter(course_id=self.kwargs['course_id'])
+
+    def perform_create(self, serializer):
+        course_id = self.kwargs['course_id']
+        user = self.request.user
+        
+        course = get_object_or_404(Course, id=course_id)
+        
+        # VIP-пропуск: проверяем, является ли юзер автором курса или админом
+        is_author_or_admin = (course.teacher == user) or user.is_staff
+        
+        # 1. Защита: Проверяем запись на курс (Авторов и админов пропускаем)
+        if not is_author_or_admin and not Enrollment.objects.filter(course_id=course_id, student=user).exists():
+            raise ValidationError(["Вы не можете оставить отзыв, так как не записаны на этот курс."])
+            
+        # 2. Защита: Один отзыв на человека
+        if Review.objects.filter(course_id=course_id, user=user).exists():
+            raise ValidationError(["Вы уже оставляли отзыв на этот курс."])
+            
+        # 3. Защита: Проверяем прогресс (Минимум 20%) - только для обычных студентов!
+        if not is_author_or_admin:
+            steps = LessonStep.objects.filter(lesson__course_id=course_id)
+            total_steps = steps.count()
+            
+            if total_steps > 0:
+                completed_count = 0
+                for step in steps:
+                    if step.step_type == 'quiz':
+                        quizzes = Quiz.objects.filter(lesson=step.lesson)
+                        if quizzes.exists() and Result.objects.filter(student=user, quiz__in=quizzes, score__gte=70).exists():
+                            completed_count += 1
+                    else:
+                        if StepProgress.objects.filter(student=user, step=step, is_completed=True).exists():
+                            completed_count += 1
+                
+                progress = (completed_count / total_steps) * 100
+                if progress < 20:
+                    raise ValidationError([f"Вы прошли только {int(progress)}%. Для отзыва необходимо пройти минимум 20% курса."])
+        
+        # Сохраняем
+        serializer.save(user=user, course=course)

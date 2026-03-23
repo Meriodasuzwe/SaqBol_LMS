@@ -11,6 +11,8 @@ import {
     CheckCircle2,
     Clock
 } from 'lucide-react';
+// 🔥 Импорт секции отзывов
+import ReviewSection from './ReviewSection';
 
 function CourseDetail({ isLoggedIn }) { 
     const { id } = useParams();
@@ -103,7 +105,6 @@ function CourseDetail({ isLoggedIn }) {
     return (
         <div className="min-h-screen bg-base-100 font-sans text-base-content pb-20 relative transition-colors duration-200">
 
-            {/* ── Success toast ── */}
             {showSuccessToast && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
                     <div className="bg-blue-600 text-white p-4 rounded-xl shadow-2xl shadow-blue-900/20 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
@@ -133,13 +134,12 @@ function CourseDetail({ isLoggedIn }) {
                             {course.title}
                         </h1>
 
-                        {/* 🔥 Добавлен dark:prose-invert для корректного отображения текста из редактора в темной теме */}
                         <div 
                             className="prose prose-sm sm:prose-base max-w-none text-base-content/80 mb-12 leading-relaxed dark:prose-invert prose-a:text-blue-600 hover:prose-a:text-blue-500"
                             dangerouslySetInnerHTML={{ __html: course.description }}
                         />
 
-                        <div className="flex items-center gap-6 py-8 border-t border-base-300">
+                        <div className="flex items-center gap-6 py-8 border-t border-b border-base-300">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                                     {course.teacher_name?.[0] || 'S'}
@@ -150,12 +150,19 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* 🔥 СЕКЦИЯ ОТЗЫВОВ ПРЯМО ЗДЕСЬ 🔥 */}
+                        <ReviewSection 
+                            courseId={course.id} 
+                            isEnrolled={isEnrolled} 
+                            progress={course.progress || 0} 
+                        />
+
                     </div>
 
-                    {/* ── Правая колонка ── */}
+                    {/* ── Правая колонка (sticky) ── */}
                     <div className="w-full lg:w-[400px] sticky top-24">
                         {!isEnrolled ? (
-                            /* Карточка записи */
                             <div className="bg-base-100 border border-base-300 rounded-2xl p-8 shadow-xl shadow-base-300/30">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-base-content/50 mb-2">
                                     Стоимость доступа
@@ -198,7 +205,6 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
                             </div>
                         ) : (
-                            /* Программа курса */
                             <div className="bg-base-100 border border-base-300 rounded-2xl overflow-hidden shadow-lg shadow-base-300/30">
                                 <div className="px-6 py-5 bg-base-200 border-b border-base-300">
                                     <h3 className="font-black text-xs uppercase tracking-widest text-base-content flex items-center gap-2">
@@ -209,7 +215,6 @@ function CourseDetail({ isLoggedIn }) {
                                 <div className="max-h-[65vh] overflow-y-auto">
                                     {lessons.map((lesson, lIdx) => (
                                         <div key={lesson.id} className="bg-base-100">
-                                            {/* Заголовок модуля */}
                                             <div className="px-6 py-4 bg-base-200/50 border-b border-base-300 flex items-center justify-between">
                                                 <div className="min-w-0">
                                                     <p className="text-[9px] font-black text-base-content/50 uppercase tracking-widest mb-0.5">
@@ -219,7 +224,6 @@ function CourseDetail({ isLoggedIn }) {
                                                 </div>
                                             </div>
 
-                                            {/* Шаги */}
                                             <div className="flex flex-col relative">
                                                 {lesson.steps?.map((step, sIdx) => {
                                                     const { icon, label } = getStepStyle(step.step_type);
@@ -229,15 +233,10 @@ function CourseDetail({ isLoggedIn }) {
                                                             onClick={() => navigate(`/lesson/${lesson.id}?step=${step.id}`)}
                                                             className="w-full group flex items-start gap-4 px-6 py-5 hover:bg-base-200 transition-all text-left relative"
                                                         >
-                                                            {/* Timeline line */}
                                                             <div className="absolute left-[39px] top-0 bottom-0 w-px bg-base-300 group-first:top-1/2 group-last:bottom-1/2"></div>
-                                                            
-                                                            {/* Icon */}
                                                             <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-xl bg-base-100 border border-base-300 shadow-sm flex items-center justify-center group-hover:border-blue-300/50 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
                                                                 {icon}
                                                             </div>
-
-                                                            {/* Text */}
                                                             <div className="flex-1 min-w-0">
                                                                 <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest leading-none block mb-1">
                                                                     {label}
@@ -246,7 +245,6 @@ function CourseDetail({ isLoggedIn }) {
                                                                     {step.title || `Шаг ${sIdx + 1}`}
                                                                 </h4>
                                                             </div>
-
                                                             <ChevronRight size={14} className="text-base-content/30 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all mt-3" />
                                                         </button>
                                                     );
@@ -256,7 +254,6 @@ function CourseDetail({ isLoggedIn }) {
                                     ))}
                                 </div>
 
-                                {/* Start button */}
                                 <div className="p-4 bg-base-200 border-t border-base-300">
                                     <button 
                                         onClick={() => navigate(`/lesson/${lessons[0]?.id}`)}

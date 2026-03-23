@@ -12,7 +12,7 @@ from .views import (
     LessonStepCreateView,
     MarkStepCompleteView,
     RejectCourseView,
-
+    ReviewListCreateView,
     upload_image,
     CreateStripeCheckoutSessionView,
     stripe_webhook,
@@ -27,6 +27,7 @@ urlpatterns = [
     path('my_courses/', MyCoursesView.as_view(), name='my-courses'),
     
     path('', CourseListView.as_view(), name='course-list'),
+    path('<int:course_id>/reviews/', ReviewListCreateView.as_view(), name='course-reviews'),
     path('<int:pk>/', CourseDetailView.as_view(), name='course-detail'),
     path('<int:pk>/enroll/', EnrollCourseView.as_view(), name='course-enroll'),
     

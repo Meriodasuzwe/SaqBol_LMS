@@ -370,3 +370,32 @@ INFO 2026-03-22 11:10:42,059 | INSIGHTS TEACHER | user_id=1 | course=Текущ�
 INFO 2026-03-22 11:10:43,635 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-22 11:10:43,640 | INSIGHTS TEACHER SUCCESS | user_id=1
 INFO 2026-03-22 11:10:43,641 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.592s
+INFO 2026-03-22 16:39:23,027 | INSIGHTS TEACHER | user_id=22 | course=Текущий курс
+INFO 2026-03-22 16:39:24,553 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:39:24,557 | INSIGHTS TEACHER SUCCESS | user_id=22
+INFO 2026-03-22 16:39:24,558 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.549s
+INFO 2026-03-22 16:41:59,212 | SCENARIO REQUEST | user_id=1 | type=chat | topic=Некий алмас пишет тебе занять бабки | difficulty=medium
+INFO 2026-03-22 16:42:01,008 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:42:01,009 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-03-22 16:42:01,010 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 1.801s
+INFO 2026-03-22 16:43:32,865 | SCENARIO REQUEST | user_id=22 | type=chat | topic=Алмас пишет занять бабки | difficulty=medium
+INFO 2026-03-22 16:43:35,347 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:43:35,350 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-03-22 16:43:35,351 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.488s
+INFO 2026-03-22 16:44:21,437 | QUIZ REQUEST | user_id=22 | count=3 | difficulty=easy
+INFO 2026-03-22 16:44:22,482 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:44:22,484 | QUIZ SUCCESS | user_id=22 | questions_generated=3
+INFO 2026-03-22 16:44:22,485 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 1.050s
+INFO 2026-03-22 16:44:43,068 | QUIZ REQUEST | user_id=22 | count=3 | difficulty=easy
+INFO 2026-03-22 16:44:44,400 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:44:44,402 | QUIZ SUCCESS | user_id=22 | questions_generated=3
+INFO 2026-03-22 16:44:44,402 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 1.336s
+INFO 2026-03-22 16:55:44,333 | FILE UPLOAD | user_id=1 | filename=Ходатайство каз и рус для 4 курса.docx
+INFO 2026-03-22 16:55:44,353 | AI COURSE | user_id=1 | chars=1331
+INFO 2026-03-22 16:55:45,691 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:55:45,693 | AI COURSE SUCCESS | user_id=1 | title=Организация производственной практики в стоматологии
+INFO 2026-03-22 16:55:45,693 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 1.365s
+INFO 2026-03-22 16:56:19,990 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-03-22 16:56:21,578 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-22 16:56:21,580 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-03-22 16:56:21,580 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.593s

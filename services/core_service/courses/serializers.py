@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Course, Lesson, Category, LessonStep, StepProgress
+from django.db.models import Avg # <-- НОВЫЙ ИМПОРТ для подсчета среднего рейтинга
+from .models import Course, Lesson, Category, LessonStep, StepProgress, Review
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,6 +58,10 @@ class CourseSerializer(serializers.ModelSerializer):
     )
 
     progress = serializers.SerializerMethodField()
+    
+    # === НОВЫЕ ПОЛЯ ДЛЯ РЕЙТИНГА ===
+    average_rating = serializers.SerializerMethodField()
+    reviews_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -64,7 +69,8 @@ class CourseSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 
             'short_description', 'cover_image', 
             'price', 'category', 'category_title', 
-            'teacher_name', 'lessons', 'progress', 'status'
+            'teacher_name', 'lessons', 'progress', 'status',
+            'average_rating', 'reviews_count' # <-- Не забудь добавить их сюда!
         ]
         
 
@@ -97,3 +103,22 @@ class CourseSerializer(serializers.ModelSerializer):
                     completed_count += 1
         
         return int((completed_count / total_steps) * 100)
+
+    # === НОВЫЕ МЕТОДЫ ДЛЯ РЕЙТИНГА ===
+    def get_average_rating(self, obj):
+        # Агрегируем среднее значение по полю rating у всех связанных отзывов
+        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        # Если отзывы есть, округляем до 1 знака после запятой (например, 4.8). Иначе 0.0
+        return round(avg, 1) if avg else 0.0
+
+    def get_reviews_count(self, obj):
+        # Просто считаем количество связанных отзывов
+        return obj.reviews.count()
+    
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user_name', 'rating', 'text', 'created_at']
