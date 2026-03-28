@@ -19,6 +19,10 @@ from django.db.models import Q
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from django.db import models
+from django.db.models import Count
+from django.utils import timezone
+from datetime import timedelta
 
 from .models import EmailVerification
 from .models import TeacherApplication
@@ -562,3 +566,97 @@ class UpdateTeacherApplicationStatusView(generics.UpdateAPIView):
             )
  
         return Response({"message": f"Статус заявки изменён на {new_status}"})
+
+
+class PlatformStatsView(APIView):
+    """
+    GET /users/stats/
+    Статистика платформы для админ-дашборда.
+    Доступна только администраторам.
+    """
+    permission_classes = [permissions.IsAdminUser]
+ 
+    def get(self, request):
+        from django.utils import timezone
+        from datetime import timedelta
+        from courses.models import Course, Enrollment, Lesson, LessonStep
+        from quizzes.models import Result
+ 
+        now = timezone.now()
+        week_ago  = now - timedelta(days=7)
+        month_ago = now - timedelta(days=30)
+ 
+        # ── ПОЛЬЗОВАТЕЛИ ─────────────────────────────────────────
+        total_users    = User.objects.count()
+        new_this_week  = User.objects.filter(date_joined__gte=week_ago).count()
+        new_this_month = User.objects.filter(date_joined__gte=month_ago).count()
+        total_students = User.objects.filter(role='student').count()
+        total_teachers = User.objects.filter(role='teacher').count()
+ 
+        # ── КУРСЫ ────────────────────────────────────────────────
+        total_courses     = Course.objects.count()
+        published_courses = Course.objects.filter(status='published').count()
+        draft_courses     = Course.objects.filter(status='draft').count()
+        pending_courses   = Course.objects.filter(status='review').count()
+        total_lessons     = Lesson.objects.count()
+        total_steps       = LessonStep.objects.count()
+ 
+        # ── АКТИВНОСТЬ ───────────────────────────────────────────
+        total_enrollments    = Enrollment.objects.count()
+        enrollments_30d      = Enrollment.objects.filter(enrolled_at__gte=month_ago).count()
+        total_quiz_results   = Result.objects.count()
+        avg_quiz_score_data  = Result.objects.aggregate(avg=models.Avg('score'))
+        avg_quiz_score       = round(avg_quiz_score_data['avg'] or 0, 1)
+        passed_quizzes       = Result.objects.filter(score__gte=70).count()
+        pass_rate            = round(passed_quizzes / total_quiz_results * 100, 1) if total_quiz_results else 0
+ 
+        # ── ТОП КУРСОВ по записям ────────────────────────────────
+        from django.db.models import Count
+        top_courses = (
+            Course.objects
+            .filter(status='published')
+            .annotate(enrollments_count=Count('enrolled_students'))
+            .order_by('-enrollments_count')[:5]
+            .values('id', 'title', 'enrollments_count')
+        )
+ 
+        # ── РЕГИСТРАЦИИ ПО ДНЯМ (последние 14 дней) ──────────────
+        from django.db.models.functions import TruncDate
+        registrations_by_day = (
+            User.objects
+            .filter(date_joined__gte=now - timedelta(days=14))
+            .annotate(day=TruncDate('date_joined'))
+            .values('day')
+            .annotate(count=Count('id'))
+            .order_by('day')
+        )
+ 
+        return Response({
+            'users': {
+                'total':         total_users,
+                'students':      total_students,
+                'teachers':      total_teachers,
+                'new_this_week': new_this_week,
+                'new_this_month': new_this_month,
+            },
+            'courses': {
+                'total':     total_courses,
+                'published': published_courses,
+                'draft':     draft_courses,
+                'pending':   pending_courses,
+                'lessons':   total_lessons,
+                'steps':     total_steps,
+            },
+            'activity': {
+                'total_enrollments':  total_enrollments,
+                'enrollments_30d':    enrollments_30d,
+                'total_quiz_results': total_quiz_results,
+                'avg_quiz_score':     avg_quiz_score,
+                'pass_rate':          pass_rate,
+            },
+            'top_courses': list(top_courses),
+            'registrations_by_day': [
+                {'day': str(item['day']), 'count': item['count']}
+                for item in registrations_by_day
+            ],
+        })

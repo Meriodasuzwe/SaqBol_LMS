@@ -21,6 +21,7 @@ from .views import (
     GoogleLoginView,
     # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
     PendingTeacherApplicationsView,
+    PlatformStatsView,
     UpdateTeacherApplicationStatusView
 )
 
@@ -54,4 +55,5 @@ urlpatterns = [
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ ЗАЯВОК) ===
     path('admin/applications/pending/', PendingTeacherApplicationsView.as_view(), name='admin_pending_applications'),
     path('admin/applications/<int:pk>/update/', UpdateTeacherApplicationStatusView.as_view(), name='admin_update_application'),
+    path('stats/', PlatformStatsView.as_view(), name='platform-stats'),
 ]

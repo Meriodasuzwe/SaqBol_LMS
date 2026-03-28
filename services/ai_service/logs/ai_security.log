@@ -399,3 +399,12 @@ INFO 2026-03-22 16:56:19,990 | INSIGHTS TEACHER | user_id=1 | course=Текущ�
 INFO 2026-03-22 16:56:21,578 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-22 16:56:21,580 | INSIGHTS TEACHER SUCCESS | user_id=1
 INFO 2026-03-22 16:56:21,580 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.593s
+INFO 2026-03-24 16:02:20,166 | FILE UPLOAD | user_id=1 | filename=Коммерческое Предложение КСК.docx
+INFO 2026-03-24 16:02:20,179 | AI COURSE | user_id=1 | chars=1398
+INFO 2026-03-24 16:02:22,562 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-24 16:02:22,566 | AI COURSE SUCCESS | user_id=1 | title=Коммерческое Предложение на услуги по санитарному содержанию и обслуживанию жилых домов
+INFO 2026-03-24 16:02:22,567 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 2.412s
+INFO 2026-03-24 16:13:41,473 | INSIGHTS STUDENT | user_id=25
+INFO 2026-03-24 16:13:42,846 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-03-24 16:13:42,849 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-03-24 16:13:42,849 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.380s
