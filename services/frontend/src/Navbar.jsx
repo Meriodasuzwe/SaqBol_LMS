@@ -121,6 +121,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         { to: '/analytics/student', icon: <BarChart2 size={14} />,      label: 'Мой прогресс',      show: !isTeacher },
         { to: '/teacher',           icon: <LayoutDashboard size={14} />, label: 'Панель управления', show: isTeacher },
         { to: '/admin',             icon: <ShieldCheck size={14} />,    label: 'Модерация',         show: isAdmin },
+        { to: '/admin/stats', icon: <BarChart2 size={14}/>, label: 'Статистика', show: isAdmin },
     ].filter(i => i.show);
 
     const mobileItems = [
