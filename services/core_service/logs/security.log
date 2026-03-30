@@ -1825,3 +1825,41 @@ INFO 2026-03-28 11:08:40,066 | ACTION: [200] POST /api/users/telegram-auth/ (Use
 INFO 2026-03-28 11:08:46,370 | ACTION: [201] POST /api/courses/20/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.030s
 WARNING 2026-03-28 11:08:49,248 | CLIENT ERROR: [404] GET /api/courses/lessons/undefined/ (User:  [ID:None], IP: 172.18.0.1) - 0.018s
 WARNING 2026-03-28 11:08:49,259 | CLIENT ERROR: [404] GET /api/courses/lessons/undefined/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-28 11:15:52,714 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.098s
+INFO 2026-03-28 11:16:04,483 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+INFO 2026-03-28 11:16:04,493 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-28 11:16:05,469 | ACTION: [200] GET /api/courses/admin/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+WARNING 2026-03-28 11:46:11,328 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 06:48:46,789 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-29 06:48:46,790 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-29 06:48:46,794 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 06:48:46,795 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 06:48:46,800 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 06:48:46,805 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-29 06:50:14,490 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.103s
+WARNING 2026-03-29 07:20:57,574 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:21:18,329 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:21:48,331 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:22:18,340 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:22:48,337 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:23:18,332 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:23:48,342 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:24:18,338 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:24:48,341 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:25:18,325 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:25:48,328 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:18,055 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:42,560 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:42,561 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+WARNING 2026-03-29 07:26:42,565 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:42,567 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:42,570 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:42,573 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-29 07:26:48,333 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.000s
+INFO 2026-03-29 07:26:48,892 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.010s
+WARNING 2026-03-29 07:27:00,555 | CLIENT ERROR: [400] POST /api/courses/steps/39/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-29 07:27:02,441 | CLIENT ERROR: [400] POST /api/courses/steps/39/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.012s
+WARNING 2026-03-29 07:27:02,856 | CLIENT ERROR: [400] POST /api/courses/steps/39/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.012s
+INFO 2026-03-29 07:27:18,116 | ACTION: [201] POST /api/courses/6/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.025s
+WARNING 2026-03-29 07:27:24,750 | CLIENT ERROR: [400] POST /api/courses/steps/37/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.011s
+INFO 2026-03-29 07:29:13,666 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.091s
