@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
+import OnboardingTour from './OnboardingTour'; // ✅ Импортируем отдельный компонент
 import {
     Search, BookOpen, PlayCircle, Clock, Users, Star,
     ChevronDown, X, CheckCircle, ArrowRight, Zap, Shield, TrendingUp
@@ -58,7 +59,6 @@ function CourseCard({ course }) {
     const isFree     = price === 0;
     const hasProgress = course.progress > 0;
     
-    // Берем реальный рейтинг и количество отзывов с бэкенда
     const ratingNum  = parseFloat(course.average_rating || 0);
     const ratingStr  = ratingNum > 0 ? ratingNum.toFixed(1) : '0.0';
     const reviews    = course.reviews_count || 0;
@@ -89,8 +89,6 @@ function CourseCard({ course }) {
 
                 <div className="mt-4 sm:mt-3 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3 text-[11px] text-base-content/50">
-                        
-                        {/* ✅ ОБНОВЛЕННЫЙ БЛОК РЕЙТИНГА */}
                         <div className="flex items-center gap-1.5" title={`${reviews} отзывов`}>
                             {renderStars(ratingNum)}
                             <span className="font-bold text-amber-500">{ratingStr}</span>
@@ -211,7 +209,7 @@ function PromoBanner() {
     );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main CourseList ──────────────────────────────────────────────────────────
 export default function CourseList() {
     const [courses, setCourses]       = useState([]);
     const [categories, setCategories] = useState([]);
@@ -247,7 +245,6 @@ export default function CourseList() {
         
         api.get(`courses/?${params.toString()}`)
             .then(res => { 
-                // ✅ Оставляем ТОЛЬКО опубликованные курсы
                 const publishedCourses = res.data.filter(c => c.status === 'published');
                 setCourses(publishedCourses); 
                 setLoading(false); 
@@ -270,7 +267,6 @@ export default function CourseList() {
     };
     const toggleLevel = l => setSelectedLevels(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l]);
 
-    // Sidebar content
     const SidebarContent = () => (
         <>
             <div className="flex items-center justify-between mb-1 px-1">
@@ -343,6 +339,9 @@ export default function CourseList() {
 
     return (
         <>
+            {/* 🚀 Онбординг вызывается здесь */}
+            <OnboardingTour />
+
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
             `}</style>
