@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Avg # <-- НОВЫЙ ИМПОРТ для подсчета среднего рейтинга
-from .models import Course, Lesson, Category, LessonStep, StepProgress, Review
+from .models import Course, Lesson, Category, LessonStep, StepProgress, Review, Certificate
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -122,3 +122,15 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ['id', 'user_name', 'rating', 'text', 'created_at']
+        
+
+class CertificateSerializer(serializers.ModelSerializer):
+    course_title = serializers.CharField(source='course.title', read_only=True)
+    student_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Certificate
+        fields = ['id', 'course_title', 'student_name', 'issued_at', 'file', 'is_valid']
+
+    def get_student_name(self, obj):
+        return f"{obj.student.first_name} {obj.student.last_name}".strip() or obj.student.username

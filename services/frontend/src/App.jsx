@@ -17,6 +17,7 @@ import CourseList from './CourseList';
 import CourseDetail from './CourseDetail';
 import QuizPage from './QuizPage';
 import Profile from './Profile';
+import VerifyCertificate from './VerifyCertificate';
 import LessonPage from './LessonPage';
 import TeacherPanel from './TeacherPanel';
 import CourseBuilder from './CourseBuilder/CourseBuilder';
@@ -76,6 +77,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             <Route path="/profile" element={
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
             } />
+            <Route path="/verify/:certId" element={<VerifyCertificate />} />
             <Route path="/teacher/course/:courseId/builder" element={
               isLoggedIn ? (
                 isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />

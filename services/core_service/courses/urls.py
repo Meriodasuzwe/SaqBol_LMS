@@ -13,6 +13,8 @@ from .views import (
     MarkStepCompleteView,
     RejectCourseView,
     ReviewListCreateView,
+    MyCertificatesView,
+    VerifyCertificateView,
     upload_image,
     CreateStripeCheckoutSessionView,
     stripe_webhook,
@@ -44,6 +46,8 @@ urlpatterns = [
     
     path('upload-image/', upload_image, name='upload-image'),
 
+    path('certificates/my/', MyCertificatesView.as_view(), name='my-certificates'),
+    path('certificates/verify/<uuid:cert_id>/', VerifyCertificateView.as_view(), name='verify-certificate'),
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
     path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),
     path('admin/<int:pk>/approve/', ApproveCourseView.as_view(), name='admin_approve_course'),

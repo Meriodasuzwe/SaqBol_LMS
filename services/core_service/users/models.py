@@ -10,6 +10,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
+    
     # Роли для доступа (RBAC) - администратор, преподаватель, студент
     ROLE_CHOICES = (
         ('admin', 'Администратор'),
@@ -82,7 +83,7 @@ class TeacherApplication(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='teacher_application', verbose_name="Пользователь")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
     
-    # === НОВЫЕ ПОЛЯ ДЛЯ АНКЕТЫ ===
+    # Дополнительные поля для заявки на преподавателя, например, опыт работы и ссылка на портфолио verbose_name для админки
     cv_text = models.TextField(verbose_name="Опыт работы", blank=True)
     portfolio_url = models.URLField(verbose_name="Ссылка на портфолио", blank=True)
     
