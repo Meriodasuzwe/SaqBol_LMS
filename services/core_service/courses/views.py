@@ -18,8 +18,8 @@ from rest_framework.exceptions import ValidationError
 User = get_user_model()
 
 # Импорты моделей и сериализаторов
-from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress, Review
-from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer,  ReviewSerializer
+from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress, Review, Certificate
+from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer,  ReviewSerializer, CertificateSerializer
 from quizzes.models import Quiz, Result
 
 # Инициализация ключа Stripe
@@ -247,11 +247,47 @@ class MarkStepCompleteView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
+        # Сохраняем прогресс текущего шага
         progress, created = StepProgress.objects.update_or_create(
             student=user,
             step=step,
             defaults={'score_earned': score, 'is_completed': True}
         )
+
+        # ─── ЛОГИКА ВЫДАЧИ СЕРТИФИКАТА ───────────────────────────────
+        course = step.lesson.course
+        
+        # 1. Считаем, сколько всего шагов в курсе
+        total_steps = LessonStep.objects.filter(lesson__course=course).count()
+        
+        # 2. Считаем, сколько шагов успешно прошел именно этот студент
+        completed_steps = StepProgress.objects.filter(
+            student=user, 
+            step__lesson__course=course, 
+            is_completed=True
+        ).count()
+
+        # 3. Если студент прошел все шаги
+        if total_steps > 0 and completed_steps >= total_steps:
+            # Делаем импорт тут, чтобы избежать возможных циклических импортов вверху файла
+            from .models import Certificate
+            from .certificate_generator import generate_certificate_image
+            
+            # Проверяем, не выдавали ли мы уже сертификат (защита от дублей)
+            if not Certificate.objects.filter(student=user, course=course).exists():
+                # Создаем запись в БД
+                new_cert = Certificate.objects.create(student=user, course=course)
+                # Рисуем саму картинку
+                generate_certificate_image(new_cert)
+                
+                # Отправляем радостное уведомление студенту
+                send_notification(
+                    recipient=user,
+                    notification_type='certificate_issued',
+                    title='🎉 Сертификат получен!',
+                    message=f'Поздравляем! Вы успешно завершили курс «{course.title}». Ваш сертификат готов к скачиванию в личном кабинете.'
+                )
+        # ─────────────────────────────────────────────────────────────
 
         return Response({"message": "Шаг пройден!", "score_earned": score}, status=status.HTTP_200_OK)
 
@@ -485,3 +521,27 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         
         # Сохраняем
         serializer.save(user=user, course=course)
+        
+
+class MyCertificatesView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CertificateSerializer
+
+    def get_queryset(self):
+        return Certificate.objects.filter(student=self.request.user, is_valid=True).order_by('-issued_at')
+
+# 2. Для HR (публичная проверка)
+class VerifyCertificateView(APIView):
+    permission_classes = [permissions.AllowAny] # Доступно всем без логина!
+
+    def get(self, request, cert_id):
+        # Ищем сертификат. Если нет - выдаст 404
+        cert = get_object_or_404(Certificate, id=cert_id, is_valid=True)
+        return Response({
+            "valid": True,
+            "id": cert.id,
+            "course_title": cert.course.title,
+            "student_name": f"{cert.student.first_name} {cert.student.last_name}".strip() or cert.student.username,
+            "issued_at": cert.issued_at,
+            "file_url": request.build_absolute_uri(cert.file.url) if cert.file else None
+        })

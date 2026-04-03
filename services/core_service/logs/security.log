@@ -1863,3 +1863,35 @@ WARNING 2026-03-29 07:27:02,856 | CLIENT ERROR: [400] POST /api/courses/steps/39
 INFO 2026-03-29 07:27:18,116 | ACTION: [201] POST /api/courses/6/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.025s
 WARNING 2026-03-29 07:27:24,750 | CLIENT ERROR: [400] POST /api/courses/steps/37/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.011s
 INFO 2026-03-29 07:29:13,666 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.091s
+WARNING 2026-03-30 10:04:45,637 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-03-30 10:04:45,638 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-03-30 10:04:45,643 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-30 10:04:45,644 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-30 10:04:45,649 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-03-30 10:04:45,652 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-30 10:04:52,525 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.099s
+INFO 2026-03-30 10:27:01,132 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.093s
+INFO 2026-03-30 10:51:12,565 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-30 10:55:05,080 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.097s
+INFO 2026-03-30 10:55:12,689 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-30 10:55:28,758 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-30 10:55:35,538 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.007s
+INFO 2026-03-30 11:00:15,968 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+INFO 2026-03-30 11:00:23,848 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+WARNING 2026-03-31 19:03:53,931 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.011s
+WARNING 2026-03-31 19:03:53,936 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-03-31 19:04:00,425 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.106s
+WARNING 2026-04-01 11:15:10,257 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-04-01 11:15:10,258 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.012s
+WARNING 2026-04-01 11:15:10,262 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-01 11:15:10,264 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-01 11:15:10,267 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-01 11:15:10,271 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-04-03 17:03:22,436 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.110s
+INFO 2026-04-03 17:20:11,340 | ACTION: [200] POST /api/courses/steps/22/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-04-03 17:20:12,366 | ACTION: [200] POST /api/courses/steps/22/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 2.468s
+INFO 2026-04-03 17:27:00,321 | ACTION: [200] POST /api/courses/steps/38/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.032s
+INFO 2026-04-03 17:27:01,998 | ACTION: [200] PATCH /api/notifications/mark-read/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-04-03 17:27:36,235 | ACTION: [200] POST /api/courses/steps/21/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 1.925s
+INFO 2026-04-03 17:27:36,262 | ACTION: [200] POST /api/courses/steps/21/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-04-03 17:27:39,242 | ACTION: [200] PATCH /api/notifications/mark-read/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s

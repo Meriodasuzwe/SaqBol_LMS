@@ -1,8 +1,9 @@
 from django.db import models
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator # <-- НОВЫЙ ИМПОРТ
+import uuid
+from django.core.validators import MinValueValidator, MaxValueValidator
 
-# 1. Категории курсов (Без изменений)
+# 1. Категории курсов
 class Category(models.Model):
     title = models.CharField(max_length=200, verbose_name="Название категории")
     description = models.TextField(blank=True, verbose_name="Описание")
@@ -15,7 +16,7 @@ class Category(models.Model):
         return self.title
 
 
-# 2. Сам Курс (Без изменений)
+# 2. Сам Курс 
 class Course(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Черновик (Видит только автор)'),
@@ -86,12 +87,12 @@ class LessonStep(models.Model):
     STEP_TYPES = (
         ('text', 'Теория (Текст + Markdown + Код)'),
         ('video_url', 'Видео (YouTube/Ссылка)'),
-        ('video_file', 'Локальное видео (Загрузка файла)'), # Важно для ИБ (храним у себя)
+        ('video_file', 'Локальное видео (Загрузка файла)'), 
         ('simulation_chat', 'Симуляция: Чат (WhatsApp/Telegram)'),
         ('simulation_email', 'Симуляция: Email (Фишинг)'),
         ('quiz', 'Тест/Опрос'),
-        ('interactive_code', 'Тренажер кода (Написание скрипта)'), # НОВОЕ: Для практики Python/Bash
-        ('terminal', 'Эмулятор терминала (Linux/Хак)'), # НОВОЕ: Для командной строки
+        ('interactive_code', 'Тренажер кода (Написание скрипта)'), 
+        ('terminal', 'Эмулятор терминала (Linux/Хак)'), 
     )
     # урок связан с шагом через внешний ключ и если урок удаляется удаляются все шаги а так же related name для получения всех шагов урока verbose_name для админки
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='steps', verbose_name="Урок")
@@ -128,9 +129,9 @@ class LessonStep(models.Model):
 
 # 5. Запись на курс (Без изменений)
 class Enrollment(models.Model):
-    # Студент связан через внешний ключ с моделью пользователя с каскадным удалением и создает часть связи Многие-ко-Многим через таблицу-посредник
+    # Студент вызван для связи с конкретным пользователем и при удалении пользователя удаляются все записи на курсы related name для получения всех записей студента verbose_name для админки
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='enrollments')
-    # Курс который связан через внешний ключ и при удалении курса удаляются все записи на него related name для получения всех записей курса verbose_name для админки
+    # Курс вызван для связи с конкретным курсом и при удалении курса удаляются все записи на курс related name для получения всех записей курса verbose_name для админки
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrolled_students')
     # Дата и время зачисления на курс с автоматической установкой при создании записи verbose_name для админки
     enrolled_at = models.DateTimeField(auto_now_add=True)
@@ -147,9 +148,9 @@ class Enrollment(models.Model):
 
 # 6. Прогресс по шагам урока для каждого студента
 class StepProgress(models.Model):
-    # Студент связанный через внешний ключ с моделью пользователя с каскадным удалением и related name для получения всех прогрессов студента verbose_name для админки
+    # Студент вызван для связи с конкертным пользователем
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    # Шаг урока связанный через внешний ключ с моделью шага урока с каскадным удалением и related name для получения всех прогрессов по шагу verbose_name для админки
+    # Шаг урока вызван для связи с конкретным шагом урока и при удалении шага удаляются все связанные записи прогресса
     step = models.ForeignKey(LessonStep, on_delete=models.CASCADE)
     # Флаг для отслеживания завершенности шага по умолчанию False verbose_name для админки
     is_completed = models.BooleanField(default=False, verbose_name="Пройден")
@@ -168,10 +169,13 @@ class StepProgress(models.Model):
         return f"{self.student.username} - {self.step}"
 
 
-# === НОВОЕ: Отзывы и рейтинги (Звездочки) ===
+# 7. Отзывы и рейтинги курсов
 class Review(models.Model):
+    # Вызван course для связи отзыва с конкретным курсом
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews', verbose_name="Курс")
+    # Вызван user для связи отзыва с конкретным пользователем
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Пользователь")
+    # Рейтинг отзыва с валидацией от 1 до 5
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         help_text="Оценка от 1 до 5",
@@ -189,3 +193,28 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Отзыв от {self.user.email} на курс {self.course.title} ({self.rating}/5)"
+    
+
+class Certificate(models.Model):
+    
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+
+    student=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='certificates')
+    course=models.ForeignKey('Course', on_delete=models.CASCADE, related_name='certificates')
+    
+    issued_at=models.DateTimeField(auto_now_add=True,verbose_name="Дата выдачи")
+    
+    file=models.ImageField(upload_to='certificates/',null=True,blank=True)
+    is_valid=models.BooleanField(default=True,verbose_name="Действителен")
+    
+    class Meta:
+        unique_together=('student','course')
+        verbose_name="Сертификат"
+        verbose_name_plural="Сертификаты"
+    
+    def __str__(self):
+        return f"Сертификат {self.id} | {self.student.username} - {self.course.title}"
+        
+        
+                                   
+    

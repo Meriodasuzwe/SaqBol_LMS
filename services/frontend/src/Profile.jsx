@@ -2,12 +2,14 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
+import { Award, Download } from 'lucide-react'; // ✅ Добавили иконки для сертификатов
 
 function Profile() {
     const [user, setUser] = useState(null);
     const [results, setResults] = useState([]);
     const [myCourses, setMyCourses] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [certificates, setCertificates] = useState([]); // ✅ Стейт для сертификатов
     const [loading, setLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,6 +36,11 @@ function Profile() {
 
                 const coursesRes = await api.get('courses/my_courses/');
                 setMyCourses(coursesRes.data);
+
+                // ✅ Загружаем сертификаты (с защитой от ошибки, если эндпоинт упадет)
+                const certRes = await api.get('courses/certificates/my/').catch(() => ({ data: [] }));
+                setCertificates(certRes.data);
+
             } catch (err) {
                 console.error("Ошибка загрузки профиля:", err);
                 toast.error("Не удалось загрузить данные профиля");
@@ -59,7 +66,8 @@ function Profile() {
         }
     };
 
-    const getAvatarUrl = (path) => {
+    // ✅ Универсальная функция для получения полного URL картинок
+    const getMediaUrl = (path) => {
         if (!path) return null;
         if (path.startsWith('http://') || path.startsWith('blob:')) return path;
         return `http://localhost:8000${path.startsWith('/') ? '' : '/'}${path}`;
@@ -86,10 +94,7 @@ function Profile() {
         ? Math.round(results.reduce((acc, c) => acc + c.score, 0) / totalTests)
         : 0;
 
-    // ✅ Количество курсов в процессе (прогресс < 100%)
     const inProgressCourses = myCourses.filter(c => !c.is_completed).length;
-
-    // ✅ Для учителя — суммарно студентов на курсах
     const totalStudents = isTeacher
         ? myCourses.reduce((acc, c) => acc + (c.enrolled_students_count || 0), 0)
         : null;
@@ -130,14 +135,11 @@ function Profile() {
             {/* ── ШАПКА ПРОФИЛЯ ── */}
             <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden mb-6">
                 <div className="h-32 bg-base-200/50 border-b border-base-200"></div>
-
                 <div className="px-8 pb-8 flex flex-col sm:flex-row gap-6 items-start sm:items-end relative -mt-12">
-
-                    {/* Аватарка */}
                     <div className="relative shrink-0 group">
                         <div className="w-28 h-28 rounded-full border-4 border-base-100 shadow-sm bg-base-200 overflow-hidden flex items-center justify-center">
                             {user?.avatar ? (
-                                <img src={getAvatarUrl(user?.avatar)} alt="avatar" className="w-full h-full object-cover" />
+                                <img src={getMediaUrl(user?.avatar)} alt="avatar" className="w-full h-full object-cover" />
                             ) : (
                                 <span className="text-4xl font-semibold uppercase text-base-content/40">
                                     {user?.username?.[0] || 'U'}
@@ -153,8 +155,6 @@ function Profile() {
                         </label>
                         <input type="file" id="avatar-upload" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                     </div>
-
-                    {/* Инфо */}
                     <div className="flex-1 pb-1">
                         <div className="flex items-center gap-3">
                             <h1 className="text-2xl font-bold text-base-content">
@@ -166,14 +166,8 @@ function Profile() {
                         </div>
                         <p className="text-sm text-base-content/50 mt-1">{displaySubtext}</p>
                     </div>
-
                     <div className="pb-2">
-                        <Link to="/settings"
-                            className="btn btn-sm btn-outline border-base-300 text-base-content/80 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                        <Link to="/settings" className="btn btn-sm btn-outline border-base-300 text-base-content/80 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium">
                             Настройки
                         </Link>
                     </div>
@@ -204,23 +198,6 @@ function Profile() {
                             })}
                         </div>
                     </div>
-                    <div className="flex justify-end items-center gap-1.5 mt-3 text-[11px] text-base-content/50">
-                        <span>Меньше</span>
-                        <div className="w-[11px] h-[11px] rounded-[2px] bg-gray-200 dark:bg-base-300"></div>
-                        <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-300 dark:bg-emerald-800"></div>
-                        <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-400 dark:bg-emerald-600"></div>
-                        <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-500 dark:bg-emerald-500"></div>
-                        <span>Больше</span>
-                    </div>
-                </div>
-                <div className="w-full md:w-32 flex flex-row md:flex-col gap-1">
-                    {[2026, 2025, 2024].map(year => (
-                        <button key={year} onClick={() => setActivityYear(year)}
-                            className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors text-left
-                                ${activityYear === year ? 'bg-blue-50 text-blue-600' : 'text-base-content/60 hover:bg-base-200'}`}>
-                            {year}
-                        </button>
-                    ))}
                 </div>
             </div>
 
@@ -228,8 +205,6 @@ function Profile() {
 
                 {/* ── ЛЕВАЯ КОЛОНКА ── */}
                 <div className="xl:col-span-1 space-y-6">
-
-                    {/* ✅ УЛУЧШЕННЫЕ МЕТРИКИ */}
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
                         <h3 className="text-sm font-semibold mb-4">Успеваемость</h3>
                         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -244,8 +219,6 @@ function Profile() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* ✅ Третья метрика — полная строка */}
                         <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
                             <div className="flex justify-between items-center mb-2">
                                 <div className="text-xs text-base-content/50">
@@ -257,34 +230,13 @@ function Profile() {
                             </div>
                             {!isTeacher && myCourses.length > 0 && (
                                 <div className="w-full bg-base-200 rounded-full h-1.5 mt-1">
-                                    <div
-                                        className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.round((inProgressCourses / myCourses.length) * 100)}%` }}
-                                    />
+                                    <div className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.round((inProgressCourses / myCourses.length) * 100)}%` }} />
                                 </div>
                             )}
                         </div>
-
-                        {/* ✅ Ссылка на детальную аналитику */}
-                        <Link
-                            to={isTeacher ? '/analytics/teacher' : '/analytics/student'}
-                            className="mt-4 flex items-center justify-between w-full px-4 py-3 rounded-xl border border-base-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
-                        >
-                            <div>
-                                <p className="text-xs font-semibold text-base-content/70 group-hover:text-blue-700 transition-colors">
-                                    {isTeacher ? 'Аналитика курсов' : 'Подробная аналитика'}
-                                </p>
-                                <p className="text-[11px] text-base-content/40 mt-0.5">
-                                    {isTeacher ? 'Слабые темы и AI-рекомендации' : 'Прогресс, слабые темы, советы AI'}
-                                </p>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/30 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </Link>
                     </div>
 
-                    {/* ✅ УЛУЧШЕННЫЕ РЕЗУЛЬТАТЫ КВИЗОВ */}
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
                         <h3 className="text-sm font-semibold mb-4">Последние результаты</h3>
                         {results.length === 0 ? (
@@ -292,8 +244,7 @@ function Profile() {
                         ) : (
                             <div className="space-y-1">
                                 {results.slice(0, 5).map(r => (
-                                    <div key={r.id}
-                                        className="py-3 px-2 -mx-2 rounded-lg hover:bg-base-50 transition-colors">
+                                    <div key={r.id} className="py-3 px-2 -mx-2 rounded-lg hover:bg-base-50 transition-colors">
                                         <div className="flex justify-between items-center mb-2">
                                             <div className="truncate pr-3 flex-1">
                                                 <p className="text-sm font-medium truncate">{r.quiz_title || "Без названия"}</p>
@@ -301,19 +252,13 @@ function Profile() {
                                                     {r.completed_at ? new Date(r.completed_at).toLocaleDateString('ru-RU') : '—'}
                                                 </p>
                                             </div>
-                                            <span className={`shrink-0 font-bold text-xs px-2 py-1 rounded border
-                                                ${r.score >= 70
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                            <span className={`shrink-0 font-bold text-xs px-2 py-1 rounded border ${r.score >= 70 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
                                                 {r.score}%
                                             </span>
                                         </div>
-                                        {/* ✅ Прогресс-полоска */}
                                         <div className="w-full bg-base-200 rounded-full h-1">
-                                            <div
-                                                className={`h-1 rounded-full transition-all duration-500 ${r.score >= 70 ? 'bg-emerald-500' : r.score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
-                                                style={{ width: `${r.score}%` }}
-                                            />
+                                            <div className={`h-1 rounded-full transition-all duration-500 ${r.score >= 70 ? 'bg-emerald-500' : r.score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                                style={{ width: `${r.score}%` }} />
                                         </div>
                                     </div>
                                 ))}
@@ -323,8 +268,9 @@ function Profile() {
                 </div>
 
                 {/* ── ПРАВАЯ КОЛОНКА ── */}
-                <div className="xl:col-span-2">
-                    <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8 min-h-full">
+                <div className="xl:col-span-2 space-y-6">
+                    {/* КУРСЫ */}
+                    <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold">
                                 {isTeacher ? 'Управление курсами' : 'Моё обучение'}
@@ -340,30 +286,19 @@ function Profile() {
                         {myCourses.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 {myCourses.map(course => (
-                                    <div key={course.id}
-                                        className="p-5 rounded-xl border border-base-200 bg-base-50/50 hover:bg-base-100 hover:shadow-md hover:border-blue-200 transition-all group flex flex-col">
+                                    <div key={course.id} className="p-5 rounded-xl border border-base-200 bg-base-50/50 hover:bg-base-100 hover:shadow-md hover:border-blue-200 transition-all group flex flex-col">
                                         <div className="text-[10px] font-bold text-base-content/40 mb-2 uppercase tracking-widest">
                                             {course.category_title}
                                         </div>
                                         <h4 className="font-semibold mb-4 line-clamp-2 text-sm group-hover:text-blue-600 transition-colors">
                                             {course.title}
                                         </h4>
-
-                                        {/* ✅ Количество студентов для учителя */}
-                                        {isTeacher && course.enrolled_students_count != null && (
-                                            <p className="text-xs text-base-content/40 mb-3">
-                                                {course.enrolled_students_count} студентов
-                                            </p>
-                                        )}
-
                                         <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
-                                            <Link to={`/courses/${course.id}`}
-                                                className="text-xs font-bold text-blue-600 hover:underline">
+                                            <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
                                                 {isTeacher ? 'Просмотр курса' : 'Продолжить'}
                                             </Link>
                                             {isTeacher && (
-                                                <Link to={`/teacher/course/${course.id}/builder`}
-                                                    className="text-xs font-semibold px-2.5 py-1.5 border border-base-300 rounded text-base-content/70 hover:bg-base-200 transition-colors">
+                                                <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 border border-base-300 rounded text-base-content/70 hover:bg-base-200 transition-colors">
                                                     Редактор
                                                 </Link>
                                             )}
@@ -373,55 +308,123 @@ function Profile() {
                             </div>
                         ) : (
                             <div className="text-center py-16 border border-dashed border-base-300 rounded-xl bg-base-50/50">
-                                <p className="text-sm font-medium text-base-content/50 mb-4">
-                                    У вас пока нет активных курсов.
-                                </p>
+                                <p className="text-sm font-medium text-base-content/50 mb-4">У вас пока нет активных курсов.</p>
                                 {!isTeacher && (
-                                    <Link to="/courses"
-                                        className="btn btn-sm btn-outline border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 shadow-sm">
+                                    <Link to="/courses" className="btn btn-sm btn-outline border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 shadow-sm">
                                         Перейти в каталог
                                     </Link>
                                 )}
                             </div>
                         )}
                     </div>
+
+                    {/* ✅ СЕРТИФИКАТЫ (ДЕРЗКИЙ ДИЗАЙН) */}
+                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 p-6 sm:p-8 relative overflow-hidden">
+                        {/* Декоративный фоновый блик */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <div className="flex justify-between items-center mb-8 relative z-10">
+                            <div>
+                                <h3 className="text-xl font-black flex items-center gap-3">
+                                    <span className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
+                                        <Award size={22} />
+                                    </span>
+                                    Мои достижения
+                                </h3>
+                                <p className="text-sm text-base-content/50 mt-1">Официальные документы об окончании</p>
+                            </div>
+                        </div>
+
+                        {certificates.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                                {certificates.map(cert => (
+                                    <div key={cert.id} className="relative group rounded-2xl bg-gradient-to-br from-base-300 to-base-200 p-[1px] hover:from-amber-400 hover:to-orange-500 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-amber-500/10">
+                                        
+                                        {/* Внутренняя карточка */}
+                                        <div className="bg-base-100 rounded-[15px] p-5 h-full flex flex-col relative overflow-hidden">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h4 className="font-extrabold text-base leading-tight pr-4 group-hover:text-amber-600 transition-colors">
+                                                    {cert.course_title}
+                                                </h4>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-md shrink-0">
+                                                    Verified
+                                                </span>
+                                            </div>
+
+                                            {/* Превью сертификата */}
+                                            {/* aspect-[1.414/1] - идеальная пропорция для сертификата А4 */}
+                                            <div className="w-full aspect-[1.414/1] bg-base-200/50 rounded-xl mb-4 overflow-hidden relative group/img border border-base-200">
+                                                {cert.file ? (
+                                                    // ВАЖНО: object-contain чтобы сертификат влезал целиком и не обрезался!
+                                                    <img src={getMediaUrl(cert.file)} alt="Certificate" className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover/img:scale-105" />
+                                                ) : (
+                                                    <div className="flex items-center justify-center w-full h-full text-base-content/10">
+                                                        <Award size={64} />
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Стеклянный оверлей при наведении */}
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                                                    <a href={getMediaUrl(cert.file)} target="_blank" rel="noreferrer" download 
+                                                       className="px-6 py-2.5 bg-white text-black hover:bg-amber-400 hover:text-black font-bold rounded-full text-sm flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
+                                                        <Download size={16} /> Скачать
+                                                    </a>
+                                                    <Link to={`/verify/${cert.id}`} className="text-white/80 font-medium text-xs hover:text-white underline underline-offset-4 transition-colors">
+                                                        Страница верификации
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mt-auto pt-4 border-t border-base-200/60 flex justify-between items-end">
+                                                <div>
+                                                    <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider mb-0.5">Дата выдачи</p>
+                                                    <p className="text-xs font-semibold text-base-content">{new Date(cert.issued_at).toLocaleDateString('ru-RU')}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider mb-0.5">ID Документа</p>
+                                                    <p className="text-[10px] font-mono text-base-content/70">{cert.id.split('-')[0].toUpperCase()}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 border-2 border-dashed border-base-200 rounded-2xl bg-base-50/50 relative z-10">
+                                <div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Award size={32} className="text-base-content/20" />
+                                </div>
+                                <h4 className="text-base font-bold text-base-content mb-1">Нет сертификатов</h4>
+                                <p className="text-sm font-medium text-base-content/50 max-w-sm mx-auto">
+                                    Пройдите любой курс на 100%, и ваш первый сертификат появится здесь.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* ── МОДАЛКА СОЗДАНИЯ КУРСА ── */}
+            {/* Модалка создания остается без изменений */}
             {isModalOpen && isTeacher && (
                 <div className="fixed inset-0 bg-base-300/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-                    <div className="bg-base-100 rounded-2xl shadow-xl border border-base-200 w-full max-w-md p-6">
+                     {/* ... твой старый код модалки ... */}
+                     <div className="bg-base-100 rounded-2xl shadow-xl border border-base-200 w-full max-w-md p-6">
                         <h3 className="font-bold text-lg mb-4">Новый курс</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="label py-0 pb-1.5">
-                                    <span className="text-xs font-medium text-base-content/70">Название</span>
-                                </label>
-                                <input type="text"
-                                    className="input input-sm input-bordered border-base-300 w-full shadow-sm"
-                                    value={newCourseTitle}
-                                    onChange={(e) => setNewCourseTitle(e.target.value)} />
+                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Название</span></label>
+                                <input type="text" className="input input-sm input-bordered w-full" value={newCourseTitle} onChange={(e) => setNewCourseTitle(e.target.value)} />
                             </div>
                             <div>
-                                <label className="label py-0 pb-1.5">
-                                    <span className="text-xs font-medium text-base-content/70">Категория</span>
-                                </label>
-                                <select className="select select-sm select-bordered border-base-300 w-full shadow-sm"
-                                    value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}>
+                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">Категория</span></label>
+                                <select className="select select-sm select-bordered w-full" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
                                     {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.title}</option>)}
                                 </select>
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-8">
-                            <button className="btn btn-sm btn-ghost" onClick={() => setIsModalOpen(false)}>
-                                Отмена
-                            </button>
-                            <button
-                                className={`btn btn-sm shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-0 ${isCreating ? 'loading' : ''}`}
-                                onClick={handleCreateCourse}
-                                disabled={isCreating || !newCourseTitle}>
+                            <button className="btn btn-sm btn-ghost" onClick={() => setIsModalOpen(false)}>Отмена</button>
+                            <button className={`btn btn-sm bg-blue-600 text-white border-0 ${isCreating ? 'loading' : ''}`} onClick={handleCreateCourse} disabled={isCreating || !newCourseTitle}>
                                 Создать
                             </button>
                         </div>
