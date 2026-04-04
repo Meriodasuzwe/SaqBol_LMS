@@ -15,11 +15,12 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from notifications.service import send_notification
 from rest_framework.exceptions import ValidationError
+
 User = get_user_model()
 
 # Импорты моделей и сериализаторов
 from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress, Review, Certificate
-from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer,  ReviewSerializer, CertificateSerializer
+from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer, ReviewSerializer, CertificateSerializer
 from quizzes.models import Quiz, Result
 
 # Инициализация ключа Stripe
@@ -254,42 +255,39 @@ class MarkStepCompleteView(APIView):
             defaults={'score_earned': score, 'is_completed': True}
         )
 
-        # ─── ЛОГИКА ВЫДАЧИ СЕРТИФИКАТА ───────────────────────────────
         course = step.lesson.course
-        
-        # 1. Считаем, сколько всего шагов в курсе
         total_steps = LessonStep.objects.filter(lesson__course=course).count()
-        
-        # 2. Считаем, сколько шагов успешно прошел именно этот студент
         completed_steps = StepProgress.objects.filter(
             student=user, 
             step__lesson__course=course, 
             is_completed=True
         ).count()
 
-        # 3. Если студент прошел все шаги
+        # 🔥 Флаг: только что ли завершили курс?
+        just_completed = False 
+
         if total_steps > 0 and completed_steps >= total_steps:
-            # Делаем импорт тут, чтобы избежать возможных циклических импортов вверху файла
             from .models import Certificate
             from .certificate_generator import generate_certificate_image
             
-            # Проверяем, не выдавали ли мы уже сертификат (защита от дублей)
+            # Если сертификата ЕЩЕ НЕТ, значит это первое в жизни 100% завершение!
             if not Certificate.objects.filter(student=user, course=course).exists():
-                # Создаем запись в БД
                 new_cert = Certificate.objects.create(student=user, course=course)
-                # Рисуем саму картинку
                 generate_certificate_image(new_cert)
                 
-                # Отправляем радостное уведомление студенту
                 send_notification(
                     recipient=user,
                     notification_type='certificate_issued',
                     title='🎉 Сертификат получен!',
-                    message=f'Поздравляем! Вы успешно завершили курс «{course.title}». Ваш сертификат готов к скачиванию в личном кабинете.'
+                    message=f'Поздравляем! Вы успешно завершили курс «{course.title}».'
                 )
-        # ─────────────────────────────────────────────────────────────
+                just_completed = True # Устанавливаем в True только 1 раз!
 
-        return Response({"message": "Шаг пройден!", "score_earned": score}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "Шаг пройден!", 
+            "score_earned": score,
+            "just_completed": just_completed # Передаем на фронт!
+        }, status=status.HTTP_200_OK)
 
 
 class BulkCreateCourseView(APIView):
@@ -522,6 +520,19 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         # Сохраняем
         serializer.save(user=user, course=course)
         
+
+class ReviewDeleteView(generics.DestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        review = super().get_object()
+        # Защита: удалять можно только свой отзыв (админам можно всё)
+        if review.user != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Вы не можете удалить чужой отзыв.")
+        return review
+
 
 class MyCertificatesView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
