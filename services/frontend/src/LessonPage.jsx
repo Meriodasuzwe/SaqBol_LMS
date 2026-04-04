@@ -11,7 +11,8 @@ import {
     Code2, 
     FileText, 
     ArrowRight,
-    ArrowLeft
+    ArrowLeft,
+    Award // 🔥 Добавлена иконка Award
 } from 'lucide-react';
 
 import FakeMessenger from './FakeMessenger';
@@ -28,6 +29,9 @@ function LessonPage() {
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeStepIndex, setActiveStepIndex] = useState(0);
+    
+    // 🔥 Стейт для показа красивого модального окна при завершении курса
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
 
     const getYoutubeEmbedUrl = (url) => {
         if (!url) return null;
@@ -85,13 +89,20 @@ function LessonPage() {
         const currentStep = lesson.steps[activeStepIndex];
         
         try {
-            await api.post(`courses/steps/${currentStep.id}/complete/`, { score });
+            // 🔥 Сохраняем ответ сервера в переменную res
+            const res = await api.post(`courses/steps/${currentStep.id}/complete/`, { score });
             
             setLesson(prevLesson => {
                 const updatedSteps = [...prevLesson.steps];
                 updatedSteps[activeStepIndex] = { ...updatedSteps[activeStepIndex], is_completed: true };
                 return { ...prevLesson, steps: updatedSteps };
             });
+
+            // 🔥 ПРОВЕРКА НА ВЫПУСКНИКА: Если курс завершен ВПЕРВЫЕ
+            if (res.data.just_completed) {
+                setShowCompletionModal(true);
+                return; // Останавливаем выполнение, показываем модалку
+            }
             
             const currentIndexInCourse = courseLessons.findIndex(l => l.id === lesson.id);
             const nextLessonObj = currentIndexInCourse < courseLessons.length - 1 ? courseLessons[currentIndexInCourse + 1] : null;
@@ -106,7 +117,8 @@ function LessonPage() {
                     toast.success("Урок завершен! Переходим к следующему");
                     navigate(`/lesson/${nextLessonObj.id}`);
                 } else {
-                    toast.success("Поздравляем! Вы завершили курс! 🎉");
+                    // Если он просто пересдал старый урок
+                    toast.success("Урок успешно перепройден!");
                     navigate(`/course/${lesson.course}`);
                 }
             }
@@ -147,7 +159,7 @@ function LessonPage() {
 
     return (
         <div className="min-h-screen bg-base-200 flex justify-center pb-20 font-sans text-base-content transition-colors duration-200">
-            <div className="flex w-full max-w-7xl mx-auto pt-8 px-6 lg:px-8 gap-12">
+            <div className="flex w-full max-w-7xl mx-auto pt-8 px-6 lg:px-8 gap-12 relative">
                 
                 {/* ── ЛЕВЫЙ САЙДБАР ── */}
                 <aside className="hidden lg:flex flex-col w-[300px] shrink-0">
@@ -337,6 +349,33 @@ function LessonPage() {
                         )}
                     </div>
                 </main>
+
+                {/* 🔥 МОДАЛКА ОКОНЧАНИЯ КУРСА 🔥 */}
+                {showCompletionModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-base-300/80 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-base-100 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center relative animate-in zoom-in-95 duration-300">
+                            <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/30">
+                                <Award size={48} className="text-white" />
+                            </div>
+                            <h2 className="text-2xl font-black mb-2 text-base-content">Курс пройден!</h2>
+                            <p className="text-sm text-base-content/60 mb-8">
+                                Вы проделали отличную работу. Ваш именной сертификат уже сгенерирован и ждет вас в профиле.
+                            </p>
+                            <Link 
+                                to="/profile" 
+                                className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+                            >
+                                <Award size={18} /> Забрать сертификат
+                            </Link>
+                            <button 
+                                onClick={() => navigate(`/course/${lesson.course}`)} 
+                                className="mt-4 text-sm text-base-content/50 hover:text-base-content font-medium w-full py-2"
+                            >
+                                Вернуться к курсу
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

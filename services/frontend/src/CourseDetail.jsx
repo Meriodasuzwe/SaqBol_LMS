@@ -9,9 +9,9 @@ import {
     Code2, 
     ChevronRight, 
     CheckCircle2,
-    Clock
+    Clock,
+    Award
 } from 'lucide-react';
-// 🔥 Импорт секции отзывов
 import ReviewSection from './ReviewSection';
 
 function CourseDetail({ isLoggedIn }) { 
@@ -69,7 +69,7 @@ function CourseDetail({ isLoggedIn }) {
     }, [id, isLoggedIn]);
 
     const getStepStyle = (type) => {
-        const iconProps = { size: 18, className: "text-base-content/70 group-hover:text-blue-600 transition-colors" };
+        const iconProps = { size: 18, className: "text-base-content/50 group-hover:text-blue-500 transition-colors" };
         switch (type) {
             case 'simulation_chat':  return { icon: <ShieldCheck {...iconProps} />, label: 'Интерактив' };
             case 'simulation_email': return { icon: <ShieldCheck {...iconProps} />, label: 'Фишинг' };
@@ -134,12 +134,34 @@ function CourseDetail({ isLoggedIn }) {
                             {course.title}
                         </h1>
 
+                        {course.progress === 100 && (
+                            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-8 text-white shadow-xl shadow-emerald-500/20 mb-10 flex flex-col md:flex-row items-center justify-between gap-6 transform transition-all hover:scale-[1.01]">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0 border border-white/30">
+                                        <CheckCircle2 size={36} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black mb-1">Выпускник курса! 🎉</h2>
+                                        <p className="text-emerald-50 text-sm opacity-90">Вы изучили все материалы и сдали финальные тесты.</p>
+                                    </div>
+                                </div>
+                                <div className="shrink-0 flex flex-col gap-3 w-full md:w-auto">
+                                    <button 
+                                        onClick={() => navigate('/profile')} 
+                                        className="bg-white text-emerald-700 hover:bg-emerald-50 border-0 shadow-lg px-8 rounded-xl font-bold py-3 flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <Award size={18} /> Смотреть достижения
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div 
                             className="prose prose-sm sm:prose-base max-w-none text-base-content/80 mb-12 leading-relaxed dark:prose-invert prose-a:text-blue-600 hover:prose-a:text-blue-500"
                             dangerouslySetInnerHTML={{ __html: course.description }}
                         />
 
-                        <div className="flex items-center gap-6 py-8 border-t border-b border-base-300">
+                        <div className="flex items-center gap-6 py-8 border-t border-base-300">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                                     {course.teacher_name?.[0] || 'S'}
@@ -150,14 +172,6 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
                             </div>
                         </div>
-
-                        {/* 🔥 СЕКЦИЯ ОТЗЫВОВ ПРЯМО ЗДЕСЬ 🔥 */}
-                        <ReviewSection 
-                            courseId={course.id} 
-                            isEnrolled={isEnrolled} 
-                            progress={course.progress || 0} 
-                        />
-
                     </div>
 
                     {/* ── Правая колонка (sticky) ── */}
@@ -224,28 +238,43 @@ function CourseDetail({ isLoggedIn }) {
                                                 </div>
                                             </div>
 
-                                            <div className="flex flex-col relative">
+                                            <div className="flex flex-col relative py-2">
                                                 {lesson.steps?.map((step, sIdx) => {
                                                     const { icon, label } = getStepStyle(step.step_type);
+                                                    const isPassed = step.is_completed;
+
                                                     return (
                                                         <button 
                                                             key={step.id}
                                                             onClick={() => navigate(`/lesson/${lesson.id}?step=${step.id}`)}
-                                                            className="w-full group flex items-start gap-4 px-6 py-5 hover:bg-base-200 transition-all text-left relative"
+                                                            className="w-full group flex items-center px-6 py-4 hover:bg-base-200/50 transition-all text-left relative"
                                                         >
-                                                            <div className="absolute left-[39px] top-0 bottom-0 w-px bg-base-300 group-first:top-1/2 group-last:bottom-1/2"></div>
-                                                            <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-xl bg-base-100 border border-base-300 shadow-sm flex items-center justify-center group-hover:border-blue-300/50 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
-                                                                {icon}
+                                                            {/* 🔥 Идеально центрированная линия таймлайна 🔥 */}
+                                                            <div className="absolute left-[43px] top-0 bottom-0 w-[2px] bg-base-200 dark:bg-base-300 group-first:top-1/2 group-last:bottom-1/2 z-0"></div>
+                                                            
+                                                            {/* 🔥 Круглая иконка (зеленая если пройдено) 🔥 */}
+                                                            <div className={`relative z-10 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all mr-4 shadow-sm border-2 ${
+                                                                isPassed 
+                                                                ? "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/30" 
+                                                                : "bg-base-100 border-base-300 text-base-content/40 group-hover:border-blue-400 group-hover:text-blue-500 group-hover:scale-105"
+                                                            }`}>
+                                                                {isPassed ? <CheckCircle2 size={20} strokeWidth={2.5} /> : icon}
                                                             </div>
+                                                            
                                                             <div className="flex-1 min-w-0">
-                                                                <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest leading-none block mb-1">
-                                                                    {label}
+                                                                <span className={`text-[10px] font-black uppercase tracking-widest leading-none block mb-1.5 ${
+                                                                    isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-base-content/40"
+                                                                }`}>
+                                                                    {isPassed ? "Пройдено" : label}
                                                                 </span>
-                                                                <h4 className="text-[13px] font-bold text-base-content/80 group-hover:text-base-content transition-colors leading-snug">
+                                                                <h4 className={`text-sm font-bold transition-colors leading-snug ${
+                                                                    isPassed ? "text-base-content" : "text-base-content/60 group-hover:text-base-content"
+                                                                }`}>
                                                                     {step.title || `Шаг ${sIdx + 1}`}
                                                                 </h4>
                                                             </div>
-                                                            <ChevronRight size={14} className="text-base-content/30 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all mt-3" />
+                                                            
+                                                            <ChevronRight size={16} className="text-base-content/20 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all ml-2" />
                                                         </button>
                                                     );
                                                 })}
@@ -255,17 +284,38 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
 
                                 <div className="p-4 bg-base-200 border-t border-base-300">
-                                    <button 
-                                        onClick={() => navigate(`/lesson/${lessons[0]?.id}`)}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors shadow-lg shadow-blue-900/20"
-                                    >
-                                        Начать обучение
-                                    </button>
+                                    {course.progress === 100 ? (
+                                        <button 
+                                            onClick={() => navigate('/profile')}
+                                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"
+                                        >
+                                            <Award size={16} /> Ваши сертификаты
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={() => navigate(`/lesson/${lessons[0]?.id}`)}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors shadow-lg shadow-blue-900/20"
+                                        >
+                                            {course.progress > 0 ? "Продолжить обучение" : "Начать обучение"}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
                     </div>
+
                 </div>
+
+                <div className="mt-20 pt-16 border-t border-base-300">
+                    <div className="max-w-4xl mx-auto">
+                        <ReviewSection 
+                            courseId={course.id} 
+                            isEnrolled={isEnrolled} 
+                            progress={course.progress || 0} 
+                        />
+                    </div>
+                </div>
+
             </div>
         </div>
     );
