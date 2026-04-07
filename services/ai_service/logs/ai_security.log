@@ -408,3 +408,7 @@ INFO 2026-03-24 16:13:41,473 | INSIGHTS STUDENT | user_id=25
 INFO 2026-03-24 16:13:42,846 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-03-24 16:13:42,849 | INSIGHTS STUDENT SUCCESS | user_id=25
 INFO 2026-03-24 16:13:42,849 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.380s
+INFO 2026-04-04 13:18:23,533 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-04-04 13:18:25,664 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-04 13:18:25,670 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-04-04 13:18:25,671 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.163s
