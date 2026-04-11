@@ -19,3 +19,10 @@ class ScenarioRequest(BaseModel):
     topic: str = Field(..., min_length=3, max_length=500, description="Тема сценария")
     scenario_type: Literal["chat", "email"] = Field(..., description="Тип сценария")
     difficulty: Literal["easy", "medium", "hard"] = Field(default="medium")
+
+    @field_validator("topic")
+    @classmethod
+    def topic_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Тема не может быть пустой.")
+        return v.strip()

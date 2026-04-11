@@ -3,7 +3,7 @@ groq_service.py — Вся логика работы с Groq AI.
 
 Содержит:
 - Базовый async вызов с таймаутом и retry
-- Валидаторы формата сценария
+- Валидаторы формата сценария (поддержка графов)
 - Конвертер speaker → interactive формат
 """
 
@@ -108,94 +108,91 @@ async def groq_chat_json(
 # ---------------------------------------------------------------------------
 
 def is_interactive_chat_format(scenario: Dict[str, Any]) -> bool:
-    """Проверяет что сценарий соответствует формату message/choice."""
-    steps = scenario.get("steps", [])
+    """Проверяет что сценарий соответствует новому формату графа (message/choice с id)."""
+    scenario_data = scenario.get("scenario_data", scenario)
+    steps = scenario_data.get("steps", [])
+    
     if not isinstance(steps, list) or len(steps) == 0:
         return False
 
-    for i, step in enumerate(steps):
-        if not isinstance(step, dict) or "type" not in step:
+    for step in steps:
+        if not isinstance(step, dict) or "type" not in step or "id" not in step:
             return False
-        if i % 2 == 0:
-            if step.get("type") != "message":
-                return False
-            if not isinstance(step.get("text"), str) or not step["text"].strip():
-                return False
-        else:
-            if step.get("type") != "choice":
-                return False
-            opts = step.get("options")
-            if not isinstance(opts, list) or len(opts) < 2:
-                return False
+            
     return True
 
 
 def has_speaker_format(scenario: Dict[str, Any]) -> bool:
-    """Определяет, использует ли сценарий устаревший speaker-формат."""
-    steps = scenario.get("steps", [])
+    """Определяет, использует ли сценарий устаревший speaker-формат без id."""
+    scenario_data = scenario.get("scenario_data", scenario)
+    steps = scenario_data.get("steps", [])
     if not isinstance(steps, list) or not steps:
         return False
-    return any(isinstance(s, dict) and "speaker" in s for s in steps)
-
-
-_DEFAULT_CHOICE: Dict[str, Any] = {
-    "type": "choice",
-    "options": [
-        {
-            "text": "Отказаться, завершить разговор и проверить информацию через официальный канал.",
-            "is_correct": True,
-            "feedback": "Верно: всегда верифицируйте запрос через официальный номер или почту компании.",
-        },
-        {
-            "text": "Сообщить свои данные/пароль, чтобы быстрее решить проблему.",
-            "is_correct": False,
-            "feedback": "Ошибка: это классический социнжиниринг. Никогда не передавайте пароли и коды.",
-        },
-    ],
-}
+    # Если есть speaker, text, но нет id — это старый формат
+    return any(isinstance(s, dict) and "speaker" in s and "id" not in s for s in steps)
 
 
 def convert_speaker_to_interactive(scenario: Dict[str, Any]) -> Dict[str, Any]:
-    """Конвертирует speaker-формат в интерактивный message/choice формат."""
-    steps_in = scenario.get("steps", [])
-    out_steps: List[Dict[str, Any]] = []
-
-    for item in steps_in:
+    """Аварийный конвертер: если нейросеть отдала старый формат, пытаемся переделать в новый граф."""
+    scenario_data = scenario.get("scenario_data", scenario)
+    old_steps = scenario_data.get("steps", [])
+    
+    new_steps = []
+    current_id = 1
+    
+    for item in old_steps:
         if not isinstance(item, dict):
             continue
         speaker = (item.get("speaker") or "").lower()
-        text = (
-            item.get("text") or item.get("message") or item.get("content") or ""
-        ).strip()
+        text = (item.get("text") or item.get("message") or item.get("content") or "").strip()
 
         if not text:
             continue
 
-        # Пропускаем реплики пользователя/жертвы
         is_user = any(kw in speaker for kw in ("польз", "user", "victim", "жертв"))
+        
         if is_user:
-            continue
+            new_steps.append({
+                "id": current_id,
+                "type": "choice",
+                "options": [
+                    {
+                        "text": text,
+                        "next_step_id": current_id + 1
+                    }
+                ]
+            })
+        else:
+            new_steps.append({
+                "id": current_id,
+                "type": "message",
+                "speaker": "bot",
+                "text": text,
+                "next_step_id": current_id + 1
+            })
+        current_id += 1
 
-        out_steps.append({"type": "message", "text": text})
-        # Глубокая копия чтобы не мутировать шаблон
-        out_steps.append(json.loads(json.dumps(_DEFAULT_CHOICE)))
-
+    # У последнего шага убираем next_step_id, чтобы граф завершился
+    if new_steps:
+        new_steps[-1].pop("next_step_id", None)
+        
     return {
-        "contact_name": scenario.get("contact_name", "Служба безопасности"),
-        "steps": out_steps[:12],  # Не более 6 пар message+choice
+        "scenario_data": {
+            "contact_name": scenario_data.get("contact_name", "Служба безопасности"),
+            "steps": new_steps
+        }
     }
 
 
 def validate_choice_options(scenario: Dict[str, Any]) -> None:
-    """Проверяет что в каждом choice есть минимум 1 верный и 1 неверный вариант."""
-    for step in scenario.get("steps", []):
-        if step.get("type") != "choice":
-            continue
-        opts = step.get("options", [])
-        correct_count = sum(1 for o in opts if o.get("is_correct") is True)
-        wrong_count = sum(1 for o in opts if o.get("is_correct") is False)
-        if correct_count < 1 or wrong_count < 1:
-            raise HTTPException(
-                status_code=500,
-                detail="AI вернул сценарий без корректной разметки правильных/неправильных ответов.",
-            )
+    """Проверяет что в каждом choice есть варианты ответов."""
+    scenario_data = scenario.get("scenario_data", scenario)
+    
+    for step in scenario_data.get("steps", []):
+        if step.get("type") == "choice":
+            opts = step.get("options", [])
+            if not isinstance(opts, list) or len(opts) < 1:
+                raise HTTPException(
+                    status_code=500,
+                    detail="AI вернул узел 'choice' без вариантов ответа (options).",
+                )

@@ -2031,3 +2031,21 @@ WARNING 2026-04-05 10:32:42,830 | ACCESS DENIED: [401] GET /api/notifications/un
 WARNING 2026-04-05 10:32:42,834 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 WARNING 2026-04-05 10:32:42,837 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 INFO 2026-04-05 10:32:49,605 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.116s
+WARNING 2026-04-07 17:33:44,242 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.054s
+WARNING 2026-04-07 17:33:44,243 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.065s
+WARNING 2026-04-07 17:33:44,250 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-07 17:33:44,253 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-07 17:33:44,258 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-07 17:33:44,263 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-04-07 17:33:50,495 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.174s
+INFO 2026-04-07 17:34:46,040 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.352s
+INFO 2026-04-07 17:37:12,323 | ACTION: [200] PATCH /api/courses/steps/72/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.028s
+INFO 2026-04-07 17:37:25,533 | ACTION: [201] POST /api/courses/lessons/91/steps/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-07 17:37:57,885 | ACTION: [201] POST /api/quizzes/save-generated/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.033s
+INFO 2026-04-07 17:37:57,903 | ACTION: [200] PATCH /api/courses/steps/73/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-07 17:38:21,439 | ACTION: [200] POST /api/quizzes/92/submit/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.020s
+INFO 2026-04-07 17:38:21,478 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.023s
+INFO 2026-04-07 17:38:26,736 | ACTION: [200] POST /api/courses/steps/71/complete/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.018s
+INFO 2026-04-07 17:38:29,950 | ACTION: [200] POST /api/courses/steps/72/complete/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-07 17:38:54,779 | ACTION: [200] POST /api/quizzes/92/submit/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.036s
+INFO 2026-04-07 17:38:54,811 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.020s

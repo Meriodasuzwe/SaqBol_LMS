@@ -412,3 +412,11 @@ INFO 2026-04-04 13:18:23,533 | INSIGHTS TEACHER | user_id=1 | course=Текущ�
 INFO 2026-04-04 13:18:25,664 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-04 13:18:25,670 | INSIGHTS TEACHER SUCCESS | user_id=1
 INFO 2026-04-04 13:18:25,671 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.163s
+INFO 2026-04-07 17:37:45,964 | QUIZ REQUEST | user_id=22 | count=5 | difficulty=medium
+INFO 2026-04-07 17:37:47,882 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-07 17:37:47,891 | QUIZ SUCCESS | user_id=22 | questions_generated=5
+INFO 2026-04-07 17:37:47,892 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 1.983s
+INFO 2026-04-07 17:55:44,267 | INSIGHTS TEACHER | user_id=22 | course=Текущий курс
+INFO 2026-04-07 17:55:45,683 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-07 17:55:45,686 | INSIGHTS TEACHER SUCCESS | user_id=22
+INFO 2026-04-07 17:55:45,687 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.436s
