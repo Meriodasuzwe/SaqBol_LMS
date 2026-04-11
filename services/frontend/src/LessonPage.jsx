@@ -12,7 +12,7 @@ import {
     FileText, 
     ArrowRight,
     ArrowLeft,
-    Award // 🔥 Добавлена иконка Award
+    Award 
 } from 'lucide-react';
 
 import FakeMessenger from './FakeMessenger';
@@ -22,6 +22,7 @@ import PythonEditor from './PythonEditor';
 function LessonPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
+    
     const location = useLocation();
     
     const [lesson, setLesson] = useState(null);
@@ -30,7 +31,7 @@ function LessonPage() {
     const [loading, setLoading] = useState(true);
     const [activeStepIndex, setActiveStepIndex] = useState(0);
     
-    // 🔥 Стейт для показа красивого модального окна при завершении курса
+    // Стейт для показа красивого модального окна при завершении курса
     const [showCompletionModal, setShowCompletionModal] = useState(false);
 
     const getYoutubeEmbedUrl = (url) => {
@@ -89,7 +90,6 @@ function LessonPage() {
         const currentStep = lesson.steps[activeStepIndex];
         
         try {
-            // 🔥 Сохраняем ответ сервера в переменную res
             const res = await api.post(`courses/steps/${currentStep.id}/complete/`, { score });
             
             setLesson(prevLesson => {
@@ -98,10 +98,9 @@ function LessonPage() {
                 return { ...prevLesson, steps: updatedSteps };
             });
 
-            // 🔥 ПРОВЕРКА НА ВЫПУСКНИКА: Если курс завершен ВПЕРВЫЕ
             if (res.data.just_completed) {
                 setShowCompletionModal(true);
-                return; // Останавливаем выполнение, показываем модалку
+                return; 
             }
             
             const currentIndexInCourse = courseLessons.findIndex(l => l.id === lesson.id);
@@ -117,7 +116,6 @@ function LessonPage() {
                     toast.success("Урок завершен! Переходим к следующему");
                     navigate(`/lesson/${nextLessonObj.id}`);
                 } else {
-                    // Если он просто пересдал старый урок
                     toast.success("Урок успешно перепройден!");
                     navigate(`/course/${lesson.course}`);
                 }
@@ -172,7 +170,6 @@ function LessonPage() {
                     </button>
                     
                     <div className="bg-base-100 rounded-2xl border border-base-300 shadow-sm overflow-hidden sticky top-8 transition-colors duration-200">
-                        {/* Course header */}
                         <div className="p-6 border-b border-base-200">
                             <h2 className="font-black text-sm uppercase tracking-tight text-base-content leading-tight mb-4">
                                 {course?.title}
@@ -193,7 +190,6 @@ function LessonPage() {
                             )}
                         </div>
 
-                        {/* Lesson list */}
                         <nav className="p-2 overflow-y-auto max-h-[50vh]">
                             {courseLessons.map((l, idx) => (
                                 <Link 
@@ -230,7 +226,6 @@ function LessonPage() {
 
                     <div className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden flex flex-col min-h-[600px] transition-colors duration-200">
                         
-                        {/* ── Step tabs ── */}
                         <div className="bg-base-200/50 border-b border-base-300 px-6 py-4 flex items-center gap-3 overflow-x-auto">
                             {lesson.steps?.map((step, index) => {
                                 const isActive  = index === activeStepIndex;
@@ -254,12 +249,10 @@ function LessonPage() {
                             })}
                         </div>
 
-                        {/* ── Step content ── */}
                         <div className="flex-1 flex flex-col">
                             {currentStep ? (
                                 <div className="animate-in fade-in duration-500">
                                     
-                                    {/* Video */}
                                     {(currentStep.step_type === 'video_url' || currentStep.step_type === 'video_file') && (
                                         <div className="bg-black aspect-video w-full overflow-hidden">
                                             {currentStep.step_type === 'video_url' ? (
@@ -278,7 +271,12 @@ function LessonPage() {
                                         <div className="text-base-content/80">
                                             {currentStep.step_type === 'simulation_chat' ? (
                                                 <div className="flex justify-center py-4">
-                                                    <FakeMessenger scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
+                                                    {/*  ONEXIT  */}
+                                                    <FakeMessenger 
+                                                        scenario={currentStep.scenario_data} 
+                                                        onComplete={handleStepComplete} 
+                                                        onExit={() => navigate(`/course/${lesson.course}`)}
+                                                    />
                                                 </div>
                                             ) : currentStep.step_type === 'simulation_email' ? (
                                                 <div className="flex justify-center py-4">
@@ -320,7 +318,6 @@ function LessonPage() {
                             )}
                         </div>
 
-                        {/* ── Footer navigation ── */}
                         {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
                             <div className="p-6 bg-base-200/50 border-t border-base-300 flex items-center justify-between mt-auto">
                                 {activeStepIndex > 0 ? (
@@ -350,7 +347,6 @@ function LessonPage() {
                     </div>
                 </main>
 
-                {/* 🔥 МОДАЛКА ОКОНЧАНИЯ КУРСА 🔥 */}
                 {showCompletionModal && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-base-300/80 backdrop-blur-md animate-in fade-in duration-300">
                         <div className="bg-base-100 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center relative animate-in zoom-in-95 duration-300">
