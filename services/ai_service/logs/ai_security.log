@@ -463,3 +463,7 @@ INFO 2026-04-11 19:46:47,573 | SCENARIO SUCCESS | user_id=1 | type=chat
 INFO 2026-04-11 19:46:47,574 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.444s
 INFO 2026-04-11 19:55:59,546 | OK: [200] GET /docs (IP: 172.18.0.8) — 0.001s
 INFO 2026-04-11 19:56:00,070 | OK: [200] GET /openapi.json (IP: 172.18.0.8) — 0.012s
+INFO 2026-04-12 09:58:08,562 | INSIGHTS STUDENT | user_id=25
+INFO 2026-04-12 09:58:09,818 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-12 09:58:09,825 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-04-12 09:58:09,826 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.301s
