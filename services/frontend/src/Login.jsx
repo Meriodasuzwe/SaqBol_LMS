@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import api from './api';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link,useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 import TelegramLoginButton from 'react-telegram-login';
@@ -15,6 +15,8 @@ function Login({ onLoginSuccess }) {
     const [rememberMe, setRememberMe]     = useState(false);
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const isNewUser = location.state?.isNewUser;
 
     // Стандартный логин по паролю
     const handleSubmit = async (e) => {
@@ -25,7 +27,7 @@ function Login({ onLoginSuccess }) {
             const response = await api.post('users/login/', { username, password });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            toast.success(`👋 С возвращением, ${username}!`);
+            toast.success(isNewUser ? `🎉 Добро пожаловать на платформу, ${username}!` : `👋 С возвращением, ${username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {
@@ -35,7 +37,7 @@ function Login({ onLoginSuccess }) {
         }
     };
 
-    // Логин через Google
+    //  Google
     const handleGoogleSuccess = async (credentialResponse) => {
         setLoading(true);
         setError('');
@@ -45,7 +47,7 @@ function Login({ onLoginSuccess }) {
             });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            toast.success(`👋 Привет, ${response.data.username}!`);
+            toast.success(isNewUser ? `🎉 Добро пожаловать, ${response.data.username}!` : `👋 С возвращением, ${response.data.username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {
@@ -57,7 +59,7 @@ function Login({ onLoginSuccess }) {
         }
     };
 
-    // 🔥 Логин через Telegram
+    //   Telegram
     const handleTelegramResponse = async (tgData) => {
         setLoading(true);
         setError('');
@@ -67,7 +69,7 @@ function Login({ onLoginSuccess }) {
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
             
-            toast.success(`👋 Привет, ${response.data.user.username}!`);
+            toast.success(isNewUser ? `🎉 Добро пожаловать, ${response.data.user.username}!` : `👋 С возвращением, ${response.data.user.username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {

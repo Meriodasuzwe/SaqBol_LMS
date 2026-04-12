@@ -3,25 +3,28 @@ import api from './api';
 import aiApi from './aiApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const BLUE   = '#2563EB';
-const BLUE_L = '#EFF6FF';
-const BLUE_D = '#1D4ED8';
-const GRAY_1 = '#0F172A';
-const GRAY_2 = '#475569';
-const GRAY_3 = '#94A3B8';
-const GRAY_4 = '#F8FAFC';
-const GRAY_5 = '#E2E8F0';
-const GREEN  = '#059669';
-const GREEN_L= '#F0FDF4';
-const AMBER  = '#D97706';
-const RED    = '#DC2626';
-const RED_L  = '#FEF2F2';
-const BORDER = '1px solid #E2E8F0';
+// 🔥 1. Переводим цвета на CSS-переменные
+const BLUE   = 'var(--blue)';
+const BLUE_L = 'var(--blue-l)';
+const BLUE_D = 'var(--blue-d)';
+const GRAY_1 = 'var(--gray-1)';
+const GRAY_2 = 'var(--gray-2)';
+const GRAY_3 = 'var(--gray-3)';
+const GRAY_4 = 'var(--gray-4)';
+const GRAY_5 = 'var(--gray-5)';
+const GREEN  = 'var(--green)';
+const GREEN_L= 'var(--green-l)';
+const AMBER  = 'var(--amber)';
+const RED    = 'var(--red)';
+const RED_L  = 'var(--red-l)';
+const PURPLE = 'var(--purple)';
+const PURPLE_L = 'var(--purple-l)';
+const BORDER = '1px solid var(--border-color)';
 const R      = 12;
-const SHADOW = '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)';
+const SHADOW = 'var(--shadow)';
 
 function Card({ children, style = {} }) {
-  return <div style={{ background: '#fff', borderRadius: R, border: BORDER, boxShadow: SHADOW, ...style }}>{children}</div>;
+  return <div style={{ background: 'var(--card-bg)', borderRadius: R, border: BORDER, boxShadow: SHADOW, ...style }}>{children}</div>;
 }
 
 function SectionHeader({ title, subtitle }) {
@@ -33,12 +36,21 @@ function SectionHeader({ title, subtitle }) {
   );
 }
 
-function Tag({ children, color = GRAY_2 }) {
+// 🔥 2. Улучшенный Tag с поддержкой безопасной прозрачности
+function Tag({ children, type = 'gray' }) {
+  const colorMap = {
+    gray:  { c: GRAY_2, bg: 'var(--gray-l)' },
+    green: { c: GREEN,  bg: 'var(--green-l)' },
+    amber: { c: AMBER,  bg: 'var(--amber-l)' },
+    red:   { c: RED,    bg: 'var(--red-l)' },
+  };
+  const { c, bg } = colorMap[type] || colorMap.gray;
+
   return (
     <span style={{
       display: 'inline-block', padding: '2px 8px', borderRadius: 6,
       fontSize: 11, fontWeight: 600,
-      background: color + '12', color, border: `1px solid ${color}22`,
+      background: bg, color: c, border: `1px solid ${bg}`,
     }}>{children}</span>
   );
 }
@@ -133,16 +145,16 @@ function ScenarioHistory({ history }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {history.map((item, i) => {
-        const color = item.result === 'passed' ? GREEN : item.result === 'failed' ? RED : AMBER;
+        const tagType = item.result === 'passed' ? 'green' : item.result === 'failed' ? 'red' : 'amber';
         const label = item.result === 'passed' ? 'Пройден' : item.result === 'failed' ? 'Провален' : 'Не завершён';
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 10, background: GRAY_4 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-              background: item.scenario_type === 'chat' ? BLUE_L : '#F5F3FF',
+              background: item.scenario_type === 'chat' ? BLUE_L : PURPLE_L,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,
-              color: item.scenario_type === 'chat' ? BLUE : '#7C3AED',
+              color: item.scenario_type === 'chat' ? BLUE : PURPLE,
             }}>
               {item.scenario_type === 'chat' ? 'ЧАТ' : 'EMAIL'}
             </div>
@@ -154,7 +166,7 @@ function ScenarioHistory({ history }) {
                 {item.success_rate?.toFixed(0)}% верных шагов
               </p>
             </div>
-            <Tag color={color}>{label}</Tag>
+            <Tag type={tagType}>{label}</Tag>
           </div>
         );
       })}
@@ -174,13 +186,14 @@ function WeakTopics({ topics }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {topics.map((t, i) => {
         const c = t.error_rate >= 70 ? RED : t.error_rate >= 40 ? AMBER : GREEN;
+        const tagType = t.error_rate >= 70 ? 'red' : t.error_rate >= 40 ? 'amber' : 'green';
         return (
           <div key={i}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, gap: 10 }}>
               <span style={{ fontSize: 13, color: GRAY_2, flex: 1, lineHeight: 1.4 }}>
                 {t.question_text?.length > 90 ? t.question_text.slice(0, 90) + '…' : t.question_text}
               </span>
-              <Tag color={c}>{t.error_rate.toFixed(0)}%</Tag>
+              <Tag type={tagType}>{t.error_rate.toFixed(0)}%</Tag>
             </div>
             <div style={{ height: 4, background: GRAY_5, borderRadius: 99, overflow: 'hidden' }}>
               <div style={{ width: `${Math.min(100, t.error_rate)}%`, height: '100%', background: c, borderRadius: 99, transition: 'width .5s ease' }} />
@@ -252,7 +265,7 @@ function AIRecommendations({ data }) {
       {result && !loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {result.strengths && (
-            <div style={{ padding: '12px 16px', background: GREEN_L, borderRadius: 8, fontSize: 13, color: '#065F46', borderLeft: `3px solid ${GREEN}` }}>
+            <div style={{ padding: '12px 16px', background: GREEN_L, borderRadius: 8, fontSize: 13, color: 'var(--green-d, #065F46)', borderLeft: `3px solid ${GREEN}` }}>
               {result.strengths}
             </div>
           )}
@@ -318,7 +331,58 @@ export default function StudentDashboard() {
   ];
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto', padding: '4px 0 56px', fontFamily: 'inherit' }}>
+    <div className="dash-container" style={{ maxWidth: 980, margin: '0 auto', padding: '4px 0 56px', fontFamily: 'inherit' }}>
+
+      {/* 🔥 3. CSS БЛОК ДЛЯ ТЕМНОЙ ТЕМЫ 🔥 */}
+      <style>{`
+        .dash-container {
+          --blue: #2563EB;
+          --blue-l: #EFF6FF;
+          --blue-d: #1D4ED8;
+          --gray-1: #0F172A;
+          --gray-2: #475569;
+          --gray-3: #94A3B8;
+          --gray-4: #F8FAFC;
+          --gray-5: #E2E8F0;
+          --gray-l: rgba(71, 85, 105, 0.1);
+          --green: #059669;
+          --green-l: rgba(5, 150, 105, 0.12);
+          --green-d: #065F46;
+          --amber: #D97706;
+          --amber-l: rgba(217, 119, 6, 0.12);
+          --red: #DC2626;
+          --red-l: #FEF2F2;
+          --purple: #7C3AED;
+          --purple-l: #F5F3FF;
+          --card-bg: #ffffff;
+          --border-color: #E2E8F0;
+          --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        [data-theme='dark'] .dash-container {
+          --blue: #3B82F6;
+          --blue-l: rgba(59, 130, 246, 0.15);
+          --blue-d: #60A5FA;
+          --gray-1: #F1F5F9;
+          --gray-2: #94A3B8;
+          --gray-3: #64748B;
+          --gray-4: rgba(255, 255, 255, 0.04);
+          --gray-5: rgba(255, 255, 255, 0.1);
+          --gray-l: rgba(148, 163, 184, 0.15);
+          --green: #10B981;
+          --green-l: rgba(16, 185, 129, 0.15);
+          --green-d: #34D399;
+          --amber: #F59E0B;
+          --amber-l: rgba(245, 158, 11, 0.15);
+          --red: #EF4444;
+          --red-l: rgba(239, 68, 68, 0.15);
+          --purple: #A78BFA;
+          --purple-l: rgba(139, 92, 246, 0.15);
+          --card-bg: #1E2028;
+          --border-color: rgba(255, 255, 255, 0.08);
+          --shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+      `}</style>
 
       <div style={{ marginBottom: 28 }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 6px' }}>Аналитика</p>
@@ -347,7 +411,12 @@ export default function StudentDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke={GRAY_5} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: GRAY_3 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0,100]} tick={{ fontSize: 11, fill: GRAY_3 }} unit="%" axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: 10, border: BORDER, fontSize: 12 }} formatter={v => [`${v.toFixed(1)}%`, 'Балл']} />
+                  {/* 🔥 Исправлен тултип для темной темы */}
+                  <Tooltip 
+                    contentStyle={{ borderRadius: 10, border: BORDER, background: 'var(--card-bg)', color: GRAY_1, fontSize: 12, boxShadow: SHADOW }} 
+                    itemStyle={{ color: GRAY_1 }}
+                    formatter={v => [`${v.toFixed(1)}%`, 'Балл']} 
+                  />
                   <Line type="monotone" dataKey="score" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>

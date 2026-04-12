@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
-import OnboardingTour from './OnboardingTour'; // ✅ Импортируем отдельный компонент
+import OnboardingTour from './OnboardingTour';
 import {
     Search, BookOpen, PlayCircle, Clock, Users, Star,
-    ChevronDown, X, CheckCircle, ArrowRight, Zap, Shield, TrendingUp
+    ChevronDown, X, CheckCircle, ArrowRight, Zap, Shield, TrendingUp, BookOpenCheck
 } from 'lucide-react';
 
 const stripHtml = (html) => {
@@ -37,7 +37,6 @@ const CARD_ACCENTS = [
     'from-sky-500 to-sky-700',
 ];
 
-// Функция для отрисовки звезд рейтинга
 const renderStars = (rating) => {
     return (
         <div className="flex items-center gap-0.5">
@@ -67,11 +66,13 @@ function CourseCard({ course }) {
     const hours      = course.duration || seeded(course.id, 2, 20);
     const accent     = CARD_ACCENTS[course.id % CARD_ACCENTS.length];
 
+    // 🔥 Если курс в процессе, карточка выглядит как "активная"
+    const cardClasses = hasProgress
+        ? "group flex flex-col-reverse sm:flex-row gap-4 bg-blue-50/40 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-800/60 rounded-2xl p-4 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+        : "group flex flex-col-reverse sm:flex-row gap-4 bg-base-100 border border-base-200 rounded-2xl p-4 hover:border-base-300 hover:shadow-lg hover:shadow-base-200/50 transition-all duration-200";
+
     return (
-        <Link
-            to={`/courses/${course.id}`}
-            className="group flex flex-col-reverse sm:flex-row gap-4 bg-base-100 border border-base-200 rounded-2xl p-4 hover:border-base-300 hover:shadow-lg hover:shadow-base-200/50 transition-all duration-200"
-        >
+        <Link to={`/courses/${course.id}`} className={cardClasses}>
             <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
                     {course.category_title && (
@@ -87,50 +88,63 @@ function CourseCard({ course }) {
                     </p>
                 </div>
 
-                <div className="mt-4 sm:mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 text-[11px] text-base-content/50">
+                <div className="mt-4 sm:mt-3 flex flex-wrap items-end sm:items-center justify-between gap-3">
+                    
+                    {/* Статистика курса */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[11px] text-base-content/50">
                         <div className="flex items-center gap-1.5" title={`${reviews} отзывов`}>
                             {renderStars(ratingNum)}
                             <span className="font-bold text-amber-500">{ratingStr}</span>
                             <span className="text-base-content/40">({reviews})</span>
                         </div>
-
-                        <span className="flex items-center gap-1">
-                            <Users size={10} />{students.toLocaleString('ru-RU')}
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Clock size={10} />{hours}ч
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1">
+                                <Users size={10} />{students.toLocaleString('ru-RU')}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <Clock size={10} />{hours}ч
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0">
-                        <span className="font-extrabold text-sm text-base-content">
-                            {isFree
-                                ? <span className="text-emerald-600 dark:text-emerald-400">Бесплатно</span>
-                                : `${new Intl.NumberFormat('ru-RU').format(price)} ₸`
-                            }
-                        </span>
-                        <span className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-lg text-[11px] font-bold transition-all whitespace-nowrap
-                            ${hasProgress ? 'bg-blue-600 text-white' : 'bg-base-200 text-base-content/70 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                    {/* 🔥 Логика отображения Цены vs Прогресса */}
+                    <div className="flex flex-col sm:items-end w-full sm:w-auto mt-2 sm:mt-0 gap-2">
+                        {hasProgress ? (
+                            // Состояние: В процессе (ЦЕНЫ НЕТ)
+                            <div className="flex flex-col w-full sm:w-48 gap-1.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                        <BookOpenCheck size={12} /> Моё обучение
+                                    </span>
+                                    <span className="text-[11px] font-bold text-base-content">{course.progress}%</span>
+                                </div>
+                                <div className="h-2 w-full bg-blue-200 dark:bg-blue-900/50 rounded-full overflow-hidden">
+                                    <div className="h-full bg-blue-600 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                                </div>
+                            </div>
+                        ) : (
+                            // Состояние: Витрина (Показываем цену)
+                            <span className="font-extrabold text-sm text-base-content">
+                                {isFree
+                                    ? <span className="text-emerald-600 dark:text-emerald-400">Бесплатно</span>
+                                    : `${new Intl.NumberFormat('ru-RU').format(price)} ₸`
+                                }
+                            </span>
+                        )}
+
+                        {/* Кнопка действия */}
+                        <span className={`flex items-center justify-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-lg text-[11px] font-bold transition-all w-full sm:w-auto
+                            ${hasProgress 
+                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700' 
+                                : 'bg-base-200 text-base-content/70 group-hover:bg-blue-600 group-hover:text-white'}`}>
                             {hasProgress ? <><PlayCircle size={12} />Продолжить</> : <>Открыть <ArrowRight size={12} /></>}
                         </span>
                     </div>
                 </div>
-
-                {hasProgress && (
-                    <div className="mt-3.5 sm:mt-2.5">
-                        <div className="flex justify-between text-[10px] font-semibold mb-1">
-                            <span className="text-base-content/50">Прогресс</span>
-                            <span className="text-blue-600 dark:text-blue-400">{course.progress}%</span>
-                        </div>
-                        <div className="h-1.5 bg-base-300 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${course.progress}%` }}></div>
-                        </div>
-                    </div>
-                )}
             </div>
 
-            <div className="flex-shrink-0 w-full h-40 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative">
+            {/* Картинка курса */}
+            <div className="flex-shrink-0 w-full h-40 sm:w-32 sm:h-auto rounded-xl overflow-hidden relative">
                 {imageUrl ? (
                     <img
                         src={imageUrl}
@@ -142,11 +156,19 @@ function CourseCard({ course }) {
                         <BookOpen size={32} className="text-white/80 sm:w-7 sm:h-7" strokeWidth={1.5} />
                     </div>
                 )}
-                {isFree && (
-                    <div className="absolute top-2 right-2 sm:top-1.5 sm:right-1.5">
-                        <span className="px-2 py-1 sm:px-1.5 sm:py-0.5 bg-emerald-500 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-sm">Free</span>
-                    </div>
-                )}
+                
+                {/* 🔥 Бейджи на картинке */}
+                <div className="absolute top-2 right-2 sm:top-1.5 sm:right-1.5 flex flex-col gap-1">
+                    {hasProgress ? (
+                        <span className="px-2 py-1 bg-blue-600 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-md border border-blue-400/30">
+                            В процессе
+                        </span>
+                    ) : isFree ? (
+                        <span className="px-2 py-1 bg-emerald-500 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-sm">
+                            Free
+                        </span>
+                    ) : null}
+                </div>
             </div>
         </Link>
     );
@@ -339,7 +361,6 @@ export default function CourseList() {
 
     return (
         <>
-            {/* 🚀 Онбординг вызывается здесь */}
             <OnboardingTour />
 
             <style>{`
@@ -351,7 +372,6 @@ export default function CourseList() {
                 {/* ── TOP BAR ── */}
                 <div className="bg-base-100 border-b border-base-200 sticky top-16 z-30">
                     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-                        {/* Search */}
                         <div className="relative flex-1 max-w-xl">
                             <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none" />
                             <input
@@ -368,7 +388,6 @@ export default function CourseList() {
                             )}
                         </div>
 
-                        {/* Quick filter chips */}
                         <div className="hidden lg:flex items-center gap-2">
                             <button
                                 onClick={() => setOnlyFree(f => !f)}
@@ -380,7 +399,6 @@ export default function CourseList() {
                             </button>
                         </div>
 
-                        {/* Sort + mobile filter */}
                         <div className="flex items-center gap-2 ml-auto">
                             <div className="relative hidden sm:block">
                                 <select
@@ -408,22 +426,18 @@ export default function CourseList() {
                 {/* ── BODY ── */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 flex gap-7">
 
-                    {/* ── SIDEBAR ── */}
                     <aside className="hidden lg:block w-64 flex-shrink-0">
                         <div className="bg-base-100 rounded-2xl border border-base-200 px-5 py-4 sticky top-32">
                             <SidebarContent />
                         </div>
                     </aside>
 
-                    {/* ── MAIN ── */}
                     <div className="flex-1 min-w-0">
 
-                        {/* Promo banner */}
                         {!searchTerm && !selectedCategory && !onlyFree && !selectedLevels.length && (
                             <PromoBanner />
                         )}
 
-                        {/* Active filter chips */}
                         {activeFilters > 0 && (
                             <div className="flex flex-wrap gap-2 mb-5">
                                 {selectedCategory && categories.find(c => String(c.id) === selectedCategory) && (
@@ -445,7 +459,6 @@ export default function CourseList() {
                             </div>
                         )}
 
-                        {/* Count */}
                         <p className="text-xs text-base-content/50 font-medium mb-4">
                             {loading ? 'Ищем курсы...' : `${filtered.length} ${filtered.length === 1 ? 'курс' : 'курсов'}`}
                         </p>
@@ -454,7 +467,7 @@ export default function CourseList() {
                             <div className="flex flex-col gap-3">
                                 {[...Array(5)].map((_, i) => (
                                     <div key={i} className="flex flex-col sm:flex-row gap-4 bg-base-100 rounded-2xl border border-base-200 p-4 animate-pulse">
-                                        <div className="w-full h-40 sm:w-28 sm:h-28 bg-base-300 rounded-xl flex-shrink-0"></div>
+                                        <div className="w-full h-40 sm:w-32 bg-base-300 rounded-xl flex-shrink-0"></div>
                                         <div className="flex-1 space-y-3 mt-2 sm:mt-0">
                                             <div className="h-3 bg-base-300 rounded w-1/5"></div>
                                             <div className="h-4 bg-base-300 rounded w-3/4"></div>
@@ -465,27 +478,42 @@ export default function CourseList() {
                             </div>
                         ) : filtered.length > 0 ? (
                             <>
-                                {/* In progress */}
+                                {/* 🔥 Блок: Моё обучение */}
                                 {inProgress.length > 0 && !debouncedSearch && !selectedCategory && (
-                                    <div className="mb-8">
-                                        <h2 className="text-sm font-extrabold text-base-content mb-3 flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                            Продолжить обучение
-                                        </h2>
-                                        <div className="flex flex-col gap-3">
-                                            {inProgress.map(c => <CourseCard key={`ip-${c.id}`} course={c} />)}
+                                    <div className="mb-10 bg-blue-50/30 dark:bg-blue-900/10 p-5 sm:p-6 rounded-3xl border border-blue-100 dark:border-blue-900/50 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+                                        
+                                        <div className="flex items-center gap-3 mb-5 relative z-10">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+                                                <BookOpenCheck size={20} />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-lg font-extrabold text-base-content leading-tight">Продолжить обучение</h2>
+                                                <p className="text-xs text-base-content/60 font-medium">Ваш текущий прогресс</p>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3 my-7">
-                                            <div className="flex-1 h-px bg-base-200"></div>
-                                            <span className="text-[11px] text-base-content/50 font-semibold uppercase tracking-wider">Все курсы</span>
-                                            <div className="flex-1 h-px bg-base-200"></div>
+
+                                        <div className="flex flex-col gap-3 relative z-10">
+                                            {inProgress.map(c => <CourseCard key={`ip-${c.id}`} course={c} />)}
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Course list */}
+                                {/* 🔥 Разделитель каталога */}
+                                {inProgress.length > 0 && !debouncedSearch && !selectedCategory && (
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <h2 className="text-lg font-extrabold text-base-content flex-shrink-0">Каталог курсов</h2>
+                                        <div className="flex-1 h-px bg-base-200"></div>
+                                    </div>
+                                )}
+
+                                {/* Course list (Все остальные курсы) */}
                                 <div className="flex flex-col gap-3">
-                                    {filtered.map(c => <CourseCard key={c.id} course={c} />)}
+                                    {filtered
+                                        // Если мы на главной странице каталога (без поиска), убираем из списка "Все курсы" те, что уже есть в блоке "Продолжить"
+                                        .filter(c => (!debouncedSearch && !selectedCategory) ? !(c.progress > 0 && c.progress < 100) : true)
+                                        .map(c => <CourseCard key={c.id} course={c} />)
+                                    }
                                 </div>
                             </>
                         ) : (

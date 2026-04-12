@@ -33,7 +33,7 @@ const VerifyEmail = () => {
         try {
             await api.post('users/verify-email/', { email, code });
             toast.success('🎉 Аккаунт успешно подтверждён! Добро пожаловать.');
-            navigate('/login');
+            navigate('/login', { state: { isNewUser: true } });
         } catch (err) {
             console.error(err);
             if (err.response?.data) {
