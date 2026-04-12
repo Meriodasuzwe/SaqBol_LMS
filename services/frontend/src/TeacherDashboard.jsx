@@ -6,25 +6,26 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 
-const BLUE   = '#2563EB';
-const BLUE_L = '#EFF6FF';
-const BLUE_D = '#1D4ED8';
-const GRAY_1 = '#0F172A';
-const GRAY_2 = '#475569';
-const GRAY_3 = '#94A3B8';
-const GRAY_4 = '#F8FAFC';
-const GRAY_5 = '#E2E8F0';
-const GREEN  = '#059669';
-const AMBER  = '#D97706';
-const RED    = '#DC2626';
-const RED_L  = '#FEF2F2';
-const BORDER = '1px solid #E2E8F0';
+// 🔥 1. Переводим все константы на CSS-переменные
+const BLUE   = 'var(--blue)';
+const BLUE_L = 'var(--blue-l)';
+const BLUE_D = 'var(--blue-d)';
+const GRAY_1 = 'var(--gray-1)';
+const GRAY_2 = 'var(--gray-2)';
+const GRAY_3 = 'var(--gray-3)';
+const GRAY_4 = 'var(--gray-4)';
+const GRAY_5 = 'var(--gray-5)';
+const GREEN  = 'var(--green)';
+const AMBER  = 'var(--amber)';
+const RED    = 'var(--red)';
+const RED_L  = 'var(--red-l)';
+const BORDER = '1px solid var(--border-color)';
 const R      = 12;
-const SHADOW = '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)';
+const SHADOW = 'var(--shadow)';
 
 function Card({ children, style = {} }) {
   return (
-    <div style={{ background: '#fff', borderRadius: R, border: BORDER, boxShadow: SHADOW, ...style }}>
+    <div style={{ background: 'var(--card-bg)', borderRadius: R, border: BORDER, boxShadow: SHADOW, ...style }}>
       {children}
     </div>
   );
@@ -39,12 +40,21 @@ function SectionHeader({ title, subtitle }) {
   );
 }
 
-function Tag({ children, color = GRAY_2 }) {
+// 🔥 2. Улучшенный Tag: получает тип и сам подставляет нужные прозрачные фоны
+function Tag({ children, type = 'gray' }) {
+  const colorMap = {
+    gray:  { c: GRAY_2, bg: 'var(--gray-l)' },
+    green: { c: GREEN,  bg: 'var(--green-l)' },
+    amber: { c: AMBER,  bg: 'var(--amber-l)' },
+    red:   { c: RED,    bg: 'var(--red-l)' },
+  };
+  const { c, bg } = colorMap[type] || colorMap.gray;
+
   return (
     <span style={{
       display: 'inline-block', padding: '2px 8px', borderRadius: 6,
       fontSize: 11, fontWeight: 600,
-      background: color + '12', color, border: `1px solid ${color}22`,
+      background: bg, color: c, border: `1px solid ${bg}`,
     }}>{children}</span>
   );
 }
@@ -79,13 +89,14 @@ function WeakTopics({ topics }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {topics.map((t, i) => {
         const c = t.error_rate >= 70 ? RED : t.error_rate >= 40 ? AMBER : GREEN;
+        const tagType = t.error_rate >= 70 ? 'red' : t.error_rate >= 40 ? 'amber' : 'green';
         return (
           <div key={i}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, gap: 10 }}>
               <span style={{ fontSize: 13, color: GRAY_2, flex: 1, lineHeight: 1.4 }}>
                 {t.question_text?.length > 80 ? t.question_text.slice(0, 80) + '…' : t.question_text}
               </span>
-              <Tag color={c}>{t.error_rate.toFixed(0)}%</Tag>
+              <Tag type={tagType}>{t.error_rate.toFixed(0)}%</Tag>
             </div>
             <Bar2 value={t.error_rate} color={c} />
             <p style={{ fontSize: 11, color: GRAY_3, margin: '4px 0 0' }}>{t.total_answers} ответов</p>
@@ -113,7 +124,7 @@ function QuizDetail({ quizStats }) {
           <button key={i} onClick={() => setSel(i)} style={{
             padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
             border: `1px solid ${sel === i ? BLUE : GRAY_5}`,
-            background: sel === i ? BLUE_L : '#fff',
+            background: sel === i ? BLUE_L : 'var(--card-bg)',
             color: sel === i ? BLUE : GRAY_2,
             cursor: 'pointer', transition: 'all .15s', fontFamily: 'inherit',
           }}>{q.quiz_title?.slice(0, 22) || `Квиз ${i + 1}`}</button>
@@ -165,8 +176,8 @@ function ScenarioStats({ stats }) {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <Tag color={GRAY_2}>{s.total_attempts}</Tag>
-              <Tag color={s.pass_rate >= 70 ? GREEN : RED}>{s.pass_rate}%</Tag>
+              <Tag type="gray">{s.total_attempts}</Tag>
+              <Tag type={s.pass_rate >= 70 ? 'green' : 'red'}>{s.pass_rate}%</Tag>
             </div>
           </div>
           <Bar2 value={s.pass_rate} color={s.pass_rate >= 70 ? GREEN : AMBER} />
@@ -315,7 +326,53 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '4px 0 56px', fontFamily: 'inherit' }}>
+    <div className="dash-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '4px 0 56px', fontFamily: 'inherit' }}>
+      
+      {/* 🔥 3. CSS БЛОК ДЛЯ ТЕМНОЙ ТЕМЫ 🔥 */}
+      <style>{`
+        .dash-container {
+          --blue: #2563EB;
+          --blue-l: #EFF6FF;
+          --blue-d: #1D4ED8;
+          --gray-1: #0F172A;
+          --gray-2: #475569;
+          --gray-3: #94A3B8;
+          --gray-4: #F8FAFC;
+          --gray-5: #E2E8F0;
+          --gray-l: rgba(71, 85, 105, 0.1);
+          --green: #059669;
+          --green-l: rgba(5, 150, 105, 0.12);
+          --amber: #D97706;
+          --amber-l: rgba(217, 119, 6, 0.12);
+          --red: #DC2626;
+          --red-l: #FEF2F2;
+          --card-bg: #ffffff;
+          --border-color: #E2E8F0;
+          --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        /* Цвета автоматически заменятся, если на body/html висит атрибут data-theme="dark" */
+        [data-theme='dark'] .dash-container {
+          --blue: #3B82F6;
+          --blue-l: rgba(59, 130, 246, 0.15);
+          --blue-d: #60A5FA;
+          --gray-1: #F1F5F9;
+          --gray-2: #94A3B8;
+          --gray-3: #64748B;
+          --gray-4: rgba(255, 255, 255, 0.04);
+          --gray-5: rgba(255, 255, 255, 0.1);
+          --gray-l: rgba(148, 163, 184, 0.15);
+          --green: #10B981;
+          --green-l: rgba(16, 185, 129, 0.15);
+          --amber: #F59E0B;
+          --amber-l: rgba(245, 158, 11, 0.15);
+          --red: #EF4444;
+          --red-l: rgba(239, 68, 68, 0.15);
+          --card-bg: #1E2028; /* Темный фон карточек */
+          --border-color: rgba(255, 255, 255, 0.08);
+          --shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+      `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
@@ -325,7 +382,7 @@ export default function TeacherDashboard() {
         {courses.length > 0 && (
           <select value={courseId} onChange={e => setCourseId(e.target.value)} style={{
             padding: '8px 14px', borderRadius: 10, border: BORDER, fontSize: 13,
-            color: GRAY_1, background: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+            color: GRAY_1, background: 'var(--card-bg)', cursor: 'pointer', fontFamily: 'inherit',
             fontWeight: 500, outline: 'none',
           }}>
             <option value=''>Все курсы</option>
@@ -349,7 +406,12 @@ export default function TeacherDashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={GRAY_5} vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: GRAY_3 }} axisLine={false} tickLine={false} />
               <YAxis domain={[0,100]} tick={{ fontSize: 12, fill: GRAY_3 }} unit="%" axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 10, border: BORDER, fontSize: 12, boxShadow: SHADOW }} formatter={v => `${v}%`} />
+              {/* Умный тултип для графиков */}
+              <Tooltip 
+                contentStyle={{ borderRadius: 10, border: BORDER, background: 'var(--card-bg)', color: GRAY_1, fontSize: 12, boxShadow: SHADOW }} 
+                itemStyle={{ color: GRAY_1 }}
+                formatter={v => `${v}%`} 
+              />
               <Bar dataKey="Средний балл" fill={BLUE} radius={[4,4,0,0]} />
               <Bar dataKey="Прошли %" fill={GREEN} radius={[4,4,0,0]} />
             </BarChart>

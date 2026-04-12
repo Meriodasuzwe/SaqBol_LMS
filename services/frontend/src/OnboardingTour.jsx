@@ -154,7 +154,8 @@ const STEPS = [
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
-export default function OnboardingTour() {
+// 🔥 ДОБАВЛЕН ПРОП userId
+export default function OnboardingTour({ userId }) {
   const [visible, setVisible]   = useState(false);
   const [step, setStep]         = useState(0);
   const [exiting, setExiting]   = useState(false);
@@ -162,21 +163,26 @@ export default function OnboardingTour() {
   const [animating, setAnimating] = useState(false);
   const navigate = useNavigate();
 
+  // 🔥 ДИНАМИЧЕСКИЙ КЛЮЧ: Привязываем флаг к конкретному юзеру
+  const storageKey = userId ? `sq_onboarding_done_${userId}` : 'sq_onboarding_done';
+
   useEffect(() => {
-    if (localStorage.getItem('sq_onboarding_done')) return;
+    // Если тур уже пройден этим юзером — ничего не делаем
+    if (localStorage.getItem(storageKey)) return;
     const t = setTimeout(() => setVisible(true), 600);
     return () => clearTimeout(t);
-  }, []);
+  }, [storageKey]);
 
   const close = useCallback((goToCourses = false) => {
     setExiting(true);
-    localStorage.setItem('sq_onboarding_done', '1');
+    // Записываем флаг прохождения
+    localStorage.setItem(storageKey, '1');
     setTimeout(() => {
       setVisible(false);
       setExiting(false);
       if (goToCourses) navigate('/courses');
     }, 300);
-  }, [navigate]);
+  }, [navigate, storageKey]);
 
   const go = useCallback((dir) => {
     if (animating) return;

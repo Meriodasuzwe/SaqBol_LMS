@@ -238,7 +238,9 @@ class MarkStepCompleteView(APIView):
         user = request.user
         score = request.data.get('score', 10)
 
-        if not (step.lesson.course.teacher == user or user.is_staff):
+        # 🔥 ИСПРАВЛЕНИЕ ЗДЕСЬ:
+        # Проверяем тесты ТОЛЬКО если юзер пытается завершить шаг с типом 'quiz'
+        if step.step_type == 'quiz' and not (step.lesson.course.teacher == user or user.is_staff):
             quizzes = Quiz.objects.filter(lesson=step.lesson)
             if quizzes.exists():
                 passed = Result.objects.filter(student=user, quiz__in=quizzes, score__gte=70).exists()

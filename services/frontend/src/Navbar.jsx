@@ -187,7 +187,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         </button>
 
                         {isLoggedIn ? (
-                            <div style={{ position: 'relative' }} ref={dropRef}>
+                            <div className="hidden lg:block" style={{ position: 'relative' }} ref={dropRef}>
                                 <button onClick={() => setDropOpen(o => !o)}
                                     style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', transition: 'background 0.15s' }}
                                     onMouseEnter={e => e.currentTarget.style.background = t.hover}
@@ -295,6 +295,18 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                 {item.icon}{item.label}
                             </Link>
                         ))}
+                        
+                        {!isTeacher && (
+                            <button onClick={() => { setMobileOpen(false); setModalOpen(true); }}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: t.text, fontSize: 13, fontWeight: 600, transition: 'background 0.15s', textAlign: 'left', marginBottom: 2 }}
+                                onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(59,130,246,0.12)' : '#eff6ff'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <Sparkles size={15} style={{ color: '#3b82f6' }} />
+                                Стать автором
+                                <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: '#3b82f6', background: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff', border: '1px solid rgba(59,130,246,0.3)', padding: '2px 6px', borderRadius: 99 }}>NEW</span>
+                            </button>
+                        )}
+
                         <div style={{ borderTop: `1px solid ${t.divider}`, marginTop: 8, paddingTop: 8 }}>
                             <button onClick={onLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
                                 <LogOut size={15} /> Выйти

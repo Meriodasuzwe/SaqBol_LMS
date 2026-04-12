@@ -90,7 +90,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             } />
             <Route path="/settings" element={<Settings />} />
 
-            {/*  Админка */}
+            {/* Админка */}
             <Route path="/admin" element={
               isLoggedIn && userRole === 'admin' ? <AdminPanel /> : <Navigate to="/login" />
             } />
@@ -99,7 +99,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
               isLoggedIn && userRole === 'admin' ? <AdminStats /> : <Navigate to="/login" />
             } />
 
-            {/*  Аналитика */}
+            {/* Аналитика */}
             <Route path="/analytics/teacher" element={
               isLoggedIn && isTeacher ? <TeacherDashboard /> : <Navigate to="/login" />
             } />
@@ -178,8 +178,12 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(false);
 
+  //  Теперь при логауте мы удаляем токены и сбрасываем состояние
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh');
+    
+    
     setIsLoggedIn(false);
     setUserRole(null);
   };

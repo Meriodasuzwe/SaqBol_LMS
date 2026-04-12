@@ -420,3 +420,46 @@ INFO 2026-04-07 17:55:44,267 | INSIGHTS TEACHER | user_id=22 | course=Текущ
 INFO 2026-04-07 17:55:45,683 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-07 17:55:45,686 | INSIGHTS TEACHER SUCCESS | user_id=22
 INFO 2026-04-07 17:55:45,687 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.436s
+INFO 2026-04-11 13:39:38,846 | SCENARIO REQUEST | user_id=22 | type=chat | topic=Переписка с мошенникком | difficulty=medium
+INFO 2026-04-11 13:39:41,349 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 13:39:41,353 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-04-11 13:39:41,354 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.525s
+INFO 2026-04-11 13:49:03,735 | SCENARIO REQUEST | user_id=22 | type=chat | topic=мошенник в steam | difficulty=medium
+INFO 2026-04-11 13:49:05,960 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 13:49:05,963 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-04-11 13:49:05,964 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.231s
+INFO 2026-04-11 14:18:22,314 | SCENARIO REQUEST | user_id=22 | type=chat | topic=урок английского | difficulty=medium
+INFO 2026-04-11 14:18:23,980 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 14:18:23,985 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-04-11 14:18:23,987 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 1.675s
+INFO 2026-04-11 14:52:47,170 | SCENARIO REQUEST | user_id=22 | type=chat | topic=человек который раскидает учебу | difficulty=medium
+INFO 2026-04-11 14:52:49,390 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 14:52:49,392 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-04-11 14:52:49,392 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.225s
+INFO 2026-04-11 15:02:27,154 | SCENARIO REQUEST | user_id=22 | type=chat | topic=фишинг | difficulty=medium
+INFO 2026-04-11 15:02:29,436 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 15:02:29,438 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-04-11 15:02:29,439 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.289s
+INFO 2026-04-11 15:09:41,394 | SCENARIO REQUEST | user_id=22 | type=chat | topic=мошенник | difficulty=medium
+INFO 2026-04-11 15:09:43,575 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 15:09:43,578 | SCENARIO SUCCESS | user_id=22 | type=chat
+INFO 2026-04-11 15:09:43,578 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.187s
+INFO 2026-04-11 19:41:40,073 | FILE UPLOAD | user_id=1 | filename=Зертханалық жұмыс 7косымшалары.docx
+INFO 2026-04-11 19:41:40,104 | AI COURSE | user_id=1 | chars=7729
+INFO 2026-04-11 19:41:43,946 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 19:41:43,950 | AI COURSE SUCCESS | user_id=1 | title=Мобильді қосымшаларды дамыту
+INFO 2026-04-11 19:41:43,951 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 3.890s
+INFO 2026-04-11 19:43:01,834 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-04-11 19:43:03,414 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 19:43:03,416 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-04-11 19:43:03,417 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.589s
+INFO 2026-04-11 19:45:12,673 | QUIZ REQUEST | user_id=1 | count=5 | difficulty=medium
+INFO 2026-04-11 19:45:15,593 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 19:45:15,596 | QUIZ SUCCESS | user_id=1 | questions_generated=5
+INFO 2026-04-11 19:45:15,597 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 2.927s
+INFO 2026-04-11 19:46:45,133 | SCENARIO REQUEST | user_id=1 | type=chat | topic=Некий нариман просит денег | difficulty=medium
+INFO 2026-04-11 19:46:47,571 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-11 19:46:47,573 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-11 19:46:47,574 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.444s
+INFO 2026-04-11 19:55:59,546 | OK: [200] GET /docs (IP: 172.18.0.8) — 0.001s
+INFO 2026-04-11 19:56:00,070 | OK: [200] GET /openapi.json (IP: 172.18.0.8) — 0.012s
