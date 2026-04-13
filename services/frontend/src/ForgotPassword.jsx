@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
 import { Mail, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; 
 
 const ForgotPassword = () => {
+    const { t } = useTranslation(); 
+
     const [email, setEmail]     = useState('');
     const [loading, setLoading] = useState(false);
     const [isSent, setIsSent]   = useState(false);
@@ -17,9 +20,9 @@ const ForgotPassword = () => {
         try {
             await api.post('users/password-reset/', { email });
             setIsSent(true);
-            toast.success('Ссылка для восстановления отправлена на почту!');
+            toast.success(t('auth.successForgotSend'));
         } catch (err) {
-            setError('Не удалось отправить ссылку. Проверьте правильность email.');
+            setError(t('auth.errForgotSend'));
         } finally {
             setLoading(false);
         }
@@ -78,10 +81,10 @@ const ForgotPassword = () => {
                                 <CheckCircle size={28} color="#22c55e" />
                             </div>
                             <h1 className="auth-title" style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 8px' }}>
-                                Письмо отправлено!
+                                {t('auth.forgotSuccessTitle')}
                             </h1>
                             <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: '0 0 24px', lineHeight: 1.6 }}>
-                                Проверьте <strong>{email}</strong> — мы отправили инструкции по восстановлению пароля. Не забудьте заглянуть в папку «Спам».
+                                {t('auth.forgotSuccessDescPrefix')} <strong>{email}</strong>{t('auth.forgotSuccessDescSuffix')}
                             </p>
                             <Link to="/login"
                                 style={{
@@ -94,7 +97,7 @@ const ForgotPassword = () => {
                                 }}
                                 onMouseEnter={e => e.currentTarget.style.background = '#1d4ed8'}
                                 onMouseLeave={e => e.currentTarget.style.background = '#2563eb'}>
-                                Вернуться ко входу
+                                {t('auth.backToLogin')}
                             </Link>
                         </div>
                     ) : (
@@ -103,10 +106,10 @@ const ForgotPassword = () => {
                             {/* Header */}
                             <div style={{ textAlign: 'center', marginBottom: 28 }}>
                                 <h1 className="auth-title" style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-                                    Забыли пароль?
+                                    {t('auth.forgotTitle')}
                                 </h1>
                                 <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500, lineHeight: 1.6 }}>
-                                    Введите email аккаунта — мы отправим ссылку для восстановления.
+                                    {t('auth.forgotSubtitle')}
                                 </p>
                             </div>
 
@@ -129,7 +132,7 @@ const ForgotPassword = () => {
                                         color: '#475569', textTransform: 'uppercase',
                                         letterSpacing: '0.07em', marginBottom: 7,
                                     }}>
-                                        Email
+                                        {t('auth.forgotEmailLabel')}
                                     </label>
                                     <div style={{ position: 'relative' }}>
                                         <Mail size={15} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
@@ -158,23 +161,23 @@ const ForgotPassword = () => {
                                     }}
                                     onMouseEnter={e => { if (!loading && email) e.currentTarget.style.background = '#1d4ed8'; }}
                                     onMouseLeave={e => { if (!loading && email) e.currentTarget.style.background = '#2563eb'; }}>
-                                    {loading ? 'Отправка...' : 'Отправить ссылку'}
+                                    {loading ? t('auth.forgotSendingBtn') : t('auth.forgotSendBtn')}
                                 </button>
                             </form>
 
                             {/* Divider + back */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
                                 <div className="auth-sep" style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>или</span>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('auth.or')}</span>
                                 <div className="auth-sep" style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
                             </div>
 
                             <p className="auth-hint" style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500 }}>
-                                Вспомнили пароль?{' '}
+                                {t('auth.forgotRemembered')}{' '}
                                 <Link to="/login" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}
                                     onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                                     onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
-                                    Войти
+                                    {t('auth.loginBtn')}
                                 </Link>
                             </p>
                         </>

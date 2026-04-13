@@ -3,8 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; 
 
 const ResetPassword = () => {
+    const { t } = useTranslation(); 
+
     const { uidb64, token } = useParams();
     const navigate = useNavigate();
 
@@ -16,9 +19,9 @@ const ResetPassword = () => {
 
     const getPasswordStrength = (pass) => {
         if (!pass) return null;
-        if (pass.length < 6)                       return { label: 'Слабый',   color: '#f87171', width: '33%' };
-        if (pass.length < 10 || !/\d/.test(pass)) return { label: 'Средний',  color: '#fb923c', width: '66%' };
-        return                                            { label: 'Надёжный', color: '#34d399', width: '100%' };
+        if (pass.length < 6)                       return { label: t('auth.strengthWeak'),   color: '#f87171', width: '33%' };
+        if (pass.length < 10 || !/\d/.test(pass)) return { label: t('auth.strengthMedium'), color: '#fb923c', width: '66%' };
+        return                                     { label: t('auth.strengthStrong'), color: '#34d399', width: '100%' };
     };
 
     const strength = getPasswordStrength(password);
@@ -26,16 +29,16 @@ const ResetPassword = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        if (password.length < 6) { setError('Пароль должен содержать минимум 6 символов.'); return; }
-        if (password !== confirmPassword) { setError('Пароли не совпадают!'); return; }
+        if (password.length < 6) { setError(t('auth.errPassLength')); return; }
+        if (password !== confirmPassword) { setError(t('auth.errPassMatch')); return; }
 
         setLoading(true);
         try {
             await api.post('users/password-reset-confirm/', { uidb64, token, password });
-            toast.success('Пароль успешно изменён! Теперь вы можете войти.');
+            toast.success(t('auth.successReset'));
             navigate('/login');
         } catch (err) {
-            setError('Ссылка недействительна или устарела. Попробуйте запросить новую.');
+            setError(t('auth.errResetLink'));
         } finally {
             setLoading(false);
         }
@@ -84,10 +87,10 @@ const ResetPassword = () => {
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: 32 }}>
                         <h1 className="auth-title" style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-                            Новый пароль
+                            {t('auth.resetTitle')}
                         </h1>
                         <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500 }}>
-                            Придумайте надёжный пароль для вашего аккаунта
+                            {t('auth.resetSubtitle')}
                         </p>
                     </div>
 
@@ -112,7 +115,7 @@ const ResetPassword = () => {
                                 color: '#475569', textTransform: 'uppercase',
                                 letterSpacing: '0.07em', marginBottom: 7,
                             }}>
-                                Новый пароль
+                                {t('auth.newPasswordLabel')}
                             </label>
                             <div style={{ position: 'relative' }}>
                                 <input
@@ -155,7 +158,7 @@ const ResetPassword = () => {
                                 color: '#475569', textTransform: 'uppercase',
                                 letterSpacing: '0.07em', marginBottom: 7,
                             }}>
-                                Повторите пароль
+                                {t('auth.passRepeat')}
                             </label>
                             <input
                                 type={showPassword ? 'text' : 'password'}
@@ -182,7 +185,7 @@ const ResetPassword = () => {
                             }}
                             onMouseEnter={e => { if (!loading && password && confirmPassword) e.currentTarget.style.background = '#1d4ed8'; }}
                             onMouseLeave={e => { if (!loading && password && confirmPassword) e.currentTarget.style.background = '#2563eb'; }}>
-                            {loading ? 'Сохранение...' : 'Сохранить пароль'}
+                            {loading ? t('auth.savingBtn') : t('auth.savePasswordBtn')}
                         </button>
                     </form>
 
@@ -193,7 +196,7 @@ const ResetPassword = () => {
                             style={{ fontSize: 13, color: '#64748b', textDecoration: 'none', fontWeight: 500 }}
                             onMouseEnter={e => e.currentTarget.style.color = '#3b82f6'}
                             onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
-                            ← Вернуться ко входу
+                            ← {t('auth.backToLogin')}
                         </Link>
                     </div>
 
