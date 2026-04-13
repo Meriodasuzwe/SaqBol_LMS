@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import api from './api';
-import { useNavigate, Link,useLocation } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 import TelegramLoginButton from 'react-telegram-login';
 import { Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; 
 
 function Login({ onLoginSuccess }) {
+    const { t } = useTranslation(); 
+
     const [username, setUsername]         = useState('');
     const [password, setPassword]         = useState('');
     const [error, setError]               = useState('');
@@ -27,11 +30,11 @@ function Login({ onLoginSuccess }) {
             const response = await api.post('users/login/', { username, password });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            toast.success(isNewUser ? `🎉 Добро пожаловать на платформу, ${username}!` : `👋 С возвращением, ${username}!`);
+            toast.success(isNewUser ? `${t('auth.welcomeNew')}, ${username}!` : `${t('auth.welcomeBack')}, ${username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {
-            setError('Неверный логин, email или пароль');
+            setError(t('auth.errorInvalid'));
         } finally {
             setLoading(false);
         }
@@ -47,13 +50,13 @@ function Login({ onLoginSuccess }) {
             });
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
-            toast.success(isNewUser ? `🎉 Добро пожаловать, ${response.data.username}!` : `👋 С возвращением, ${response.data.username}!`);
+            toast.success(isNewUser ? `${t('auth.welcomeNew')}, ${response.data.username}!` : `${t('auth.welcomeBack')}, ${response.data.username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {
             console.error(err);
-            setError('Ошибка авторизации через Google. Попробуйте снова.');
-            toast.error('Сбой при входе через Google');
+            setError(t('auth.errorGoogle'));
+            toast.error(t('auth.errorGoogleToast'));
         } finally {
             setLoading(false);
         }
@@ -69,13 +72,13 @@ function Login({ onLoginSuccess }) {
             localStorage.setItem('access', response.data.access);
             localStorage.setItem('refresh', response.data.refresh);
             
-            toast.success(isNewUser ? `🎉 Добро пожаловать, ${response.data.user.username}!` : `👋 С возвращением, ${response.data.user.username}!`);
+            toast.success(isNewUser ? `${t('auth.welcomeNew')}, ${response.data.user.username}!` : `${t('auth.welcomeBack')}, ${response.data.user.username}!`);
             onLoginSuccess();
             navigate('/courses');
         } catch (err) {
             console.error(err);
-            setError('Ошибка авторизации через Telegram');
-            toast.error('Сбой при входе через Telegram');
+            setError(t('auth.errorTelegram'));
+            toast.error(t('auth.errorTelegramToast'));
         } finally {
             setLoading(false);
         }
@@ -168,10 +171,10 @@ function Login({ onLoginSuccess }) {
                     {/* ── Header ── */}
                     <div style={{ textAlign: 'center', marginBottom: 32 }}>
                         <h1 className="auth-title" style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-                            Вход в SaqBol
+                            {t('auth.loginTitle')}
                         </h1>
                         <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500 }}>
-                            Корпоративная платформа цифровой безопасности
+                            {t('auth.loginSubtitle')}
                         </p>
                     </div>
 
@@ -202,12 +205,12 @@ function Login({ onLoginSuccess }) {
                                 color: '#475569', textTransform: 'uppercase',
                                 letterSpacing: '0.07em', marginBottom: 7,
                             }}>
-                                Логин или Email
+                                {t('auth.loginOrEmail')}
                             </label>
                             <input
                                 type="text"
                                 className={`auth-input${error ? ' has-error' : ''}`}
-                                placeholder="Введите логин или почту"
+                                placeholder={t('auth.loginPlaceholder')}
                                 value={username}
                                 onChange={e => setUsername(e.target.value)}
                                 required
@@ -221,7 +224,7 @@ function Login({ onLoginSuccess }) {
                                 color: '#475569', textTransform: 'uppercase',
                                 letterSpacing: '0.07em', marginBottom: 7,
                             }}>
-                                Пароль
+                                {t('auth.password')}
                             </label>
                             <div style={{ position: 'relative' }}>
                                 <input
@@ -272,7 +275,7 @@ function Login({ onLoginSuccess }) {
                                         </svg>
                                     )}
                                 </div>
-                                Запомнить меня
+                                {t('auth.rememberMe')}
                             </label>
                             <Link
                                 to="/forgot-password"
@@ -280,7 +283,7 @@ function Login({ onLoginSuccess }) {
                                 onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                                 onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                             >
-                                Забыли пароль?
+                                {t('auth.forgotPassword')}
                             </Link>
                         </div>
 
@@ -301,14 +304,14 @@ function Login({ onLoginSuccess }) {
                             onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#1d4ed8'; }}
                             onMouseLeave={e => { if (!loading) e.currentTarget.style.background = loading ? '#93c5fd' : '#2563eb'; }}
                         >
-                            {loading ? 'Входим...' : 'Войти'}
+                            {loading ? t('auth.loggingIn') : t('auth.loginBtn')}
                         </button>
                     </form>
 
                     {/* ── Divider ── */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
                         <div className="auth-sep" style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-                        <span className="auth-sep-t" style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>или</span>
+                        <span className="auth-sep-t" style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('auth.or')}</span>
                         <div className="auth-sep" style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
                     </div>
 
@@ -318,8 +321,8 @@ function Login({ onLoginSuccess }) {
                         <GoogleLogin
                             onSuccess={handleGoogleSuccess}
                             onError={() => {
-                                toast.error('Сбой при входе через Google');
-                                setError('Не удалось связаться с Google');
+                                toast.error(t('auth.errorGoogleToast'));
+                                setError(t('auth.errorGoogle'));
                             }}
                             useOneTap
                             shape="rectangular"
@@ -343,14 +346,14 @@ function Login({ onLoginSuccess }) {
 
                     {/* ── Footer ── */}
                     <p className="auth-hint" style={{ textAlign: 'center', fontSize: 13, color: '#64748b', marginTop: 36, marginBottom: 20, fontWeight: 500 }}>
-                        Нет аккаунта?{' '}
+                        {t('auth.noAccount')} {' '}
                         <Link
                             to="/register"
                             style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}
                             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                         >
-                            Зарегистрироваться
+                            {t('auth.registerBtn')}
                         </Link>
                     </p>
 

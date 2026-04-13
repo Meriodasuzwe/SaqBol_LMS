@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
-import { Eye, EyeOff, Info } from 'lucide-react'; // 🔥 Добавили Info
+import { Eye, EyeOff, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; 
 
 const Register = () => {
+    const { t } = useTranslation(); 
+
     const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
     const [error, setError]             = useState('');
     const [loading, setLoading]         = useState(false);
@@ -18,22 +21,22 @@ const Register = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    // Сила пароля
+    // Сила пароля (теперь с переводами)
     const getPasswordStrength = (pass) => {
         if (!pass) return null;
-        if (pass.length < 6)                        return { label: 'Слабый',   color: '#f87171', width: '33%' };
-        if (pass.length < 10 || !/\d/.test(pass))  return { label: 'Средний',  color: '#fb923c', width: '66%' };
-        return                                     { label: 'Надёжный', color: '#34d399', width: '100%' };
+        if (pass.length < 6)                        return { label: t('auth.strengthWeak'),   color: '#f87171', width: '33%' };
+        if (pass.length < 10 || !/\d/.test(pass))  return { label: t('auth.strengthMedium'), color: '#fb923c', width: '66%' };
+        return                                     { label: t('auth.strengthStrong'), color: '#34d399', width: '100%' };
     };
     const strength = getPasswordStrength(formData.password);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        if (formData.password.length < 6) { setError('Пароль должен содержать минимум 6 символов.'); return; }
+        if (formData.password.length < 6) { setError(t('auth.errPassLength')); return; }
         if (formData.password !== formData.confirmPassword) {
-            setError('Пароли не совпадают!');
-            toast.warn('⚠️ Пароли не совпадают');
+            setError(t('auth.errPassMatch'));
+            toast.warn(t('auth.errPassMatchToast'));
             return;
         }
         setLoading(true);
@@ -43,24 +46,20 @@ const Register = () => {
                 email: formData.email,
                 password: formData.password,
             });
-            toast.success('Отлично! Остался один шаг: проверьте почту.');
+            toast.success(t('auth.successReg'));
             navigate('/verify-email', { state: { email: formData.email } });
         } catch (err) {
             console.error(err);
             if (err.response?.data) {
                 const msg = Object.values(err.response.data).flat().join(', ');
-                setError(msg || 'Ошибка регистрации');
+                setError(msg || t('auth.errReg'));
             } else {
-                setError('Ошибка соединения с сервером');
+                setError(t('auth.errServer'));
             }
         } finally {
             setLoading(false);
         }
     };
-
-    const inputStyle = (hasError) => ({
-        base: `auth-input${hasError ? ' has-error' : ''}`,
-    });
 
     return (
         <>
@@ -107,10 +106,10 @@ const Register = () => {
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: 28 }}>
                         <h1 className="auth-title" style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-                            Создать аккаунт
+                            {t('auth.regTitle')}
                         </h1>
                         <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500 }}>
-                            Присоединитесь к SaqBol LMS
+                            {t('auth.regSubtitle')}
                         </p>
                     </div>
 
@@ -127,17 +126,17 @@ const Register = () => {
                         {/* Username */}
                         <div style={{ marginBottom: 14 }}>
                             <label className="auth-label" style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 7 }}>
-                                Логин <span style={{ color: '#f87171' }}>*</span>
+                                {t('auth.loginLabel')} <span style={{ color: '#f87171' }}>*</span>
                             </label>
-                            <input type="text" name="username" className="auth-input" placeholder="Придумайте логин" onChange={handleChange} required />
+                            <input type="text" name="username" className={`auth-input${error ? ' has-error' : ''}`} placeholder={t('auth.loginPlaceholderReg')} onChange={handleChange} required />
                         </div>
 
                         {/* Email */}
                         <div style={{ marginBottom: 14 }}>
                             <label className="auth-label" style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 7 }}>
-                                Email <span style={{ color: '#f87171' }}>*</span>
+                                {t('auth.emailLabel')} <span style={{ color: '#f87171' }}>*</span>
                             </label>
-                            <input type="email" name="email" className="auth-input" placeholder="example@mail.com" onChange={handleChange} required />
+                            <input type="email" name="email" className={`auth-input${error ? ' has-error' : ''}`} placeholder="example@mail.com" onChange={handleChange} required />
                             
                             {/* 🔥 КРАСИВАЯ ПОДСКАЗКА О РЕАЛЬНОМ EMAIL 🔥 */}
                             <div style={{ 
@@ -154,17 +153,21 @@ const Register = () => {
                                 lineHeight: 1.4 
                             }}>
                                 <Info size={16} style={{ flexShrink: 0, marginTop: 1 }} />
-                                <span>Укажите ваш реальный email. На него будет отправлен <strong>6-значный код</strong> для активации аккаунта.</span>
+                                <span>
+                                    {t('auth.emailHintPrefix')} 
+                                    <strong>{t('auth.emailHintBold')}</strong>
+                                    {t('auth.emailHintSuffix')}
+                                </span>
                             </div>
                         </div>
 
                         {/* Password */}
                         <div style={{ marginBottom: 14 }}>
                             <label className="auth-label" style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 7 }}>
-                                Пароль <span style={{ color: '#f87171' }}>*</span>
+                                {t('auth.password')} <span style={{ color: '#f87171' }}>*</span>
                             </label>
                             <div style={{ position: 'relative' }}>
-                                <input type={showPassword ? 'text' : 'password'} name="password" className="auth-input" placeholder="••••••••" style={{ paddingRight: 44 }} onChange={handleChange} required />
+                                <input type={showPassword ? 'text' : 'password'} name="password" className={`auth-input${error ? ' has-error' : ''}`} placeholder="••••••••" style={{ paddingRight: 44 }} onChange={handleChange} required />
                                 <button type="button" onClick={() => setShowPassword(s => !s)}
                                     style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 6 }}
                                     onMouseEnter={e => e.currentTarget.style.color = '#64748b'}
@@ -187,10 +190,10 @@ const Register = () => {
                         {/* Confirm password */}
                         <div style={{ marginBottom: 24 }}>
                             <label className="auth-label" style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 7 }}>
-                                Повторите пароль <span style={{ color: '#f87171' }}>*</span>
+                                {t('auth.passRepeat')} <span style={{ color: '#f87171' }}>*</span>
                             </label>
                             <div style={{ position: 'relative' }}>
-                                <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className="auth-input" placeholder="••••••••" style={{ paddingRight: 44 }} onChange={handleChange} required />
+                                <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className={`auth-input${error ? ' has-error' : ''}`} placeholder="••••••••" style={{ paddingRight: 44 }} onChange={handleChange} required />
                                 <button type="button" onClick={() => setShowConfirmPassword(s => !s)}
                                     style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 6 }}
                                     onMouseEnter={e => e.currentTarget.style.color = '#64748b'}
@@ -214,17 +217,17 @@ const Register = () => {
                             }}
                             onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#1d4ed8'; }}
                             onMouseLeave={e => { if (!loading) e.currentTarget.style.background = loading ? '#93c5fd' : '#2563eb'; }}>
-                            {loading ? 'Создаём...' : 'Создать аккаунт'}
+                            {loading ? t('auth.creating') : t('auth.createBtn')}
                         </button>
                     </form>
 
                     {/* Footer */}
                     <p className="auth-hint" style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: '20px 0 0', fontWeight: 500 }}>
-                        Уже есть аккаунт?{' '}
+                        {t('auth.alreadyHave')} {' '}
                         <Link to="/login" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}
                             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
-                            Войти
+                            {t('auth.loginBtn')}
                         </Link>
                     </p>
 

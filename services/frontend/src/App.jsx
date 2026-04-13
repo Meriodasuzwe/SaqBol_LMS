@@ -4,6 +4,7 @@ import api from './api';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTranslation } from 'react-i18next'; 
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -37,6 +38,9 @@ import StudentDashboard from './StudentDashboard';
 function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }) {
   const location = useLocation();
   const isLanding = location.pathname === '/';
+  
+  // 🔥 ПОДКЛЮЧАЕМ ХУК ПЕРЕВОДА
+  const { t } = useTranslation(); 
 
   return (
     <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
@@ -117,6 +121,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
         </main>
       )}
 
+      {/* 🔥 ПЕРЕВЕДЕННЫЙ ФУТЕР */}
       <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-14">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
@@ -128,43 +133,43 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 <span className="font-extrabold text-white text-base tracking-tight">SaqBol <span className="font-normal text-slate-400">LMS</span></span>
               </div>
               <p className="text-sm leading-relaxed text-slate-500">
-                Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.
+                {t('footer.desc')}
               </p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Платформа</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{t('footer.col1Title')}</p>
               <ul className="space-y-3 text-sm">
-                <li><Link to="/courses" className="hover:text-white transition-colors">Каталог курсов</Link></li>
-                <li><Link to="/#tracks" className="hover:text-white transition-colors">Направления</Link></li>
-                <li><Link to="/#features" className="hover:text-white transition-colors">Возможности</Link></li>
-                <li><Link to="/register" className="hover:text-white transition-colors">Начать бесплатно</Link></li>
+                <li><Link to="/courses" className="hover:text-white transition-colors">{t('footer.navCatalog')}</Link></li>
+                <li><Link to="/#tracks" className="hover:text-white transition-colors">{t('footer.navTracks')}</Link></li>
+                <li><Link to="/#features" className="hover:text-white transition-colors">{t('footer.navFeatures')}</Link></li>
+                <li><Link to="/register" className="hover:text-white transition-colors">{t('footer.navStart')}</Link></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Компания</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{t('footer.col2Title')}</p>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">О нас</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Блог</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Карьера</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Контакты</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navAbout')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navBlog')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navCareers')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navContact')}</a></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Правовое</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{t('footer.col3Title')}</p>
               <ul className="space-y-3 text-sm">
-                <li><Link to="/privacy" className="hover:text-white transition-colors">Политика конфиденциальности</Link></li>
-                <li><Link to="/terms" className="hover:text-white transition-colors">Пользовательское соглашение</Link></li>
-                <li><Link to="/data-processing" className="hover:text-white transition-colors">Обработка данных</Link></li>
-                <li><Link to="/cookies" className="hover:text-white transition-colors">Cookie</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">{t('footer.navPrivacy')}</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">{t('footer.navTerms')}</Link></li>
+                <li><Link to="/data-processing" className="hover:text-white transition-colors">{t('footer.navData')}</Link></li>
+                <li><Link to="/cookies" className="hover:text-white transition-colors">{t('footer.navCookies')}</Link></li>
               </ul>
             </div>
           </div>
           <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-slate-600">© 2026 SaqBol LMS — AI Education Platform. Все права защищены.</p>
+            <p className="text-xs text-slate-600">{t('footer.copyright')}</p>
             <div className="flex items-center gap-4 text-xs text-slate-600">
-              <span>🇰🇿 Казахстан</span>
+              <span>{t('footer.country')}</span>
               <span>·</span>
-              <a href="mailto:hello@saqbol.kz" className="hover:text-slate-400 transition-colors">dev.saqbol@gmail.com</a>
+              <a href="mailto:dev.saqbol@gmail.com" className="hover:text-slate-400 transition-colors">dev.saqbol@gmail.com</a>
             </div>
           </div>
         </div>
@@ -178,11 +183,10 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(false);
 
-  //  Теперь при логауте мы удаляем токены и сбрасываем состояние
+  // Теперь при логауте мы удаляем токены и сбрасываем состояние
   const handleLogout = () => {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
-    
     
     setIsLoggedIn(false);
     setUserRole(null);

@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // 🔥 ИМПОРТИРУЕМ ХУК
 
 const VerifyEmail = () => {
+    const { t } = useTranslation(); // 🔥 ПОДКЛЮЧАЕМ ПЕРЕВОДЫ
+
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -28,19 +31,19 @@ const VerifyEmail = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        if (code.length !== 6) { setError('Код должен состоять ровно из 6 цифр'); return; }
+        if (code.length !== 6) { setError(t('auth.errCodeLength')); return; }
         setLoading(true);
         try {
             await api.post('users/verify-email/', { email, code });
-            toast.success('🎉 Аккаунт успешно подтверждён! Добро пожаловать.');
+            toast.success(t('auth.successVerify'));
             navigate('/login', { state: { isNewUser: true } });
         } catch (err) {
             console.error(err);
             if (err.response?.data) {
                 const msg = Object.values(err.response.data).flat().join(', ');
-                setError(msg || 'Неверный код или срок его действия истёк.');
+                setError(msg || t('auth.errInvalidCode'));
             } else {
-                setError('Ошибка соединения с сервером');
+                setError(t('auth.errServer')); // Берем из предыдущих ключей
             }
         } finally {
             setLoading(false);
@@ -49,15 +52,15 @@ const VerifyEmail = () => {
 
     // Повторная отправка кода
     const handleResendCode = async () => {
-        if (!email) { setError('Пожалуйста, укажите email для отправки кода.'); return; }
+        if (!email) { setError(t('auth.errNoEmail')); return; }
         setIsResending(true);
         setError('');
         try {
             await api.post('users/resend-verification/', { email });
-            toast.info('🚀 Новый код летит к вам на почту!');
+            toast.info(t('auth.successResend'));
             setTimeLeft(60);
         } catch (err) {
-            setError(err.response?.data?.error || 'Не удалось отправить код. Попробуйте позже.');
+            setError(err.response?.data?.error || t('auth.errResend'));
         } finally {
             setIsResending(false);
         }
@@ -123,11 +126,11 @@ const VerifyEmail = () => {
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: 28 }}>
                         <h1 className="auth-title" style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: '0 0 8px' }}>
-                            Проверьте почту
+                            {t('auth.verifyTitle')}
                         </h1>
                         <p className="auth-sub" style={{ fontSize: 13, color: '#64748b', margin: 0, fontWeight: 500, lineHeight: 1.6 }}>
-                            Мы отправили 6-значный код на{' '}
-                            <span style={{ fontWeight: 700, color: '#2563eb' }}>{email || 'ваш email'}</span>
+                            {t('auth.verifySubtitlePrefix')}
+                            <span style={{ fontWeight: 700, color: '#2563eb' }}>{email || t('auth.verifySubtitleFallback')}</span>
                         </p>
                     </div>
 
@@ -153,7 +156,7 @@ const VerifyEmail = () => {
                                     color: '#475569', textTransform: 'uppercase',
                                     letterSpacing: '0.07em', marginBottom: 7,
                                 }}>
-                                    Ваш Email
+                                    {t('auth.yourEmailLabel')}
                                 </label>
                                 <input
                                     type="email"
@@ -173,7 +176,7 @@ const VerifyEmail = () => {
                                 color: '#475569', textTransform: 'uppercase',
                                 letterSpacing: '0.07em', marginBottom: 10, textAlign: 'center',
                             }}>
-                                Код подтверждения
+                                {t('auth.codeLabel')}
                             </label>
                             <input
                                 type="text"
@@ -186,7 +189,7 @@ const VerifyEmail = () => {
                                 autoFocus
                             />
                             <p style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', marginTop: 8, fontWeight: 500 }}>
-                                Введите 6 цифр из письма
+                                {t('auth.codeHint')}
                             </p>
                         </div>
 
@@ -205,20 +208,20 @@ const VerifyEmail = () => {
                             }}
                             onMouseEnter={e => { if (!loading && code.length === 6 && email) e.currentTarget.style.background = '#1d4ed8'; }}
                             onMouseLeave={e => { if (!loading && code.length === 6 && email) e.currentTarget.style.background = '#2563eb'; }}>
-                            {loading ? 'Проверка...' : 'Подтвердить'}
+                            {loading ? t('auth.verifyingBtn') : t('auth.verifyBtn')}
                         </button>
                     </form>
 
                     {/* Resend block */}
                     <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
                         <p className="auth-hint" style={{ fontSize: 12, color: '#94a3b8', marginBottom: 10, fontWeight: 500 }}>
-                            Код не пришёл или истёк срок действия?
+                            {t('auth.resendPrompt')}
                         </p>
 
                         {timeLeft > 0 ? (
                             <p className="auth-timer" style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>
-                                Отправить повторно через{' '}
-                                <span style={{ fontWeight: 700, color: '#64748b' }}>{timeLeft} сек</span>
+                                {t('auth.resendTimerPrefix')}
+                                <span style={{ fontWeight: 700, color: '#64748b' }}>{timeLeft}{t('auth.resendTimerSuffix')}</span>
                             </p>
                         ) : (
                             <button
@@ -232,7 +235,7 @@ const VerifyEmail = () => {
                                 }}
                                 onMouseEnter={e => { if (!isResending) e.currentTarget.style.background = '#eff6ff'; }}
                                 onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                                {isResending ? 'Отправляем...' : 'Отправить код повторно'}
+                                {isResending ? t('auth.resendingBtn') : t('auth.resendBtn')}
                             </button>
                         )}
 
@@ -242,7 +245,7 @@ const VerifyEmail = () => {
                                 style={{ fontSize: 12, color: '#94a3b8', textDecoration: 'none', fontWeight: 500 }}
                                 onMouseEnter={e => e.currentTarget.style.color = '#2563eb'}
                                 onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
-                                Зарегистрироваться с другим email
+                                {t('auth.registerOtherEmail')}
                             </Link>
                         </div>
                     </div>
