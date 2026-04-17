@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // 🔥 ИМПОРТИРУЕМ ХУК
 
 function Privacy() {
+    const { t } = useTranslation(); // 🔥 ПОДКЛЮЧАЕМ ПЕРЕВОДЫ
+
     return (
         <div className="min-h-screen bg-base-200 py-12 px-6 transition-colors duration-200" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             <div className="max-w-3xl mx-auto">
                 {/* Кнопка назад */}
                 <Link to="/" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mb-8">
-                    <ArrowLeft size={16} /> На главную
+                    <ArrowLeft size={16} /> {t('privacy.backToHome')}
                 </Link>
 
                 <div className="bg-base-100 rounded-[2rem] border border-base-300 shadow-sm p-8 md:p-12 transition-colors duration-200">
@@ -15,53 +18,57 @@ function Privacy() {
                         <ShieldCheck size={24} />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-base-content mb-4">
-                        Политика конфиденциальности
+                        {t('privacy.title')}
                     </h1>
                     <p className="text-sm font-semibold text-base-content/50 uppercase tracking-widest mb-10">
-                        Последнее обновление: 11 Марта 2026
+                        {t('privacy.lastUpdate')}
                     </p>
 
                     <div className="space-y-8 text-base-content/80 leading-relaxed font-medium">
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">1. Общие положения</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('privacy.sec1Title')}</h2>
                             <p>
-                                Настоящая политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей платформы <strong className="text-base-content">SaqBol LMS</strong>. Мы с уважением относимся к личной информации наших пользователей и строго соблюдаем законодательство Республики Казахстан о персональных данных.
+                                {t('privacy.sec1p1')}
+                                <strong className="text-base-content">SaqBol LMS</strong>
+                                {t('privacy.sec1p2')}
                             </p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">2. Какие данные мы собираем</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('privacy.sec2Title')}</h2>
                             <ul className="list-disc pl-5 space-y-2 marker:text-blue-500">
-                                <li><strong className="text-base-content">Учетные данные:</strong> ФИО, адрес электронной почты, должность.</li>
-                                <li><strong className="text-base-content">Данные об обучении:</strong> прогресс прохождения курсов, результаты тестов, выданные сертификаты.</li>
-                                <li><strong className="text-base-content">Технические данные:</strong> IP-адрес, тип браузера, файлы cookies для обеспечения корректной работы сессий.</li>
+                                <li><strong className="text-base-content">{t('privacy.li1Bold')}</strong>{t('privacy.li1Text')}</li>
+                                <li><strong className="text-base-content">{t('privacy.li2Bold')}</strong>{t('privacy.li2Text')}</li>
+                                <li><strong className="text-base-content">{t('privacy.li3Bold')}</strong>{t('privacy.li3Text')}</li>
                             </ul>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">3. Использование данных</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('privacy.sec3Title')}</h2>
                             <p>
-                                Собранная информация используется исключительно для:
+                                {t('privacy.sec3Text')}
                             </p>
                             <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-blue-500">
-                                <li>Предоставления доступа к образовательным материалам.</li>
-                                <li>Формирования аналитических отчетов для руководителей (B2B сегмент).</li>
-                                <li>Улучшения алгоритмов ИИ-адаптации под каждого студента.</li>
+                                <li>{t('privacy.sec3li1')}</li>
+                                <li>{t('privacy.sec3li2')}</li>
+                                <li>{t('privacy.sec3li3')}</li>
                             </ul>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">4. Безопасность</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('privacy.sec4Title')}</h2>
                             <p>
-                                Мы используем современные методы шифрования и изолированные базы данных. Передача информации между вашим устройством и нашими серверами защищена протоколом SSL/TLS.
+                                {t('privacy.sec4Text')}
                             </p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">5. Контакты</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('privacy.sec5Title')}</h2>
                             <p>
-                                Если у вас есть вопросы по поводу вашей конфиденциальности или вы хотите запросить удаление аккаунта, свяжитесь с нами по адресу:{' '}
-                                <a href="mailto:dev.saqbol@gmail.com" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">dev.saqbol@gmail.com</a>
+                                {t('privacy.sec5Text')}
+                                <a href="mailto:dev.saqbol@gmail.com" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                                    dev.saqbol@gmail.com
+                                </a>
                             </p>
                         </section>
                     </div>
