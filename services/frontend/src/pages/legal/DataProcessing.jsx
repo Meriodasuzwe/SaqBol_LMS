@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Database } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; 
 
 function DataProcessing() {
+    const { t } = useTranslation(); 
+
     return (
         <div className="min-h-screen bg-base-200 py-12 px-6 transition-colors duration-200" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             <div className="max-w-3xl mx-auto">
                 {/* Кнопка назад */}
                 <Link to="/" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mb-8">
-                    <ArrowLeft size={16} /> На главную
+                    <ArrowLeft size={16} /> {t('dataProcessing.backToHome')}
                 </Link>
 
                 <div className="bg-base-100 rounded-[2rem] border border-base-300 shadow-sm p-8 md:p-12 transition-colors duration-200">
@@ -15,42 +18,48 @@ function DataProcessing() {
                         <Database size={24} />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-base-content mb-4">
-                        Согласие на обработку данных
+                        {t('dataProcessing.title')}
                     </h1>
                     <p className="text-sm font-semibold text-base-content/50 uppercase tracking-widest mb-10">
-                        В соответствии с Законодательством РК
+                        {t('dataProcessing.subtitle')}
                     </p>
 
                     <div className="space-y-8 text-base-content/80 leading-relaxed font-medium">
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">1. Предмет согласия</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('dataProcessing.sec1Title')}</h2>
                             <p>
-                                Регистрируясь на платформе <strong className="text-base-content">SaqBol LMS</strong>, Пользователь дает свое безусловное согласие на сбор, систематизацию, накопление, хранение, уточнение (обновление, изменение), использование и блокирование своих персональных данных.
+                                {t('dataProcessing.sec1p1')}
+                                <strong className="text-base-content">SaqBol LMS</strong>
+                                {t('dataProcessing.sec1p2')}
                             </p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">2. Специфика корпоративного обучения (B2B)</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('dataProcessing.sec2Title')}</h2>
                             <p>
-                                Если доступ к платформе предоставлен вашим Работодателем, платформа SaqBol LMS выступает в роли <strong className="text-base-content">Обработчика данных</strong>, а Работодатель — в роли <strong className="text-base-content">Контроллера данных</strong>.
+                                {t('dataProcessing.sec2p1_1')}
+                                <strong className="text-base-content">{t('dataProcessing.dataProcessor')}</strong>
+                                {t('dataProcessing.sec2p1_2')}
+                                <strong className="text-base-content">{t('dataProcessing.dataController')}</strong>
+                                {t('dataProcessing.sec2p1_3')}
                             </p>
                             <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-blue-500">
-                                <li>Платформа имеет право передавать отчеты о вашем прогрессе, результатах тестов и активности уполномоченным представителям вашего Работодателя.</li>
-                                <li>Платформа не передает эти данные третьим лицам, не связанным с процессом вашего обучения.</li>
+                                <li>{t('dataProcessing.sec2li1')}</li>
+                                <li>{t('dataProcessing.sec2li2')}</li>
                             </ul>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">3. Сроки хранения</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('dataProcessing.sec3Title')}</h2>
                             <p>
-                                Персональные данные хранятся в течение всего срока использования аккаунта на платформе, а также в течение 3 (трех) лет после его удаления в целях разрешения возможных юридических споров и формирования архивной аналитики.
+                                {t('dataProcessing.sec3Text')}
                             </p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-base-content mb-3">4. Отзыв согласия</h2>
+                            <h2 className="text-xl font-bold text-base-content mb-3">{t('dataProcessing.sec4Title')}</h2>
                             <p>
-                                Пользователь вправе в любой момент отозвать свое согласие на обработку персональных данных, направив соответствующий запрос в службу поддержки. Обратите внимание, что отзыв согласия может повлечь за собой блокировку аккаунта, так как платформа не сможет обеспечивать образовательный процесс без хранения базовой информации.
+                                {t('dataProcessing.sec4Text')}
                             </p>
                         </section>
                     </div>

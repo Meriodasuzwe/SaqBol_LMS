@@ -467,3 +467,41 @@ INFO 2026-04-12 09:58:08,562 | INSIGHTS STUDENT | user_id=25
 INFO 2026-04-12 09:58:09,818 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-12 09:58:09,825 | INSIGHTS STUDENT SUCCESS | user_id=25
 INFO 2026-04-12 09:58:09,826 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.301s
+INFO 2026-04-15 18:12:11,510 | INSIGHTS STUDENT | user_id=26
+INFO 2026-04-15 18:12:12,571 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-15 18:12:12,574 | INSIGHTS STUDENT SUCCESS | user_id=26
+INFO 2026-04-15 18:12:12,575 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.086s
+INFO 2026-04-15 18:12:56,690 | INSIGHTS STUDENT | user_id=25
+INFO 2026-04-15 18:12:57,769 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-15 18:12:57,771 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-04-15 18:12:57,772 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.083s
+INFO 2026-04-15 18:15:55,961 | INSIGHTS TEACHER | user_id=1 | course=Текущий курс
+INFO 2026-04-15 18:15:58,111 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-15 18:15:58,112 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-04-15 18:15:58,113 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.157s
+INFO 2026-04-15 18:16:14,442 | FILE UPLOAD | user_id=1 | filename=Авр Абай.pdf
+INFO 2026-04-15 18:16:14,485 | AI COURSE | user_id=1 | chars=1710
+INFO 2026-04-15 18:16:17,150 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-15 18:16:17,154 | AI COURSE SUCCESS | user_id=1 | title=Акт выполненных работ (оказанных услуг) в государственных закупках
+INFO 2026-04-15 18:16:17,156 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 2.724s
+INFO 2026-04-15 18:17:34,089 | QUIZ REQUEST | user_id=1 | count=3 | difficulty=medium
+INFO 2026-04-15 18:17:36,186 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-15 18:17:36,187 | QUIZ SUCCESS | user_id=1 | questions_generated=3
+INFO 2026-04-15 18:17:36,188 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 2.102s
+INFO 2026-04-15 18:17:57,097 | SCENARIO REQUEST | user_id=1 | type=chat | topic=некий арман просит денег | difficulty=medium
+INFO 2026-04-15 18:18:00,153 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-15 18:18:00,154 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-15 18:18:00,155 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.062s
+INFO 2026-04-16 18:25:00,627 | FILE UPLOAD | user_id=22 | filename=Авр Абай (1).pdf
+INFO 2026-04-16 18:25:00,664 | AI COURSE | user_id=22 | chars=1721
+INFO 2026-04-16 18:25:02,567 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-16 18:25:02,575 | AI COURSE SUCCESS | user_id=22 | title=Акт выполненных работ (оказанных услуг) в государственных закупках
+INFO 2026-04-16 18:25:02,577 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 1.965s
+INFO 2026-04-16 18:25:24,030 | INSIGHTS TEACHER | user_id=22 | course=Текущий курс
+INFO 2026-04-16 18:25:26,106 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-16 18:25:26,108 | INSIGHTS TEACHER SUCCESS | user_id=22
+INFO 2026-04-16 18:25:26,109 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.084s
+INFO 2026-04-16 18:31:27,336 | QUIZ REQUEST | user_id=1 | count=3 | difficulty=medium
+INFO 2026-04-16 18:31:28,909 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-16 18:31:28,911 | QUIZ SUCCESS | user_id=1 | questions_generated=3
+INFO 2026-04-16 18:31:28,912 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 1.582s

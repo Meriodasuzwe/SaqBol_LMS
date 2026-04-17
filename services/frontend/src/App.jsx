@@ -30,8 +30,8 @@ import DataProcessing from './pages/legal/DataProcessing';
 import Navbar from './Navbar';
 import AdminPanel from './AdminPanel';
 import AdminStats from './AdminStats';
-
-// ✅ Новые дашборды аналитики
+import About from './About';
+// Аналитика
 import TeacherDashboard from './TeacherDashboard';
 import StudentDashboard from './StudentDashboard';
 
@@ -39,7 +39,6 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
   const location = useLocation();
   const isLanding = location.pathname === '/';
   
-  // 🔥 ПОДКЛЮЧАЕМ ХУК ПЕРЕВОДА
   const { t } = useTranslation(); 
 
   return (
@@ -94,6 +93,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             } />
             <Route path="/settings" element={<Settings />} />
 
+            <Route path="/about" element={<About />} />
             {/* Админка */}
             <Route path="/admin" element={
               isLoggedIn && userRole === 'admin' ? <AdminPanel /> : <Navigate to="/login" />
@@ -121,7 +121,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
         </main>
       )}
 
-      {/* 🔥 ПЕРЕВЕДЕННЫЙ ФУТЕР */}
+      {/* 🔥 ФУТЕР 🔥 */}
       <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-14">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
@@ -145,15 +145,20 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 <li><Link to="/register" className="hover:text-white transition-colors">{t('footer.navStart')}</Link></li>
               </ul>
             </div>
+            
+            
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{t('footer.col2Title')}</p>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navAbout')}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navBlog')}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navCareers')}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.navContact')}</a></li>
+                {/* Внутренняя ссылка на страницу Обо мне */}
+                <li><Link to="/about" className="hover:text-white transition-colors">{t('footer.navAbout')}</Link></li>
+                {/* Внешние ссылки на соцсети */}
+                <li><a href="https://github.com/Meriodasuzwe/SaqBol_LMS" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{t('footer.navBlog')}</a></li>
+                <li><a href="https://www.linkedin.com/in/rakhat-aliyev-3a9a2026b/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{t('footer.navCareers')}</a></li>
+                <li><a href="https://t.me/zulficar1" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{t('footer.navContact')}</a></li>
               </ul>
             </div>
+
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{t('footer.col3Title')}</p>
               <ul className="space-y-3 text-sm">
