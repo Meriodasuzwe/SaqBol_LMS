@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from './api';
 import aiApi from './aiApi';
 import { useTranslation } from 'react-i18next'; 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
@@ -199,6 +200,7 @@ function ScenarioStats({ stats, t }) {
 }
 
 function AIAnalysis({ dashData, t }) {
+  const { i18n } = useTranslation();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -215,12 +217,13 @@ function AIAnalysis({ dashData, t }) {
         hardest_scenario_steps: allSteps.slice(0, 3).map(s => ({ message_text: s.message_text || '', error_rate: s.error_rate })),
         avg_quiz_score: dashData.avg_quiz_score || 0,
         total_students: dashData.total_students || 0,
+        language: i18n.language?.split('-')[0] || 'ru',
       });
       setResult(res.data);
     } catch (e) {
       setError(e.response?.data?.detail || t('analyticsTeacher.aiErrorDefault'));
     } finally { setLoading(false); }
-  }, [dashData, t]);
+  }, [dashData, t, i18n.language]);
 
   return (
     <Card style={{ padding: 24 }}>

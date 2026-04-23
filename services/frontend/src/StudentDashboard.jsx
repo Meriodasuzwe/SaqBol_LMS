@@ -207,6 +207,7 @@ function WeakTopics({ topics, t }) {
 }
 
 function AIRecommendations({ data, t }) {
+  const { i18n } = useTranslation();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -220,12 +221,13 @@ function AIRecommendations({ data, t }) {
         weak_topics: (data.weak_topics || []).slice(0, 5).map(item => ({ question_text: item.question_text, error_rate: item.error_rate, total_answers: item.total_answers })),
         scenario_pass_rate: data.scenario_pass_rate || 0,
         total_quizzes: data.total_quizzes_taken || 0,
+        language: i18n.language?.split('-')[0] || 'ru',
       });
       setResult(res.data);
     } catch (e) {
       setError(e.response?.data?.detail || t('analyticsStudent.aiErrorDefault'));
     } finally { setLoading(false); }
-  }, [data, t]);
+  }, [data, t, i18n.language]);
 
   return (
     <Card style={{ padding: 24 }}>
