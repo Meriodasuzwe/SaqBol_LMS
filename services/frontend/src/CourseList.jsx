@@ -50,7 +50,7 @@ function CourseCard({ course }) {
     const isFree     = price === 0;
     const progress   = course.progress || 0;
     
-    // 🔥 Логика: Курс считается "Нашим", если есть флаг is_enrolled ИЛИ прогресс пришел как число (даже 0)
+    // Логика: Курс считается "Нашим", если есть флаг is_enrolled ИЛИ прогресс пришел как число (даже 0)
     const isEnrolled = course.is_enrolled === true || (course.progress !== undefined && course.progress !== null);
     
     const ratingNum  = parseFloat(course.average_rating || 0);
@@ -72,7 +72,7 @@ function CourseCard({ course }) {
                 <div>
                     {course.category_title && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1.5 block">
-                            {course.category_title}
+                            {t(`categories.${course.category_title}`, { defaultValue: course.category_title })}
                         </span>
                     )}
                     <h3 className="font-bold text-base-content text-sm sm:text-base leading-snug mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
@@ -92,7 +92,7 @@ function CourseCard({ course }) {
                         </div>
                         <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1">
-                                <Users size={10} />{students.toLocaleString('ru-RU')}
+                                <Users size={10} />{students.toLocaleString()}
                             </span>
                             <span className="flex items-center gap-1">
                                 <Clock size={10} />{hours}ч
@@ -117,7 +117,7 @@ function CourseCard({ course }) {
                             <span className="font-extrabold text-sm text-base-content">
                                 {isFree
                                     ? <span className="text-emerald-600 dark:text-emerald-400">{t('courseList.free')}</span>
-                                    : `${new Intl.NumberFormat('ru-RU').format(price)} ₸`
+                                    : `${new Intl.NumberFormat().format(price)} ₸`
                                 }
                             </span>
                         )}
@@ -129,7 +129,7 @@ function CourseCard({ course }) {
                             {isEnrolled 
                                 ? progress > 0 
                                     ? <><PlayCircle size={12} />{t('courseList.continueBtn')}</> 
-                                    : <><PlayCircle size={12} />{t('courseList.startBtn', { defaultValue: 'Начать обучение' })}</>
+                                    : <><PlayCircle size={12} />{t('courseList.startBtn')}</>
                                 : <>{t('courseList.openBtn')} <ArrowRight size={12} /></>}
                         </span>
                     </div>
@@ -152,7 +152,7 @@ function CourseCard({ course }) {
                 <div className="absolute top-2 right-2 sm:top-1.5 sm:right-1.5 flex flex-col gap-1">
                     {isEnrolled ? (
                         <span className={`px-2 py-1 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-md border ${progress > 0 ? 'bg-blue-600 border-blue-400/30' : 'bg-violet-600 border-violet-400/30'}`}>
-                            {progress > 0 ? t('courseList.inProgressBadge') : t('courseList.enrolledBadge', { defaultValue: 'Записан' })}
+                            {progress > 0 ? t('courseList.inProgressBadge') : t('courseList.enrolledBadge')}
                         </span>
                     ) : isFree ? (
                         <span className="px-2 py-1 bg-emerald-500 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-sm">
@@ -294,7 +294,6 @@ export default function CourseList() {
         return r;
     }, [courses, onlyFree]);
 
-    // 🔥 Изменено: Собираем курсы, на которые мы записаны (даже если прогресс 0) и еще не закончили (< 100)
     const myLearning = filtered.filter(c => {
         const isEnrolled = c.is_enrolled === true || (c.progress !== undefined && c.progress !== null);
         return isEnrolled && (c.progress || 0) < 100;
@@ -335,7 +334,7 @@ export default function CourseList() {
                             className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors font-medium
                                 ${selectedCategory === String(cat.id) ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-semibold' : 'text-base-content/70 hover:bg-base-200'}`}
                         >
-                            {cat.title}
+                            {t(`categories.${cat.title}`, { defaultValue: cat.title })}
                         </button>
                     ))}
                 </div>
@@ -461,7 +460,7 @@ export default function CourseList() {
                             <div className="flex flex-wrap gap-2 mb-5">
                                 {selectedCategory && categories.find(c => String(c.id) === selectedCategory) && (
                                     <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold border border-blue-100 dark:border-blue-800">
-                                        {categories.find(c => String(c.id) === selectedCategory)?.title}
+                                        {t(`categories.${categories.find(c => String(c.id) === selectedCategory)?.title}`, { defaultValue: categories.find(c => String(c.id) === selectedCategory)?.title })}
                                         <button onClick={() => setSelectedCategory('')}><X size={10} /></button>
                                     </span>
                                 )}
@@ -529,7 +528,6 @@ export default function CourseList() {
                                 {/* Course list (Все остальные курсы) */}
                                 <div className="flex flex-col gap-3">
                                     {filtered
-                                        // Если мы на главной странице каталога, скрываем из общего списка те, что уже есть в "Моё обучение"
                                         .filter(c => {
                                             if (!debouncedSearch && !selectedCategory) {
                                                 const isEnrolled = c.is_enrolled === true || (c.progress !== undefined && c.progress !== null);

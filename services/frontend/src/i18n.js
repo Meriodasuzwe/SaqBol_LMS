@@ -34,6 +34,18 @@ const resources = {
         studentRole: "студент",
         user: "Пользователь"
       },
+      
+
+      categories: {
+          "Программирование основы": "Программирование основы",
+          "Программирование для знатоков": "Программирование для знатоков",
+          "Законодательства РК": "Законодательства РК",
+          "Информационная безопасность": "Информационная безопасность",
+          "Кибергигиена и осведомленность": "Кибергигиена и осведомленность",
+          "Безопасная разработка (DevSecOps)": "Безопасная разработка (DevSecOps)",
+          "Сетевая безопасность и Инфраструктура": "Сетевая безопасность и Инфраструктура",
+          
+      },    
       modal: {
         title: "Стать автором",
         subtitle: "Поделитесь знаниями со студентами",
@@ -379,6 +391,8 @@ const resources = {
         courseCatalog: "Каталог курсов",
         notFoundTitle: "Ничего не найдено",
         notFoundDesc: "Попробуйте другой запрос или сбросьте фильтры.",
+        startBtn: "Начать обучение",
+        enrolledBadge: "Записан",
         showCourses: "Показать курсы"
       },
       footer: {
@@ -433,6 +447,16 @@ const resources = {
         register: "Тіркелу",
         studentRole: "студент",
         user: "Пайдаланушы"
+      },
+      categories: {
+        "Программирование основы": "Бағдарламалау негіздері",
+        "Программирование для знатоков": "Тәжірибелілерге арналған бағдарламалау",
+        "Законодательства РК": "ҚР Заңнамасы",
+        "Информационная безопасность": "Ақпараттық қауіпсіздік",
+        "Кибергигиена и осведомленность": "Кибергигиена және хабардарлық",
+        "Безопасная разработка (DevSecOps)": "Қауіпсіз әзірлеу (DevSecOps)",
+        "Сетевая безопасность и Инфраструктура": "Желілік қауіпсіздік және Инфрақұрылым",
+        
       },
       modal: {
         title: "Автор болу",
@@ -778,6 +802,8 @@ const resources = {
         courseCatalog: "Курстар каталогы",
         notFoundTitle: "Ештеңе табылмады",
         notFoundDesc: "Басқа сұрауды байқап көріңіз немесе сүзгілерді алып тастаңыз.",
+        startBtn: "Оқуды бастау",
+        enrolledBadge: "Жазылған",
         showCourses: "Курстарды көрсету"
       },
       footer: {
@@ -833,6 +859,16 @@ const resources = {
         register: "Register",
         studentRole: "student",
         user: "User"
+      },
+      categories: {
+        "Программирование основы": "Programming Basics",
+        "Программирование для знатоков": "Advanced Programming",
+        "Законодательства РК": "Legislation of RK",
+        "Информационная безопасность": "Information Security",
+        "Кибергигиена и осведомленность": "Cyber Hygiene & Awareness",
+        "Безопасная разработка (DevSecOps)": "Secure Development (DevSecOps)",
+        "Сетевая безопасность и Инфраструктура": "Network Security & Infrastructure",
+        
       },
       modal: {
         title: "Become an Author",
@@ -1178,6 +1214,8 @@ const resources = {
         courseCatalog: "Course Catalog",
         notFoundTitle: "Nothing found",
         notFoundDesc: "Try a different search term or reset the filters.",
+        startBtn: "Start learning",
+        enrolledBadge: "Enrolled",
         showCourses: "Show courses"
       },
       footer: {
