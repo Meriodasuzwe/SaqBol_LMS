@@ -1,4 +1,5 @@
 from django.contrib import admin
+from modeltranslation.admin import TranslationAdmin
 from .models import Category, Course, Lesson, Enrollment, LessonStep, StepProgress
 
 @admin.register(Category)

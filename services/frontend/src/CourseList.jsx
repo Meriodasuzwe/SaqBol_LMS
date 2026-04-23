@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
 import OnboardingTour from './OnboardingTour';
+import { useTranslation } from 'react-i18next'; 
 import {
     Search, BookOpen, PlayCircle, Clock, Users, Star,
     ChevronDown, X, CheckCircle, ArrowRight, Zap, Shield, TrendingUp, BookOpenCheck
@@ -16,17 +17,6 @@ const seeded = (id, min, max) => {
     const x = Math.sin(id * 9301 + 49297) * 233280;
     return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
 };
-
-const SORT_OPTIONS = [
-    { value: 'popular',    label: 'По популярности' },
-    { value: 'new',        label: 'Сначала новые' },
-    { value: 'rating',     label: 'По рейтингу' },
-    { value: 'price_asc',  label: 'Сначала дешевле' },
-    { value: 'price_desc', label: 'Сначала дороже' },
-];
-
-const LEVEL_OPTIONS  = ['Начинающий', 'Средний', 'Продвинутый'];
-const DURATION_OPTIONS = ['< 2 часов', '2–5 часов', '5–10 часов', '> 10 часов'];
 
 const CARD_ACCENTS = [
     'from-blue-500 to-blue-700',
@@ -53,10 +43,15 @@ const renderStars = (rating) => {
 
 // ─── Compact Course Card (Responsive) ──────────────────────────────────────
 function CourseCard({ course }) {
+    const { t } = useTranslation();
+
     const imageUrl   = course.image || course.cover_image || course.image_url;
     const price      = parseFloat(course.price);
     const isFree     = price === 0;
-    const hasProgress = course.progress > 0;
+    const progress   = course.progress || 0;
+    
+    // 🔥 Логика: Курс считается "Нашим", если есть флаг is_enrolled ИЛИ прогресс пришел как число (даже 0)
+    const isEnrolled = course.is_enrolled === true || (course.progress !== undefined && course.progress !== null);
     
     const ratingNum  = parseFloat(course.average_rating || 0);
     const ratingStr  = ratingNum > 0 ? ratingNum.toFixed(1) : '0.0';
@@ -66,8 +61,8 @@ function CourseCard({ course }) {
     const hours      = course.duration || seeded(course.id, 2, 20);
     const accent     = CARD_ACCENTS[course.id % CARD_ACCENTS.length];
 
-    // 🔥 Если курс в процессе, карточка выглядит как "активная"
-    const cardClasses = hasProgress
+    // Если записан, подсвечиваем синей рамкой
+    const cardClasses = isEnrolled
         ? "group flex flex-col-reverse sm:flex-row gap-4 bg-blue-50/40 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-800/60 rounded-2xl p-4 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
         : "group flex flex-col-reverse sm:flex-row gap-4 bg-base-100 border border-base-200 rounded-2xl p-4 hover:border-base-300 hover:shadow-lg hover:shadow-base-200/50 transition-all duration-200";
 
@@ -84,15 +79,13 @@ function CourseCard({ course }) {
                         {course.title}
                     </h3>
                     <p className="text-xs text-base-content/70 line-clamp-2 sm:line-clamp-1 leading-relaxed">
-                        {stripHtml(course.description) || 'Описание скоро появится'}
+                        {stripHtml(course.description) || t('courseList.noDesc')}
                     </p>
                 </div>
 
                 <div className="mt-4 sm:mt-3 flex flex-wrap items-end sm:items-center justify-between gap-3">
-                    
-                    {/* Статистика курса */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[11px] text-base-content/50">
-                        <div className="flex items-center gap-1.5" title={`${reviews} отзывов`}>
+                        <div className="flex items-center gap-1.5" title={`${reviews} ${t('courseList.reviewsText')}`}>
                             {renderStars(ratingNum)}
                             <span className="font-bold text-amber-500">{ratingStr}</span>
                             <span className="text-base-content/40">({reviews})</span>
@@ -107,43 +100,42 @@ function CourseCard({ course }) {
                         </div>
                     </div>
 
-                    {/* 🔥 Логика отображения Цены vs Прогресса */}
                     <div className="flex flex-col sm:items-end w-full sm:w-auto mt-2 sm:mt-0 gap-2">
-                        {hasProgress ? (
-                            // Состояние: В процессе (ЦЕНЫ НЕТ)
+                        {isEnrolled ? (
                             <div className="flex flex-col w-full sm:w-48 gap-1.5">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                                        <BookOpenCheck size={12} /> Моё обучение
+                                        <BookOpenCheck size={12} /> {t('courseList.myLearning')}
                                     </span>
-                                    <span className="text-[11px] font-bold text-base-content">{course.progress}%</span>
+                                    <span className="text-[11px] font-bold text-base-content">{progress}%</span>
                                 </div>
                                 <div className="h-2 w-full bg-blue-200 dark:bg-blue-900/50 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-600 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                                    <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
                                 </div>
                             </div>
                         ) : (
-                            // Состояние: Витрина (Показываем цену)
                             <span className="font-extrabold text-sm text-base-content">
                                 {isFree
-                                    ? <span className="text-emerald-600 dark:text-emerald-400">Бесплатно</span>
+                                    ? <span className="text-emerald-600 dark:text-emerald-400">{t('courseList.free')}</span>
                                     : `${new Intl.NumberFormat('ru-RU').format(price)} ₸`
                                 }
                             </span>
                         )}
 
-                        {/* Кнопка действия */}
                         <span className={`flex items-center justify-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-lg text-[11px] font-bold transition-all w-full sm:w-auto
-                            ${hasProgress 
+                            ${isEnrolled 
                                 ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700' 
                                 : 'bg-base-200 text-base-content/70 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                            {hasProgress ? <><PlayCircle size={12} />Продолжить</> : <>Открыть <ArrowRight size={12} /></>}
+                            {isEnrolled 
+                                ? progress > 0 
+                                    ? <><PlayCircle size={12} />{t('courseList.continueBtn')}</> 
+                                    : <><PlayCircle size={12} />{t('courseList.startBtn', { defaultValue: 'Начать обучение' })}</>
+                                : <>{t('courseList.openBtn')} <ArrowRight size={12} /></>}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* Картинка курса */}
             <div className="flex-shrink-0 w-full h-40 sm:w-32 sm:h-auto rounded-xl overflow-hidden relative">
                 {imageUrl ? (
                     <img
@@ -157,15 +149,14 @@ function CourseCard({ course }) {
                     </div>
                 )}
                 
-                {/* 🔥 Бейджи на картинке */}
                 <div className="absolute top-2 right-2 sm:top-1.5 sm:right-1.5 flex flex-col gap-1">
-                    {hasProgress ? (
-                        <span className="px-2 py-1 bg-blue-600 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-md border border-blue-400/30">
-                            В процессе
+                    {isEnrolled ? (
+                        <span className={`px-2 py-1 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-md border ${progress > 0 ? 'bg-blue-600 border-blue-400/30' : 'bg-violet-600 border-violet-400/30'}`}>
+                            {progress > 0 ? t('courseList.inProgressBadge') : t('courseList.enrolledBadge', { defaultValue: 'Записан' })}
                         </span>
                     ) : isFree ? (
                         <span className="px-2 py-1 bg-emerald-500 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-sm">
-                            Free
+                            {t('courseList.freeBadge')}
                         </span>
                     ) : null}
                 </div>
@@ -190,6 +181,7 @@ function FilterBlock({ title, children, defaultOpen = true }) {
 
 // ─── Promo Banner ─────────────────────────────────────────────────────────────
 function PromoBanner() {
+    const { t } = useTranslation();
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 p-6 mb-8 flex items-center justify-between gap-6">
             <div className="absolute -top-6 -right-6 w-40 h-40 rounded-full bg-white/5"></div>
@@ -197,27 +189,27 @@ function PromoBanner() {
 
             <div className="relative z-10">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 rounded-full text-[10px] font-bold text-blue-100 uppercase tracking-wider mb-3">
-                    <Zap size={10} className="text-yellow-300" /> Новинка
+                    <Zap size={10} className="text-yellow-300" /> {t('courseList.promoNew')}
                 </div>
                 <h3 className="text-white font-extrabold text-lg leading-snug mb-1.5 max-w-xs">
-                    Защитите команду от фишинга за 2 часа
+                    {t('courseList.promoTitle')}
                 </h3>
                 <p className="text-blue-200 text-sm font-medium max-w-xs">
-                    Интерактивный тренажёр с реальными сценариями атак. Бесплатно для первых 100 команд.
+                    {t('courseList.promoDesc')}
                 </p>
                 <Link
                     to="/courses"
                     className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20"
                 >
-                    Начать бесплатно <ArrowRight size={14} />
+                    {t('courseList.promoBtn')} <ArrowRight size={14} />
                 </Link>
             </div>
 
             <div className="relative z-10 hidden lg:flex flex-col gap-2 flex-shrink-0">
                 {[
-                    { icon: <Shield size={14} className="text-blue-400" />, label: 'Фишинг-симулятор', color: 'bg-blue-50 dark:bg-blue-900/30' },
-                    { icon: <TrendingUp size={14} className="text-emerald-500" />, label: '+70% осведомлённость', color: 'bg-emerald-50 dark:bg-emerald-900/30' },
-                    { icon: <Star size={14} className="text-amber-400 fill-amber-400" />, label: 'Рейтинг 4.9', color: 'bg-amber-50 dark:bg-amber-900/30' },
+                    { icon: <Shield size={14} className="text-blue-400" />, label: t('courseList.promoF1'), color: 'bg-blue-50 dark:bg-blue-900/30' },
+                    { icon: <TrendingUp size={14} className="text-emerald-500" />, label: t('courseList.promoF2'), color: 'bg-emerald-50 dark:bg-emerald-900/30' },
+                    { icon: <Star size={14} className="text-amber-400 fill-amber-400" />, label: t('courseList.promoF3'), color: 'bg-amber-50 dark:bg-amber-900/30' },
                 ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 bg-base-100/95 backdrop-blur-sm rounded-xl px-3.5 py-2.5 shadow-lg">
                         <div className={`w-7 h-7 ${item.color} rounded-lg flex items-center justify-center`}>
@@ -233,6 +225,28 @@ function PromoBanner() {
 
 // ─── Main CourseList ──────────────────────────────────────────────────────────
 export default function CourseList() {
+    const { t } = useTranslation();
+
+    const SORT_OPTIONS = [
+        { value: 'popular',    label: t('courseList.sortPopular') },
+        { value: 'new',        label: t('courseList.sortNew') },
+        { value: 'rating',     label: t('courseList.sortRating') },
+        { value: 'price_asc',  label: t('courseList.sortPriceAsc') },
+        { value: 'price_desc', label: t('courseList.sortPriceDesc') },
+    ];
+
+    const LEVEL_OPTIONS  = [
+        { id: 'beginner', label: t('courseList.levelBeginner') },
+        { id: 'intermediate', label: t('courseList.levelIntermediate') },
+        { id: 'advanced', label: t('courseList.levelAdvanced') }
+    ];
+    const DURATION_OPTIONS = [
+        { id: 'lt2', label: t('courseList.durLt2') },
+        { id: '2-5', label: t('courseList.dur2to5') },
+        { id: '5-10', label: t('courseList.dur5to10') },
+        { id: 'gt10', label: t('courseList.durGt10') }
+    ];
+
     const [courses, setCourses]       = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading]       = useState(true);
@@ -280,34 +294,39 @@ export default function CourseList() {
         return r;
     }, [courses, onlyFree]);
 
-    const inProgress = filtered.filter(c => c.progress > 0 && c.progress < 100);
+    // 🔥 Изменено: Собираем курсы, на которые мы записаны (даже если прогресс 0) и еще не закончили (< 100)
+    const myLearning = filtered.filter(c => {
+        const isEnrolled = c.is_enrolled === true || (c.progress !== undefined && c.progress !== null);
+        return isEnrolled && (c.progress || 0) < 100;
+    });
+
     const activeFilters = [selectedCategory, onlyFree, ...selectedLevels].filter(Boolean).length;
 
     const clearAll = () => {
         setSelectedCategory(''); setOnlyFree(false);
         setSelectedLevels([]); setSearchTerm(''); setDebouncedSearch('');
     };
-    const toggleLevel = l => setSelectedLevels(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l]);
+    const toggleLevel = id => setSelectedLevels(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
     const SidebarContent = () => (
         <>
             <div className="flex items-center justify-between mb-1 px-1">
-                <span className="text-sm font-extrabold text-base-content">Фильтры</span>
+                <span className="text-sm font-extrabold text-base-content">{t('courseList.filters')}</span>
                 {activeFilters > 0 && (
                     <button onClick={clearAll} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 flex items-center gap-1">
-                        <X size={11} /> Сбросить
+                        <X size={11} /> {t('courseList.reset')}
                     </button>
                 )}
             </div>
 
-            <FilterBlock title="Направление">
+            <FilterBlock title={t('courseList.direction')}>
                 <div className="space-y-0.5">
                     <button
                         onClick={() => setSelectedCategory('')}
                         className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors font-medium
                             ${selectedCategory === '' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-semibold' : 'text-base-content/70 hover:bg-base-200'}`}
                     >
-                        Все направления
+                        {t('courseList.allDirections')}
                     </button>
                     {categories.map(cat => (
                         <button
@@ -322,36 +341,36 @@ export default function CourseList() {
                 </div>
             </FilterBlock>
 
-            <FilterBlock title="Уровень">
+            <FilterBlock title={t('courseList.level')}>
                 <div className="space-y-2.5">
                     {LEVEL_OPTIONS.map(l => (
-                        <label key={l} onClick={() => toggleLevel(l)} className="flex items-center gap-3 cursor-pointer group">
+                        <label key={l.id} onClick={() => toggleLevel(l.id)} className="flex items-center gap-3 cursor-pointer group">
                             <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors
-                                ${selectedLevels.includes(l) ? 'bg-blue-600 border-blue-600' : 'border-base-300 group-hover:border-blue-400'}`}>
-                                {selectedLevels.includes(l) && <CheckCircle size={10} className="text-white" />}
+                                ${selectedLevels.includes(l.id) ? 'bg-blue-600 border-blue-600' : 'border-base-300 group-hover:border-blue-400'}`}>
+                                {selectedLevels.includes(l.id) && <CheckCircle size={10} className="text-white" />}
                             </div>
-                            <span className="text-sm text-base-content/70 font-medium">{l}</span>
+                            <span className="text-sm text-base-content/70 font-medium">{l.label}</span>
                         </label>
                     ))}
                 </div>
             </FilterBlock>
 
-            <FilterBlock title="Стоимость">
+            <FilterBlock title={t('courseList.cost')}>
                 <label onClick={() => setOnlyFree(f => !f)} className="flex items-center gap-3 cursor-pointer group">
                     <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors
                         ${onlyFree ? 'bg-blue-600 border-blue-600' : 'border-base-300 group-hover:border-blue-400'}`}>
                         {onlyFree && <CheckCircle size={10} className="text-white" />}
                     </div>
-                    <span className="text-sm text-base-content/70 font-medium">Только бесплатные</span>
+                    <span className="text-sm text-base-content/70 font-medium">{t('courseList.onlyFree')}</span>
                 </label>
             </FilterBlock>
 
-            <FilterBlock title="Длительность" defaultOpen={false}>
+            <FilterBlock title={t('courseList.duration')} defaultOpen={false}>
                 <div className="space-y-2.5">
                     {DURATION_OPTIONS.map(d => (
-                        <label key={d} className="flex items-center gap-3 cursor-pointer group">
+                        <label key={d.id} className="flex items-center gap-3 cursor-pointer group">
                             <div className="w-4 h-4 rounded border-2 border-base-300 group-hover:border-blue-400 flex-shrink-0 transition-colors"></div>
-                            <span className="text-sm text-base-content/70 font-medium">{d}</span>
+                            <span className="text-sm text-base-content/70 font-medium">{d.label}</span>
                         </label>
                     ))}
                 </div>
@@ -376,7 +395,7 @@ export default function CourseList() {
                             <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Название курса, навык, тема..."
+                                placeholder={t('courseList.searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-9 py-2.5 bg-base-200 border border-base-300 rounded-xl text-sm font-medium placeholder:text-base-content/50 text-base-content outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50/20 transition-all"
@@ -395,7 +414,7 @@ export default function CourseList() {
                                     ${onlyFree ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-base-100 text-base-content/70 border-base-300 hover:border-base-content/20'}`}
                             >
                                 <CheckCircle size={11} className={onlyFree ? 'text-emerald-500' : 'text-base-content/30'} />
-                                Бесплатные
+                                {t('courseList.onlyFree')}
                             </button>
                         </div>
 
@@ -414,7 +433,7 @@ export default function CourseList() {
                                 onClick={() => setMobileSidebar(true)}
                                 className="lg:hidden relative flex items-center gap-1.5 px-3.5 py-2.5 bg-base-100 border border-base-300 rounded-xl text-xs font-bold text-base-content"
                             >
-                                Фильтры
+                                {t('courseList.filters')}
                                 {activeFilters > 0 && (
                                     <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">{activeFilters}</span>
                                 )}
@@ -448,19 +467,19 @@ export default function CourseList() {
                                 )}
                                 {onlyFree && (
                                     <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold border border-emerald-100 dark:border-emerald-800">
-                                        Бесплатные <button onClick={() => setOnlyFree(false)}><X size={10} /></button>
+                                        {t('courseList.free')} <button onClick={() => setOnlyFree(false)}><X size={10} /></button>
                                     </span>
                                 )}
-                                {selectedLevels.map(l => (
-                                    <span key={l} className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded-full text-xs font-bold border border-violet-100 dark:border-violet-800">
-                                        {l} <button onClick={() => toggleLevel(l)}><X size={10} /></button>
+                                {selectedLevels.map(lId => (
+                                    <span key={lId} className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded-full text-xs font-bold border border-violet-100 dark:border-violet-800">
+                                        {LEVEL_OPTIONS.find(lo => lo.id === lId)?.label} <button onClick={() => toggleLevel(lId)}><X size={10} /></button>
                                     </span>
                                 ))}
                             </div>
                         )}
 
                         <p className="text-xs text-base-content/50 font-medium mb-4">
-                            {loading ? 'Ищем курсы...' : `${filtered.length} ${filtered.length === 1 ? 'курс' : 'курсов'}`}
+                            {loading ? t('courseList.searching') : `${filtered.length} ${filtered.length === 1 ? t('courseList.courseSingle') : t('courseList.coursePlural')}`}
                         </p>
 
                         {loading ? (
@@ -479,7 +498,7 @@ export default function CourseList() {
                         ) : filtered.length > 0 ? (
                             <>
                                 {/* 🔥 Блок: Моё обучение */}
-                                {inProgress.length > 0 && !debouncedSearch && !selectedCategory && (
+                                {myLearning.length > 0 && !debouncedSearch && !selectedCategory && (
                                     <div className="mb-10 bg-blue-50/30 dark:bg-blue-900/10 p-5 sm:p-6 rounded-3xl border border-blue-100 dark:border-blue-900/50 relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
                                         
@@ -488,21 +507,21 @@ export default function CourseList() {
                                                 <BookOpenCheck size={20} />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg font-extrabold text-base-content leading-tight">Продолжить обучение</h2>
-                                                <p className="text-xs text-base-content/60 font-medium">Ваш текущий прогресс</p>
+                                                <h2 className="text-lg font-extrabold text-base-content leading-tight">{t('courseList.continueLearningTitle')}</h2>
+                                                <p className="text-xs text-base-content/60 font-medium">{t('courseList.currentProgress')}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col gap-3 relative z-10">
-                                            {inProgress.map(c => <CourseCard key={`ip-${c.id}`} course={c} />)}
+                                            {myLearning.map(c => <CourseCard key={`ml-${c.id}`} course={c} />)}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* 🔥 Разделитель каталога */}
-                                {inProgress.length > 0 && !debouncedSearch && !selectedCategory && (
+                                {myLearning.length > 0 && !debouncedSearch && !selectedCategory && (
                                     <div className="flex items-center gap-4 mb-6">
-                                        <h2 className="text-lg font-extrabold text-base-content flex-shrink-0">Каталог курсов</h2>
+                                        <h2 className="text-lg font-extrabold text-base-content flex-shrink-0">{t('courseList.courseCatalog')}</h2>
                                         <div className="flex-1 h-px bg-base-200"></div>
                                     </div>
                                 )}
@@ -510,8 +529,14 @@ export default function CourseList() {
                                 {/* Course list (Все остальные курсы) */}
                                 <div className="flex flex-col gap-3">
                                     {filtered
-                                        // Если мы на главной странице каталога (без поиска), убираем из списка "Все курсы" те, что уже есть в блоке "Продолжить"
-                                        .filter(c => (!debouncedSearch && !selectedCategory) ? !(c.progress > 0 && c.progress < 100) : true)
+                                        // Если мы на главной странице каталога, скрываем из общего списка те, что уже есть в "Моё обучение"
+                                        .filter(c => {
+                                            if (!debouncedSearch && !selectedCategory) {
+                                                const isEnrolled = c.is_enrolled === true || (c.progress !== undefined && c.progress !== null);
+                                                return !(isEnrolled && (c.progress || 0) < 100);
+                                            }
+                                            return true;
+                                        })
                                         .map(c => <CourseCard key={c.id} course={c} />)
                                     }
                                 </div>
@@ -521,12 +546,12 @@ export default function CourseList() {
                                 <div className="w-14 h-14 rounded-2xl bg-base-200 flex items-center justify-center mb-4">
                                     <Search size={24} className="text-base-content/50" />
                                 </div>
-                                <h3 className="text-base font-bold text-base-content mb-1.5">Ничего не найдено</h3>
+                                <h3 className="text-base font-bold text-base-content mb-1.5">{t('courseList.notFoundTitle')}</h3>
                                 <p className="text-sm text-base-content/50 max-w-xs mb-5 leading-relaxed">
-                                    Попробуйте другой запрос или сбросьте фильтры.
+                                    {t('courseList.notFoundDesc')}
                                 </p>
                                 <button onClick={clearAll} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20">
-                                    Сбросить фильтры
+                                    {t('courseList.resetFilters')}
                                 </button>
                             </div>
                         )}
@@ -539,7 +564,7 @@ export default function CourseList() {
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileSidebar(false)}></div>
                         <div className="absolute left-0 top-0 bottom-0 w-[280px] bg-base-100 shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-200">
                             <div className="flex items-center justify-between p-5 border-b border-base-200 sticky top-0 bg-base-100/95 backdrop-blur z-10">
-                                <span className="font-extrabold text-base-content">Фильтры</span>
+                                <span className="font-extrabold text-base-content">{t('courseList.filters')}</span>
                                 <button onClick={() => setMobileSidebar(false)} className="p-2 -mr-2 rounded-xl hover:bg-base-200 transition-colors">
                                     <X size={18} className="text-base-content/50" />
                                 </button>
@@ -547,7 +572,7 @@ export default function CourseList() {
                             <div className="p-5"><SidebarContent /></div>
                             <div className="sticky bottom-0 p-5 bg-base-100 border-t border-base-200">
                                 <button onClick={() => setMobileSidebar(false)} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20">
-                                    Показать курсы
+                                    {t('courseList.showCourses')}
                                 </button>
                             </div>
                         </div>

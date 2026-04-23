@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from './api';
 import { 
     FileText, 
@@ -17,6 +17,7 @@ import ReviewSection from './ReviewSection';
 function CourseDetail({ isLoggedIn }) { 
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [course, setCourse] = useState(null);
     const [lessons, setLessons] = useState([]); 
@@ -24,17 +25,16 @@ function CourseDetail({ isLoggedIn }) {
     const [loading, setLoading] = useState(true);
     const [enrollLoading, setEnrollLoading] = useState(false); 
 
-    const [showSuccessToast, setShowSuccessToast] = useState(() => {
-        return new URLSearchParams(window.location.search).get('success') === 'true';
-    });
+    // Состояние для зелёной кнопки
+    const [buttonSuccess, setButtonSuccess] = useState(false);
 
+    // Очищаем URL, если юзер вернулся после оплаты (CloudPayments/Stripe)
     useEffect(() => {
-        if (showSuccessToast) {
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('success') === 'true') {
             window.history.replaceState(null, '', window.location.pathname);
-            const timer = setTimeout(() => setShowSuccessToast(false), 5000);
-            return () => clearTimeout(timer);
         }
-    }, [showSuccessToast]);
+    }, [location]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -85,13 +85,29 @@ function CourseDetail({ isLoggedIn }) {
         setEnrollLoading(true);
         try {
             if (course.price && parseFloat(course.price) > 0) {
+                // Платный курс: редирект на оплату
                 const response = await api.post(`courses/${id}/create-checkout-session/`);
                 window.location.href = response.data.checkout_url; 
             } else {
+                // Бесплатный курс: моментальная запись без перезагрузки
                 await api.post(`courses/${id}/enroll/`);
-                window.location.href = `/course/${id}?success=true`; 
+                
+                // Подгружаем уроки в фоне
+                const lessonsRes = await api.get(`courses/${id}/lessons/`);
+                setLessons(lessonsRes.data.sort((a, b) => a.id - b.id));
+                
+                // Выключаем лоадер, включаем зеленую кнопку успеха
+                setEnrollLoading(false);
+                setButtonSuccess(true);
+
+                // Ждем 1.5 секунды, чтобы юзер увидел "Успешно!", и затем открываем программу курса
+                setTimeout(() => {
+                    setButtonSuccess(false);
+                    setIsEnrolled(true);
+                }, 1500);
             }
-        } catch {
+        } catch (error) {
+            console.error("Ошибка при записи", error);
             setEnrollLoading(false);
         }
     };
@@ -104,19 +120,6 @@ function CourseDetail({ isLoggedIn }) {
 
     return (
         <div className="min-h-screen bg-base-100 font-sans text-base-content pb-20 relative transition-colors duration-200">
-
-            {showSuccessToast && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                    <div className="bg-blue-600 text-white p-4 rounded-xl shadow-2xl shadow-blue-900/20 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
-                        <CheckCircle2 className="text-white/80 flex-shrink-0" />
-                        <div>
-                            <p className="font-bold text-sm">Доступ открыт</p>
-                            <p className="text-xs text-blue-200">Курс успешно добавлен в ваше обучение</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <div className="max-w-6xl mx-auto px-6 pt-12">
                 <div className="flex flex-col lg:flex-row gap-16 items-start">
 
@@ -177,7 +180,7 @@ function CourseDetail({ isLoggedIn }) {
                     {/* ── Правая колонка (sticky) ── */}
                     <div className="w-full lg:w-[400px] sticky top-24">
                         {!isEnrolled ? (
-                            <div className="bg-base-100 border border-base-300 rounded-2xl p-8 shadow-xl shadow-base-300/30">
+                            <div className="bg-base-100 border border-base-300 rounded-2xl p-8 shadow-xl shadow-base-300/30 animate-in fade-in duration-300">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-base-content/50 mb-2">
                                     Стоимость доступа
                                 </p>
@@ -188,13 +191,23 @@ function CourseDetail({ isLoggedIn }) {
                                     }
                                 </div>
 
+                                {/* 🔥 Магическая кнопка 🔥 */}
                                 <button 
                                     onClick={handleEnrollClick} 
-                                    disabled={enrollLoading}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 group shadow-lg shadow-blue-900/20"
+                                    disabled={enrollLoading || buttonSuccess}
+                                    className={`w-full py-4 rounded-xl font-bold transition-all duration-300 flex justify-center items-center gap-2 shadow-lg ${
+                                        buttonSuccess 
+                                            ? 'bg-emerald-500 text-white shadow-emerald-500/30' 
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20 group disabled:opacity-50 disabled:cursor-not-allowed'
+                                    }`}
                                 >
                                     {enrollLoading ? (
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : buttonSuccess ? (
+                                        <>
+                                            <CheckCircle2 size={20} className="animate-in zoom-in duration-300" />
+                                            <span className="animate-in fade-in slide-in-from-right-2 duration-300">Успешно!</span>
+                                        </>
                                     ) : (
                                         <>
                                             {isLoggedIn ? 'Записаться на курс' : 'Войти и начать'}
@@ -219,7 +232,7 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-base-100 border border-base-300 rounded-2xl overflow-hidden shadow-lg shadow-base-300/30">
+                            <div className="bg-base-100 border border-base-300 rounded-2xl overflow-hidden shadow-lg shadow-base-300/30 animate-in flip-in-y duration-500">
                                 <div className="px-6 py-5 bg-base-200 border-b border-base-300">
                                     <h3 className="font-black text-xs uppercase tracking-widest text-base-content flex items-center gap-2">
                                         <FileText size={14} /> Программа обучения
@@ -249,10 +262,8 @@ function CourseDetail({ isLoggedIn }) {
                                                             onClick={() => navigate(`/lesson/${lesson.id}?step=${step.id}`)}
                                                             className="w-full group flex items-center px-6 py-4 hover:bg-base-200/50 transition-all text-left relative"
                                                         >
-                                                            {/* 🔥 Идеально центрированная линия таймлайна 🔥 */}
                                                             <div className="absolute left-[43px] top-0 bottom-0 w-[2px] bg-base-200 dark:bg-base-300 group-first:top-1/2 group-last:bottom-1/2 z-0"></div>
                                                             
-                                                            {/* 🔥 Круглая иконка (зеленая если пройдено) 🔥 */}
                                                             <div className={`relative z-10 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all mr-4 shadow-sm border-2 ${
                                                                 isPassed 
                                                                 ? "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/30" 
