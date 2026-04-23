@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from './api';
 import aiApi from './aiApi';
+import { useTranslation } from 'react-i18next'; 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// 🔥 1. Переводим цвета на CSS-переменные
+//  1. Цвета на CSS-переменных
 const BLUE   = 'var(--blue)';
 const BLUE_L = 'var(--blue-l)';
 const BLUE_D = 'var(--blue-d)';
@@ -36,7 +37,7 @@ function SectionHeader({ title, subtitle }) {
   );
 }
 
-// 🔥 2. Улучшенный Tag с поддержкой безопасной прозрачности
+// 🔥 2. Tag с поддержкой прозрачности
 function Tag({ children, type = 'gray' }) {
   const colorMap = {
     gray:  { c: GRAY_2, bg: 'var(--gray-l)' },
@@ -101,10 +102,10 @@ function ScoreDot({ score }) {
   );
 }
 
-function QuizHistory({ history }) {
+function QuizHistory({ history, t }) {
   if (!history?.length) return (
     <p style={{ fontSize: 13, color: GRAY_3, textAlign: 'center', padding: '20px 0', margin: 0 }}>
-      Квизы ещё не пройдены
+      {t('analyticsStudent.emptyQuizzes')}
     </p>
   );
   return (
@@ -123,12 +124,12 @@ function QuizHistory({ history }) {
               {item.quiz_title}
             </p>
             <p style={{ fontSize: 12, color: GRAY_3, margin: '2px 0 0' }}>
-              {item.correct_answers}/{item.total_questions} правильных
-              {item.time_spent_seconds > 0 && ` · ${Math.round(item.time_spent_seconds / 60)} мин`}
+              {item.correct_answers}/{item.total_questions} {t('analyticsStudent.correctAnswers')}
+              {item.time_spent_seconds > 0 && ` · ${Math.round(item.time_spent_seconds / 60)} ${t('analyticsStudent.min')}`}
             </p>
           </div>
           <p style={{ fontSize: 11, color: GRAY_3, flexShrink: 0 }}>
-            {new Date(item.completed_at).toLocaleDateString('ru-RU')}
+            {new Date(item.completed_at).toLocaleDateString()}
           </p>
         </div>
       ))}
@@ -136,17 +137,17 @@ function QuizHistory({ history }) {
   );
 }
 
-function ScenarioHistory({ history }) {
+function ScenarioHistory({ history, t }) {
   if (!history?.length) return (
     <p style={{ fontSize: 13, color: GRAY_3, textAlign: 'center', padding: '20px 0', margin: 0 }}>
-      Сценарии ещё не пройдены
+      {t('analyticsStudent.emptyScenarios')}
     </p>
   );
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {history.map((item, i) => {
         const tagType = item.result === 'passed' ? 'green' : item.result === 'failed' ? 'red' : 'amber';
-        const label = item.result === 'passed' ? 'Пройден' : item.result === 'failed' ? 'Провален' : 'Не завершён';
+        const label = item.result === 'passed' ? t('analyticsStudent.passed') : item.result === 'failed' ? t('analyticsStudent.failed') : t('analyticsStudent.incomplete');
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 10, background: GRAY_4 }}>
             <div style={{
@@ -156,14 +157,14 @@ function ScenarioHistory({ history }) {
               fontSize: 11, fontWeight: 700,
               color: item.scenario_type === 'chat' ? BLUE : PURPLE,
             }}>
-              {item.scenario_type === 'chat' ? 'ЧАТ' : 'EMAIL'}
+              {item.scenario_type === 'chat' ? t('analyticsStudent.chatType') : t('analyticsStudent.emailType')}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: GRAY_1, margin: 0 }}>
-                {item.scenario_topic || 'Сценарий'}
+                {item.scenario_topic || t('analyticsStudent.scenarioDefault')}
               </p>
               <p style={{ fontSize: 12, color: GRAY_3, margin: '2px 0 0' }}>
-                {item.success_rate?.toFixed(0)}% верных шагов
+                {item.success_rate?.toFixed(0)}{t('analyticsStudent.correctSteps')}
               </p>
             </div>
             <Tag type={tagType}>{label}</Tag>
@@ -174,29 +175,29 @@ function ScenarioHistory({ history }) {
   );
 }
 
-function WeakTopics({ topics }) {
+function WeakTopics({ topics, t }) {
   if (!topics?.length) return (
     <div style={{ padding: '24px', textAlign: 'center', background: GREEN_L, borderRadius: 10 }}>
       <p style={{ fontSize: 13, color: GREEN, fontWeight: 600, margin: 0 }}>
-        Явных слабых тем нет — отличный результат
+        {t('analyticsStudent.noWeakTopics')}
       </p>
     </div>
   );
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {topics.map((t, i) => {
-        const c = t.error_rate >= 70 ? RED : t.error_rate >= 40 ? AMBER : GREEN;
-        const tagType = t.error_rate >= 70 ? 'red' : t.error_rate >= 40 ? 'amber' : 'green';
+      {topics.map((tItem, i) => {
+        const c = tItem.error_rate >= 70 ? RED : tItem.error_rate >= 40 ? AMBER : GREEN;
+        const tagType = tItem.error_rate >= 70 ? 'red' : tItem.error_rate >= 40 ? 'amber' : 'green';
         return (
           <div key={i}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, gap: 10 }}>
               <span style={{ fontSize: 13, color: GRAY_2, flex: 1, lineHeight: 1.4 }}>
-                {t.question_text?.length > 90 ? t.question_text.slice(0, 90) + '…' : t.question_text}
+                {tItem.question_text?.length > 90 ? tItem.question_text.slice(0, 90) + '…' : tItem.question_text}
               </span>
-              <Tag type={tagType}>{t.error_rate.toFixed(0)}%</Tag>
+              <Tag type={tagType}>{tItem.error_rate.toFixed(0)}%</Tag>
             </div>
             <div style={{ height: 4, background: GRAY_5, borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, t.error_rate)}%`, height: '100%', background: c, borderRadius: 99, transition: 'width .5s ease' }} />
+              <div style={{ width: `${Math.min(100, tItem.error_rate)}%`, height: '100%', background: c, borderRadius: 99, transition: 'width .5s ease' }} />
             </div>
           </div>
         );
@@ -205,7 +206,7 @@ function WeakTopics({ topics }) {
   );
 }
 
-function AIRecommendations({ data }) {
+function AIRecommendations({ data, t }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -216,15 +217,15 @@ function AIRecommendations({ data }) {
     try {
       const res = await aiApi.post('analytics/insights/student/', {
         avg_quiz_score: data.avg_quiz_score || 0,
-        weak_topics: (data.weak_topics || []).slice(0, 5).map(t => ({ question_text: t.question_text, error_rate: t.error_rate, total_answers: t.total_answers })),
+        weak_topics: (data.weak_topics || []).slice(0, 5).map(item => ({ question_text: item.question_text, error_rate: item.error_rate, total_answers: item.total_answers })),
         scenario_pass_rate: data.scenario_pass_rate || 0,
         total_quizzes: data.total_quizzes_taken || 0,
       });
       setResult(res.data);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Сервис временно недоступен');
+      setError(e.response?.data?.detail || t('analyticsStudent.aiErrorDefault'));
     } finally { setLoading(false); }
-  }, [data]);
+  }, [data, t]);
 
   return (
     <Card style={{ padding: 24 }}>
@@ -234,10 +235,10 @@ function AIRecommendations({ data }) {
             fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
             color: BLUE, background: BLUE_L, padding: '2px 8px', borderRadius: 4,
             display: 'inline-block', marginBottom: 8,
-          }}>AI Студия</span>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: GRAY_1, margin: 0 }}>Персональные рекомендации</h2>
+          }}>{t('analyticsStudent.aiStudio')}</span>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: GRAY_1, margin: 0 }}>{t('analyticsStudent.aiTitle')}</h2>
           <p style={{ fontSize: 13, color: GRAY_3, margin: '4px 0 0' }}>
-            ИИ анализирует ваши ошибки и советует что повторить
+            {t('analyticsStudent.aiDesc')}
           </p>
         </div>
         <button onClick={load} disabled={loading} style={{
@@ -248,7 +249,7 @@ function AIRecommendations({ data }) {
         }}
         onMouseEnter={e => { if (!loading) e.currentTarget.style.background = BLUE_D; }}
         onMouseLeave={e => { if (!loading) e.currentTarget.style.background = BLUE; }}>
-          {loading ? 'Анализирую...' : result ? 'Обновить' : 'Получить рекомендации'}
+          {loading ? t('analyticsStudent.btnAnalyze') : result ? t('analyticsStudent.btnUpdate') : t('analyticsStudent.btnGet')}
         </button>
       </div>
 
@@ -257,7 +258,7 @@ function AIRecommendations({ data }) {
       {!result && !loading && !error && (
         <div style={{ padding: '28px 24px', textAlign: 'center', background: GRAY_4, borderRadius: 10, border: `1px dashed ${GRAY_5}` }}>
           <p style={{ fontSize: 13, color: GRAY_3, margin: 0 }}>
-            Нажмите «Получить рекомендации» — ИИ изучит ваши результаты
+            {t('analyticsStudent.aiHint')}
           </p>
         </div>
       )}
@@ -294,6 +295,7 @@ function AIRecommendations({ data }) {
 }
 
 export default function StudentDashboard() {
+  const { t } = useTranslation(); // 🔥 Инициализируем хук перевода
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(null);
@@ -302,9 +304,9 @@ export default function StudentDashboard() {
   useEffect(() => {
     api.get('analytics/student/dashboard/')
       .then(r => { setData(r.data); setError(null); })
-      .catch(e => setError(e.response?.data?.detail || 'Ошибка загрузки'))
+      .catch(e => setError(e.response?.data?.detail || t('analyticsStudent.loadingError')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const lineData = data?.quiz_history?.slice().reverse().map((item, i) => ({
     name: `#${i + 1}`,
@@ -325,15 +327,15 @@ export default function StudentDashboard() {
   );
 
   const TABS = [
-    { key: 'quizzes',   label: 'История квизов' },
-    { key: 'scenarios', label: 'История сценариев' },
-    { key: 'weak',      label: 'Слабые темы' },
+    { key: 'quizzes',   label: t('analyticsStudent.tabQuizzes') },
+    { key: 'scenarios', label: t('analyticsStudent.tabScenarios') },
+    { key: 'weak',      label: t('analyticsStudent.tabWeak') },
   ];
 
   return (
     <div className="dash-container" style={{ maxWidth: 980, margin: '0 auto', padding: '4px 0 56px', fontFamily: 'inherit' }}>
 
-      {/* 🔥 3. CSS БЛОК ДЛЯ ТЕМНОЙ ТЕМЫ 🔥 */}
+      {/* CSS БЛОК ДЛЯ ТЕМНОЙ ТЕМЫ */}
       <style>{`
         .dash-container {
           --blue: #2563EB;
@@ -385,37 +387,40 @@ export default function StudentDashboard() {
       `}</style>
 
       <div style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 6px' }}>Аналитика</p>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: GRAY_1, margin: 0 }}>Мой прогресс</h1>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 6px' }}>
+          {t('analyticsStudent.title')}
+        </p>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: GRAY_1, margin: 0 }}>
+          {t('analyticsStudent.myProgress')}
+        </h1>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14, marginBottom: 22 }}>
-        <StatCard label="Квизов пройдено" value={data?.total_quizzes_taken ?? 0} accent={BLUE} />
-        <StatCard label="Средний балл" value={data?.avg_quiz_score != null ? `${data.avg_quiz_score.toFixed(1)}%` : '—'} accent={data?.avg_quiz_score >= 70 ? GREEN : RED} />
-        <StatCard label="Сценариев пройдено" value={data?.total_scenarios_taken ?? 0} accent={AMBER} />
-        <StatCard label="Прошёл сценарии" value={data?.scenario_pass_rate != null ? `${data.scenario_pass_rate.toFixed(1)}%` : '—'} accent={data?.scenario_pass_rate >= 70 ? GREEN : RED} />
+        <StatCard label={t('analyticsStudent.quizzesTaken')} value={data?.total_quizzes_taken ?? 0} accent={BLUE} />
+        <StatCard label={t('analyticsStudent.avgScore')} value={data?.avg_quiz_score != null ? `${data.avg_quiz_score.toFixed(1)}%` : '—'} accent={data?.avg_quiz_score >= 70 ? GREEN : RED} />
+        <StatCard label={t('analyticsStudent.scenariosTaken')} value={data?.total_scenarios_taken ?? 0} accent={AMBER} />
+        <StatCard label={t('analyticsStudent.scenarioPassRate')} value={data?.scenario_pass_rate != null ? `${data.scenario_pass_rate.toFixed(1)}%` : '—'} accent={data?.scenario_pass_rate >= 70 ? GREEN : RED} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginBottom: 18, alignItems: 'stretch' }}>
         <Card style={{ padding: '20px 28px', display: 'flex', gap: 28, alignItems: 'center' }}>
-          <ProgressRing value={data?.avg_quiz_score ?? 0} color={data?.avg_quiz_score >= 70 ? GREEN : AMBER} label="Квизы" />
-          <ProgressRing value={data?.scenario_pass_rate ?? 0} color={data?.scenario_pass_rate >= 70 ? BLUE : RED} label="Сценарии" />
+          <ProgressRing value={data?.avg_quiz_score ?? 0} color={data?.avg_quiz_score >= 70 ? GREEN : AMBER} label={t('analyticsStudent.quizzesLabel')} />
+          <ProgressRing value={data?.scenario_pass_rate ?? 0} color={data?.scenario_pass_rate >= 70 ? BLUE : RED} label={t('analyticsStudent.scenariosLabel')} />
         </Card>
 
         <Card style={{ padding: 24 }}>
           {lineData.length > 1 ? (
             <>
-              <SectionHeader title="Динамика результатов" subtitle="Баллы по последним квизам" />
+              <SectionHeader title={t('analyticsStudent.chartTitle')} subtitle={t('analyticsStudent.chartSubtitle')} />
               <ResponsiveContainer width="100%" height={110}>
                 <LineChart data={lineData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRAY_5} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: GRAY_3 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0,100]} tick={{ fontSize: 11, fill: GRAY_3 }} unit="%" axisLine={false} tickLine={false} />
-                  {/* 🔥 Исправлен тултип для темной темы */}
                   <Tooltip 
                     contentStyle={{ borderRadius: 10, border: BORDER, background: 'var(--card-bg)', color: GRAY_1, fontSize: 12, boxShadow: SHADOW }} 
                     itemStyle={{ color: GRAY_1 }}
-                    formatter={v => [`${v.toFixed(1)}%`, 'Балл']} 
+                    formatter={v => [`${v.toFixed(1)}%`, t('analyticsStudent.chartScore')]} 
                   />
                   <Line type="monotone" dataKey="score" stroke={BLUE} strokeWidth={2} dot={{ r: 3, fill: BLUE }} activeDot={{ r: 5 }} />
                 </LineChart>
@@ -424,7 +429,7 @@ export default function StudentDashboard() {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <p style={{ fontSize: 13, color: GRAY_3, textAlign: 'center', margin: 0 }}>
-                Пройдите больше квизов — здесь появится динамика прогресса
+                {t('analyticsStudent.chartEmpty')}
               </p>
             </div>
           )}
@@ -434,25 +439,26 @@ export default function StudentDashboard() {
       <Card style={{ marginBottom: 18 }}>
         <div style={{ padding: '0 24px', borderBottom: BORDER }}>
           <div style={{ display: 'flex', gap: 0 }}>
-            {TABS.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)} style={{
+            {TABS.map(tItem => (
+              <button key={tItem.key} onClick={() => setTab(tItem.key)} style={{
                 padding: '14px 18px', border: 'none', background: 'none', fontFamily: 'inherit',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color .15s',
-                color: tab === t.key ? BLUE : GRAY_3,
-                borderBottom: `2px solid ${tab === t.key ? BLUE : 'transparent'}`,
+                color: tab === tItem.key ? BLUE : GRAY_3,
+                borderBottom: `2px solid ${tab === tItem.key ? BLUE : 'transparent'}`,
                 marginBottom: -1,
-              }}>{t.label}</button>
+              }}>{tItem.label}</button>
             ))}
           </div>
         </div>
         <div style={{ padding: 24 }}>
-          {tab === 'quizzes'   && <QuizHistory     history={data?.quiz_history} />}
-          {tab === 'scenarios' && <ScenarioHistory history={data?.scenario_history} />}
-          {tab === 'weak'      && <WeakTopics      topics={data?.weak_topics} />}
+          {/* 🔥 Передаем функцию t как пропс в дочерние компоненты */}
+          {tab === 'quizzes'   && <QuizHistory   history={data?.quiz_history} t={t} />}
+          {tab === 'scenarios' && <ScenarioHistory history={data?.scenario_history} t={t} />}
+          {tab === 'weak'      && <WeakTopics      topics={data?.weak_topics} t={t} />}
         </div>
       </Card>
 
-      <AIRecommendations data={data} />
+      <AIRecommendations data={data} t={t} />
     </div>
   );
 }
