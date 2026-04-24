@@ -2393,3 +2393,5 @@ WARNING 2026-04-23 13:48:57,152 | ACCESS DENIED: [401] GET /api/users/me/ (User:
 WARNING 2026-04-23 13:48:57,156 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 WARNING 2026-04-23 13:52:53,482 | ACCESS DENIED: [401] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
 INFO 2026-04-23 13:52:57,124 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.101s
+INFO 2026-04-23 13:59:13,803 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.103s
+INFO 2026-04-23 14:03:28,543 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.297s

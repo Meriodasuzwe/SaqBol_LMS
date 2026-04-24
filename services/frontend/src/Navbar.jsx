@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import api from './api';
 import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; // 🔥 ИМПОРТ ПЕРЕВОДОВ
+import { useTranslation } from 'react-i18next'; //  Импортируем хук для переводов
 import {
     BookOpen, LayoutDashboard, User, LogOut, ChevronDown,
     Sun, Moon, GraduationCap, ExternalLink, X, Sparkles, Settings,
@@ -15,9 +15,9 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
     const isAdmin   = userRole === 'admin';
     const location  = useLocation();
 
-    // 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ
+    // Инициализация переводов
     const { t, i18n } = useTranslation();
-
+    // Состояние для темы, пользователя, открытости дропдаунов и мобильного меню
     const [theme, setTheme]           = useState(localStorage.getItem('theme') || 'light');
     const [user, setUser]             = useState(null);
     const [dropOpen, setDropOpen]     = useState(false);
@@ -26,17 +26,17 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
     
     // Стейт для меню языков
     const [langOpen, setLangOpen]     = useState(false); 
-
+    // Рефы для отслеживания кликов вне дропдаунов (профиль и язык)
     const dropRef = useRef(null);
     const langRef = useRef(null);
-
+    // Стейты для модального окна "Стать автором"
     const [modalOpen, setModalOpen]    = useState(false);
     const [cvText, setCvText]          = useState('');
     const [portfolioUrl, setPortfolio] = useState('');
     const [submitting, setSubmitting]  = useState(false);
-
+    // Определение, является ли текущая тема темной для упрощения условий в стилях
     const isDark = theme === 'dark';
-
+    // Эффект для применения темы к документу и сохранения выбора в localStorage
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -83,7 +83,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         } finally { setSubmitting(false); }
     };
 
-    // 🔥 Смена языка
+    // Смена языка с сохранением выбора в localStorage и закрытием меню после выбора
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
         localStorage.setItem('language', lng);
@@ -97,7 +97,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         : user?.username || t('nav.user');
     const initials = displayName.split(' ').map(w => w[0]?.toUpperCase()).slice(0, 2).join('');
 
-    // 🔥 ПЕРЕИМЕНОВАЛ ПЕРЕМЕННУЮ ЦВЕТОВ, ЧТОБЫ НЕ ПЕРЕСЕКАЛАСЬ С ФУНКЦИЕЙ ПЕРЕВОДА t()
+    //  Была произведена оптимизация цветовой схемы: вместо повторяющихся тернарных операторов для каждой части интерфейса, теперь используется единый объект themeColors, который централизованно управляет всеми цветами в зависимости от текущей темы. Это не только сокращает код, но и облегчает поддержку и изменение цветовой схемы в будущем.
     const themeColors = {
         nav:      isDark ? 'rgba(30,30,35,0.97)'    : 'rgba(255,255,255,0.97)',
         border:   isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
@@ -188,7 +188,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
 
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
 
-                        {/* 🔥 МЕНЮ ВЫБОРА ЯЗЫКА */}
+                        {/*  МЕНЮ ВЫБОРА ЯЗЫКА */}
                         <div style={{ position: 'relative' }} ref={langRef} className="hidden sm:block">
                             <button onClick={() => setLangOpen(o => !o)}
                                 style={{ width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', background: langOpen ? themeColors.hover : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: themeColors.textMute, transition: 'background 0.15s', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}

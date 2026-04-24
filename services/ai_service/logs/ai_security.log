@@ -537,3 +537,26 @@ INFO 2026-04-23 13:52:59,423 | INSIGHTS TEACHER | user_id=1 | course=Current cou
 INFO 2026-04-23 13:53:01,352 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-23 13:53:01,354 | INSIGHTS TEACHER SUCCESS | user_id=1
 INFO 2026-04-23 13:53:01,355 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.937s
+INFO 2026-04-23 13:59:16,608 | INSIGHTS TEACHER | user_id=1 | course=Current course
+INFO 2026-04-23 13:59:18,304 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-23 13:59:18,307 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-04-23 13:59:18,308 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.706s
+INFO 2026-04-23 14:01:48,030 | INSIGHTS TEACHER | user_id=1 | course=Ағымдағы курс
+INFO 2026-04-23 14:01:51,055 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-23 14:01:51,057 | INSIGHTS TEACHER SUCCESS | user_id=1
+INFO 2026-04-23 14:01:51,058 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 3.031s
+INFO 2026-04-23 14:03:36,959 | INSIGHTS STUDENT | user_id=25
+INFO 2026-04-23 14:03:36,959 | ===> REQUESTED LANG: kk, TARGET: Kazakh (Қазақ тілі)
+INFO 2026-04-23 14:03:39,245 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-23 14:03:39,247 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-04-23 14:03:39,248 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 2.293s
+INFO 2026-04-23 14:03:46,048 | INSIGHTS STUDENT | user_id=25
+INFO 2026-04-23 14:03:46,049 | ===> REQUESTED LANG: en, TARGET: English
+INFO 2026-04-23 14:03:47,046 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-23 14:03:47,048 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-04-23 14:03:47,048 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.004s
+INFO 2026-04-23 14:03:50,589 | INSIGHTS STUDENT | user_id=25
+INFO 2026-04-23 14:03:50,589 | ===> REQUESTED LANG: ru, TARGET: Russian
+INFO 2026-04-23 14:03:52,079 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-23 14:03:52,083 | INSIGHTS STUDENT SUCCESS | user_id=25
+INFO 2026-04-23 14:03:52,085 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.498s
