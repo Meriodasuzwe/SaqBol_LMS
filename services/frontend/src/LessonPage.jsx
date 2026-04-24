@@ -33,6 +33,9 @@ function LessonPage() {
     
     // Стейт для показа красивого модального окна при завершении курса
     const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [certLanguage, setCertLanguage] = useState('ru');
+    const [isGeneratingCert, setIsGeneratingCert] = useState(false);
+    const [certGenerated, setCertGenerated] = useState(false);
 
     const getYoutubeEmbedUrl = (url) => {
         if (!url) return null;
@@ -348,30 +351,33 @@ function LessonPage() {
                 </main>
 
                 {showCompletionModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-base-300/80 backdrop-blur-md animate-in fade-in duration-300">
-                        <div className="bg-base-100 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center relative animate-in zoom-in-95 duration-300">
-                            <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/30">
-                                <Award size={48} className="text-white" />
-                            </div>
-                            <h2 className="text-2xl font-black mb-2 text-base-content">Курс пройден!</h2>
-                            <p className="text-sm text-base-content/60 mb-8">
-                                Вы проделали отличную работу. Ваш именной сертификат уже сгенерирован и ждет вас в профиле.
-                            </p>
-                            <Link 
-                                to="/profile" 
-                                className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
-                            >
-                                <Award size={18} /> Забрать сертификат
-                            </Link>
-                            <button 
-                                onClick={() => navigate(`/course/${lesson.course}`)} 
-                                className="mt-4 text-sm text-base-content/50 hover:text-base-content font-medium w-full py-2"
-                            >
-                                Вернуться к курсу
-                            </button>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-base-300/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-base-100 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center relative animate-in zoom-in-95 duration-300">
+                        <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/30">
+                            <Award size={48} className="text-white" />
                         </div>
+                        <h2 className="text-2xl font-black mb-2 text-base-content">Курс пройден!</h2>
+                        <p className="text-sm text-base-content/60 mb-8">
+                            Вы проделали отличную работу. Ваш сертификат готов и ждет вас в профиле.
+                        </p>
+                        <Link 
+                            to="/profile" 
+                            className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+                        >
+                            Перейти в профиль <ArrowRight size={18} />
+                        </Link>
+                        <button 
+                            onClick={() => {
+                                setShowCompletionModal(false);
+                                navigate(`/course/${lesson.course}`);
+                            }} 
+                            className="mt-4 text-sm text-base-content/50 hover:text-base-content font-medium w-full py-2"
+                        >
+                            Закрыть
+                        </button>
                     </div>
-                )}
+                </div>
+            )}
             </div>
         </div>
     );

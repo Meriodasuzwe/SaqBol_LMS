@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from django.db.models import Avg # <-- НОВЫЙ ИМПОРТ для подсчета среднего рейтинга
-from .models import Course, Lesson, Category, LessonStep, StepProgress, Review, Certificate
+from django.db.models import Avg 
+
+from .models import Course, Lesson, Category, LessonStep, StepProgress, Review, Certificate, Enrollment
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,17 +24,14 @@ class LessonStepSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return False
 
-        # 🔥 Локальный импорт решает проблему 500 ошибки (NameError / Circular Import)
         from quizzes.models import Quiz, Result 
 
         if obj.step_type == 'quiz':
             quizzes = Quiz.objects.filter(lesson=obj.lesson)
             if quizzes.exists():
-                # Просто возвращаем True, если тест сдан. Ничего не пишем в базу!
                 return Result.objects.filter(student=request.user, quiz__in=quizzes, score__gte=70).exists()
             return False
 
-        # Для обычных шагов
         return StepProgress.objects.filter(
             student=request.user,
             step=obj,
@@ -58,10 +56,11 @@ class CourseSerializer(serializers.ModelSerializer):
     )
 
     progress = serializers.SerializerMethodField()
-    
-    # === НОВЫЕ ПОЛЯ ДЛЯ РЕЙТИНГА ===
     average_rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
+    
+    # поле для проверки, записан ли текущий юзер на курс (для отображения кнопки "Записаться" или "Продолжить")
+    is_enrolled = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -70,16 +69,27 @@ class CourseSerializer(serializers.ModelSerializer):
             'short_description', 'cover_image', 
             'price', 'category', 'category_title', 
             'teacher_name', 'lessons', 'progress', 'status',
-            'average_rating', 'reviews_count' # <-- Не забудь добавить их сюда!
+            'average_rating', 'reviews_count', 
+            'is_enrolled' # <-- Добавили в выдачу
         ]
         
-
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
+
+    # Метод для проверки записи конкретного юзера
+    def get_is_enrolled(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Enrollment.objects.filter(course=obj, student=request.user).exists()
+        return False
 
     def get_progress(self, obj):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
+            return 0
+        
+        # 🔥 Если юзер НЕ записан, сразу отдаем 0 (нет смысла лезть в базу)
+        if not Enrollment.objects.filter(course=obj, student=request.user).exists():
             return 0
         
         steps = LessonStep.objects.filter(lesson__course=obj)
@@ -88,11 +98,8 @@ class CourseSerializer(serializers.ModelSerializer):
             return 0
             
         completed_count = 0
-        
-        # 🔥 Локальный импорт
         from quizzes.models import Quiz, Result
 
-        # 🔥 УМНЫЙ ПОДСЧЕТ ПРОГРЕССА (Учитывает и обычные шаги, и тесты)
         for step in steps:
             if step.step_type == 'quiz':
                 quizzes = Quiz.objects.filter(lesson=step.lesson)
@@ -104,18 +111,13 @@ class CourseSerializer(serializers.ModelSerializer):
         
         return int((completed_count / total_steps) * 100)
 
-    # === НОВЫЕ МЕТОДЫ ДЛЯ РЕЙТИНГА ===
     def get_average_rating(self, obj):
-        # Агрегируем среднее значение по полю rating у всех связанных отзывов
         avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
-        # Если отзывы есть, округляем до 1 знака после запятой (например, 4.8). Иначе 0.0
         return round(avg, 1) if avg else 0.0
 
     def get_reviews_count(self, obj):
-        # Просто считаем количество связанных отзывов
         return obj.reviews.count()
     
-
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.ReadOnlyField(source='user.username')
 
@@ -123,7 +125,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['id', 'user_name', 'rating', 'text', 'created_at']
         
-
 class CertificateSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
     student_name = serializers.SerializerMethodField()

@@ -41,7 +41,6 @@ const renderStars = (rating) => {
     );
 };
 
-// ─── Compact Course Card (Responsive) ──────────────────────────────────────
 function CourseCard({ course }) {
     const { t } = useTranslation();
 
@@ -50,8 +49,9 @@ function CourseCard({ course }) {
     const isFree     = price === 0;
     const progress   = course.progress || 0;
     
-    // Логика: Курс считается "Нашим", если есть флаг is_enrolled ИЛИ прогресс пришел как число (даже 0)
-    const isEnrolled = course.is_enrolled === true || (course.progress !== undefined && course.progress !== null);
+    // 🔥 Теперь проверка строгая - только если бэкенд сказал True
+    const isEnrolled = course.is_enrolled === true;
+    const isCompleted = progress === 100; 
     
     const ratingNum  = parseFloat(course.average_rating || 0);
     const ratingStr  = ratingNum > 0 ? ratingNum.toFixed(1) : '0.0';
@@ -61,9 +61,10 @@ function CourseCard({ course }) {
     const hours      = course.duration || seeded(course.id, 2, 20);
     const accent     = CARD_ACCENTS[course.id % CARD_ACCENTS.length];
 
-    // Если записан, подсвечиваем синей рамкой
     const cardClasses = isEnrolled
-        ? "group flex flex-col-reverse sm:flex-row gap-4 bg-blue-50/40 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-800/60 rounded-2xl p-4 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+        ? isCompleted
+            ? "group flex flex-col-reverse sm:flex-row gap-4 bg-emerald-50/40 dark:bg-emerald-900/10 border-2 border-emerald-300 dark:border-emerald-800/60 rounded-2xl p-4 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-200"
+            : "group flex flex-col-reverse sm:flex-row gap-4 bg-blue-50/40 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-800/60 rounded-2xl p-4 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
         : "group flex flex-col-reverse sm:flex-row gap-4 bg-base-100 border border-base-200 rounded-2xl p-4 hover:border-base-300 hover:shadow-lg hover:shadow-base-200/50 transition-all duration-200";
 
     return (
@@ -104,13 +105,13 @@ function CourseCard({ course }) {
                         {isEnrolled ? (
                             <div className="flex flex-col w-full sm:w-48 gap-1.5">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                                        <BookOpenCheck size={12} /> {t('courseList.myLearning')}
+                                    <span className={`text-[11px] font-bold flex items-center gap-1 ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                        <BookOpenCheck size={12} /> {isCompleted ? t('courseList.completedStatus', { defaultValue: 'Завершен' }) : t('courseList.myLearning')}
                                     </span>
                                     <span className="text-[11px] font-bold text-base-content">{progress}%</span>
                                 </div>
-                                <div className="h-2 w-full bg-blue-200 dark:bg-blue-900/50 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                                <div className={`h-2 w-full rounded-full overflow-hidden ${isCompleted ? 'bg-emerald-200 dark:bg-emerald-900/50' : 'bg-blue-200 dark:bg-blue-900/50'}`}>
+                                    <div className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`} style={{ width: `${progress}%` }}></div>
                                 </div>
                             </div>
                         ) : (
@@ -124,12 +125,16 @@ function CourseCard({ course }) {
 
                         <span className={`flex items-center justify-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-lg text-[11px] font-bold transition-all w-full sm:w-auto
                             ${isEnrolled 
-                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700' 
+                                ? isCompleted
+                                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-700'
+                                    : 'bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700' 
                                 : 'bg-base-200 text-base-content/70 group-hover:bg-blue-600 group-hover:text-white'}`}>
                             {isEnrolled 
-                                ? progress > 0 
-                                    ? <><PlayCircle size={12} />{t('courseList.continueBtn')}</> 
-                                    : <><PlayCircle size={12} />{t('courseList.startBtn')}</>
+                                ? isCompleted 
+                                    ? <><CheckCircle size={12} />{t('courseList.completedBtn', { defaultValue: 'Пройден' })}</>
+                                    : progress > 0 
+                                        ? <><PlayCircle size={12} />{t('courseList.continueBtn')}</> 
+                                        : <><PlayCircle size={12} />{t('courseList.startBtn')}</>
                                 : <>{t('courseList.openBtn')} <ArrowRight size={12} /></>}
                         </span>
                     </div>
@@ -151,8 +156,12 @@ function CourseCard({ course }) {
                 
                 <div className="absolute top-2 right-2 sm:top-1.5 sm:right-1.5 flex flex-col gap-1">
                     {isEnrolled ? (
-                        <span className={`px-2 py-1 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-md border ${progress > 0 ? 'bg-blue-600 border-blue-400/30' : 'bg-violet-600 border-violet-400/30'}`}>
-                            {progress > 0 ? t('courseList.inProgressBadge') : t('courseList.enrolledBadge')}
+                        <span className={`px-2 py-1 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-md border ${
+                            isCompleted ? 'bg-emerald-500 border-emerald-400/30' : 
+                            progress > 0 ? 'bg-blue-600 border-blue-400/30' : 'bg-violet-600 border-violet-400/30'
+                        }`}>
+                            {isCompleted ? t('courseList.completedBadge', { defaultValue: 'Пройден' }) : 
+                             progress > 0 ? t('courseList.inProgressBadge') : t('courseList.enrolledBadge')}
                         </span>
                     ) : isFree ? (
                         <span className="px-2 py-1 bg-emerald-500 text-white text-[10px] sm:text-[9px] font-bold rounded-full shadow-sm">
@@ -165,7 +174,6 @@ function CourseCard({ course }) {
     );
 }
 
-// ─── Sidebar collapse block ───────────────────────────────────────────────────
 function FilterBlock({ title, children, defaultOpen = true }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
@@ -179,7 +187,6 @@ function FilterBlock({ title, children, defaultOpen = true }) {
     );
 }
 
-// ─── Promo Banner ─────────────────────────────────────────────────────────────
 function PromoBanner() {
     const { t } = useTranslation();
     return (
@@ -223,7 +230,6 @@ function PromoBanner() {
     );
 }
 
-// ─── Main CourseList ──────────────────────────────────────────────────────────
 export default function CourseList() {
     const { t } = useTranslation();
 
@@ -294,10 +300,8 @@ export default function CourseList() {
         return r;
     }, [courses, onlyFree]);
 
-    const myLearning = filtered.filter(c => {
-        const isEnrolled = c.is_enrolled === true || (c.progress !== undefined && c.progress !== null);
-        return isEnrolled && (c.progress || 0) < 100;
-    });
+    // 🔥 Только реально купленные курсы попадают в этот блок
+    const myLearning = filtered.filter(c => c.is_enrolled === true && (c.progress || 0) < 100);
 
     const activeFilters = [selectedCategory, onlyFree, ...selectedLevels].filter(Boolean).length;
 
@@ -387,7 +391,6 @@ export default function CourseList() {
 
             <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="min-h-screen bg-base-100 text-base-content">
 
-                {/* ── TOP BAR ── */}
                 <div className="bg-base-100 border-b border-base-200 sticky top-16 z-30">
                     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
                         <div className="relative flex-1 max-w-xl">
@@ -441,9 +444,7 @@ export default function CourseList() {
                     </div>
                 </div>
 
-                {/* ── BODY ── */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 flex gap-7">
-
                     <aside className="hidden lg:block w-64 flex-shrink-0">
                         <div className="bg-base-100 rounded-2xl border border-base-200 px-5 py-4 sticky top-32">
                             <SidebarContent />
@@ -451,7 +452,6 @@ export default function CourseList() {
                     </aside>
 
                     <div className="flex-1 min-w-0">
-
                         {!searchTerm && !selectedCategory && !onlyFree && !selectedLevels.length && (
                             <PromoBanner />
                         )}
@@ -496,7 +496,6 @@ export default function CourseList() {
                             </div>
                         ) : filtered.length > 0 ? (
                             <>
-                                {/* 🔥 Блок: Моё обучение */}
                                 {myLearning.length > 0 && !debouncedSearch && !selectedCategory && (
                                     <div className="mb-10 bg-blue-50/30 dark:bg-blue-900/10 p-5 sm:p-6 rounded-3xl border border-blue-100 dark:border-blue-900/50 relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
@@ -517,7 +516,6 @@ export default function CourseList() {
                                     </div>
                                 )}
 
-                                {/* 🔥 Разделитель каталога */}
                                 {myLearning.length > 0 && !debouncedSearch && !selectedCategory && (
                                     <div className="flex items-center gap-4 mb-6">
                                         <h2 className="text-lg font-extrabold text-base-content flex-shrink-0">{t('courseList.courseCatalog')}</h2>
@@ -525,13 +523,12 @@ export default function CourseList() {
                                     </div>
                                 )}
 
-                                {/* Course list (Все остальные курсы) */}
                                 <div className="flex flex-col gap-3">
                                     {filtered
                                         .filter(c => {
                                             if (!debouncedSearch && !selectedCategory) {
-                                                const isEnrolled = c.is_enrolled === true || (c.progress !== undefined && c.progress !== null);
-                                                return !(isEnrolled && (c.progress || 0) < 100);
+                                                // 🔥 Прямая проверка: скрываем из общего списка только если реально записан и не прошел до конца
+                                                return !(c.is_enrolled === true && (c.progress || 0) < 100);
                                             }
                                             return true;
                                         })
@@ -556,7 +553,6 @@ export default function CourseList() {
                     </div>
                 </div>
 
-                {/* ── MOBILE DRAWER ── */}
                 {mobileSidebar && (
                     <div className="fixed inset-0 z-50 lg:hidden">
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileSidebar(false)}></div>

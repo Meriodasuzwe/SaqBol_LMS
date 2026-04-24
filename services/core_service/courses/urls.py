@@ -19,6 +19,7 @@ from .views import (
     upload_image,
     CreateStripeCheckoutSessionView,
     stripe_webhook,
+    ChangeCertificateLanguageView,
     # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
     PendingCoursesView,
     ApproveCourseView
@@ -51,7 +52,12 @@ urlpatterns = [
     path('reviews/<int:pk>/', ReviewDeleteView.as_view(), name='review-delete'),
 
     path('certificates/my/', MyCertificatesView.as_view(), name='my-certificates'),
+
+    # Для страницы верификации
     path('certificates/verify/<uuid:cert_id>/', VerifyCertificateView.as_view(), name='verify-certificate'),
+    
+    # Для переключения языка сертификата
+    path('certificates/<uuid:cert_id>/change-language/', ChangeCertificateLanguageView.as_view(), name='change-certificate-language'),
     
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
     path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),

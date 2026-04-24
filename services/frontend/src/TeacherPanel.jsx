@@ -3,16 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import api from './api';      
 import aiApi from './aiApi';    
 import { toast } from 'react-toastify'; 
+import { useTranslation } from 'react-i18next'; // 🔥 Подключаем хук i18n
 import { 
     UploadCloud, FileText, Settings, Sparkles, 
     Trash2, ChevronRight, CheckCircle2, Layout 
 } from 'lucide-react';
 
-
 import TiptapEditor from './CourseBuilder/components/TiptapEditor';
 
 function TeacherPanel() {
     const navigate = useNavigate();
+    const { t } = useTranslation(); // 🔥 Инициализируем хук
     
     // --- СТЕЙТЫ ---
     const [selectedFile, setSelectedFile] = useState(null);
@@ -54,7 +55,7 @@ function TeacherPanel() {
         if (!file) return;
         const ext = file.name.split('.').pop().toLowerCase();
         if (ext !== 'pdf' && ext !== 'docx') {
-            toast.warning('Формат не поддерживается. Только PDF или DOCX.');
+            toast.warning(t('teacherPanel.formatNotSupported'));
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
@@ -63,7 +64,7 @@ function TeacherPanel() {
 
     // --- ГЕНЕРАЦИЯ КУРСА ---
     const handleGenerate = async () => {
-        if (!selectedFile) return toast.warning("Загрузите документ для анализа.");
+        if (!selectedFile) return toast.warning(t('teacherPanel.uploadDocPrompt'));
         
         setIsGenerating(true);
         setGeneratedCourse(null);
@@ -77,10 +78,10 @@ function TeacherPanel() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setGeneratedCourse(res.data);
-            toast.success('✨ Черновик курса успешно создан!');
+            toast.success(t('teacherPanel.draftCreated'));
         } catch (err) {
             console.error("Ошибка ИИ:", err);
-            toast.error(err.response?.data?.detail || "Ошибка при генерации курса.");
+            toast.error(err.response?.data?.detail || t('teacherPanel.generateError'));
         } finally {
             setIsGenerating(false);
         }
@@ -88,22 +89,22 @@ function TeacherPanel() {
     
     // --- СОХРАНЕНИЕ ---
     const handleSaveCourse = async () => {
-        if (!generatedCourse?.course_title?.trim()) return toast.warning("Введите название курса");
-        if (!generatedCourse?.lessons?.length) return toast.warning("В курсе нет уроков!");
+        if (!generatedCourse?.course_title?.trim()) return toast.warning(t('teacherPanel.enterCourseName'));
+        if (!generatedCourse?.lessons?.length) return toast.warning(t('teacherPanel.noLessons'));
         
         setIsSaving(true);
         try {
             await api.post('courses/bulk-create/', generatedCourse);
-            toast.success(' Черновик сохранен! Не забудьте отправить его на модерацию после доработки.');
+            toast.success(t('teacherPanel.draftSaved'));
             
             setGeneratedCourse(null); 
             setSelectedFile(null);
             setCourseContext("");
-            setTimeout(() => navigate('/teacher/courses'), 1500);
+            setTimeout(() => navigate('/profile'), 1500);
             
         } catch (err) {
             console.error("Ошибка сохранения:", err);
-            toast.error("Не удалось сохранить курс.");
+            toast.error(t('teacherPanel.saveError'));
         } finally {
             setIsSaving(false);
         }
@@ -123,39 +124,40 @@ function TeacherPanel() {
     const removeLesson = (idx) => {
         setConfirmDialog({
             isOpen: true,
-            title: "Удалить урок?",
-            message: "Этот урок будет удален из черновика. Отменить нельзя.",
-            confirmText: "Удалить",
+            title: t('teacherPanel.deleteLessonTitle'),
+            message: t('teacherPanel.deleteLessonMessage'),
+            confirmText: t('teacherPanel.deleteBtn'),
             isDanger: true,
             onConfirm: () => {
                 const updated = { ...generatedCourse };
                 updated.lessons.splice(idx, 1);
                 setGeneratedCourse(updated);
-                toast.info("Урок удален");
+                toast.info(t('teacherPanel.lessonDeleted'));
                 closeDialog();
             }
         });
     };
 
     return (
-        <div className="max-w-7xl mx-auto py-10 px-6 font-sans text-slate-900 selection:bg-blue-600 selection:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        // 🔥 Добавили темный фон и текст для основного контейнера
+        <div className="max-w-7xl mx-auto py-10 px-6 font-sans text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             
             {/* ── HEADER ── */}
             <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-extrabold uppercase tracking-widest mb-3">
-                        <Sparkles size={12} /> AI Студия
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[11px] font-extrabold uppercase tracking-widest mb-3">
+                        <Sparkles size={12} /> {t('teacherPanel.aiStudio')}
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Генератор курсов</h1>
-                    <p className="text-slate-500 font-medium mt-2 max-w-xl">
-                        Превратите ваши должностные инструкции, регламенты или PDF-методички в полноценный интерактивный курс за пару минут.
+                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t('teacherPanel.generatorTitle')}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium mt-2 max-w-xl">
+                        {t('teacherPanel.generatorDesc')}
                     </p>
                 </div>
                 <button 
-                    onClick={() => navigate('/teacher/courses')}
-                    className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-colors shadow-sm"
+                    onClick={() => navigate('/profile')}
+                    className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
                 >
-                    Мои курсы
+                    {t('teacherPanel.myCoursesBtn')}
                 </button>
             </div>
 
@@ -165,16 +167,16 @@ function TeacherPanel() {
                 <div className="lg:col-span-4 space-y-6">
                     
                     {/* Upload Card */}
-                    <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 p-6">
-                        <h3 className="text-lg font-extrabold mb-4 flex items-center gap-2">
-                            <FileText size={20} className="text-blue-600" /> Исходный материал
+                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/40 dark:shadow-none p-6 transition-colors">
+                        <h3 className="text-lg font-extrabold mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+                            <FileText size={20} className="text-blue-600 dark:text-blue-400" /> {t('teacherPanel.sourceMaterial')}
                         </h3>
                         
                         <div 
                             className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 ${
-                                isDragging ? 'border-blue-500 bg-blue-50' : 
-                                selectedFile ? 'border-emerald-500 bg-emerald-50/30' : 
-                                'border-slate-200 hover:border-blue-300 bg-slate-50 hover:bg-slate-50/50'
+                                isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 
+                                selectedFile ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20' : 
+                                'border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-50/50 dark:hover:bg-slate-900/80'
                             }`}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
@@ -190,36 +192,38 @@ function TeacherPanel() {
                             
                             {selectedFile ? (
                                 <div className="flex flex-col items-center">
-                                    <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-3">
+                                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-3">
                                         <CheckCircle2 size={24} />
                                     </div>
-                                    <p className="font-bold text-slate-900 text-sm">{selectedFile.name}</p>
-                                    <p className="text-xs text-slate-500 mt-1">Готово к анализу</p>
+                                    <p className="font-bold text-slate-900 dark:text-white text-sm">{selectedFile.name}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('teacherPanel.readyToAnalyze')}</p>
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center">
-                                    <div className="w-12 h-12 bg-white text-blue-600 rounded-xl flex items-center justify-center shadow-sm border border-slate-100 mb-3 pointer-events-none">
+                                    <div className="w-12 h-12 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-700 mb-3 pointer-events-none transition-colors">
                                         <UploadCloud size={24} />
                                     </div>
-                                    <p className="font-bold text-slate-700 text-sm">Перетащите PDF или DOCX</p>
-                                    <p className="text-xs text-slate-400 mt-1">до 50 МБ</p>
+                                    <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">{t('teacherPanel.dragDropText')}</p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t('teacherPanel.maxSize')}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Settings Card */}
-                    <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 p-6">
-                        <h3 className="text-lg font-extrabold mb-4 flex items-center gap-2">
-                            <Settings size={20} className="text-slate-600" /> Настройки ИИ
+                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/40 dark:shadow-none p-6 transition-colors">
+                        <h3 className="text-lg font-extrabold mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+                            <Settings size={20} className="text-slate-600 dark:text-slate-400" /> {t('teacherPanel.aiSettingsTitle')}
                         </h3>
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Фокус курса (Опционально)</label>
+                                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                                    {t('teacherPanel.courseFocus')}
+                                </label>
                                 <textarea 
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none h-24"
-                                    placeholder="Например: Сделай акцент на практических примерах для отдела продаж..."
+                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all resize-none h-24"
+                                    placeholder={t('teacherPanel.courseFocusPlaceholder')}
                                     value={courseContext}
                                     onChange={(e) => setCourseContext(e.target.value)}
                                 ></textarea>
@@ -227,17 +231,17 @@ function TeacherPanel() {
 
                             <button 
                                 className={`w-full py-4 rounded-xl font-extrabold text-white flex items-center justify-center gap-2 transition-all ${
-                                    isGenerating ? 'bg-blue-400 cursor-wait' : 
-                                    !selectedFile ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 
+                                    isGenerating ? 'bg-blue-400 dark:bg-blue-500/70 cursor-wait' : 
+                                    !selectedFile ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 
                                     'bg-blue-600 hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-600/20'
                                 }`}
                                 onClick={handleGenerate}
                                 disabled={isGenerating || !selectedFile}
                             >
                                 {isGenerating ? (
-                                    <> <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Анализируем... </>
+                                    <> <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t('teacherPanel.analyzing')} </>
                                 ) : (
-                                    <> <Sparkles size={18} /> Сгенерировать черновик </>
+                                    <> <Sparkles size={18} /> {t('teacherPanel.generateDraftBtn')} </>
                                 )}
                             </button>
                         </div>
@@ -247,67 +251,66 @@ function TeacherPanel() {
                 {/* ── RIGHT COLUMN: WORKSPACE ── */}
                 <div className="lg:col-span-8">
                     {!generatedCourse ? (
-                        <div className="h-full min-h-[500px] border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-10 bg-slate-50/50">
-                            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 mb-6">
-                                <Layout size={32} className="text-slate-300" />
+                        <div className="h-full min-h-[500px] border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-10 bg-slate-50/50 dark:bg-slate-800/30 transition-colors">
+                            <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+                                <Layout size={32} className="text-slate-300 dark:text-slate-500" />
                             </div>
-                            <h3 className="text-xl font-extrabold text-slate-900 mb-2">Рабочая область пуста</h3>
-                            <p className="text-slate-500 font-medium max-w-sm">
-                                Загрузите документ слева и нажмите генерацию. ИИ изучит материал и соберет структуру курса.
+                            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">{t('teacherPanel.emptyWorkspaceTitle')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-sm">
+                                {t('teacherPanel.emptyWorkspaceDesc')}
                             </p>
                         </div>
                     ) : (
                         <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-500">
                             
                             {/* Draft Meta */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 p-8">
+                            <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/40 dark:shadow-none p-8 transition-colors">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider rounded-lg">Черновик</span>
-                                    <span className="text-sm font-medium text-slate-400">{generatedCourse.lessons?.length || 0} модулей</span>
+                                    <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider rounded-lg">{t('teacherPanel.draftBadge')}</span>
+                                    <span className="text-sm font-medium text-slate-400 dark:text-slate-500">{generatedCourse.lessons?.length || 0} {t('teacherPanel.modulesCount')}</span>
                                 </div>
                                 
                                 <input 
-                                    className="w-full text-3xl md:text-4xl font-black text-slate-900 placeholder:text-slate-300 outline-none mb-4 bg-transparent transition-colors focus:bg-slate-50 rounded-xl px-2 -ml-2 py-1"
+                                    className="w-full text-3xl md:text-4xl font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none mb-4 bg-transparent transition-colors focus:bg-slate-50 dark:focus:bg-slate-900/50 rounded-xl px-2 -ml-2 py-1"
                                     value={generatedCourse.course_title}
                                     onChange={(e) => updateField('course_title', e.target.value)}
-                                    placeholder="Название курса..."
+                                    placeholder={t('teacherPanel.courseNamePlaceholder')}
                                 />
                                 <textarea 
-                                    className="w-full text-lg text-slate-600 font-medium placeholder:text-slate-300 outline-none resize-none h-24 bg-transparent transition-colors focus:bg-slate-50 rounded-xl px-2 -ml-2 py-1"
+                                    className="w-full text-lg text-slate-600 dark:text-slate-300 font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none resize-none h-24 bg-transparent transition-colors focus:bg-slate-50 dark:focus:bg-slate-900/50 rounded-xl px-2 -ml-2 py-1"
                                     value={generatedCourse.course_description}
                                     onChange={(e) => updateField('course_description', e.target.value)}
-                                    placeholder="Краткое описание курса..."
+                                    placeholder={t('teacherPanel.courseDescPlaceholder')}
                                 />
                             </div>
 
                             {/* Lessons List */}
                             <div className="space-y-4">
-                                <h3 className="text-lg font-extrabold text-slate-900 px-2 flex items-center gap-2">
-                                    Программа курса
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white px-2 flex items-center gap-2">
+                                    {t('teacherPanel.courseProgram')}
                                 </h3>
                                 
                                 {generatedCourse.lessons?.map((lesson, idx) => (
-                                    <div key={idx} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group mb-6">
-                                        <div className="flex items-center gap-4 p-4 border-b border-slate-50 bg-slate-50/50">
-                                            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-black text-sm shrink-0">
+                                    <div key={idx} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden group mb-6 transition-colors">
+                                        <div className="flex items-center gap-4 p-4 border-b border-slate-50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 flex items-center justify-center font-black text-sm shrink-0">
                                                 {idx + 1}
                                             </div>
                                             <input 
-                                                className="flex-1 text-lg font-bold text-slate-900 outline-none bg-transparent"
+                                                className="flex-1 text-lg font-bold text-slate-900 dark:text-white outline-none bg-transparent placeholder:text-slate-400"
                                                 value={lesson.title}
                                                 onChange={(e) => updateLesson(idx, 'title', e.target.value)}
-                                                placeholder="Название урока..."
+                                                placeholder={t('teacherPanel.lessonNamePlaceholder')}
                                             />
                                             <button 
                                                 onClick={() => removeLesson(idx)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Удалить урок"
+                                                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                title={t('teacherPanel.deleteBtn')}
                                             >
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
                                         <div className="p-4">
-                                            {/* 🔥 Вызов твоего кастомного TiptapEditor 🔥 */}
                                             <TiptapEditor 
                                                 content={lesson.content} 
                                                 onChange={(content) => updateLesson(idx, 'content', content)} 
@@ -318,12 +321,12 @@ function TeacherPanel() {
                             </div>
 
                             {/* Publish Bar */}
-                            <div className="sticky bottom-6 bg-slate-900 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl shadow-slate-900/30">
+                            <div className="sticky bottom-6 bg-slate-900 dark:bg-slate-950 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl shadow-slate-900/30 dark:shadow-black/50 border border-slate-800">
                                 <button 
                                     className="text-slate-400 hover:text-white font-medium text-sm transition-colors"
                                     onClick={() => setGeneratedCourse(null)}
                                 >
-                                    Сбросить
+                                    {t('teacherPanel.resetBtn')}
                                 </button>
                                 <button 
                                     className={`px-8 py-3 rounded-xl font-extrabold text-sm flex items-center gap-2 transition-all ${
@@ -332,7 +335,7 @@ function TeacherPanel() {
                                     onClick={handleSaveCourse}
                                     disabled={isSaving || !generatedCourse.lessons?.length}
                                 >
-                                    {isSaving ? 'Сохранение...' : <> Сохранить черновик <ChevronRight size={16} /> </>}
+                                    {isSaving ? t('teacherPanel.saving') : <> {t('teacherPanel.saveDraftBtn')} <ChevronRight size={16} /> </>}
                                 </button>
                             </div>
 
@@ -344,16 +347,16 @@ function TeacherPanel() {
             {/* ── MODAL ── */}
             {confirmDialog.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeDialog}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative z-10 animate-in zoom-in-95 duration-200">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${confirmDialog.isDanger ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDialog}></div>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full p-6 relative z-10 animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-700">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${confirmDialog.isDanger ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}`}>
                             {confirmDialog.isDanger ? <Trash2 size={24} /> : <Settings size={24} />}
                         </div>
-                        <h3 className="text-xl font-extrabold text-slate-900 mb-2">{confirmDialog.title}</h3>
-                        <p className="text-slate-500 font-medium mb-8 leading-relaxed">{confirmDialog.message}</p>
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">{confirmDialog.title}</h3>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">{confirmDialog.message}</p>
                         <div className="flex gap-3">
-                            <button className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors text-sm" onClick={closeDialog}>
-                                Отмена
+                            <button className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition-colors text-sm" onClick={closeDialog}>
+                                {t('teacherPanel.cancelBtn')}
                             </button>
                             <button 
                                 className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm text-white ${confirmDialog.isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`} 

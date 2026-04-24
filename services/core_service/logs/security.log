@@ -2395,3 +2395,46 @@ WARNING 2026-04-23 13:52:53,482 | ACCESS DENIED: [401] POST /api/users/login/ (U
 INFO 2026-04-23 13:52:57,124 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.101s
 INFO 2026-04-23 13:59:13,803 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.103s
 INFO 2026-04-23 14:03:28,543 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.297s
+INFO 2026-04-24 13:31:10,768 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.116s
+WARNING 2026-04-24 14:01:36,335 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-24 14:02:36,068 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+WARNING 2026-04-24 14:02:36,069 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-24 14:02:36,074 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-24 14:02:36,075 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-24 14:02:36,079 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-24 14:02:36,084 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-04-24 14:06:38,781 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.104s
+INFO 2026-04-24 14:07:13,275 | ACTION: [200] POST /api/quizzes/93/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.031s
+INFO 2026-04-24 14:07:13,314 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.030s
+INFO 2026-04-24 14:07:46,206 | ACTION: [200] POST /api/quizzes/93/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-24 14:07:46,238 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.022s
+INFO 2026-04-24 14:08:26,302 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.292s
+INFO 2026-04-24 14:08:50,025 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.276s
+INFO 2026-04-24 14:09:11,264 | ACTION: [200] POST /api/courses/steps/79/complete/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.059s
+INFO 2026-04-24 14:09:47,404 | ACTION: [200] POST /api/courses/23/create-checkout-session/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.762s
+INFO 2026-04-24 14:10:13,886 | ACTION: [200] POST /api/courses/steps/65/complete/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.019s
+INFO 2026-04-24 14:10:15,186 | ACTION: [200] POST /api/courses/steps/65/complete/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 2.543s
+INFO 2026-04-24 14:10:28,383 | ACTION: [200] PATCH /api/notifications/mark-read/ (User: zulficar1 [ID:22], IP: 172.18.0.1) - 0.008s
+INFO 2026-04-24 14:10:46,215 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+INFO 2026-04-24 14:10:52,482 | ACTION: [201] POST /api/courses/19/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.017s
+INFO 2026-04-24 14:10:58,067 | ACTION: [200] POST /api/courses/steps/65/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 2.142s
+INFO 2026-04-24 14:11:17,469 | ACTION: [200] PATCH /api/notifications/mark-read/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.009s
+INFO 2026-04-24 14:11:50,674 | ACTION: [201] POST /api/courses/9/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.011s
+INFO 2026-04-24 14:12:31,468 | ACTION: [201] POST /api/courses/12/enroll/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.016s
+INFO 2026-04-24 14:13:10,963 | ACTION: [200] POST /api/courses/steps/74/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.016s
+INFO 2026-04-24 14:13:16,956 | ACTION: [200] POST /api/courses/steps/75/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.014s
+INFO 2026-04-24 14:13:19,220 | ACTION: [200] POST /api/courses/steps/76/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.015s
+INFO 2026-04-24 14:13:24,144 | ACTION: [200] POST /api/courses/steps/77/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.014s
+INFO 2026-04-24 14:13:30,038 | ACTION: [200] POST /api/courses/steps/78/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-24 14:13:37,634 | ACTION: [200] POST /api/courses/steps/79/complete/ (User: zulficar1_05851 [ID:35], IP: 172.18.0.1) - 2.008s
+WARNING 2026-04-24 14:13:41,729 | CLIENT ERROR: [404] POST /api/courses/20/certificate/generate/ (User:  [ID:None], IP: 172.18.0.1) - 0.025s
+INFO 2026-04-24 14:30:32,211 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.097s
+INFO 2026-04-24 14:30:40,449 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.152s
+INFO 2026-04-24 14:30:43,007 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.106s
+INFO 2026-04-24 14:32:45,649 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.103s
+INFO 2026-04-24 14:32:48,409 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.109s
+INFO 2026-04-24 14:32:49,144 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.105s
+INFO 2026-04-24 14:32:49,765 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.100s
+INFO 2026-04-24 14:32:50,556 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.100s
+INFO 2026-04-24 14:45:22,888 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
+INFO 2026-04-24 14:45:39,551 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.097s

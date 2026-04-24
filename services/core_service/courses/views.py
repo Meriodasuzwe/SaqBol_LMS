@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from notifications.service import send_notification
 from rest_framework.exceptions import ValidationError
-
+from .certificate_generator import generate_certificate_image
 User = get_user_model()
 
 # Импорты моделей и сериализаторов
@@ -541,9 +541,13 @@ class MyCertificatesView(generics.ListAPIView):
     serializer_class = CertificateSerializer
 
     def get_queryset(self):
-        return Certificate.objects.filter(student=self.request.user, is_valid=True).order_by('-issued_at')
+        return Certificate.objects.filter(
+            student=self.request.user, 
+            is_valid=True
+        ).order_by('-issued_at')
 
-# 2. Для HR (публичная проверка)
+
+# 2. Публичная проверка сертификата (для страницы VerifyCertificate)
 class VerifyCertificateView(APIView):
     permission_classes = [permissions.AllowAny] # Доступно всем без логина!
 
@@ -557,4 +561,24 @@ class VerifyCertificateView(APIView):
             "student_name": f"{cert.student.first_name} {cert.student.last_name}".strip() or cert.student.username,
             "issued_at": cert.issued_at,
             "file_url": request.build_absolute_uri(cert.file.url) if cert.file else None
+        })
+
+
+# 3. Изменение языка сертификата "на лету" (клик по тумблеру RU/KZ/EN)
+class ChangeCertificateLanguageView(APIView):
+    permission_classes = [permissions.AllowAny] # Разрешаем всем, чтобы работало на публичной странице
+
+    def post(self, request, cert_id):
+        language = request.data.get('language', 'ru')
+        
+        # Ищем сертификат
+        cert = get_object_or_404(Certificate, id=cert_id, is_valid=True)
+        
+        # Перерисовываем картинку на нужном языке (перезаписываем старый файл)
+        generate_certificate_image(cert, language=language)
+        
+        return Response({
+            "message": "Язык сертификата обновлен",
+            # Возвращаем новую ссылку на картинку
+            "file_url": request.build_absolute_uri(cert.file.url)
         })
