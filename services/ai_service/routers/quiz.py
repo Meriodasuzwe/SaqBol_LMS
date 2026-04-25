@@ -22,11 +22,22 @@ async def generate_quiz(
     user_data: dict = Depends(verify_token),
 ):
     user_id = user_data.get("user_id")
-    logger.info(f"QUIZ REQUEST | user_id={user_id} | count={body.count} | difficulty={body.difficulty}")
+    # 🔥 Добавили логирование языка
+    logger.info(
+        f"QUIZ REQUEST | user_id={user_id} | count={body.count} | "
+        f"difficulty={body.difficulty} | lang={body.language}"
+    )
 
     result = await groq_chat_json(
-        system_prompt=QUIZ_SYSTEM.substitute(difficulty=body.difficulty),
-        user_prompt=QUIZ_USER.substitute(count=body.count, text=body.text),
+        # 🔥 Прокидываем язык в системный промпт
+        system_prompt=QUIZ_SYSTEM.substitute(
+            difficulty=body.difficulty, 
+            language=body.language
+        ),
+        user_prompt=QUIZ_USER.substitute(
+            count=body.count, 
+            text=body.text
+        ),
         temperature=0.3,
     )
 

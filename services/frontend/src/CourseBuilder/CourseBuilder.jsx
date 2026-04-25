@@ -13,8 +13,20 @@ import {
 
 function CourseBuilder() {
     const { courseId } = useParams();
-    const { t } = useTranslation(); // ✅ Инициализировали хук
+    // 🔥 ФИКС ЗДЕСЬ: Добавили i18n рядом с t
+    const { t, i18n } = useTranslation(); 
     
+    // Превращаем код 'kk' в понятное ИИ слово 'Казахский'
+    const getAiLanguage = () => {
+        const langMap = {
+            'kk': 'Казахский',
+            'ru': 'Русский',
+            'en': 'English'
+        };
+        // Теперь i18n существует, ошибки не будет
+        return langMap[i18n.language] || 'Русский';
+    };
+
     // --- СОСТОЯНИЯ ---
     const [lessons, setLessons] = useState([]);
     const [courseData, setCourseData] = useState({ title: '', description: '', price: 0 }); 
@@ -289,7 +301,12 @@ function CourseBuilder() {
     const executeQuizGeneration = async () => {
         setIsGeneratingQuiz(true);
         try {
-            const res = await aiApi.post('generate-quiz', { text: quizPrompt, count: Number(quizCount), difficulty: quizDifficulty });
+            const res = await aiApi.post('generate-quiz', { 
+                text: quizPrompt, 
+                count: Number(quizCount), 
+                difficulty: quizDifficulty,
+                language: getAiLanguage() 
+            });
             const questions = res.data.generated_questions || res.data;
             const normalized = Array.isArray(questions) ? questions.map(q => {
                 const questionText = (q.question || q.text || q.prompt || q.title || '').trim();
@@ -334,11 +351,21 @@ function CourseBuilder() {
         if (!aiTopic) return toast.warning(t('builder.toasts.simEmptyPrompt'));
         setAiLoading(true);
         try {
-            const res = await aiApi.post('generate-scenario', { topic: aiTopic, scenario_type: type === 'simulation_email' ? 'email' : 'chat', difficulty: 'medium' });
+            const res = await aiApi.post('generate-scenario', { 
+                topic: aiTopic, 
+                scenario_type: type === 'simulation_email' ? 'email' : 'chat', 
+                difficulty: 'medium',
+                language: getAiLanguage() 
+            });
             setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: res.data }));
             toast.success(t('builder.toasts.simSuccess'));
-        } catch (err) { toast.error(t('builder.toasts.simError')); } finally { setAiLoading(false); }
-    };  
+        } catch (err) { 
+            console.error("AI Error:", err);
+            toast.error(t('builder.toasts.simError')); 
+        } finally { 
+            setAiLoading(false); 
+        }
+    }; 
 
     const getStepIcon = (type, size = 20) => {
         if (type === 'video_url') return <PlayCircle size={size} />;
@@ -360,7 +387,6 @@ function CourseBuilder() {
         <div className="flex h-screen bg-base-100 font-sans text-base-content animate-in fade-in"> 
             
             {/* === ЛЕВАЯ КОЛОНКА (САЙДБАР) === */}
-            {/* 🟦 Перекрасили фон в base-200 */}
             <div className="w-80 bg-base-200/50 border-r border-base-200 flex flex-col h-full shrink-0 z-20">
                 <div className="px-6 py-5 border-b border-base-200 flex justify-between items-center bg-base-100">
                     <h2 className="font-black text-base-content truncate pr-4 text-lg" title={courseData.title}>
@@ -368,7 +394,6 @@ function CourseBuilder() {
                     </h2>
                     <div className="flex gap-1 shrink-0">
                         <button 
-                            // 🟦 Активная кнопка стала синей
                             className={`p-2 rounded-xl transition-colors ${isSettingsMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-base-content/50 hover:bg-base-200 hover:text-base-content'}`} 
                             onClick={() => { setIsSettingsMode(true); setActiveLesson(null); }} 
                             title={t('builder.courseSettings')}
@@ -390,7 +415,6 @@ function CourseBuilder() {
                     {lessons.map((lesson, index) => (
                         <div 
                             key={lesson.id}
-                            // 🟦 Активный урок теперь синий
                             className={`p-3 rounded-xl cursor-pointer transition-all border 
                                 ${activeLesson?.id === lesson.id && !isSettingsMode 
                                     ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20" 
@@ -451,7 +475,6 @@ function CourseBuilder() {
                                             <button 
                                                 key={step.id}
                                                 onClick={() => setActiveStep(step)}
-                                                // 🟦 Активный шаг теперь синий
                                                 className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all border-2 
                                                     ${isActive 
                                                         ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20 scale-105' 

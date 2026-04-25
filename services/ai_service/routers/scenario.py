@@ -19,18 +19,20 @@ from prompts import (
     SCENARIO_EMAIL_USER,
 )
 from schemas import ScenarioRequest
-from security import verify_token
 from fastapi import HTTPException
+from security import verify_token
 
 logger = logging.getLogger("ai_security")
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/generate-scenario", tags=["Scenario"])
 
 
-async def _generate_chat_scenario(topic: str, difficulty: str) -> dict:
+# 🔥 Добавили параметр language
+async def _generate_chat_scenario(topic: str, difficulty: str, language: str) -> dict:
     """Генерирует интерактивный chat-сценарий с валидацией и fallback."""
-    sys_prompt = SCENARIO_CHAT_SYSTEM.substitute(difficulty=difficulty)
-    user_prompt = SCENARIO_CHAT_USER.substitute(topic=topic)
+    # 🔥 Прокидываем язык в системный и юзер промпты
+    sys_prompt = SCENARIO_CHAT_SYSTEM.substitute(difficulty=difficulty, language=language)
+    user_prompt = SCENARIO_CHAT_USER.substitute(topic=topic, language=language)
 
     scenario = await groq_chat_json(sys_prompt, user_prompt, temperature=0.05)
 
@@ -42,7 +44,8 @@ async def _generate_chat_scenario(topic: str, difficulty: str) -> dict:
     # Попытка 2: повторный запрос с более строгим промптом
     if not is_interactive_chat_format(scenario):
         logger.warning("SCENARIO: invalid format, retrying with strict prompt...")
-        strict_prompt = SCENARIO_CHAT_USER_STRICT.substitute(topic=topic)
+        # 🔥 Прокидываем язык и в строгий промпт тоже
+        strict_prompt = SCENARIO_CHAT_USER_STRICT.substitute(topic=topic, language=language)
         scenario = await groq_chat_json(sys_prompt, strict_prompt, temperature=0.01)
 
         if has_speaker_format(scenario):
@@ -67,17 +70,20 @@ async def generate_scenario(
     user_data: dict = Depends(verify_token),
 ):
     user_id = user_data.get("user_id")
+    # Можно добавить язык в логи, чтобы видеть, на каком генерят чаще
     logger.info(
         f"SCENARIO REQUEST | user_id={user_id} | type={body.scenario_type} | "
-        f"topic={body.topic[:50]} | difficulty={body.difficulty}"
+        f"topic={body.topic[:50]} | difficulty={body.difficulty} | lang={body.language}"
     )
 
     if body.scenario_type == "chat":
-        result = await _generate_chat_scenario(body.topic, body.difficulty)
+        # 🔥 Передаем язык в функцию генерации чата
+        result = await _generate_chat_scenario(body.topic, body.difficulty, body.language)
     else:
+        # 🔥 Передаем язык в генерацию email (обрати внимание, SCENARIO_EMAIL_SYSTEM теперь тоже Template)
         result = await groq_chat_json(
-            system_prompt=SCENARIO_EMAIL_SYSTEM,
-            user_prompt=SCENARIO_EMAIL_USER.substitute(topic=body.topic),
+            system_prompt=SCENARIO_EMAIL_SYSTEM.substitute(language=body.language),
+            user_prompt=SCENARIO_EMAIL_USER.substitute(topic=body.topic, language=body.language),
             temperature=0.1,
         )
 
