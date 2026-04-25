@@ -4,7 +4,8 @@ import os
 
 import docx
 import fitz  # PyMuPDF
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+# 🔥 Добавили импорт Form
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -36,10 +37,12 @@ def extract_text_from_docx(content: bytes) -> str:
 async def generate_course_from_file(
     request: Request,
     file: UploadFile = File(...),
+    # 🔥 Добавили получение языка из form-data (по умолчанию Русский)
+    language: str = Form("Русский"),
     user_data: dict = Depends(verify_token),
 ):
     user_id = user_data.get("user_id", "Unknown")
-    logger.info(f"FILE UPLOAD | user_id={user_id} | filename={file.filename}")
+    logger.info(f"FILE UPLOAD | user_id={user_id} | filename={file.filename} | lang={language}")
 
     # --- Валидация расширения ---
     file_ext = os.path.splitext(file.filename or "")[1].lower()
@@ -79,8 +82,9 @@ async def generate_course_from_file(
     # --- Генерация курса ---
     logger.info(f"AI COURSE | user_id={user_id} | chars={len(truncated)}")
     result = await groq_chat_json(
-        system_prompt=COURSE_SYSTEM,
-        user_prompt=COURSE_USER.substitute(text=truncated),
+        # 🔥 Прокидываем язык в системный и юзер промпты
+        system_prompt=COURSE_SYSTEM.substitute(language=language),
+        user_prompt=COURSE_USER.substitute(text=truncated, language=language),
         temperature=0.2,
     )
 

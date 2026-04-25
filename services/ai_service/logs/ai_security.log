@@ -560,3 +560,11 @@ INFO 2026-04-23 14:03:50,589 | ===> REQUESTED LANG: ru, TARGET: Russian
 INFO 2026-04-23 14:03:52,079 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-23 14:03:52,083 | INSIGHTS STUDENT SUCCESS | user_id=25
 INFO 2026-04-23 14:03:52,085 | OK: [200] POST /analytics/insights/student/ (IP: 172.18.0.8) — 1.498s
+INFO 2026-04-25 13:41:01,473 | SCENARIO REQUEST | user_id=1 | type=chat | topic=салық қызметінен хат | difficulty=medium
+INFO 2026-04-25 13:41:03,592 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-25 13:41:03,599 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-25 13:41:03,600 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.177s
+INFO 2026-04-25 13:57:18,381 | SCENARIO REQUEST | user_id=1 | type=chat | topic=Салық қызметінен хат | difficulty=medium | lang=Русский
+INFO 2026-04-25 13:57:20,581 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-25 13:57:20,585 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-25 13:57:20,587 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.213s

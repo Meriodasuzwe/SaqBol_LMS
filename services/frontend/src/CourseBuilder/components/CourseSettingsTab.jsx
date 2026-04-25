@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next'; // ✅ Подключили i18n
 import { Save, ImagePlus, X, FileText } from 'lucide-react';
 import TiptapEditor from './TiptapEditor'; 
 
 const CourseSettingsTab = ({ courseData, setCourseData, onSave, loading }) => {
+    const { t } = useTranslation(); // ✅ Инициализация
     const fileInputRef = useRef(null);
     const [previewUrl, setPreviewUrl] = useState(courseData.image || courseData.cover_image || null);
 
@@ -21,26 +23,26 @@ const CourseSettingsTab = ({ courseData, setCourseData, onSave, loading }) => {
     };
 
     return (
-        // 🔥 ФИКС: Добавили h-full и overflow-y-auto, чтобы страница скроллилась! 🔥
-        <div className="h-full overflow-y-auto custom-scrollbar bg-white">
-            {/* Добавили pb-32 для комфортного отступа снизу */}
+        <div className="h-full overflow-y-auto custom-scrollbar bg-base-100">
             <div className="max-w-3xl mx-auto py-10 px-6 pb-32 animate-in fade-in duration-300">
-                <h2 className="text-3xl font-black text-slate-900 mb-8 tracking-tight">Настройки курса</h2>
+                <h2 className="text-3xl font-black text-base-content mb-8 tracking-tight">
+                    {t('builder.courseSettingsTitle')}
+                </h2>
 
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-8">
+                <div className="bg-base-100 rounded-3xl border border-base-200 shadow-sm p-8 space-y-8">
                     
                     {/* ОБЛОЖКА КУРСА */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">
-                            Обложка курса
+                        <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-3 block">
+                            {t('builder.courseCover')}
                         </label>
                         <div className="flex flex-col sm:flex-row gap-6 items-start">
                             {previewUrl ? (
-                                <div className="relative w-full sm:w-64 aspect-video rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 group shrink-0">
+                                <div className="relative w-full sm:w-64 aspect-video rounded-2xl overflow-hidden border border-base-200 bg-base-200/50 group shrink-0">
                                     <img src={previewUrl} alt="Cover preview" className="w-full h-full object-cover" />
                                     <button 
                                         onClick={removeImage}
-                                        className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors shadow-sm backdrop-blur-sm opacity-0 group-hover:opacity-100"
+                                        className="absolute top-2 right-2 p-1.5 bg-base-100/90 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors shadow-sm backdrop-blur-sm opacity-0 group-hover:opacity-100"
                                     >
                                         <X size={16} />
                                     </button>
@@ -48,16 +50,16 @@ const CourseSettingsTab = ({ courseData, setCourseData, onSave, loading }) => {
                             ) : (
                                 <div 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full sm:w-64 aspect-video rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-slate-600 shrink-0"
+                                    className="w-full sm:w-64 aspect-video rounded-2xl border-2 border-dashed border-base-300 bg-base-200/30 hover:bg-base-200 hover:border-blue-400 transition-all flex flex-col items-center justify-center cursor-pointer text-base-content/40 hover:text-blue-600 shrink-0 group"
                                 >
-                                    <ImagePlus size={32} strokeWidth={1.5} className="mb-2" />
-                                    <span className="text-xs font-bold">Загрузить обложку</span>
+                                    <ImagePlus size={32} strokeWidth={1.5} className="mb-2 group-hover:scale-110 transition-transform" />
+                                    <span className="text-xs font-bold">{t('builder.uploadCover')}</span>
                                 </div>
                             )}
                             
                             <div className="flex-1">
-                                <p className="text-sm text-slate-500 mb-4 font-medium leading-relaxed">
-                                    Рекомендуемый размер: 1280x720. Поддерживаются форматы JPG, PNG. Максимальный размер файла — 5 МБ.
+                                <p className="text-sm text-base-content/50 mb-4 font-medium leading-relaxed">
+                                    {t('builder.coverRecommendation')}
                                 </p>
                                 <input 
                                     type="file" 
@@ -68,39 +70,39 @@ const CourseSettingsTab = ({ courseData, setCourseData, onSave, loading }) => {
                                 />
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                                    className="px-4 py-2 bg-base-200 text-base-content text-sm font-bold rounded-xl hover:bg-base-300 transition-colors"
                                 >
-                                    Выбрать файл
+                                    {t('builder.chooseFile')}
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="h-px w-full bg-slate-100"></div>
+                    <div className="h-px w-full bg-base-200"></div>
 
                     {/* ОСНОВНАЯ ИНФОРМАЦИЯ */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                            Название курса
+                        <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 block">
+                            {t('builder.courseName')}
                         </label>
                         <input 
                             type="text" 
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold focus:bg-white focus:border-slate-900 outline-none transition-all" 
+                            className="w-full px-4 py-3 bg-base-200/50 border border-base-200 rounded-xl text-base font-bold text-base-content focus:bg-base-100 focus:border-blue-600 outline-none transition-all" 
                             value={courseData.title || ""} 
                             onChange={(e) => setCourseData({...courseData, title: e.target.value})} 
-                            placeholder="Например: Основы кибербезопасности"
+                            placeholder={t('builder.courseNamePh')}
                         />
                     </div>
 
                     {/* ОПИСАНИЕ */}
                     <div>
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-3 rounded-t-xl border border-b-0">
-                            <FileText size={18} className="text-slate-500" />
-                            <span className="text-sm font-bold text-slate-700">
-                                Описание курса
+                        <div className="px-6 py-4 border-b border-base-200 bg-base-200/50 flex items-center gap-3 rounded-t-2xl border border-b-0">
+                            <FileText size={18} className="text-base-content/50" />
+                            <span className="text-sm font-bold text-base-content">
+                                {t('builder.courseDesc')}
                             </span>
                         </div>
-                        <div className="border border-slate-200 rounded-b-xl overflow-hidden bg-white">
+                        <div className="border border-base-200 rounded-b-2xl overflow-hidden bg-base-100">
                             <TiptapEditor 
                                 content={courseData.description || ""} 
                                 onChange={(newContent) => setCourseData({...courseData, description: newContent})} 
@@ -110,28 +112,28 @@ const CourseSettingsTab = ({ courseData, setCourseData, onSave, loading }) => {
 
                     {/* ЦЕНА */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                            Цена (в тенге)
+                        <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 block">
+                            {t('builder.coursePrice')}
                         </label>
                         <input 
                             type="number" 
-                            className="w-full sm:w-48 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold focus:bg-white focus:border-slate-900 outline-none transition-all" 
+                            className="w-full sm:w-48 px-4 py-3 bg-base-200/50 border border-base-200 rounded-xl text-base font-bold text-base-content focus:bg-base-100 focus:border-blue-600 outline-none transition-all" 
                             value={courseData.price || 0} 
                             onChange={(e) => setCourseData({...courseData, price: e.target.value})} 
                             min="0"
                         />
                     </div>
 
-                    <div className="pt-6 border-t border-slate-100">
+                    <div className="pt-6 border-t border-base-200">
                         <button 
-                            className="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md disabled:opacity-70 disabled:pointer-events-none w-full sm:w-auto" 
+                            className="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 disabled:opacity-70 disabled:pointer-events-none w-full sm:w-auto" 
                             onClick={onSave} 
                             disabled={loading}
                         >
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             ) : (
-                                <><Save size={18} /> Сохранить настройки</>
+                                <><Save size={18} /> {t('builder.saveSettingsBtn')}</>
                             )}
                         </button>
                     </div>
