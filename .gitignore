@@ -28,3 +28,5 @@ postgres_data_auth/
 # IDE
 .vscode/
 .idea/
+
+*.log

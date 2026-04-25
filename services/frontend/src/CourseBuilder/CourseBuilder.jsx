@@ -1,29 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom'; 
+import { useTranslation } from 'react-i18next'; // ✅ Добавили переводы
 import api from '../api';
 import aiApi from '../aiApi'; 
 import { toast } from 'react-toastify'; 
 import CourseSettingsTab from './components/CourseSettingsTab';
 import StepEditor from './components/StepEditor';
 import { 
-    Settings, 
-    Eye, 
-    Plus, 
-    Trash2, 
-    FileText, 
-    PlayCircle, 
-    HelpCircle, 
-    ShieldAlert, 
-    Code2, 
-    AlertTriangle,
-    LayoutGrid,
-    CheckCircle2,
-    X,
-    ChevronRight
+    Settings, Eye, Plus, Trash2, FileText, PlayCircle, HelpCircle, 
+    ShieldAlert, Code2, AlertTriangle, LayoutGrid, CheckCircle2, X, ChevronRight
 } from 'lucide-react';
 
 function CourseBuilder() {
     const { courseId } = useParams();
+    const { t } = useTranslation(); // ✅ Инициализировали хук
     
     // --- СОСТОЯНИЯ ---
     const [lessons, setLessons] = useState([]);
@@ -88,7 +78,6 @@ function CourseBuilder() {
     useEffect(() => {
         if (activeStep?.step_type === 'quiz' && activeLesson) {
             const stepQuizId = activeStep.scenario_data?.quiz_id;
-            
             if (stepQuizId) {
                 fetchQuizForStep(activeLesson.id, stepQuizId);
             } else {
@@ -103,12 +92,8 @@ function CourseBuilder() {
 
     const fetchQuizForStep = async (lessonId, targetQuizId) => {
         try {
-            // Стало (явно просим не кешировать через заголовки):
             const res = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
+                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
             });
 
             let data = res.data;
@@ -118,7 +103,6 @@ function CourseBuilder() {
             
             if (targetQuiz) {
                 setCurrentQuizId(targetQuiz.id); 
-                
                 if (targetQuiz.questions && targetQuiz.questions.length > 0) {
                     const mapped = targetQuiz.questions.map(q => {
                         let optionsList = [];
@@ -179,9 +163,9 @@ function CourseBuilder() {
                     price: courseData.price
                 });
             }
-            toast.success("Настройки курса успешно сохранены!");
+            toast.success(t('builder.toasts.settingsSaved'));
         } catch (err) { 
-            toast.error("Ошибка сохранения курса"); 
+            toast.error(t('builder.toasts.settingsError')); 
             console.error(err);
         } finally { 
             setLoading(false); 
@@ -193,20 +177,21 @@ function CourseBuilder() {
         try {
             const res = await api.post(`courses/${courseId}/lessons/`, { title: newLessonTitle, order: lessons.length + 1, course: parseInt(courseId) });
             setLessons([...lessons, { ...res.data, steps: [] }]);
-            setIsLessonModalOpen(false); setNewLessonTitle(""); toast.success("Раздел успешно создан");
-        } catch (err) { toast.error("Ошибка создания раздела"); }
+            setIsLessonModalOpen(false); setNewLessonTitle(""); 
+            toast.success(t('builder.toasts.sectionCreated'));
+        } catch (err) { toast.error(t('builder.toasts.sectionError')); }
     };
 
     const handleDeleteLesson = async () => {
         setConfirmDialog({
-            isOpen: true, title: "Удаление раздела",
-            message: `Вы уверены, что хотите удалить раздел "${activeLesson.title}" со всеми его шагами? Это действие необратимо.`,
-            confirmText: "Удалить", isDanger: true,
+            isOpen: true, title: t('builder.delSectionTitle'),
+            message: t('builder.delSectionMsg', { title: activeLesson.title }),
+            confirmText: t('builder.deleteBtn'), isDanger: true,
             onConfirm: async () => {
                 try {
                     await api.delete(`courses/lessons/${activeLesson.id}/`);
                     window.location.reload(); 
-                } catch (err) { toast.error("Ошибка удаления урока"); }
+                } catch (err) { toast.error(t('builder.toasts.delLessonError')); }
             }
         });
     };
@@ -216,13 +201,13 @@ function CourseBuilder() {
             const res = await api.post(`courses/lessons/${activeLesson.id}/steps/`, { title: 'Новый шаг', step_type: stepType, content: '', order: (activeLesson.steps?.length || 0) + 1 });
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: [...(l.steps || []), res.data] } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data); setIsStepModalOpen(false);
-        } catch (err) { toast.error("Ошибка создания шага"); }
+        } catch (err) { toast.error(t('builder.toasts.stepCreateError')); }
     };
 
     const handleDeleteStep = async () => {
         setConfirmDialog({
-            isOpen: true, title: "Удаление шага", message: "Вы уверены, что хотите безвозвратно удалить этот шаг?",
-            confirmText: "Удалить", isDanger: true,
+            isOpen: true, title: t('builder.delStepTitle'), message: t('builder.delStepMsg'),
+            confirmText: t('builder.deleteBtn'), isDanger: true,
             onConfirm: async () => {
                 closeDialog();
                 try {
@@ -231,7 +216,7 @@ function CourseBuilder() {
                     setLessons(updatedLessons);
                     const updLesson = updatedLessons.find(l => l.id === activeLesson.id);
                     setActiveLesson(updLesson); setActiveStep(updLesson.steps.length > 0 ? updLesson.steps[0] : null);
-                } catch (err) { toast.error("Ошибка удаления шага"); }
+                } catch (err) { toast.error(t('builder.toasts.delStepError')); }
             }
         });
     };
@@ -247,15 +232,13 @@ function CourseBuilder() {
                     const options = q.options.map(s => String(s || '').trim()).filter(Boolean);
                     let userIndex = q.user_selected_index ?? q.correct_option_index ?? 0;
                     if (userIndex >= options.length) userIndex = 0;
-                    
-                    // 🔥 ФИКС: Берем ТЕКСТ правильного ответа
                     const correctAnswerText = options[userIndex] || "";
 
                     const mappedQ = { 
                         question: String(q.question), 
                         options, 
-                        correct_answer: correctAnswerText, // Теперь шлём текст (например "Рахат")
-                        correct_index: userIndex, // На всякий случай дублируем индексом
+                        correct_answer: correctAnswerText, 
+                        correct_index: userIndex,
                         explanation: "" 
                     };
                     if (q.id) mappedQ.id = q.id; 
@@ -270,12 +253,8 @@ function CourseBuilder() {
                 setCurrentQuizId(savedQuizId);
             }
 
-            const updatedScenarioData = {
-                ...(activeStep.scenario_data || {})
-            };
-            if (savedQuizId) {
-                updatedScenarioData.quiz_id = savedQuizId;
-            }
+            const updatedScenarioData = { ...(activeStep.scenario_data || {}) };
+            if (savedQuizId) updatedScenarioData.quiz_id = savedQuizId;
 
             const res = await api.patch(`courses/steps/${activeStep.id}/`, { 
                 title: activeStep.title, 
@@ -286,9 +265,9 @@ function CourseBuilder() {
             
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? res.data : s) } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data);
-            toast.success("Шаг сохранен");
+            toast.success(t('builder.toasts.stepSaved'));
         } catch (err) { 
-            toast.error("Ошибка сохранения"); 
+            toast.error(t('builder.toasts.stepSaveError')); 
         } finally { 
             setLoading(false); 
         }
@@ -296,12 +275,12 @@ function CourseBuilder() {
 
     // --- ЛОГИКА ГЕНЕРАЦИИ (КВИЗЫ И СИМУЛЯЦИИ) ---
     const handlePreGenerateQuiz = () => {
-        if (!quizPrompt.trim()) return toast.warning("Введите текст лекции для генерации вопросов.");
+        if (!quizPrompt.trim()) return toast.warning(t('builder.toasts.quizEmptyPrompt'));
         if (quizQuestions && quizQuestions.length > 0) {
             setConfirmDialog({
-                isOpen: true, title: "Перезапись вопросов",
-                message: `В этом тесте уже есть вопросы (${quizQuestions.length} шт). При генерации новых, старые будут удалены. Продолжить?`,
-                confirmText: "Сгенерировать новые", isDanger: true,
+                isOpen: true, title: t('builder.rewriteQuizTitle'),
+                message: t('builder.rewriteQuizMsg', { count: quizQuestions.length }),
+                confirmText: t('builder.generateNewBtn'), isDanger: true,
                 onConfirm: () => { closeDialog(); executeQuizGeneration(); }
             });
         } else executeQuizGeneration();
@@ -327,8 +306,8 @@ function CourseBuilder() {
                 if (aiSuggestedIndex === -1) { aiSuggestedIndex = 0; correct = options[0]; }
                 return { id: null, question: questionText, options, correct_answer: correct, user_selected_index: aiSuggestedIndex, correct_option_index: aiSuggestedIndex, ai_suggested_index: aiSuggestedIndex };
             }) : [];
-            setQuizQuestions(normalized); toast.success('Тест успешно сгенерирован');
-        } catch (err) { toast.error("Не удалось сгенерировать тест."); } finally { setIsGeneratingQuiz(false); }
+            setQuizQuestions(normalized); toast.success(t('builder.toasts.quizSuccess'));
+        } catch (err) { toast.error(t('builder.toasts.quizError')); } finally { setIsGeneratingQuiz(false); }
     };
 
     const handleQuestionChange = (index, field, value) => { const updated = [...quizQuestions]; updated[index][field] = value; setQuizQuestions(updated); };
@@ -352,13 +331,13 @@ function CourseBuilder() {
     const handleDeleteQuestion = (index) => { const updated = quizQuestions.filter((_, i) => i !== index); setQuizQuestions(updated); };
 
     const handleGenerateScenario = async (type) => {
-        if (!aiTopic) return toast.warning("Опишите сценарий!");
+        if (!aiTopic) return toast.warning(t('builder.toasts.simEmptyPrompt'));
         setAiLoading(true);
         try {
             const res = await aiApi.post('generate-scenario', { topic: aiTopic, scenario_type: type === 'simulation_email' ? 'email' : 'chat', difficulty: 'medium' });
             setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: res.data }));
-            toast.success("Сценарий создан");
-        } catch (err) { toast.error("Ошибка генерации симуляции"); } finally { setAiLoading(false); }
+            toast.success(t('builder.toasts.simSuccess'));
+        } catch (err) { toast.error(t('builder.toasts.simError')); } finally { setAiLoading(false); }
     };  
 
     const getStepIcon = (type, size = 20) => {
@@ -371,33 +350,35 @@ function CourseBuilder() {
 
     if (loading && lessons.length === 0) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-50">
-                <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+            <div className="flex min-h-screen items-center justify-center bg-base-200">
+                <div className="w-8 h-8 border-4 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex h-screen bg-white font-sans text-slate-900 animate-in fade-in"> 
+        <div className="flex h-screen bg-base-100 font-sans text-base-content animate-in fade-in"> 
             
             {/* === ЛЕВАЯ КОЛОНКА (САЙДБАР) === */}
-            <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col h-full shrink-0 z-20">
-                <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-white">
-                    <h2 className="font-black text-slate-900 truncate pr-4 text-lg" title={courseData.title}>
-                        {courseData.title || "Настройка курса"}
+            {/* 🟦 Перекрасили фон в base-200 */}
+            <div className="w-80 bg-base-200/50 border-r border-base-200 flex flex-col h-full shrink-0 z-20">
+                <div className="px-6 py-5 border-b border-base-200 flex justify-between items-center bg-base-100">
+                    <h2 className="font-black text-base-content truncate pr-4 text-lg" title={courseData.title}>
+                        {courseData.title || t('builder.courseSettings')}
                     </h2>
                     <div className="flex gap-1 shrink-0">
                         <button 
-                            className={`p-2 rounded-xl transition-colors ${isSettingsMode ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'}`} 
+                            // 🟦 Активная кнопка стала синей
+                            className={`p-2 rounded-xl transition-colors ${isSettingsMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-base-content/50 hover:bg-base-200 hover:text-base-content'}`} 
                             onClick={() => { setIsSettingsMode(true); setActiveLesson(null); }} 
-                            title="Настройки курса"
+                            title={t('builder.courseSettings')}
                         >
                             <Settings size={18} />
                         </button>
                         <RouterLink 
                             to={`/courses/${courseId}`} 
-                            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
-                            title="Предпросмотр курса"
+                            className="p-2 rounded-xl text-base-content/50 hover:bg-base-200 hover:text-base-content transition-colors" 
+                            title={t('builder.previewCourse')}
                         >
                             <Eye size={18} />
                         </RouterLink>
@@ -405,49 +386,50 @@ function CourseBuilder() {
                 </div>
                 
                 <div className="overflow-y-auto flex-1 p-4 space-y-2 custom-scrollbar">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 pl-2 mt-2">Программа курса</div>
+                    <div className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-3 pl-2 mt-2">{t('builder.courseSyllabus')}</div>
                     {lessons.map((lesson, index) => (
                         <div 
                             key={lesson.id}
+                            // 🟦 Активный урок теперь синий
                             className={`p-3 rounded-xl cursor-pointer transition-all border 
                                 ${activeLesson?.id === lesson.id && !isSettingsMode 
-                                    ? "bg-slate-900 border-slate-900 text-white shadow-md" 
-                                    : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:shadow-sm"}`}
+                                    ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20" 
+                                    : "bg-base-100 border-base-200 text-base-content hover:border-blue-400 hover:shadow-sm"}`}
                             onClick={() => { setActiveLesson(lesson); setActiveStep(lesson.steps?.[0] || null); setIsSettingsMode(false); }}
                         >
                             <div className="font-bold text-sm truncate flex items-center gap-3">
                                 <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-[11px] font-black 
-                                    ${activeLesson?.id === lesson.id && !isSettingsMode ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    ${activeLesson?.id === lesson.id && !isSettingsMode ? 'bg-white/20 text-white' : 'bg-base-200 text-base-content/50'}`}>
                                     {index + 1}
                                 </span>
                                 {lesson.title}
                             </div>
                             <div className={`text-xs mt-2 font-medium flex items-center gap-1 pl-9
-                                ${activeLesson?.id === lesson.id && !isSettingsMode ? 'text-white/60' : 'text-slate-400'}`}>
-                                Шагов внутри: {lesson.steps?.length || 0}
+                                ${activeLesson?.id === lesson.id && !isSettingsMode ? 'text-white/70' : 'text-base-content/50'}`}>
+                                {t('builder.stepsInside')}: {lesson.steps?.length || 0}
                             </div>
                         </div>
                     ))}
                     {lessons.length === 0 && (
-                        <div className="text-center mt-10 p-6 border-2 border-dashed border-slate-200 rounded-2xl">
-                            <LayoutGrid size={24} className="text-slate-300 mx-auto mb-2" />
-                            <p className="text-sm font-bold text-slate-400">Разделов пока нет</p>
+                        <div className="text-center mt-10 p-6 border-2 border-dashed border-base-300 rounded-2xl">
+                            <LayoutGrid size={24} className="text-base-content/30 mx-auto mb-2" />
+                            <p className="text-sm font-bold text-base-content/50">{t('builder.noSections')}</p>
                         </div>
                     )}
                 </div>
 
-                <div className="p-4 border-t border-slate-200 bg-white">
+                <div className="p-4 border-t border-base-200 bg-base-100">
                     <button 
-                        className="w-full py-3 border border-slate-200 bg-white text-slate-600 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all flex items-center justify-center gap-2 shadow-sm" 
+                        className="w-full py-3 border border-base-200 bg-base-100 text-base-content font-bold rounded-xl hover:bg-base-200 hover:border-blue-400 transition-all flex items-center justify-center gap-2 shadow-sm" 
                         onClick={() => setIsLessonModalOpen(true)}
                     >
-                        <Plus size={16} strokeWidth={2.5} /> Добавить раздел
+                        <Plus size={16} strokeWidth={2.5} /> {t('builder.addSection')}
                     </button>
                 </div>
             </div>
 
             {/* === ПРАВАЯ КОЛОНКА === */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden bg-white relative">
+            <div className="flex-1 flex flex-col h-full overflow-hidden bg-base-100 relative">
                 
                 {isSettingsMode ? (
                     <CourseSettingsTab 
@@ -459,9 +441,9 @@ function CourseBuilder() {
                 ) : activeLesson ? (
                     <>
                         {/* Панель навигации по шагам */}
-                        <div className="bg-slate-50/50 border-b border-slate-200 px-8 py-4 flex items-center justify-between z-10 sticky top-0 backdrop-blur-sm">
+                        <div className="bg-base-200/30 border-b border-base-200 px-8 py-4 flex items-center justify-between z-10 sticky top-0 backdrop-blur-sm">
                             <div className="flex items-center gap-3 flex-1 overflow-x-auto no-scrollbar">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2 shrink-0">Шаги:</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2 shrink-0">{t('builder.stepsLabel')}</span>
                                 <div className="flex gap-2 items-center">
                                     {activeLesson.steps?.map((step, index) => {
                                         const isActive = activeStep?.id === step.id;
@@ -469,11 +451,12 @@ function CourseBuilder() {
                                             <button 
                                                 key={step.id}
                                                 onClick={() => setActiveStep(step)}
+                                                // 🟦 Активный шаг теперь синий
                                                 className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all border-2 
                                                     ${isActive 
-                                                        ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-105' 
-                                                        : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-700'}`}
-                                                title={step.title || `Шаг ${index + 1}`}
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20 scale-105' 
+                                                        : 'bg-base-100 border-base-200 text-base-content/50 hover:border-blue-400 hover:text-base-content'}`}
+                                                title={step.title || `${t('builder.stepLabel')} ${index + 1}`}
                                             >
                                                 {getStepIcon(step.step_type, 18)}
                                             </button>
@@ -481,26 +464,26 @@ function CourseBuilder() {
                                     })}
                                     <button 
                                         onClick={() => setIsStepModalOpen(true)} 
-                                        className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-white border-2 border-dashed border-slate-300 text-slate-400 hover:border-slate-900 hover:text-slate-900 transition-colors ml-2"
-                                        title="Добавить шаг"
+                                        className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-base-100 border-2 border-dashed border-base-300 text-base-content/40 hover:border-blue-600 hover:text-blue-600 transition-colors ml-2"
+                                        title={t('builder.addStep')}
                                     >
                                         <Plus size={20} strokeWidth={2.5} />
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="shrink-0 ml-6 pl-6 border-l border-slate-200">
+                            <div className="shrink-0 ml-6 pl-6 border-l border-base-200">
                                 <button 
                                     onClick={handleDeleteLesson} 
                                     className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
                                 >
-                                    <Trash2 size={14} /> Удалить раздел
+                                    <Trash2 size={14} /> {t('builder.deleteSection')}
                                 </button>
                             </div>
                         </div>
 
                         {/* Рабочая область */}
-                        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-slate-50/30">
+                        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-base-200/20">
                             {activeStep ? (
                                 <StepEditor 
                                     activeStep={activeStep} 
@@ -522,22 +505,22 @@ function CourseBuilder() {
                                 />
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-                                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 text-slate-300">
+                                    <div className="w-16 h-16 bg-base-200 rounded-2xl flex items-center justify-center mb-4 text-base-content/30">
                                         <Plus size={32} />
                                     </div>
-                                    <h3 className="text-xl font-black text-slate-900 mb-2">Создайте первый шаг</h3>
-                                    <p className="text-sm text-slate-500 font-medium">Нажмите на плюсик в верхней панели, чтобы добавить материал.</p>
+                                    <h3 className="text-xl font-black text-base-content mb-2">{t('builder.createFirstStep')}</h3>
+                                    <p className="text-sm text-base-content/50 font-medium">{t('builder.createFirstStepDesc')}</p>
                                 </div>
                             )}
                         </div>
                     </>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-[80vh] text-center bg-slate-50">
-                        <div className="w-20 h-20 bg-white border border-slate-200 shadow-sm rounded-3xl flex items-center justify-center mb-6 text-slate-300">
+                    <div className="flex flex-col items-center justify-center h-[80vh] text-center bg-base-200/20">
+                        <div className="w-20 h-20 bg-base-100 border border-base-200 shadow-sm rounded-3xl flex items-center justify-center mb-6 text-base-content/30">
                             <ChevronRight size={40} />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">Выберите раздел</h3>
-                        <p className="text-sm text-slate-500 font-medium max-w-sm">Выберите раздел в меню слева или создайте новый, чтобы начать наполнение курса.</p>
+                        <h3 className="text-2xl font-black text-base-content mb-2">{t('builder.selectSection')}</h3>
+                        <p className="text-sm text-base-content/50 font-medium max-w-sm">{t('builder.selectSectionDesc')}</p>
                     </div>
                 )}
             </div>
@@ -546,29 +529,29 @@ function CourseBuilder() {
 
             {/* Модалка: Новый раздел */}
             {isLessonModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in px-4">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/80 backdrop-blur-sm animate-in fade-in px-4">
+                    <div className="bg-base-100 rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="font-black text-xl text-slate-900">Новый раздел</h3>
-                            <button onClick={() => setIsLessonModalOpen(false)} className="text-slate-400 hover:text-slate-900 transition-colors"><X size={20} /></button>
+                            <h3 className="font-black text-xl text-base-content">{t('builder.newSectionTitle')}</h3>
+                            <button onClick={() => setIsLessonModalOpen(false)} className="text-base-content/40 hover:text-base-content transition-colors"><X size={20} /></button>
                         </div>
                         <div className="mb-8">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Название раздела</label>
+                            <label className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-2 block">{t('builder.sectionNameLabel')}</label>
                             <input 
                                 type="text" 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white focus:border-slate-900 outline-none transition-all" 
+                                className="w-full px-4 py-3 bg-base-200 border border-base-300 rounded-xl text-sm font-bold focus:bg-base-100 focus:border-blue-600 outline-none transition-all" 
                                 autoFocus 
-                                placeholder="Например: Введение в Python"
+                                placeholder={t('builder.sectionNamePh')}
                                 value={newLessonTitle} 
                                 onChange={(e) => setNewLessonTitle(e.target.value)} 
                             />
                         </div>
                         <button 
-                            className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-black transition-all shadow-md disabled:bg-slate-200 disabled:text-slate-400" 
+                            className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 disabled:bg-base-300 disabled:text-base-content/40 disabled:shadow-none" 
                             onClick={handleCreateLesson} 
                             disabled={!newLessonTitle.trim()}
                         >
-                            Создать раздел
+                            {t('builder.createBtn')}
                         </button>
                     </div>
                 </div>
@@ -576,35 +559,35 @@ function CourseBuilder() {
 
             {/* Модалка: Новый шаг */}
             {isStepModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in px-4">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 md:p-12 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/80 backdrop-blur-sm animate-in fade-in px-4">
+                    <div className="bg-base-100 rounded-3xl shadow-2xl max-w-3xl w-full p-8 md:p-12 animate-in zoom-in-95 duration-200">
                         <div className="text-center mb-10">
-                            <h3 className="font-black text-3xl text-slate-900 mb-2">Что добавим в урок?</h3>
-                            <p className="text-sm text-slate-500 font-medium">Выберите формат обучающего материала</p>
+                            <h3 className="font-black text-3xl text-base-content mb-2">{t('builder.whatToAdd')}</h3>
+                            <p className="text-sm text-base-content/50 font-medium">{t('builder.selectFormat')}</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {[
-                                { type: 'text', icon: <FileText size={32} strokeWidth={1.5} />, title: 'Текстовая теория', desc: 'Статьи и материалы' },
-                                { type: 'video_url', icon: <PlayCircle size={32} strokeWidth={1.5} />, title: 'Видеоролик', desc: 'Вставка из YouTube' },
-                                { type: 'quiz', icon: <HelpCircle size={32} strokeWidth={1.5} />, title: 'Тестирование', desc: 'С AI-генератором' },
-                                { type: 'simulation_chat', icon: <ShieldAlert size={32} strokeWidth={1.5} />, title: 'Симуляция', desc: 'Тренажеры фишинга', badge: 'AI' },
-                                { type: 'interactive_code', icon: <Code2 size={32} strokeWidth={1.5} />, title: 'Код', desc: 'Интерактивный IDE' },
+                                { type: 'text', icon: <FileText size={32} strokeWidth={1.5} />, title: t('builder.formats.text'), desc: t('builder.formats.textDesc') },
+                                { type: 'video_url', icon: <PlayCircle size={32} strokeWidth={1.5} />, title: t('builder.formats.video'), desc: t('builder.formats.videoDesc') },
+                                { type: 'quiz', icon: <HelpCircle size={32} strokeWidth={1.5} />, title: t('builder.formats.quiz'), desc: t('builder.formats.quizDesc') },
+                                { type: 'simulation_chat', icon: <ShieldAlert size={32} strokeWidth={1.5} />, title: t('builder.formats.sim'), desc: t('builder.formats.simDesc'), badge: 'AI' },
+                                { type: 'interactive_code', icon: <Code2 size={32} strokeWidth={1.5} />, title: t('builder.formats.code'), desc: t('builder.formats.codeDesc') },
                             ].map((item) => (
                                 <button 
                                     key={item.type} onClick={() => handleCreateStep(item.type)} 
-                                    className="flex flex-col items-center justify-center p-6 border-2 border-slate-100 bg-slate-50/50 rounded-2xl hover:border-slate-900 hover:bg-white hover:shadow-lg transition-all group relative text-center"
+                                    className="flex flex-col items-center justify-center p-6 border-2 border-base-200 bg-base-200/30 rounded-2xl hover:border-blue-600 hover:bg-base-100 hover:shadow-lg transition-all group relative text-center"
                                 >
-                                    {item.badge && <span className="absolute top-4 right-4 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-black uppercase tracking-widest">{item.badge}</span>}
-                                    <div className="text-slate-400 group-hover:text-slate-900 group-hover:scale-110 transition-all duration-300 mb-4">
+                                    {item.badge && <span className="absolute top-4 right-4 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px] font-black uppercase tracking-widest">{item.badge}</span>}
+                                    <div className="text-base-content/40 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-300 mb-4">
                                         {item.icon}
                                     </div>
-                                    <span className="font-bold text-slate-900 mb-1">{item.title}</span>
-                                    <span className="text-xs text-slate-500 font-medium">{item.desc}</span>
+                                    <span className="font-bold text-base-content mb-1">{item.title}</span>
+                                    <span className="text-xs text-base-content/50 font-medium">{item.desc}</span>
                                 </button>
                             ))}
                         </div>
                         <div className="mt-10 text-center">
-                            <button className="text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors" onClick={() => setIsStepModalOpen(false)}>Отмена</button>
+                            <button className="text-sm font-bold text-base-content/50 hover:text-base-content transition-colors" onClick={() => setIsStepModalOpen(false)}>{t('builder.cancel')}</button>
                         </div>
                     </div>
                 </div>
@@ -612,13 +595,13 @@ function CourseBuilder() {
 
             {/* Диалог подтверждения (Удаление) */}
             {confirmDialog.isOpen && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in px-4">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200 text-center">
-                        <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-6">
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-base-300/80 backdrop-blur-sm animate-in fade-in px-4">
+                    <div className="bg-base-100 rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200 text-center">
+                        <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center text-red-500 mb-6">
                             <AlertTriangle size={32} strokeWidth={2} />
                         </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-3">{confirmDialog.title}</h3>
-                        <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">{confirmDialog.message}</p>
+                        <h3 className="text-xl font-black text-base-content mb-3">{confirmDialog.title}</h3>
+                        <p className="text-sm text-base-content/50 font-medium mb-8 leading-relaxed">{confirmDialog.message}</p>
                         <div className="flex flex-col gap-3">
                             <button 
                                 className="w-full py-3.5 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors shadow-md shadow-red-500/20" 
@@ -627,10 +610,10 @@ function CourseBuilder() {
                                 {confirmDialog.confirmText}
                             </button>
                             <button 
-                                className="w-full py-3.5 bg-slate-50 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-colors" 
+                                className="w-full py-3.5 bg-base-200 text-base-content rounded-xl font-bold hover:bg-base-300 transition-colors" 
                                 onClick={closeDialog}
                             >
-                                Отмена
+                                {t('builder.cancel')}
                             </button>
                         </div>
                     </div>

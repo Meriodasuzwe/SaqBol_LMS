@@ -2395,6 +2395,7 @@ WARNING 2026-04-23 13:52:53,482 | ACCESS DENIED: [401] POST /api/users/login/ (U
 INFO 2026-04-23 13:52:57,124 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.101s
 INFO 2026-04-23 13:59:13,803 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.103s
 INFO 2026-04-23 14:03:28,543 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.297s
+<<<<<<< Updated upstream
 INFO 2026-04-24 13:31:10,768 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.116s
 WARNING 2026-04-24 14:01:36,335 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 WARNING 2026-04-24 14:02:36,068 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
@@ -2438,3 +2439,16 @@ INFO 2026-04-24 14:32:49,765 | ACTION: [200] POST /api/courses/certificates/f1a1
 INFO 2026-04-24 14:32:50,556 | ACTION: [200] POST /api/courses/certificates/f1a1f62d-404e-4f50-83d4-85a09c8d24ea/change-language/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.100s
 INFO 2026-04-24 14:45:22,888 | ACTION: [200] POST /api/users/telegram-auth/ (User:  [ID:None], IP: 172.18.0.1) - 0.008s
 INFO 2026-04-24 14:45:39,551 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.097s
+=======
+INFO 2026-04-24 15:11:46,600 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.094s
+WARNING 2026-04-25 12:43:16,945 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.014s
+WARNING 2026-04-25 12:43:16,945 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.013s
+WARNING 2026-04-25 12:43:16,950 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-25 12:43:16,951 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-25 12:43:16,955 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-25 12:43:16,958 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-04-25 12:43:27,363 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.110s
+INFO 2026-04-25 12:45:51,035 | ACTION: [201] POST /api/courses/lessons/57/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
+INFO 2026-04-25 12:46:03,334 | ACTION: [200] PATCH /api/courses/steps/85/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-25 12:46:18,179 | ACTION: [200] POST /api/courses/steps/85/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
+>>>>>>> Stashed changes
