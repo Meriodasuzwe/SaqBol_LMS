@@ -568,3 +568,19 @@ INFO 2026-04-25 13:57:18,381 | SCENARIO REQUEST | user_id=1 | type=chat | topic=
 INFO 2026-04-25 13:57:20,581 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-25 13:57:20,585 | SCENARIO SUCCESS | user_id=1 | type=chat
 INFO 2026-04-25 13:57:20,587 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.213s
+INFO 2026-04-25 14:11:07,683 | SCENARIO REQUEST | user_id=1 | type=chat | topic=салық қызметінен хат | difficulty=medium | lang=Казахский
+INFO 2026-04-25 14:11:11,549 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-25 14:11:11,552 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-25 14:11:11,553 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.878s
+INFO 2026-04-25 14:11:36,701 | SCENARIO REQUEST | user_id=1 | type=chat | topic=somebody called Saul asks to lend a money | difficulty=medium | lang=Казахский
+INFO 2026-04-25 14:11:42,654 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-25 14:11:42,656 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-25 14:11:42,657 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 5.957s
+INFO 2026-04-25 14:11:49,354 | SCENARIO REQUEST | user_id=1 | type=chat | topic=somebody called Saul asks to lend a money | difficulty=medium | lang=English
+INFO 2026-04-25 14:11:54,965 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-25 14:11:54,967 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-25 14:11:54,968 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 5.616s
+INFO 2026-04-25 14:12:09,911 | SCENARIO REQUEST | user_id=1 | type=chat | topic=сауль просит денег | difficulty=medium | lang=English
+INFO 2026-04-25 14:12:12,220 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-25 14:12:12,222 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-25 14:12:12,223 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.313s

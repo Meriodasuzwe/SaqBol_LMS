@@ -118,7 +118,7 @@ function VerifyCertificate() {
                     {/* ТУМБЛЕР ЯЗЫКОВ */}
                     <div className="w-full flex items-center justify-between mb-6">
                         <p className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-1.5">
-                            <Globe size={14} /> Язык документа
+                            <Globe size={14} /> {t('verify.langCertificate')}
                         </p>
                         
                         <div className="flex bg-base-300/50 p-1 rounded-lg">

@@ -222,11 +222,19 @@ class MyCoursesView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # Авторы видят все свои курсы (и опубликованные, и черновики)
-        if user.role in ['teacher', 'admin'] or user.is_staff:
-            return Course.objects.filter(teacher=user)
         
+        # 1. Сначала всегда получаем ID курсов, на которые юзер ЗАПИСАН как студент
         enrolled_course_ids = Enrollment.objects.filter(student=user).values_list('course_id', flat=True)
+        
+        # 2. Если это препод или админ
+        if user.role in ['teacher', 'admin'] or user.is_staff:
+            # Возвращаем И созданные им курсы, И те, куда он записался
+            # .distinct() нужен, чтобы курсы не дублировались, если препод записался на свой же курс
+            return Course.objects.filter(
+                Q(teacher=user) | Q(id__in=enrolled_course_ids)
+            ).distinct()
+        
+        # 3. Для обычных студентов логика остается прежней — только те, куда записан
         return Course.objects.filter(id__in=enrolled_course_ids)
 
 
