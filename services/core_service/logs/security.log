@@ -2452,3 +2452,36 @@ INFO 2026-04-25 12:45:51,035 | ACTION: [201] POST /api/courses/lessons/57/steps/
 INFO 2026-04-25 12:46:03,334 | ACTION: [200] PATCH /api/courses/steps/85/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
 INFO 2026-04-25 12:46:18,179 | ACTION: [200] POST /api/courses/steps/85/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
 >>>>>>> Stashed changes
+INFO 2026-04-25 14:04:02,248 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.098s
+INFO 2026-04-25 14:16:23,850 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-25 14:16:23,860 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-04-25 14:19:57,915 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-04-25 14:19:57,925 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-04-25 14:19:59,409 | ACTION: [200] GET /api/courses/admin/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-04-25 14:24:44,441 | ACTION: [201] POST /api/courses/lessons/62/steps/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.034s
+WARNING 2026-04-26 13:15:18,426 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.014s
+WARNING 2026-04-26 13:15:18,427 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.014s
+WARNING 2026-04-26 13:15:18,431 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-26 13:15:18,433 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-26 13:15:18,438 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-04-26 13:15:18,443 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-04-26 13:15:24,579 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.103s
+INFO 2026-04-26 13:15:34,303 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-04-26 13:15:34,313 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-04-26 13:21:33,733 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-04-26 13:25:46,870 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-04-26 13:25:52,316 | ACTION: [200] POST /api/courses/steps/70/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.022s
+INFO 2026-04-26 13:25:54,414 | ACTION: [200] POST /api/courses/steps/71/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-04-26 13:25:55,742 | ACTION: [200] POST /api/courses/steps/72/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-04-26 13:26:08,812 | ACTION: [200] POST /api/quizzes/92/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
+INFO 2026-04-26 13:26:08,843 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.023s
+INFO 2026-04-26 13:26:25,342 | ACTION: [200] POST /api/quizzes/92/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.014s
+INFO 2026-04-26 13:26:25,377 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.027s
+INFO 2026-04-26 13:26:51,757 | ACTION: [200] POST /api/quizzes/92/submit/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-04-26 13:26:51,796 | ACTION: [201] POST /api/analytics/quiz-attempt/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.029s
+INFO 2026-04-26 13:26:59,342 | ACTION: [200] POST /api/courses/steps/70/complete/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
+INFO 2026-04-26 13:28:42,995 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-04-26 13:29:18,979 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-04-26 13:30:34,386 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-04-26 13:30:54,483 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.013s
+INFO 2026-04-26 13:35:59,991 | ACTION: [200] POST /api/courses/21/enroll/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s

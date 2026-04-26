@@ -1,20 +1,23 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next'; // ✅ Импортируем хук переводов
 import api from './api';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
+// ✅ Импортируем строгие иконки
+import { 
+  Users, GraduationCap, BookOpen, UserPlus, Library, CheckCircle, 
+  FileText, Zap, UserCheck, BarChart2, Target, Award 
+} from 'lucide-react';
 
 const BLUE   = '#2563EB';
-const BLUE_L = '#EFF6FF';
 const GREEN  = '#059669';
-const GREEN_L= '#F0FDF4';
 const AMBER  = '#D97706';
 const RED    = '#DC2626';
 const GRAY_1 = '#0F172A';
 const GRAY_2 = '#475569';
 const GRAY_3 = '#94A3B8';
-const GRAY_4 = '#F8FAFC';
 const GRAY_5 = '#E2E8F0';
 const BORDER = '1px solid #E2E8F0';
 const SHADOW = '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)';
@@ -46,10 +49,11 @@ function StatCard({ label, value, sub, accent = BLUE, icon }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 8,
-          background: accent + '14',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18,
-        }}>{icon}</div>
+          background: accent + '14', color: accent, // ✅ Цвет иконки соответствует акценту
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          {icon}
+        </div>
       </div>
       <div style={{ fontSize: 28, fontWeight: 800, color: GRAY_1, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: GRAY_2, marginTop: 4 }}>{label}</div>
@@ -81,6 +85,8 @@ function MiniBar({ label, value, max, color = BLUE }) {
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 
 export default function AdminStats() {
+  const { t, i18n } = useTranslation(); // ✅ Инициализируем переводы
+  
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(null);
@@ -88,9 +94,9 @@ export default function AdminStats() {
   useEffect(() => {
     api.get('users/stats/')
       .then(r => { setData(r.data); setError(null); })
-      .catch(e => setError(e.response?.data?.detail || 'Ошибка загрузки'))
+      .catch(e => setError(e.response?.data?.detail || t('adminStats.error')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
@@ -107,9 +113,12 @@ export default function AdminStats() {
 
   const { users, courses, activity, top_courses, registrations_by_day } = data;
 
-  // Форматируем даты для графика
+  // Форматируем даты для графика в зависимости от текущего языка (ru, kk, en)
+  const localeMap = { 'ru': 'ru-RU', 'kk': 'kk-KZ', 'en': 'en-US' };
+  const currentLocale = localeMap[i18n.language] || 'ru-RU';
+
   const regChart = registrations_by_day.map(d => ({
-    day: new Date(d.day).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+    day: new Date(d.day).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' }),
     count: d.count,
   }));
 
@@ -126,44 +135,44 @@ export default function AdminStats() {
       {/* Заголовок */}
       <div style={{ marginBottom: 28 }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 6px' }}>
-          Администрирование
+          {t('adminStats.subtitle')}
         </p>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: GRAY_1, margin: 0 }}>
-          Статистика платформы
+          {t('adminStats.title')}
         </h1>
       </div>
 
       {/* ── Строка 1: Пользователи ── */}
       <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 12px' }}>
-        Пользователи
+        {t('adminStats.sections.users')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard icon="👥" label="Всего пользователей" value={users.total}         accent={BLUE}  sub={`+${users.new_this_week} за неделю`} />
-        <StatCard icon="🎓" label="Студентов"           value={users.students}      accent={BLUE} />
-        <StatCard icon="📚" label="Преподавателей"      value={users.teachers}      accent={GREEN} />
-        <StatCard icon="🆕" label="Новых за месяц"      value={users.new_this_month} accent={AMBER} />
+        <StatCard icon={<Users size={20} />} label={t('adminStats.users.total')} value={users.total}         accent={BLUE}  sub={t('adminStats.users.subNewWeek', { count: users.new_this_week })} />
+        <StatCard icon={<GraduationCap size={20} />} label={t('adminStats.users.students')}      value={users.students}      accent={BLUE} />
+        <StatCard icon={<Library size={20} />} label={t('adminStats.users.teachers')}      value={users.teachers}      accent={GREEN} />
+        <StatCard icon={<UserPlus size={20} />} label={t('adminStats.users.new')}      value={users.new_this_month} accent={AMBER} />
       </div>
 
       {/* ── Строка 2: Курсы ── */}
       <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 12px' }}>
-        Контент
+        {t('adminStats.sections.content')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard icon="📖" label="Всего курсов"     value={courses.total}     accent={BLUE} />
-        <StatCard icon="✅" label="Опубликовано"     value={courses.published}  accent={GREEN} sub={`${courses.pending} на модерации`} />
-        <StatCard icon="📝" label="Всего уроков"     value={courses.lessons}    accent='#6366F1' />
-        <StatCard icon="⚡" label="Всего шагов"      value={courses.steps}      accent={AMBER} />
+        <StatCard icon={<BookOpen size={20} />} label={t('adminStats.courses.total')}     value={courses.total}     accent={BLUE} />
+        <StatCard icon={<CheckCircle size={20} />} label={t('adminStats.courses.published')}     value={courses.published}  accent={GREEN} sub={t('adminStats.courses.pendingSub', { count: courses.pending })} />
+        <StatCard icon={<FileText size={20} />} label={t('adminStats.courses.lessons')}     value={courses.lessons}    accent='#6366F1' />
+        <StatCard icon={<Zap size={20} />} label={t('adminStats.courses.steps')}      value={courses.steps}      accent={AMBER} />
       </div>
 
       {/* ── Строка 3: Активность ── */}
       <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GRAY_3, margin: '0 0 12px' }}>
-        Активность
+        {t('adminStats.sections.activity')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 28 }}>
-        <StatCard icon="🔗" label="Всего записей на курсы" value={activity.total_enrollments} accent={BLUE}  sub={`+${activity.enrollments_30d} за месяц`} />
-        <StatCard icon="📊" label="Тестов пройдено"        value={activity.total_quiz_results} accent='#6366F1' />
-        <StatCard icon="🎯" label="Средний балл"           value={`${activity.avg_quiz_score}%`} accent={activity.avg_quiz_score >= 70 ? GREEN : AMBER} />
-        <StatCard icon="🏆" label="Процент сдачи"          value={`${activity.pass_rate}%`}    accent={activity.pass_rate >= 70 ? GREEN : RED} sub="порог ≥70%" />
+        <StatCard icon={<UserCheck size={20} />} label={t('adminStats.activity.enrollments')} value={activity.total_enrollments} accent={BLUE}  sub={t('adminStats.activity.enrollmentsSub', { count: activity.enrollments_30d })} />
+        <StatCard icon={<BarChart2 size={20} />} label={t('adminStats.activity.quizzes')}        value={activity.total_quiz_results} accent='#6366F1' />
+        <StatCard icon={<Target size={20} />} label={t('adminStats.activity.avgScore')}          value={`${activity.avg_quiz_score}%`} accent={activity.avg_quiz_score >= 70 ? GREEN : AMBER} />
+        <StatCard icon={<Award size={20} />} label={t('adminStats.activity.passRate')}          value={`${activity.pass_rate}%`}    accent={activity.pass_rate >= 70 ? GREEN : RED} sub={t('adminStats.activity.passRateSub')} />
       </div>
 
       {/* ── Графики ── */}
@@ -171,8 +180,8 @@ export default function AdminStats() {
 
         {/* Регистрации по дням */}
         <Card style={{ padding: 24 }}>
-          <SectionTitle sub="Новые пользователи за последние 14 дней">
-            Регистрации
+          <SectionTitle sub={t('adminStats.charts.regsSub')}>
+            {t('adminStats.charts.regsTitle')}
           </SectionTitle>
           {regChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
@@ -182,7 +191,7 @@ export default function AdminStats() {
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: GRAY_3 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{ borderRadius: 10, border: BORDER, fontSize: 12, boxShadow: SHADOW }}
-                  formatter={v => [v, 'Регистраций']}
+                  formatter={v => [v, t('adminStats.charts.regsTooltip')]}
                 />
                 <Line type="monotone" dataKey="count" stroke={BLUE} strokeWidth={2.5}
                   dot={{ r: 3, fill: BLUE }} activeDot={{ r: 5 }} />
@@ -190,15 +199,15 @@ export default function AdminStats() {
             </ResponsiveContainer>
           ) : (
             <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontSize: 13, color: GRAY_3, margin: 0 }}>Нет данных за последние 14 дней</p>
+              <p style={{ fontSize: 13, color: GRAY_3, margin: 0 }}>{t('adminStats.charts.regsEmpty')}</p>
             </div>
           )}
         </Card>
 
         {/* Топ курсов */}
         <Card style={{ padding: 24 }}>
-          <SectionTitle sub="По количеству записавшихся студентов">
-            Топ курсов
+          <SectionTitle sub={t('adminStats.charts.topSub')}>
+            {t('adminStats.charts.topTitle')}
           </SectionTitle>
           {topChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
@@ -208,7 +217,7 @@ export default function AdminStats() {
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: GRAY_2 }} axisLine={false} tickLine={false} width={100} />
                 <Tooltip
                   contentStyle={{ borderRadius: 10, border: BORDER, fontSize: 12, boxShadow: SHADOW }}
-                  formatter={v => [v, 'Студентов']}
+                  formatter={v => [v, t('adminStats.charts.topTooltip')]}
                 />
                 <Bar dataKey="enrollments" radius={[0, 4, 4, 0]}>
                   {topChart.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
@@ -217,7 +226,7 @@ export default function AdminStats() {
             </ResponsiveContainer>
           ) : (
             <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontSize: 13, color: GRAY_3, margin: 0 }}>Нет опубликованных курсов</p>
+              <p style={{ fontSize: 13, color: GRAY_3, margin: 0 }}>{t('adminStats.charts.topEmpty')}</p>
             </div>
           )}
         </Card>
@@ -225,15 +234,15 @@ export default function AdminStats() {
 
       {/* ── Распределение курсов ── */}
       <Card style={{ padding: 24 }}>
-        <SectionTitle sub="Статусы всех курсов на платформе">
-          Распределение курсов
+        <SectionTitle sub={t('adminStats.dist.sub')}>
+          {t('adminStats.dist.title')}
         </SectionTitle>
         <div style={{ maxWidth: 480 }}>
-          <MiniBar label="Опубликованные"   value={courses.published} max={courses.total} color={GREEN} />
-          <MiniBar label="Черновики"        value={courses.draft}     max={courses.total} color={GRAY_3} />
-          <MiniBar label="На модерации"     value={courses.pending}   max={courses.total} color={AMBER} />
+          <MiniBar label={t('adminStats.dist.published')}   value={courses.published} max={courses.total} color={GREEN} />
+          <MiniBar label={t('adminStats.dist.draft')}        value={courses.draft}     max={courses.total} color={GRAY_3} />
+          <MiniBar label={t('adminStats.dist.pending')}     value={courses.pending}   max={courses.total} color={AMBER} />
           <MiniBar
-            label="Отклонённые"
+            label={t('adminStats.dist.rejected')}
             value={courses.total - courses.published - courses.draft - courses.pending}
             max={courses.total}
             color={RED}

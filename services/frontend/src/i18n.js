@@ -562,6 +562,7 @@ const resources = {
         completedText: "Успешно завершил(а) курс:",
         issueDate: "Дата выдачи",
         certId: "ID сертификата",
+        langCertificate:"Язык сертификата",
         originalDoc: "Оригинал документа",
         openFull: "Открыть в полном размере",
         noImage: "Изображение недоступно"
@@ -575,6 +576,7 @@ const resources = {
         addSection: "Добавить раздел",
         stepsLabel: "Шаги:",
         addStep: "Добавить шаг",
+        saveStep: "Сохранить шаг",
         deleteSection: "Удалить раздел",
         createFirstStep: "Создайте первый шаг",
         createFirstStepDesc: "Нажмите на плюсик в верхней панели, чтобы добавить материал.",
@@ -671,6 +673,154 @@ const resources = {
           "optionsLabel": "Варианты ответов (отметьте верный)",
           "optionPh": "Вариант {{num}}"
       },
+      "admin": {
+    "title": "Модерация контента",
+    "subtitle": "Проверьте материалы перед публикацией в системе.",
+    "tabs": {
+        "apps": "Заявки в авторы",
+        "courses": "Новые курсы"
+    },
+    "loading": "Загрузка...",
+    "empty": "Нет материалов на модерации",
+    "app": {
+        "role": "Подал заявку на автора",
+        "about": "О себе:",
+        "portfolio": "Портфолио"
+    },
+    "course": {
+        "authorFallback": "Автор",
+        "lessonsCount": "уроков"
+    },
+    "actions": {
+        "view": "Просмотр",
+        "approve": "Одобрить",
+        "publish": "Опубликовать",
+        "cancel": "Отмена",
+        "send": "Отправить"
+    },
+    "modal": {
+        "rejectTitle": "Отклонить публикацию",
+        "object": "Объект:",
+        "reasonLabel": "Причина отказа (будет видна автору)",
+        "reasonPlaceholder": "Например: недостаточно материалов, плохое качество видео..."
+    },
+    "toasts": {
+        "loadError": "Не удалось загрузить данные",
+        "reasonRequired": "Пожалуйста, укажите причину отклонения",
+        "rejected": "Отклонено. Автор получит уведомление.",
+        "rejectError": "Ошибка при выполнении действия",
+        "approved": "Одобрено успешно!",
+        "approveError": "Ошибка при одобрении"
+    }
+},
+"adminStats": {
+    "title": "Статистика платформы",
+    "subtitle": "Администрирование",
+    "loading": "Загрузка...",
+    "error": "Ошибка загрузки",
+    "sections": {
+        "users": "Пользователи",
+        "content": "Контент",
+        "activity": "Активность"
+    },
+    "users": {
+        "total": "Всего пользователей",
+        "students": "Студентов",
+        "teachers": "Преподавателей",
+        "new": "Новых за месяц",
+        "subNewWeek": "+{{count}} за неделю"
+    },
+    "courses": {
+        "total": "Всего курсов",
+        "published": "Опубликовано",
+        "pendingSub": "{{count}} на модерации",
+        "lessons": "Всего уроков",
+        "steps": "Всего шагов"
+    },
+    "activity": {
+        "enrollments": "Всего записей на курсы",
+        "enrollmentsSub": "+{{count}} за месяц",
+        "quizzes": "Тестов пройдено",
+        "avgScore": "Средний балл",
+        "passRate": "Процент сдачи",
+        "passRateSub": "порог ≥70%"
+    },
+    "charts": {
+        "regsTitle": "Регистрации",
+        "regsSub": "Новые пользователи за последние 14 дней",
+        "regsEmpty": "Нет данных за последние 14 дней",
+        "regsTooltip": "Регистраций",
+        "topTitle": "Топ курсов",
+        "topSub": "По количеству записавшихся студентов",
+        "topEmpty": "Нет опубликованных курсов",
+        "topTooltip": "Студентов"
+    },
+    "dist": {
+        "title": "Распределение курсов",
+        "sub": "Статусы всех курсов на платформе",
+        "published": "Опубликованные",
+        "draft": "Черновики",
+        "pending": "На модерации",
+        "rejected": "Отклонённые"
+    }
+},
+"courseDetail": {
+    "library": "Библиотека",
+    "graduateTitle": "Выпускник курса! 🎉",
+    "graduateDesc": "Вы изучили все материалы и сдали финальные тесты.",
+    "viewAchievements": "Смотреть достижения",
+    "instructor": "Инструктор",
+    "instructorFallback": "Команда платформы",
+    "priceLabel": "Стоимость доступа",
+    "free": "Бесплатно",
+    "success": "Успешно!",
+    "enrollBtn": "Записаться на курс",
+    "loginToEnroll": "Войти и начать",
+    "fullAccess": "Полный доступ ко всем интерактивным модулям",
+    "selfPaced": "Обучение в собственном темпе",
+    "syllabus": "Программа обучения",
+    "section": "Раздел",
+    "stepFallback": "Шаг",
+    "passed": "Пройдено",
+    "continue": "Продолжить обучение",
+    "start": "Начать обучение",
+    "certificates": "Ваши сертификаты",
+    "locked": "Заблокировано",
+    "enrollToUnlock": "Запишитесь на курс, чтобы открыть этот материал",
+    "stepTypes": {
+        "interactive": "Интерактив",
+        "phishing": "Фишинг",
+        "video": "Видео",
+        "quiz": "Тест",
+        "code": "Код",
+        "theory": "Теория"
+    }
+},
+"reviewSection": {
+    "title": "Отзывы студентов",
+    "leaveReview": "Оставьте свой отзыв",
+    "outOf5": "из 5",
+    "selectRating": "Выберите оценку",
+    "placeholder": "Поделитесь своими впечатлениями о курсе...",
+    "submitting": "Отправка...",
+    "submitBtn": "Отправить отзыв",
+    "restriction": "Чтобы оставить отзыв, пройдите минимум 20% курса.",
+    "empty": "Пока нет отзывов. Станьте первым!",
+    "studentFallback": "Студент #",
+    "anonymous": "Аноним",
+    "yourReview": "Ваш отзыв",
+    "delete": "Удалить",
+    "confirmDelete": "Вы уверены, что хотите удалить свой отзыв?",
+    "toasts": {
+        "loadError": "Ошибка загрузки отзывов",
+        "ratingRequired": "Пожалуйста, выберите оценку от 1 до 5",
+        "textRequired": "Текст отзыва не может быть пустым",
+        "addSuccess": "Отзыв успешно добавлен!",
+        "addError": "Ошибка при отправке отзыва",
+        "delSuccess": "Отзыв успешно удален!",
+        "delError": "Не удалось удалить отзыв. Возможно, у вас нет прав."
+    }
+},
       footer: {
         desc: "Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.",
         col1Title: "Платформа",
@@ -730,7 +880,7 @@ const resources = {
         "Законодательства РК": "ҚР Заңнамасы",
         "Информационная безопасность": "Ақпараттық қауіпсіздік",
         "Кибергигиена и осведомленность": "Кибергигиена және хабардарлық",
-        "Безопасная разработка (DevSecOps)": "Қауіпсіз әзірлеу (DevSecOps)",
+        "Безопасная разработка (DevSecOps)": "Қауіпсіздікке бағытталған бағдарламалау (DevSecOps)",
         "Сетевая безопасность и Инфраструктура": "Желілік қауіпсіздік және Инфрақұрылым",
         
       },
@@ -1248,6 +1398,7 @@ const resources = {
         notFoundDesc: "Сілтеме ескірген немесе сертификат қайтарып алынған болуы мүмкін.",
         backToHome: "SaqBol басты бетіне",
         verifiedBadge: "Түпнұсқа сертификат",
+        langCertificate: "Сертификат тілі",
         completedText: "Курсты сәтті аяқтады:",
         issueDate: "Берілген күні",
         certId: "Сертификат ID",
@@ -1377,6 +1528,154 @@ const resources = {
       "optionsLabel": "Жауап нұсқалары (дұрысын белгілеңіз)",
       "optionPh": "Нұсқа {{num}}"
     },
+    "admin": {
+    "title": "Контентті модерациялау",
+    "subtitle": "Жүйеде жарияламас бұрын материалдарды тексеріңіз.",
+    "tabs": {
+        "apps": "Авторлыққа өтінімдер",
+        "courses": "Жаңа курстар"
+    },
+    "loading": "Жүктелуде...",
+    "empty": "Модерацияда материалдар жоқ",
+    "app": {
+        "role": "Автор болуға өтінім берді",
+        "about": "Өзі туралы:",
+        "portfolio": "Портфолио"
+    },
+    "course": {
+        "authorFallback": "Автор",
+        "lessonsCount": "сабақ"
+    },
+    "actions": {
+        "view": "Қарау",
+        "approve": "Мақұлдау",
+        "publish": "Жариялау",
+        "cancel": "Болдырмау",
+        "send": "Жіберу"
+    },
+    "modal": {
+        "rejectTitle": "Жариялаудан бас тарту",
+        "object": "Нысан:",
+        "reasonLabel": "Бас тарту себебі (авторға көрінеді)",
+        "reasonPlaceholder": "Мысалы: материалдар жеткіліксіз, бейне сапасы нашар..."
+    },
+    "toasts": {
+        "loadError": "Деректерді жүктеу мүмкін болмады",
+        "reasonRequired": "Бас тарту себебін көрсетіңіз",
+        "rejected": "Қабылданбады. Авторға хабарлама жіберіледі.",
+        "rejectError": "Әрекетті орындау кезінде қате пайда болды",
+        "approved": "Сәтті мақұлданды!",
+        "approveError": "Мақұлдау кезінде қате пайда болды"
+    }
+},
+"adminStats": {
+    "title": "Платформа статистикасы",
+    "subtitle": "Әкімшілендіру",
+    "loading": "Жүктелуде...",
+    "error": "Жүктеу қатесі",
+    "sections": {
+        "users": "Пайдаланушылар",
+        "content": "Контент",
+        "activity": "Белсенділік"
+    },
+    "users": {
+        "total": "Барлық пайдаланушы",
+        "students": "Студенттер",
+        "teachers": "Оқытушылар",
+        "new": "Осы айда жаңа",
+        "subNewWeek": "аптасына +{{count}}"
+    },
+    "courses": {
+        "total": "Барлық курстар",
+        "published": "Жарияланды",
+        "pendingSub": "модерацияда {{count}}",
+        "lessons": "Барлық сабақтар",
+        "steps": "Барлық қадамдар"
+    },
+    "activity": {
+        "enrollments": "Курстарға барлық жазылу",
+        "enrollmentsSub": "айына +{{count}}",
+        "quizzes": "Тесттер тапсырылды",
+        "avgScore": "Орташа балл",
+        "passRate": "Тапсыру пайызы",
+        "passRateSub": "шек ≥70%"
+    },
+    "charts": {
+        "regsTitle": "Тіркелулер",
+        "regsSub": "Соңғы 14 күндегі жаңа пайдаланушылар",
+        "regsEmpty": "Соңғы 14 күнде деректер жоқ",
+        "regsTooltip": "Тіркелулер",
+        "topTitle": "Үздік курстар",
+        "topSub": "Жазылған студенттер саны бойынша",
+        "topEmpty": "Жарияланған курстар жоқ",
+        "topTooltip": "Студенттер"
+    },
+    "dist": {
+        "title": "Курстарды бөлу",
+        "sub": "Платформадағы барлық курстардың мәртебесі",
+        "published": "Жарияланған",
+        "draft": "Қараламалар",
+        "pending": "Модерацияда",
+        "rejected": "Қабылданбаған"
+    }
+},
+"courseDetail": {
+    "library": "Кітапхана",
+    "graduateTitle": "Курс түлегі! 🎉",
+    "graduateDesc": "Сіз барлық материалдарды оқып, қорытынды тесттерді тапсырдыңыз.",
+    "viewAchievements": "Жетістіктерді көру",
+    "instructor": "Нұсқаушы",
+    "instructorFallback": "Платформа командасы",
+    "priceLabel": "Қол жеткізу құны",
+    "free": "Тегін",
+    "success": "Сәтті!",
+    "enrollBtn": "Курсқа жазылу",
+    "loginToEnroll": "Кіріп, бастау",
+    "fullAccess": "Барлық интерактивті модульдерге толық қол жеткізу",
+    "selfPaced": "Өз қарқыныңызбен оқу",
+    "syllabus": "Оқу бағдарламасы",
+    "section": "Бөлім",
+    "stepFallback": "Қадам",
+    "passed": "Өтілді",
+    "continue": "Оқуды жалғастыру",
+    "start": "Оқуды бастау",
+    "certificates": "Сіздің сертификаттарыңыз",
+    "locked": "Бұғатталған",
+    "enrollToUnlock": "Бұл материалды ашу үшін курсқа жазылыңыз",
+    "stepTypes": {
+        "interactive": "Интерактив",
+        "phishing": "Фишинг",
+        "video": "Бейне",
+        "quiz": "Тест",
+        "code": "Код",
+        "theory": "Теория"
+    }
+},
+"reviewSection": {
+    "title": "Студенттердің пікірлері",
+    "leaveReview": "Пікіріңізді қалдырыңыз",
+    "outOf5": "5-тен",
+    "selectRating": "Бағаны таңдаңыз",
+    "placeholder": "Курс туралы әсеріңізбен бөлісіңіз...",
+    "submitting": "Жіберілуде...",
+    "submitBtn": "Пікір жіберу",
+    "restriction": "Пікір қалдыру үшін курстың кем дегенде 20% өтіңіз.",
+    "empty": "Әзірге пікірлер жоқ. Бірінші болыңыз!",
+    "studentFallback": "Студент #",
+    "anonymous": "Аноним",
+    "yourReview": "Сіздің пікіріңіз",
+    "delete": "Жою",
+    "confirmDelete": "Пікіріңізді жойғыңыз келетініне сенімдісіз бе?",
+    "toasts": {
+        "loadError": "Пікірлерді жүктеу қатесі",
+        "ratingRequired": "1-ден 5-ке дейін бағаны таңдаңыз",
+        "textRequired": "Пікір мәтіні бос болмауы керек",
+        "addSuccess": "Пікір сәтті қосылды!",
+        "addError": "Пікірді жіберу кезінде қате пайда болды",
+        "delSuccess": "Пікір сәтті жойылды!",
+        "delError": "Пікірді жою мүмкін болмады. Құқығыңыз жоқ болуы мүмкін."
+    }
+},
       footer: {
         desc: "Корпоративтік оқытуға және қызметкерлердің цифрлық сауаттылығын арттыруға арналған зияткерлік платформа.",
         col1Title: "Платформа",
@@ -1955,6 +2254,7 @@ const resources = {
         notFoundDesc: "The link might be expired, or the certificate has been revoked.",
         backToHome: "Back to SaqBol Home",
         verifiedBadge: "Verified Certificate",
+        langCertificate: "Certificate Language",
         completedText: "Successfully completed the course:",
         issueDate: "Issue Date",
         certId: "Certificate ID",
@@ -2085,6 +2385,154 @@ const resources = {
         "coursePrice": "Price (in tenge)",
         "saveSettingsBtn": "Save Settings"
     },
+    "admin": {
+    "title": "Content Moderation",
+    "subtitle": "Review materials before publishing them in the system.",
+    "tabs": {
+        "apps": "Author Applications",
+        "courses": "New Courses"
+    },
+    "loading": "Loading...",
+    "empty": "No materials pending moderation",
+    "app": {
+        "role": "Applied for author role",
+        "about": "About:",
+        "portfolio": "Portfolio"
+    },
+    "course": {
+        "authorFallback": "Author",
+        "lessonsCount": "lessons"
+    },
+    "actions": {
+        "view": "View",
+        "approve": "Approve",
+        "publish": "Publish",
+        "cancel": "Cancel",
+        "send": "Send"
+    },
+    "modal": {
+        "rejectTitle": "Reject Publication",
+        "object": "Object:",
+        "reasonLabel": "Reason for rejection (visible to author)",
+        "reasonPlaceholder": "E.g.: Insufficient materials, poor video quality..."
+    },
+    "toasts": {
+        "loadError": "Failed to load data",
+        "reasonRequired": "Please specify the reason for rejection",
+        "rejected": "Rejected. The author will be notified.",
+        "rejectError": "Error performing action",
+        "approved": "Approved successfully!",
+        "approveError": "Error during approval"
+    }
+},
+"adminStats": {
+    "title": "Platform Statistics",
+    "subtitle": "Administration",
+    "loading": "Loading...",
+    "error": "Loading error",
+    "sections": {
+        "users": "Users",
+        "content": "Content",
+        "activity": "Activity"
+    },
+    "users": {
+        "total": "Total Users",
+        "students": "Students",
+        "teachers": "Teachers",
+        "new": "New this month",
+        "subNewWeek": "+{{count}} this week"
+    },
+    "courses": {
+        "total": "Total Courses",
+        "published": "Published",
+        "pendingSub": "{{count}} in moderation",
+        "lessons": "Total Lessons",
+        "steps": "Total Steps"
+    },
+    "activity": {
+        "enrollments": "Total Enrollments",
+        "enrollmentsSub": "+{{count}} this month",
+        "quizzes": "Quizzes Passed",
+        "avgScore": "Average Score",
+        "passRate": "Pass Rate",
+        "passRateSub": "threshold ≥70%"
+    },
+    "charts": {
+        "regsTitle": "Registrations",
+        "regsSub": "New users in the last 14 days",
+        "regsEmpty": "No data for the last 14 days",
+        "regsTooltip": "Registrations",
+        "topTitle": "Top Courses",
+        "topSub": "By number of enrolled students",
+        "topEmpty": "No published courses",
+        "topTooltip": "Students"
+    },
+    "dist": {
+        "title": "Course Distribution",
+        "sub": "Statuses of all courses on the platform",
+        "published": "Published",
+        "draft": "Drafts",
+        "pending": "Pending",
+        "rejected": "Rejected"
+    }
+},
+"courseDetail": {
+    "library": "Library",
+    "graduateTitle": "Course Graduate! 🎉",
+    "graduateDesc": "You have studied all materials and passed the final tests.",
+    "viewAchievements": "View Achievements",
+    "instructor": "Instructor",
+    "instructorFallback": "Platform Team",
+    "priceLabel": "Access Cost",
+    "free": "Free",
+    "success": "Success!",
+    "enrollBtn": "Enroll in Course",
+    "loginToEnroll": "Login to Start",
+    "fullAccess": "Full access to all interactive modules",
+    "selfPaced": "Learn at your own pace",
+    "syllabus": "Course Syllabus",
+    "section": "Section",
+    "stepFallback": "Step",
+    "passed": "Passed",
+    "continue": "Continue Learning",
+    "start": "Start Learning",
+    "certificates": "Your Certificates",
+    "locked": "Locked",
+    "enrollToUnlock": "Enroll in the course to unlock this material",
+    "stepTypes": {
+        "interactive": "Interactive",
+        "phishing": "Phishing",
+        "video": "Video",
+        "quiz": "Quiz",
+        "code": "Code",
+        "theory": "Theory"
+    }
+},
+"reviewSection": {
+    "title": "Student Reviews",
+    "leaveReview": "Leave a review",
+    "outOf5": "out of 5",
+    "selectRating": "Select a rating",
+    "placeholder": "Share your impressions about the course...",
+    "submitting": "Submitting...",
+    "submitBtn": "Submit review",
+    "restriction": "To leave a review, complete at least 20% of the course.",
+    "empty": "No reviews yet. Be the first!",
+    "studentFallback": "Student #",
+    "anonymous": "Anonymous",
+    "yourReview": "Your review",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete your review?",
+    "toasts": {
+        "loadError": "Error loading reviews",
+        "ratingRequired": "Please select a rating from 1 to 5",
+        "textRequired": "Review text cannot be empty",
+        "addSuccess": "Review added successfully!",
+        "addError": "Error submitting review",
+        "delSuccess": "Review deleted successfully!",
+        "delError": "Failed to delete review. You might not have permission."
+    }
+},
       footer: {
         desc: "Intelligent platform for corporate training and improving staff digital literacy.",
         col1Title: "Platform",

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next'; // ✅ Импорт хука перевода
 import { Star, Trash2, MessageSquare, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from './api';
 
-// 🔥 Функция для расшифровки JWT токена и получения ID пользователя
+//  Функция для расшифровки JWT токена и получения ID пользователя
 const getMyUserId = () => {
     try {
         const token = localStorage.getItem('access'); // Убедись, что токен хранится под ключом 'access'
@@ -18,6 +19,8 @@ const getMyUserId = () => {
 };
 
 export default function ReviewSection({ courseId, isEnrolled, progress }) {
+    const { t } = useTranslation(); // ✅ Инициализация
+    
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [rating, setRating] = useState(0);
@@ -47,11 +50,11 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (rating === 0) {
-            toast.error("Пожалуйста, выберите оценку от 1 до 5");
+            toast.error(t('reviewSection.toasts.ratingRequired'));
             return;
         }
         if (!text.trim()) {
-            toast.error("Текст отзыва не может быть пустым");
+            toast.error(t('reviewSection.toasts.textRequired'));
             return;
         }
 
@@ -61,7 +64,7 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
                 rating: rating,
                 text: text
             });
-            toast.success("Отзыв успешно добавлен!");
+            toast.success(t('reviewSection.toasts.addSuccess'));
             
             // 🔥 Принудительно вешаем флаг is_mine на новый отзыв
             const newReview = { ...res.data, is_mine: true };
@@ -73,7 +76,7 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
             if (err.response?.data && Array.isArray(err.response.data)) {
                 toast.error(err.response.data[0]);
             } else {
-                toast.error("Ошибка при отправке отзыва");
+                toast.error(t('reviewSection.toasts.addError'));
             }
         } finally {
             setSubmitting(false);
@@ -81,14 +84,14 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
     };
 
     const handleDelete = async (reviewId) => {
-        if (!window.confirm("Вы уверены, что хотите удалить свой отзыв?")) return;
+        if (!window.confirm(t('reviewSection.confirmDelete'))) return;
         
         try {
             await api.delete(`courses/reviews/${reviewId}/`);
-            toast.success("Отзыв успешно удален!");
+            toast.success(t('reviewSection.toasts.delSuccess'));
             setReviews(reviews.filter(r => r.id !== reviewId));
         } catch (err) {
-            toast.error("Не удалось удалить отзыв. Возможно, у вас нет прав.");
+            toast.error(t('reviewSection.toasts.delError'));
             console.error("Ошибка удаления:", err);
         }
     };
@@ -108,14 +111,14 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                     <MessageSquare className="text-blue-600 dark:text-blue-400" size={20} />
                 </div>
-                <h2 className="text-2xl font-black text-base-content">Отзывы студентов</h2>
+                <h2 className="text-2xl font-black text-base-content">{t('reviewSection.title')}</h2>
             </div>
 
             {isEnrolled && !hasMyReview && (
                 <div className="bg-base-100 border border-base-300 rounded-2xl p-6 shadow-sm mb-10 transition-all">
                     {progress >= 20 ? (
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <h3 className="font-bold text-base-content mb-4">Оставьте свой отзыв</h3>
+                            <h3 className="font-bold text-base-content mb-4">{t('reviewSection.leaveReview')}</h3>
                             
                             <div className="flex items-center gap-2 mb-4">
                                 {[1, 2, 3, 4, 5].map((star) => (
@@ -138,14 +141,14 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
                                     </button>
                                 ))}
                                 <span className="ml-3 text-sm font-bold text-base-content/50">
-                                    {rating > 0 ? `${rating} из 5` : "Выберите оценку"}
+                                    {rating > 0 ? `${rating} ${t('reviewSection.outOf5')}` : t('reviewSection.selectRating')}
                                 </span>
                             </div>
 
                             <textarea
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
-                                placeholder="Поделитесь своими впечатлениями о курсе..."
+                                placeholder={t('reviewSection.placeholder')}
                                 className="w-full bg-base-200 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-600 min-h-[120px] resize-none"
                                 required
                             />
@@ -155,13 +158,13 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
                                 disabled={submitting || rating === 0 || !text.trim()}
                                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
                             >
-                                {submitting ? 'Отправка...' : 'Отправить отзыв'}
+                                {submitting ? t('reviewSection.submitting') : t('reviewSection.submitBtn')}
                             </button>
                         </form>
                     ) : (
                         <div className="flex items-center gap-4 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 p-4 rounded-xl">
                             <AlertCircle size={24} />
-                            <p className="text-sm font-bold">Чтобы оставить отзыв, пройдите минимум 20% курса.</p>
+                            <p className="text-sm font-bold">{t('reviewSection.restriction')}</p>
                         </div>
                     )}
                 </div>
@@ -169,7 +172,7 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
 
             <div className="space-y-4">
                 {reviews.length === 0 ? (
-                    <p className="text-base-content/50 italic text-sm">Пока нет отзывов. Станьте первым!</p>
+                    <p className="text-base-content/50 italic text-sm">{t('reviewSection.empty')}</p>
                 ) : (
                     reviews.map((review) => {
                         // 🔥 Главная логика проверки "свой/чужой"
@@ -193,10 +196,10 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm text-base-content flex items-center gap-2">
-                                                {review.student_name || review.user_name || `Студент #${review.user || 'Аноним'}`}
+                                                {review.student_name || review.user_name || `${t('reviewSection.studentFallback')}${review.user || t('reviewSection.anonymous')}`}
                                                 {isMine && (
                                                     <span className="bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">
-                                                        Ваш отзыв
+                                                        {t('reviewSection.yourReview')}
                                                     </span>
                                                 )}
                                             </p>
@@ -219,7 +222,7 @@ export default function ReviewSection({ courseId, isEnrolled, progress }) {
                                             className="flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-3 py-2 rounded-lg transition-all cursor-pointer border border-red-100 dark:border-red-900/50"
                                         >
                                             <Trash2 size={16} />
-                                            Удалить
+                                            {t('reviewSection.delete')}
                                         </button>
                                     )}
                                 </div>
