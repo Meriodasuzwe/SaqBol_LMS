@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom'; 
-import { useTranslation } from 'react-i18next'; // ✅ Добавили переводы
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 import aiApi from '../aiApi'; 
 import { toast } from 'react-toastify'; 
@@ -13,21 +13,17 @@ import {
 
 function CourseBuilder() {
     const { courseId } = useParams();
-    // 🔥 ФИКС ЗДЕСЬ: Добавили i18n рядом с t
     const { t, i18n } = useTranslation(); 
     
-    // Превращаем код 'kk' в понятное ИИ слово 'Казахский'
     const getAiLanguage = () => {
         const langMap = {
             'kk': 'Казахский',
             'ru': 'Русский',
             'en': 'English'
         };
-        // Теперь i18n существует, ошибки не будет
         return langMap[i18n.language] || 'Русский';
     };
 
-    // --- СОСТОЯНИЯ ---
     const [lessons, setLessons] = useState([]);
     const [courseData, setCourseData] = useState({ title: '', description: '', price: 0 }); 
     const [activeLesson, setActiveLesson] = useState(null);
@@ -35,18 +31,15 @@ function CourseBuilder() {
     const [isSettingsMode, setIsSettingsMode] = useState(false); 
     const [loading, setLoading] = useState(true);
 
-    // Модалки
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
     const [newLessonTitle, setNewLessonTitle] = useState("");
     const [isStepModalOpen, setIsStepModalOpen] = useState(false); 
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null, confirmText: "Да", isDanger: false });
     const closeDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
 
-    // AI Симуляции
     const [aiTopic, setAiTopic] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
 
-    // Тесты
     const [quizQuestions, setQuizQuestions] = useState(null);
     const [currentQuizId, setCurrentQuizId] = useState(null); 
     const [quizPrompt, setQuizPrompt] = useState("");
@@ -54,7 +47,6 @@ function CourseBuilder() {
     const [quizCount, setQuizCount] = useState(3);
     const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
 
-    // --- ЗАГРУЗКА ДАННЫХ ---
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -86,7 +78,6 @@ function CourseBuilder() {
         fetchData();
     }, [courseId]);
 
-    // Изолируем тесты
     useEffect(() => {
         if (activeStep?.step_type === 'quiz' && activeLesson) {
             const stepQuizId = activeStep.scenario_data?.quiz_id;
@@ -119,7 +110,6 @@ function CourseBuilder() {
                     const mapped = targetQuiz.questions.map(q => {
                         let optionsList = [];
                         let correctIdx = 0;
-
                         if (q.choices && q.choices.length > 0) {
                             optionsList = q.choices.map(c => c.text);
                             correctIdx = q.choices.findIndex(c => c.is_correct);
@@ -131,30 +121,18 @@ function CourseBuilder() {
                         } else {
                             optionsList = ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"];
                         }
-
                         return {
-                            id: q.id, 
-                            question: q.text || q.question || "", 
-                            options: optionsList,
-                            correct_answer: optionsList[correctIdx] || "",
-                            user_selected_index: correctIdx,
-                            correct_option_index: correctIdx,
-                            ai_suggested_index: -1 
+                            id: q.id, question: q.text || q.question || "", options: optionsList,
+                            correct_answer: optionsList[correctIdx] || "", user_selected_index: correctIdx,
+                            correct_option_index: correctIdx, ai_suggested_index: -1 
                         };
                     });
                     setQuizQuestions(mapped);
                 } else setQuizQuestions([]);
-            } else { 
-                setCurrentQuizId(null); 
-                setQuizQuestions([]); 
-            }
-        } catch (err) { 
-            setCurrentQuizId(null); 
-            setQuizQuestions([]); 
-        }
+            } else { setCurrentQuizId(null); setQuizQuestions([]); }
+        } catch (err) { setCurrentQuizId(null); setQuizQuestions([]); }
     };
 
-    // --- ЛОГИКА СОХРАНЕНИЯ / УДАЛЕНИЯ ---
     const handleSaveCourseSettings = async () => {
         setLoading(true);
         try {
@@ -164,24 +142,12 @@ function CourseBuilder() {
                 formData.append('description', courseData.description);
                 formData.append('price', courseData.price);
                 formData.append('cover_image', courseData.newImageFile);
-
-                await api.patch(`courses/${courseId}/`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.patch(`courses/${courseId}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             } else {
-                await api.patch(`courses/${courseId}/`, {
-                    title: courseData.title,
-                    description: courseData.description,
-                    price: courseData.price
-                });
+                await api.patch(`courses/${courseId}/`, { title: courseData.title, description: courseData.description, price: courseData.price });
             }
             toast.success(t('builder.toasts.settingsSaved'));
-        } catch (err) { 
-            toast.error(t('builder.toasts.settingsError')); 
-            console.error(err);
-        } finally { 
-            setLoading(false); 
-        }
+        } catch (err) { toast.error(t('builder.toasts.settingsError')); } finally { setLoading(false); }
     };
 
     const handleCreateLesson = async () => {
@@ -196,8 +162,7 @@ function CourseBuilder() {
 
     const handleDeleteLesson = async () => {
         setConfirmDialog({
-            isOpen: true, title: t('builder.delSectionTitle'),
-            message: t('builder.delSectionMsg', { title: activeLesson.title }),
+            isOpen: true, title: t('builder.delSectionTitle'), message: t('builder.delSectionMsg', { title: activeLesson.title }),
             confirmText: t('builder.deleteBtn'), isDanger: true,
             onConfirm: async () => {
                 try {
@@ -218,8 +183,7 @@ function CourseBuilder() {
 
     const handleDeleteStep = async () => {
         setConfirmDialog({
-            isOpen: true, title: t('builder.delStepTitle'), message: t('builder.delStepMsg'),
-            confirmText: t('builder.deleteBtn'), isDanger: true,
+            isOpen: true, title: t('builder.delStepTitle'), message: t('builder.delStepMsg'), confirmText: t('builder.deleteBtn'), isDanger: true,
             onConfirm: async () => {
                 closeDialog();
                 try {
@@ -244,20 +208,12 @@ function CourseBuilder() {
                     const options = q.options.map(s => String(s || '').trim()).filter(Boolean);
                     let userIndex = q.user_selected_index ?? q.correct_option_index ?? 0;
                     if (userIndex >= options.length) userIndex = 0;
-                    const correctAnswerText = options[userIndex] || "";
-
-                    const mappedQ = { 
-                        question: String(q.question), 
-                        options, 
-                        correct_answer: correctAnswerText, 
-                        correct_index: userIndex,
-                        explanation: "" 
-                    };
+                    const mappedQ = { question: String(q.question), options, correct_answer: options[userIndex] || "", correct_index: userIndex, explanation: "" };
                     if (q.id) mappedQ.id = q.id; 
                     return mappedQ;
                 });
                 
-                const payload = { lesson_id: Number(activeLesson.id), quiz_title: activeStep.title || `Тест к уроку: ${activeLesson.title}`, questions: payloadQuestions };
+                const payload = { lesson_id: Number(activeLesson.id), quiz_title: activeStep.title || `Тест к уроку`, questions: payloadQuestions };
                 if (currentQuizId) payload.quiz_id = currentQuizId;
                 
                 const quizRes = await api.post(`quizzes/save-generated/`, payload);
@@ -265,7 +221,16 @@ function CourseBuilder() {
                 setCurrentQuizId(savedQuizId);
             }
 
-            const updatedScenarioData = { ...(activeStep.scenario_data || {}) };
+            let updatedScenarioData = activeStep.scenario_data;
+            if (typeof updatedScenarioData === 'string') {
+                try { updatedScenarioData = JSON.parse(updatedScenarioData); } catch(e) {}
+            }
+            if (typeof updatedScenarioData !== 'object' || updatedScenarioData === null) {
+                updatedScenarioData = {};
+            } else {
+                updatedScenarioData = { ...updatedScenarioData };
+            }
+
             if (savedQuizId) updatedScenarioData.quiz_id = savedQuizId;
 
             const res = await api.patch(`courses/steps/${activeStep.id}/`, { 
@@ -278,20 +243,14 @@ function CourseBuilder() {
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? res.data : s) } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data);
             toast.success(t('builder.toasts.stepSaved'));
-        } catch (err) { 
-            toast.error(t('builder.toasts.stepSaveError')); 
-        } finally { 
-            setLoading(false); 
-        }
+        } catch (err) { toast.error(t('builder.toasts.stepSaveError')); } finally { setLoading(false); }
     };
 
-    // --- ЛОГИКА ГЕНЕРАЦИИ (КВИЗЫ И СИМУЛЯЦИИ) ---
     const handlePreGenerateQuiz = () => {
         if (!quizPrompt.trim()) return toast.warning(t('builder.toasts.quizEmptyPrompt'));
         if (quizQuestions && quizQuestions.length > 0) {
             setConfirmDialog({
-                isOpen: true, title: t('builder.rewriteQuizTitle'),
-                message: t('builder.rewriteQuizMsg', { count: quizQuestions.length }),
+                isOpen: true, title: t('builder.rewriteQuizTitle'), message: t('builder.rewriteQuizMsg', { count: quizQuestions.length }),
                 confirmText: t('builder.generateNewBtn'), isDanger: true,
                 onConfirm: () => { closeDialog(); executeQuizGeneration(); }
             });
@@ -301,12 +260,7 @@ function CourseBuilder() {
     const executeQuizGeneration = async () => {
         setIsGeneratingQuiz(true);
         try {
-            const res = await aiApi.post('generate-quiz', { 
-                text: quizPrompt, 
-                count: Number(quizCount), 
-                difficulty: quizDifficulty,
-                language: getAiLanguage() 
-            });
+            const res = await aiApi.post('generate-quiz', { text: quizPrompt, count: Number(quizCount), difficulty: quizDifficulty, language: getAiLanguage() });
             const questions = res.data.generated_questions || res.data;
             const normalized = Array.isArray(questions) ? questions.map(q => {
                 const questionText = (q.question || q.text || q.prompt || q.title || '').trim();
@@ -314,11 +268,6 @@ function CourseBuilder() {
                 if (typeof rawOptions === 'string') rawOptions = rawOptions.split(/\r?\n|\||;|,|•|\-|\u2022/).map(s => s.trim()).filter(Boolean);
                 let options = Array.isArray(rawOptions) ? rawOptions.map(o => String(o.text || o).trim()).filter(Boolean) : [];
                 let correct = (q.correct_answer || q.correctAnswer || q.correct || '').toString().trim();
-                if (correct && /^\d+$/.test(correct) && options.length > 0) {
-                    const idx = parseInt(correct, 10);
-                    if (idx >= 0 && idx < options.length) correct = options[idx];
-                }
-                if (options.length < 2) options = [correct || "Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"];
                 let aiSuggestedIndex = options.indexOf(correct);
                 if (aiSuggestedIndex === -1) { aiSuggestedIndex = 0; correct = options[0]; }
                 return { id: null, question: questionText, options, correct_answer: correct, user_selected_index: aiSuggestedIndex, correct_option_index: aiSuggestedIndex, ai_suggested_index: aiSuggestedIndex };
@@ -335,11 +284,8 @@ function CourseBuilder() {
         setQuizQuestions(updated);
     };
     const handleCorrectSelect = (qIndex, oIndex) => {
-        const updated = [...quizQuestions]; 
-        updated[qIndex].user_selected_index = oIndex; 
-        updated[qIndex].correct_option_index = oIndex;
-        updated[qIndex].correct_answer = updated[qIndex].options[oIndex] || '';
-        setQuizQuestions(updated);
+        const updated = [...quizQuestions]; updated[qIndex].user_selected_index = oIndex; updated[qIndex].correct_option_index = oIndex;
+        updated[qIndex].correct_answer = updated[qIndex].options[oIndex] || ''; setQuizQuestions(updated);
     };
     const handleAddManualQuestion = () => {
         const newQuestion = { id: null, question: "Новый вопрос", options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], correct_answer: "Вариант 1", user_selected_index: 0, correct_option_index: 0, ai_suggested_index: -1 };
@@ -357,8 +303,29 @@ function CourseBuilder() {
                 difficulty: 'medium',
                 language: getAiLanguage() 
             });
-            setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: res.data }));
-            toast.success(t('builder.toasts.simSuccess'));
+            
+            let newScenarioData = res.data;
+            
+            if (typeof newScenarioData === 'string') {
+                try { newScenarioData = JSON.parse(newScenarioData); } catch(e) {}
+            }
+            
+            if (newScenarioData && newScenarioData.scenario_data) {
+                newScenarioData = newScenarioData.scenario_data;
+            }
+
+            setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: newScenarioData }));
+            
+            const patchRes = await api.patch(`courses/steps/${activeStep.id}/`, { 
+                step_type: type, 
+                scenario_data: newScenarioData 
+            });
+            
+            const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? patchRes.data : s) } : l);
+            setLessons(updatedLessons); 
+            setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id));
+
+            toast.success("Данные успешно сгенерированы и сохранены! ✅");
         } catch (err) { 
             console.error("AI Error:", err);
             toast.error(t('builder.toasts.simError')); 
@@ -369,7 +336,7 @@ function CourseBuilder() {
 
     const getStepIcon = (type, size = 20) => {
         if (type === 'video_url') return <PlayCircle size={size} />;
-        if (type.includes('simulation')) return <ShieldAlert size={size} />;
+        if (type.includes('simulation') || type.includes('interactive')) return <ShieldAlert size={size} />;
         if (type === 'quiz') return <HelpCircle size={size} />;
         if (type === 'interactive_code') return <Code2 size={size} />;
         return <FileText size={size} />;
@@ -386,7 +353,7 @@ function CourseBuilder() {
     return (
         <div className="flex h-screen bg-base-100 font-sans text-base-content animate-in fade-in"> 
             
-            {/* === ЛЕВАЯ КОЛОНКА (САЙДБАР) === */}
+            {/* === ЛЕВАЯ КОЛОНКА === */}
             <div className="w-80 bg-base-200/50 border-r border-base-200 flex flex-col h-full shrink-0 z-20">
                 <div className="px-6 py-5 border-b border-base-200 flex justify-between items-center bg-base-100">
                     <h2 className="font-black text-base-content truncate pr-4 text-lg" title={courseData.title}>
@@ -464,7 +431,6 @@ function CourseBuilder() {
                     />
                 ) : activeLesson ? (
                     <>
-                        {/* Панель навигации по шагам */}
                         <div className="bg-base-200/30 border-b border-base-200 px-8 py-4 flex items-center justify-between z-10 sticky top-0 backdrop-blur-sm">
                             <div className="flex items-center gap-3 flex-1 overflow-x-auto no-scrollbar">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2 shrink-0">{t('builder.stepsLabel')}</span>
@@ -505,7 +471,6 @@ function CourseBuilder() {
                             </div>
                         </div>
 
-                        {/* Рабочая область */}
                         <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-base-200/20">
                             {activeStep ? (
                                 <StepEditor 
@@ -549,8 +514,6 @@ function CourseBuilder() {
             </div>
 
             {/* === МОДАЛКИ === */}
-
-            {/* Модалка: Новый раздел */}
             {isLessonModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/80 backdrop-blur-sm animate-in fade-in px-4">
                     <div className="bg-base-100 rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200">
@@ -580,7 +543,6 @@ function CourseBuilder() {
                 </div>
             )}
 
-            {/* Модалка: Новый шаг */}
             {isStepModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/80 backdrop-blur-sm animate-in fade-in px-4">
                     <div className="bg-base-100 rounded-3xl shadow-2xl max-w-3xl w-full p-8 md:p-12 animate-in zoom-in-95 duration-200">
@@ -616,7 +578,6 @@ function CourseBuilder() {
                 </div>
             )}
 
-            {/* Диалог подтверждения (Удаление) */}
             {confirmDialog.isOpen && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center bg-base-300/80 backdrop-blur-sm animate-in fade-in px-4">
                     <div className="bg-base-100 rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in zoom-in-95 duration-200 text-center">

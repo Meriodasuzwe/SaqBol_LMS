@@ -1,318 +1,243 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { AlertTriangle, Lock, ShieldAlert, XCircle, X } from 'lucide-react';
-import './FakeMessenger.css';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShieldCheck, User, Wifi, Battery, Signal, Terminal, Send } from 'lucide-react';
+import api from './api';
 
-const FakeMessenger = ({ scenario, onComplete, onExit }) => {
-  const [history, setHistory] = useState([]);
-  
-  const [currentNodeId, setCurrentNodeId] = useState(0); 
-  const [isTyping, setIsTyping] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-  
-  const [hackedMode, setHackedMode] = useState(false);
-  const [fatalMessage, setFatalMessage] = useState(""); 
-
-  const chatContainerRef = useRef(null);
-
-  const parsedScenario = useMemo(() => {
-    if (!scenario) return {};
-    let obj = scenario;
-    if (typeof scenario === 'string') {
-      try {
-        const cleanStr = scenario.replace(/```json/gi, '').replace(/```/g, '').trim();
-        obj = JSON.parse(cleanStr);
-      } catch (e) {
-        console.error("Ошибка парсинга:", e);
-        return {};
-      }
+export default function FakeMessenger({ scenario: rawScenario, onComplete, stepId }) {
+    
+    // Парсим начальные данные
+    let scenario = rawScenario;
+    while (typeof scenario === 'string') {
+        try { scenario = JSON.parse(scenario); } catch (e) { break; }
     }
-    if (obj && obj.scenario_data) return obj.scenario_data;
-    return obj;
-  }, [scenario]);
+    if (scenario && scenario.scenario_data) scenario = scenario.scenario_data;
 
-  const steps = parsedScenario.steps || parsedScenario.messages || parsedScenario.dialogue || [];
-  
-  useEffect(() => {
-    if (steps.length > 0 && history.length === 0) {
-        setCurrentNodeId(steps[0].id !== undefined ? steps[0].id : 0);
-    }
-  }, [steps]);
+    const [chatHistory, setChatHistory] = useState([]);
+    const [inputText, setInputText] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const [gameOver, setGameOver] = useState(null); 
+    
+    // 🔥 1. Изменили ref. Теперь он будет висеть на самом контейнере сообщений
+    const chatContainerRef = useRef(null); 
+    const [time, setTime] = useState('12:00');
 
-  const currentStep = steps.find(s => s.id === currentNodeId) || steps[currentNodeId];
-
-  const optionsArray = currentStep?.options || currentStep?.choices || [];
-  const isChoiceStep = currentStep?.type === 'choice' || optionsArray.length > 0;
-
-  const isMessageStep =
-    !!currentStep &&
-    !isChoiceStep &&
-    (currentStep.type === 'message' || !!currentStep.text || !!currentStep.message || !!currentStep.content || !!currentStep.speaker);
-
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTo({
-        top: chatContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [history, isTyping]);
-
-  useEffect(() => {
-    if (!currentStep) return;
-
-    if (isMessageStep) {
-      setIsTyping(true);
-      const timer = setTimeout(() => {
-        const textValue =
-          currentStep.text || currentStep.message || currentStep.content || 
-          currentStep.moshenik || currentStep.bot || 
-          Object.values(currentStep).find(v => typeof v === 'string') || "...";
-
-        const sp = (currentStep.speaker || "").toLowerCase();
-        const sender = sp.includes("польз") || sp.includes("user") || sp.includes("victim") ? "user" : "bot";
-
-        setHistory(prev => [...prev, { sender, text: textValue }]);
-        setIsTyping(false);
+    // При старте компонента добавляем первое сообщение от бота
+    useEffect(() => {
+        const now = new Date();
+        setTime(now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
         
-        if (currentStep.next_step_id !== undefined) {
-            setCurrentNodeId(currentStep.next_step_id);
-        } else {
-            setCurrentNodeId(prev => prev + 1);
+        if (scenario && scenario.steps && scenario.steps.length > 0) {
+            setChatHistory([{ 
+                id: Date.now(), 
+                sender: 'bot', 
+                text: scenario.steps[0].text || "Здравствуйте." 
+            }]);
+            setGameOver(null);
         }
-      }, 1200);
+    }, [scenario]);
 
-      return () => clearTimeout(timer);
-    }
-  }, [currentNodeId, steps, currentStep, isMessageStep]);
+    // 🔥 2. Правильный автоскролл, который не дергает всю страницу
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTo({
+                top: chatContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    }, [chatHistory, isTyping, gameOver]);
 
-  const handleOptionClick = (option) => {
-    const btnText = option.text || option.answer || option.user || Object.values(option).find(v => typeof v === 'string') || "Выбрать";
-    setHistory(prev => [...prev, { sender: 'user', text: btnText }]);
+    
+    // 🔥 БОЕВАЯ ОТПРАВКА СООБЩЕНИЯ К ИИ 🔥
+    const handleSendMessage = async (e) => {
+        e?.preventDefault();
+        if (!inputText.trim() || isTyping || gameOver) return;
 
-    const isFatal = option.is_fatal === true || option.is_correct === false || option.correct === false;
-    const isExplicitSuccess = option.is_success === true;
+        const userMsg = inputText.trim();
+        setInputText('');
+        
+        // 1. Создаем обновленный массив истории СРАЗУ
+        const updatedHistory = [...chatHistory, { id: Date.now(), sender: 'user', text: userMsg }];
+        
+        // 2. Обновляем визуал чата
+        setChatHistory(updatedHistory);
+        setIsTyping(true); 
 
-    if (isFatal) {
-      const errorReason = option.feedback || option.explanation || "Вы приняли неверное решение.";
-      setFatalMessage(errorReason);
-      setHackedMode(true);
-      
-      setTimeout(() => {
-        setHackedMode(false);
-        setFeedback({
-          type: 'fail',
-          text: errorReason
-        });
-      }, 4000); 
-      return;
-    }
+        try {
+            // 3. Отправляем в запросе ИМЕННО updatedHistory!
+            const response = await api.post(`courses/steps/${stepId}/chat-reply/`, {
+                message: userMsg,
+                history: updatedHistory 
+            });
 
-    if (isExplicitSuccess) {
-      setTimeout(() => setFeedback({
-        type: 'success',
-        text: option.feedback || option.explanation || "Отличный выбор! Вы справились с ситуацией."
-      }), 500);
-      return;
-    }
+            const data = response.data;
 
-    let delayForNextStep = 500;
-    if (option.feedback && (option.is_correct === true || option.correct === true)) {
-        setIsTyping(true);
-        delayForNextStep = 1800; 
-        setTimeout(() => {
-            setHistory(prev => [...prev, { sender: 'bot', text: option.feedback }]);
+            if (data.reply) {
+                setChatHistory(prev => [...prev, { id: Date.now(), sender: 'bot', text: data.reply }]);
+            }
+
+            if (data.isSuccess === true || data.isSuccess === false) {
+                setTimeout(() => {
+                    setGameOver({ 
+                        isSuccess: data.isSuccess, 
+                        explanation: data.explanation 
+                    });
+                }, 1000);
+            }
+
+        } catch (error) {
+            console.error("Ошибка при запросе к ИИ:", error);
+            const errorMsg = error.response?.data?.error || "⚠️ Ошибка связи с сервером. Проверьте интернет.";
+            setChatHistory(prev => [...prev, { id: Date.now(), sender: 'bot', text: errorMsg }]);
+        } finally {
             setIsTyping(false);
-        }, 800);
-    }
-
-    let nextId = option.next_step_id;
-    if (nextId === undefined) {
-        const currentIndex = steps.findIndex(s => s.id === currentNodeId || s === currentStep);
-        nextId = steps[currentIndex + 1]?.id !== undefined ? steps[currentIndex + 1].id : currentIndex + 1;
-    }
-
-    const hasNextStep = steps.find(s => s.id === nextId) || steps[nextId];
-
-    if (!hasNextStep) {
-        setTimeout(() => setFeedback({
-          type: 'success',
-          text: option.feedback || option.explanation || "Сценарий успешно пройден!"
-        }), delayForNextStep + 500);
-        return;
-    }
-
-    setTimeout(() => {
-        setCurrentNodeId(nextId);
-    }, delayForNextStep);
-  };
-
-  const handleFeedbackContinue = () => {
-    if (!feedback) return;
-
-    if (feedback.type === 'success') {
-      setFeedback(null);
-      onComplete?.(100); 
-    } else {
-      setHistory([]);
-      setIsTyping(false);
-      setFeedback(null);
-      setHackedMode(false);
-      setCurrentNodeId(steps.length > 0 ? (steps[0].id !== undefined ? steps[0].id : 0) : 0);
-    }
-  };
-
-  // 🔥 ПОФИКСИЛИ ВЫХОД: Больше никакого ложного onComplete(0)
-  const handleExit = () => {
-    if (onExit) {
-      onExit();
-    }
-  };
-
-  if (!scenario) return <div className="p-10 text-center text-gray-400 font-bold animate-pulse">Загрузка перехвата связи...</div>;
-
-  return (
-    <div className="relative w-full max-w-md mx-auto overflow-hidden rounded-[2.5rem] shadow-2xl border-[6px] border-base-300 bg-base-100">
-      
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
         }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+    };
 
-      {hackedMode && (
-        <div className="absolute inset-0 z-50 bg-red-900 flex flex-col items-center justify-center text-center p-8 animate-in fade-in zoom-in-95 duration-200">
-          <div className="absolute inset-0 bg-black opacity-30 mix-blend-overlay"></div>
-          
-          <XCircle className="text-red-400 w-24 h-24 mb-6 relative z-10 animate-pulse" strokeWidth={2} />
-          
-          <h1 className="text-white text-3xl font-black mb-4 uppercase tracking-wider relative z-10 drop-shadow-md">
-            Сценарий провален
-          </h1>
-          
-          <div className="bg-red-950/50 border border-red-500/30 rounded-2xl p-5 relative z-10 backdrop-blur-sm w-full">
-            <p className="text-red-100 font-medium text-lg leading-relaxed">
-              {fatalMessage}
-            </p>
-          </div>
+    if (!scenario) return null;
 
-          <div className="w-full max-w-xs bg-red-950 rounded-full h-1.5 mt-8 relative z-10 overflow-hidden">
-            <div className="bg-red-400 h-1.5 rounded-full animate-[width_4s_linear_forwards]" style={{ width: '0%' }}>
-               <style>{`@keyframes width { to { width: 100%; } }`}</style>
-            </div>
-          </div>
-        </div>
-      )}
+    return (
+        <div className="flex justify-center items-center py-10 w-full animate-in fade-in duration-500">
+            <div className="w-[360px] h-[720px] bg-white dark:bg-slate-900 rounded-[3rem] border-[12px] border-slate-800 shadow-2xl relative flex flex-col overflow-hidden ring-4 ring-slate-900/10">
+                
+                {/* Челка айфона */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
 
-      <div className={`messenger-container border-0 rounded-none shadow-none m-0 transition-opacity duration-300 ${hackedMode ? 'opacity-0' : 'opacity-100'} flex flex-col h-[600px]`}>
-        
-        {/* Шапка мессенджера */}
-        <div className="messenger-header bg-base-100/90 backdrop-blur-md border-b border-base-200 p-4 flex items-center gap-3 z-10">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            {parsedScenario.contact_name ? parsedScenario.contact_name[0] : "С"}
-          </div>
-          <div className="contact-info flex-1">
-            <h3 className="font-bold text-base-content text-base leading-tight">{parsedScenario.contact_name || "Собеседник"}</h3>
-            <span className="text-xs text-teal-600 dark:text-teal-400 font-medium tracking-wide">
-                {isTyping ? "печатает..." : "в сети"}
-            </span>
-          </div>
-          
-          {/* Кнопка-крестик для выхода в любой момент */}
-          <button 
-            onClick={handleExit}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-base-200 text-base-content/40 hover:text-base-content/80 transition-colors shrink-0"
-            title="Завершить симуляцию"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Тело чата */}
-        <div 
-            ref={chatContainerRef}
-            className="messenger-body hide-scrollbar bg-slate-50 dark:bg-base-300 flex-1 p-5 space-y-4 overflow-y-auto"
-        >
-          {history.map((msg, idx) => (
-            <div key={idx} className={`flex w-full ${msg.sender === 'bot' ? 'justify-start' : 'justify-end'}`}>
-                <div className={`message shadow-sm px-4 py-2.5 max-w-[80%] text-sm md:text-base leading-relaxed ${
-                    msg.sender === 'bot' 
-                    ? 'bg-white dark:bg-base-100 text-base-content rounded-2xl rounded-tl-sm border border-slate-100 dark:border-base-200' 
-                    : 'bg-teal-600 text-white rounded-2xl rounded-tr-sm'
-                }`}>
-                  {msg.text}
+                {/* Статус бар */}
+                <div className="flex justify-between items-center px-6 py-2 text-[11px] font-bold text-slate-800 dark:text-slate-200 z-10 bg-white dark:bg-slate-900">
+                    <span>{time}</span>
+                    <div className="flex items-center gap-1.5">
+                        <Signal size={12} />
+                        <Wifi size={12} />
+                        <Battery size={14} />
+                    </div>
                 </div>
-            </div>
-          ))}
-          
-          {isTyping && (
-            <div className="flex w-full justify-start">
-                <div className="bg-white dark:bg-base-100 border border-slate-100 dark:border-base-200 text-base-content/50 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
-                  <div className="w-1.5 h-1.5 bg-base-content/40 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-base-content/40 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-1.5 h-1.5 bg-base-content/40 rounded-full animate-bounce delay-200"></div>
-                </div>
-            </div>
-          )}
-        </div>
 
-        {/* Подвал с кнопками */}
-        <div className="messenger-footer bg-white dark:bg-base-100 p-4 border-t border-slate-100 dark:border-base-200 flex flex-col gap-2 min-h-[120px] justify-center shrink-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
-          {isChoiceStep && !feedback && !hackedMode && (
-            <div className="flex flex-col gap-2 w-full animate-in fade-in slide-in-from-bottom-4">
-              {optionsArray.map((opt, idx) => (
-                <button
-                  key={idx}
-                  className="w-full text-left bg-slate-50 dark:bg-base-200 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-base-content font-medium text-sm p-3.5 rounded-xl transition-all border border-slate-200 dark:border-base-300 hover:border-teal-400 dark:hover:border-teal-500 active:scale-[0.98]"
-                  onClick={() => handleOptionClick(opt)}
+                {/* Шапка чата */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center gap-3 z-10">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-inner font-bold text-lg">
+                        {scenario.contact_name ? scenario.contact_name[0] : <User size={20} />}
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                            {scenario.contact_name || "Неизвестный номер"}
+                        </h3>
+                        <p className="text-[10px] text-indigo-500 font-medium">в сети</p>
+                    </div>
+                </div>
+
+                {/* 🔥 3. Повесили ref={chatContainerRef} прямо сюда */}
+                {/* Окно сообщений */}
+                <div 
+                    ref={chatContainerRef} 
+                    className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-100 dark:bg-[#0f172a] relative scroll-smooth"
                 >
-                  {opt.text || opt.answer || Object.values(opt).find(v => typeof v === 'string') || `Вариант ${idx + 1}`}
-                </button>
-              ))}
+                    <div className="text-center my-2">
+                        <span className="bg-slate-200 dark:bg-slate-800 text-slate-500 text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full">
+                            Сегодня
+                        </span>
+                    </div>
+
+                    {chatHistory.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in zoom-in-95 duration-200`}>
+                            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed shadow-sm ${
+                                msg.sender === 'user' 
+                                    ? 'bg-indigo-600 text-white rounded-br-sm' 
+                                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-sm border border-slate-200 dark:border-slate-700'
+                            }`}>
+                                {msg.text}
+                            </div>
+                        </div>
+                    ))}
+
+                    {isTyping && (
+                        <div className="flex justify-start">
+                            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex gap-1.5 items-center">
+                                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                            </div>
+                        </div>
+                    )}
+                    {/* Пустой div внизу больше не нужен, мы его удалили! */}
+                </div>
+
+                {/* 🔥 ЗОНА ВВОДА ТЕКСТА 🔥 */}
+                {!gameOver && (
+                    <form 
+                        onSubmit={handleSendMessage}
+                        className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-3 z-10 flex items-end gap-2"
+                    >
+                        <textarea
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
+                            placeholder="Сообщение..."
+                            disabled={isTyping}
+                            className="flex-1 max-h-24 min-h-[44px] bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-indigo-400 rounded-2xl px-4 py-3 text-[14px] text-slate-900 dark:text-white outline-none resize-none transition-all disabled:opacity-50 no-scrollbar"
+                            rows={1}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!inputText.trim() || isTyping}
+                            className="w-11 h-11 shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:bg-slate-300 shadow-sm"
+                        >
+                            <Send size={18} className="ml-1" />
+                        </button>
+                    </form>
+                )}
+
+                {/* Экран победы / проигрыша */}
+                {gameOver && (
+                    <div className="absolute inset-0 z-50 flex flex-col">
+                        {gameOver.isSuccess ? (
+                            <div className="flex-1 bg-emerald-500 text-white flex flex-col p-6 animate-in fade-in duration-500">
+                                <div className="flex-1 flex flex-col justify-center items-center text-center">
+                                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6">
+                                        <ShieldCheck size={48} className="text-white" />
+                                    </div>
+                                    <h2 className="text-2xl font-black mb-2 uppercase tracking-widest">Угроза устранена</h2>
+                                    <p className="text-sm text-emerald-50 opacity-90 leading-relaxed mb-8">
+                                        {gameOver.explanation}
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => onComplete(10)}
+                                    className="w-full bg-white text-emerald-600 font-black uppercase tracking-widest py-4 rounded-xl shadow-xl active:scale-95 transition-transform"
+                                >
+                                    Завершить шаг
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex-1 bg-[#0a0a0a] text-red-500 flex flex-col relative overflow-hidden animate-in fade-in duration-100">
+                                <div className="flex-1 flex flex-col justify-center items-center text-center p-6 relative z-10">
+                                    <Terminal size={56} className="mb-4 text-red-500" />
+                                    <h2 className="text-3xl font-black mb-2 uppercase tracking-widest font-mono">
+                                        FATAL ERROR
+                                    </h2>
+                                    <div className="bg-red-950/50 border border-red-900 rounded-lg p-4 mb-8 text-left w-full font-mono text-[11px] text-red-400">
+                                        <p className="text-red-300 mt-2 font-bold">{gameOver.explanation}</p>
+                                    </div>
+                                </div>
+                                <div className="p-6 relative z-10">
+                                    <button 
+                                        onClick={() => {
+                                            setChatHistory([{ id: Date.now(), sender: 'bot', text: scenario.steps[0].text }]);
+                                            setGameOver(null);
+                                        }}
+                                        className="w-full border-2 border-red-600 text-red-500 hover:bg-red-600 hover:text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all font-mono"
+                                    >
+                                        REBOOT SYSTEM
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-          )}
         </div>
-
-        {/* Попап обратной связи */}
-        {feedback && !hackedMode && (
-          <div className="absolute inset-0 z-40 bg-white/95 dark:bg-base-100/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-95 duration-200 rounded-[2rem]">
-            <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl rotate-3 ${feedback.type === 'success' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white' : 'bg-gradient-to-br from-red-400 to-red-600 text-white'}`}>
-                {feedback.type === 'success' ? <Lock size={48} /> : <AlertTriangle size={48} />}
-            </div>
-            <h2 className={`text-3xl font-black mb-4 ${feedback.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                {feedback.type === 'success' ? "Сценарий пройден" : "Вы допустили ошибку"}
-            </h2>
-            <p className="text-base-content/80 mb-8 leading-relaxed font-medium">
-                {feedback.text}
-            </p>
-            <button 
-                className={`w-full font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-95 ${feedback.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/30' : 'bg-slate-200 dark:bg-base-300 hover:bg-slate-300 dark:hover:bg-base-200 text-base-content'}`}
-                onClick={handleFeedbackContinue}
-            >
-              {feedback.type === 'success' ? "Продолжить обучение" : "Попробовать снова"}
-            </button>
-            
-            {/* Текстовая кнопка выхода для экрана провала */}
-            {feedback.type !== 'success' && (
-              <button 
-                onClick={handleExit}
-                className="mt-6 text-sm font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
-              >
-                Вернуться к уроку
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default FakeMessenger;
+    );
+}

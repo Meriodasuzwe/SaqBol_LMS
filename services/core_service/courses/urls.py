@@ -19,6 +19,7 @@ from .views import (
     upload_image,
     CreateStripeCheckoutSessionView,
     stripe_webhook,
+    ChatReplyView,
     ChangeCertificateLanguageView,
     # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
     PendingCoursesView,
@@ -48,7 +49,7 @@ urlpatterns = [
     
     path('upload-image/', upload_image, name='upload-image'),
     
-    
+    path('steps/<int:pk>/chat-reply/', ChatReplyView.as_view()),
     path('reviews/<int:pk>/', ReviewDeleteView.as_view(), name='review-delete'),
 
     path('certificates/my/', MyCertificatesView.as_view(), name='my-certificates'),

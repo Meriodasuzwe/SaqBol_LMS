@@ -2,7 +2,8 @@
 groq_service.py — Вся логика работы с Groq AI.
 
 Содержит:
-- Базовый async вызов с таймаутом и retry
+- Базовый async вызов с таймаутом и retry (для JSON)
+- Вызов для свободного чата с поддержкой истории (Text)
 - Валидаторы формата сценария (поддержка графов)
 - Конвертер speaker → interactive формат
 """
@@ -47,7 +48,7 @@ def safe_json_loads(s: str) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# CORE AI CALL — retry + timeout
+# CORE AI CALLS — JSON FORMAT (Для генерации сценариев)
 # ---------------------------------------------------------------------------
 
 @retry(
@@ -58,7 +59,7 @@ def safe_json_loads(s: str) -> Dict[str, Any]:
     reraise=True,
 )
 async def _call_groq(system_prompt: str, user_prompt: str, temperature: float) -> str:
-    """Низкоуровневый вызов Groq с retry на 429/503."""
+    """Низкоуровневый вызов Groq с возвратом JSON и retry на 429/503."""
     chat_completion = await aclient.chat.completions.create(
         model=settings.GROQ_MODEL,
         messages=[
@@ -100,6 +101,60 @@ async def groq_chat_json(
             detail="AI сервис временно недоступен. Попробуйте позже.",
         )
     except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# CORE AI CALLS — TEXT FORMAT (Для Live-чата / Свободного ответа)
+# ---------------------------------------------------------------------------
+
+@retry(
+    stop=stop_after_attempt(settings.GROQ_MAX_RETRIES),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((RateLimitError, APIStatusError)),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
+async def _call_groq_messages(messages: List[Dict[str, str]], temperature: float) -> str:
+    """Низкоуровневый вызов Groq (Обычный текст, без привязки к JSON) с передачей истории."""
+    chat_completion = await aclient.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        messages=messages,
+        temperature=temperature,
+        max_tokens=300, # Ограничиваем длину ответа мошенника
+    )
+    return chat_completion.choices[0].message.content
+
+
+async def groq_chat_text(
+    messages: List[Dict[str, str]], 
+    temperature: float = 0.7
+) -> str:
+    """
+    Публичный метод: вызов Groq для интерактивного чата (свободный ответ).
+    Возвращает строку (str), а не JSON.
+    """
+    try:
+        raw = await asyncio.wait_for(
+            _call_groq_messages(messages, temperature),
+            timeout=settings.GROQ_TIMEOUT_SECONDS,
+        )
+        return raw
+
+    except asyncio.TimeoutError:
+        logger.error("Groq timeout exceeded in text chat.")
+        raise HTTPException(
+            status_code=504,
+            detail="AI сервис не ответил вовремя. Попробуйте позже.",
+        )
+    except (RateLimitError, APIStatusError) as e:
+        logger.error(f"Groq API error after retries: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="AI сервис временно недоступен. Попробуйте позже.",
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error in text chat: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

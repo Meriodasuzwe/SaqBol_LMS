@@ -1,4 +1,6 @@
 import stripe
+import json
+import requests
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -590,3 +592,50 @@ class ChangeCertificateLanguageView(APIView):
             # Возвращаем новую ссылку на картинку
             "file_url": request.build_absolute_uri(cert.file.url)
         })
+
+class ChatReplyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        step = get_object_or_404(LessonStep, pk=pk)
+        user_message = request.data.get('message')
+        history = request.data.get('history', [])
+
+        scenario = step.scenario_data or {}
+        if isinstance(scenario, str):
+            try:
+                scenario = json.loads(scenario)
+            except json.JSONDecodeError:
+                scenario = {}
+        
+        contact_name = scenario.get('contact_name', 'Служба безопасности')
+
+        payload = {
+            "message": user_message,
+            "history": history,
+            "contact_name": contact_name,
+            "language": "Русский"
+        }
+
+        try:
+            # 🔥 ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ 🔥
+            # Django обращается к FastAPI по имени Docker-контейнера напрямую, минуя Nginx!
+            ai_service_url = getattr(settings, 'AI_SERVICE_URL', 'http://ai_service:8000') 
+            
+            # Эндпоинт в FastAPI у нас /generate-scenario/chat-reply
+            endpoint_url = f"{ai_service_url}/generate-scenario/chat-reply"
+            
+            print(f"🚀 СТУЧИМСЯ В FASTAPI (DOCKER NETWORK): {endpoint_url}")
+
+            response = requests.post(endpoint_url, json=payload, timeout=30)
+            
+            if not response.ok:
+                print(f"❌ ОШИБКА FASTAPI ({response.status_code}): {response.text}")
+                return Response({"error": f"FastAPI вернул ошибку: {response.text}"}, status=500)
+            
+            print("✅ ОТВЕТ ОТ FASTAPI ПОЛУЧЕН УСПЕШНО")
+            return Response(response.json())
+            
+        except requests.exceptions.RequestException as e:
+            print(f"🔥 ОШИБКА СЕТИ DOCKER (не вижу ai_service): {e}")
+            return Response({"error": "Сервер ИИ временно недоступен"}, status=500)
