@@ -12,12 +12,16 @@ import {
     FileText, 
     ArrowRight,
     ArrowLeft,
-    Award 
+    Award,
+    BrainCircuit, 
+    Search 
 } from 'lucide-react';
 
-import FakeMessenger from './FakeMessenger';
+import FakeMessenger from './FakeMessenger'; 
 import FakeEmail from './FakeEmail';
 import PythonEditor from './PythonEditor'; 
+import SpotThePhishing from './SpotThePhishing'; 
+import FreeResponseAI from './FreeResponseAI';
 
 function LessonPage() {
     const { lessonId } = useParams();
@@ -31,7 +35,6 @@ function LessonPage() {
     const [loading, setLoading] = useState(true);
     const [activeStepIndex, setActiveStepIndex] = useState(0);
     
-    // Стейт для показа красивого модального окна при завершении курса
     const [showCompletionModal, setShowCompletionModal] = useState(false);
     const [certLanguage, setCertLanguage] = useState('ru');
     const [isGeneratingCert, setIsGeneratingCert] = useState(false);
@@ -141,6 +144,8 @@ function LessonPage() {
             case 'video_file': return <PlayCircle {...props} />;
             case 'simulation_chat':
             case 'simulation_email': return <ShieldCheck {...props} />;
+            case 'interactive_spot': return <Search {...props} />; 
+            case 'interactive_free': return <BrainCircuit {...props} />; 
             case 'quiz': return <HelpCircle {...props} />;
             case 'interactive_code': return <Code2 {...props} />;
             default: return <FileText {...props} />;
@@ -156,7 +161,8 @@ function LessonPage() {
     if (!lesson) return <div className="p-10 text-center font-bold text-base-content/50">Урок не найден</div>;
 
     const currentStep = lesson.steps && lesson.steps.length > 0 ? lesson.steps[activeStepIndex] : null;
-    const isSimulation = currentStep && ['simulation_chat', 'simulation_email'].includes(currentStep.step_type);
+    
+    const isSimulation = currentStep && ['simulation_chat', 'simulation_email', 'interactive_spot', 'interactive_free'].includes(currentStep.step_type);
 
     return (
         <div className="min-h-screen bg-base-200 flex justify-center pb-20 font-sans text-base-content transition-colors duration-200">
@@ -274,16 +280,27 @@ function LessonPage() {
                                         <div className="text-base-content/80">
                                             {currentStep.step_type === 'simulation_chat' ? (
                                                 <div className="flex justify-center py-4">
-                                                    {/*  ONEXIT  */}
                                                     <FakeMessenger 
                                                         scenario={currentStep.scenario_data} 
                                                         onComplete={handleStepComplete} 
+                                                        stepId={currentStep.id}
                                                         onExit={() => navigate(`/course/${lesson.course}`)}
                                                     />
                                                 </div>
                                             ) : currentStep.step_type === 'simulation_email' ? (
                                                 <div className="flex justify-center py-4">
                                                     <FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
+                                                </div>
+                                            ) : currentStep.step_type === 'interactive_spot' ? (
+                                                <div className="flex justify-center py-4">
+                                                    <SpotThePhishing 
+                                                        data={currentStep.scenario_data} 
+                                                        onComplete={handleStepComplete} 
+                                                    />
+                                                </div>
+                                            ) : currentStep.step_type === 'interactive_free' ? (
+                                                <div className="flex justify-center py-4 w-full">
+                                                    <FreeResponseAI stepData={currentStep} onComplete={handleStepComplete} />
                                                 </div>
                                             ) : currentStep.step_type === 'interactive_code' ? (
                                                 <div className="rounded-xl overflow-hidden border border-base-300 dark:border-slate-700">

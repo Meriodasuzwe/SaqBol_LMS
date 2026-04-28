@@ -62,8 +62,12 @@ function CourseDetail({ isLoggedIn }) {
                 } else {
                     setIsEnrolled(false);
                 }
-            } catch  {
+            } catch (err) {
                 console.error("Ошибка загрузки курса", err);
+                if (err.response?.status === 401) {
+                    toast.error("Пожалуйста, войдите в систему");
+                    
+                }
             } finally {
                 setLoading(false);
             }
@@ -125,6 +129,12 @@ function CourseDetail({ isLoggedIn }) {
     if (loading) return (
         <div className="min-h-[70vh] flex items-center justify-center bg-base-200">
             <div className="w-6 h-6 border-2 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
+        </div>
+    );
+    if (!course) return (
+        <div className="min-h-[70vh] flex flex-col items-center justify-center bg-base-200 text-base-content/50">
+            <h2 className="text-xl font-bold mb-2">Курс не найден</h2>
+            <p>Возможно, у вас нет доступа, или нужно авторизоваться.</p>
         </div>
     );
 

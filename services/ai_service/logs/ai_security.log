@@ -584,3 +584,101 @@ INFO 2026-04-25 14:12:09,911 | SCENARIO REQUEST | user_id=1 | type=chat | topic=
 INFO 2026-04-25 14:12:12,220 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-25 14:12:12,222 | SCENARIO SUCCESS | user_id=1 | type=chat
 INFO 2026-04-25 14:12:12,223 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.313s
+INFO 2026-04-26 13:57:25,468 | QUIZ REQUEST | user_id=1 | count=3 | difficulty=medium | lang=English
+INFO 2026-04-26 13:57:26,775 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 13:57:26,779 | QUIZ SUCCESS | user_id=1 | questions_generated=3
+INFO 2026-04-26 13:57:26,780 | OK: [200] POST /generate-quiz (IP: 172.18.0.8) — 1.327s
+INFO 2026-04-26 13:58:12,861 | INSIGHTS TEACHER | user_id=1 | lang=English
+INFO 2026-04-26 13:58:15,449 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 13:58:15,450 | INSIGHTS TEACHER SUCCESS | user_id=1 | Translated to: English
+INFO 2026-04-26 13:58:15,451 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.595s
+INFO 2026-04-26 15:10:48,040 | SCENARIO REQUEST | user_id=1 | type=chat | topic=письмо от налоговой | difficulty=medium | lang=Русский
+INFO 2026-04-26 15:10:53,367 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 15:10:53,375 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-26 15:10:53,377 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 5.380s
+INFO 2026-04-26 15:13:42,081 | SCENARIO REQUEST | user_id=1 | type=chat | topic=друг просит в долг | difficulty=medium | lang=Русский
+INFO 2026-04-26 15:13:46,037 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 15:13:46,040 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-26 15:13:46,041 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.972s
+INFO 2026-04-26 15:37:35,646 | SCENARIO REQUEST | user_id=1 | type=chat | topic=хитрый человек деньги вымогает | difficulty=medium | lang=Русский
+INFO 2026-04-26 15:37:38,000 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 15:37:38,002 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-26 15:37:38,003 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.364s
+INFO 2026-04-26 15:40:00,013 | SCENARIO REQUEST | user_id=1 | type=chat | topic=человек вымогает деньги | difficulty=medium | lang=Русский
+INFO 2026-04-26 15:40:03,679 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 15:40:03,681 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-26 15:40:03,682 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.671s
+INFO 2026-04-26 15:40:27,294 | SCENARIO REQUEST | user_id=1 | type=chat | topic=письмо | difficulty=medium | lang=Русский
+INFO 2026-04-26 15:40:29,659 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 15:40:29,661 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-26 15:40:29,662 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.370s
+INFO 2026-04-26 19:36:08,896 | INSIGHTS TEACHER | user_id=1 | lang=English
+INFO 2026-04-26 19:36:10,874 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 19:36:10,877 | INSIGHTS TEACHER SUCCESS | user_id=1 | Translated to: English
+INFO 2026-04-26 19:36:10,878 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.996s
+INFO 2026-04-26 19:36:14,568 | INSIGHTS TEACHER | user_id=1 | lang=Kazakh (Қазақ тілі)
+INFO 2026-04-26 19:36:17,498 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-26 19:36:17,499 | INSIGHTS TEACHER SUCCESS | user_id=1 | Translated to: Kazakh (Қазақ тілі)
+INFO 2026-04-26 19:36:17,500 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 2.934s
+INFO 2026-04-27 14:54:07,092 | SCENARIO REQUEST | user_id=1 | type=chat | topic=что то воруют | difficulty=medium | lang=English
+INFO 2026-04-27 14:54:11,161 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 14:54:11,164 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 14:54:11,165 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 4.084s
+INFO 2026-04-27 14:54:39,164 | SCENARIO REQUEST | user_id=1 | type=chat | topic=tax service | difficulty=medium | lang=English
+INFO 2026-04-27 14:54:42,082 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 14:54:42,083 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 14:54:42,084 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.922s
+INFO 2026-04-27 14:57:29,323 | SCENARIO REQUEST | user_id=1 | type=chat | topic=tax service | difficulty=medium | lang=English
+INFO 2026-04-27 14:57:33,196 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 14:57:33,197 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 14:57:33,198 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.879s
+INFO 2026-04-27 15:22:20,820 | SCENARIO REQUEST | user_id=1 | type=chat | topic=simulate sth | difficulty=medium | lang=English
+INFO 2026-04-27 15:22:25,242 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 15:22:25,244 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 15:22:25,246 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 4.428s
+INFO 2026-04-27 15:30:51,344 | SCENARIO REQUEST | user_id=1 | type=chat | topic=tax service | difficulty=medium | lang=English
+INFO 2026-04-27 15:30:54,803 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 15:30:54,806 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 15:30:54,807 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.469s
+INFO 2026-04-27 16:01:05,509 | SCENARIO REQUEST | user_id=1 | type=chat | topic=tax service | difficulty=medium | lang=English
+INFO 2026-04-27 16:01:09,374 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:01:09,384 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 16:01:09,385 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.884s
+INFO 2026-04-27 16:03:16,814 | OK: [200] GET /docs (IP: 172.18.0.8) — 0.000s
+INFO 2026-04-27 16:03:17,362 | OK: [200] GET /openapi.json (IP: 172.18.0.8) — 0.013s
+INFO 2026-04-27 16:12:28,156 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:12:28,160 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.545s
+INFO 2026-04-27 16:12:39,002 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:12:39,004 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.826s
+INFO 2026-04-27 16:12:57,820 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:12:57,830 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.496s
+INFO 2026-04-27 16:13:03,339 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:13:03,341 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.991s
+INFO 2026-04-27 16:13:12,191 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:13:12,193 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.589s
+INFO 2026-04-27 16:13:17,425 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:13:17,427 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.002s
+INFO 2026-04-27 16:13:38,983 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:13:38,984 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.565s
+INFO 2026-04-27 16:13:50,321 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:13:50,324 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.687s
+INFO 2026-04-27 16:14:02,896 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 16:14:02,898 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.524s
+INFO 2026-04-27 18:26:24,552 | SCENARIO REQUEST | user_id=1 | type=chat | topic=Переписка с арсеном | difficulty=medium | lang=Русский
+INFO 2026-04-27 18:26:32,759 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:26:32,763 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-27 18:26:32,765 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 8.229s
+INFO 2026-04-27 18:27:26,919 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:27:26,921 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.212s
+INFO 2026-04-27 18:27:37,078 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:27:37,079 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.781s
+INFO 2026-04-27 18:27:44,131 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:27:44,132 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.725s
+INFO 2026-04-27 18:27:51,690 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:27:51,691 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.746s
+INFO 2026-04-27 18:30:24,520 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:30:24,522 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.586s
+INFO 2026-04-27 18:30:35,946 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:30:35,948 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.182s
+INFO 2026-04-27 18:30:48,148 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-27 18:30:48,150 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.271s
