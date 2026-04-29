@@ -846,3 +846,143 @@ INFO 2026-04-28 18:35:26,307 | HTTP Request: POST https://api.groq.com/openai/v1
 INFO 2026-04-28 18:35:26,308 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.817s
 INFO 2026-04-28 18:35:35,782 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-04-28 18:35:35,784 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.926s
+INFO 2026-04-29 15:40:17,092 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:40:17,096 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.885s
+INFO 2026-04-29 15:40:30,578 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:40:30,580 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.842s
+INFO 2026-04-29 15:40:45,514 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:40:45,516 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.804s
+INFO 2026-04-29 15:40:59,206 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:40:59,207 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.227s
+INFO 2026-04-29 15:41:07,720 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:41:07,722 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.893s
+INFO 2026-04-29 15:41:11,508 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:41:11,513 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.674s
+INFO 2026-04-29 15:41:15,378 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:41:15,380 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.066s
+INFO 2026-04-29 15:41:20,822 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:41:20,824 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.610s
+INFO 2026-04-29 15:46:00,531 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:46:00,533 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.020s
+INFO 2026-04-29 15:46:09,330 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:46:09,332 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.180s
+INFO 2026-04-29 15:46:19,256 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:46:19,258 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.570s
+INFO 2026-04-29 15:46:29,294 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:46:29,296 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.019s
+INFO 2026-04-29 15:46:43,159 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:46:43,161 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.922s
+INFO 2026-04-29 15:46:50,303 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:46:50,308 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.738s
+INFO 2026-04-29 15:47:01,628 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:47:01,630 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.933s
+INFO 2026-04-29 15:47:11,778 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:47:11,780 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.808s
+INFO 2026-04-29 15:48:09,042 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:48:09,043 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.850s
+INFO 2026-04-29 15:50:30,050 | SCENARIO REQUEST | user_id=1 | type=chat | topic=tax service email | difficulty=medium | lang=English
+INFO 2026-04-29 15:50:34,679 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:50:34,681 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-29 15:50:34,682 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 4.651s
+INFO 2026-04-29 15:54:01,555 | SCENARIO REQUEST | user_id=1 | type=chat | topic=tax service email | difficulty=medium | lang=English
+INFO 2026-04-29 15:54:04,562 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:54:04,564 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-29 15:54:04,565 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 3.012s
+INFO 2026-04-29 15:54:17,670 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:54:17,672 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.884s
+INFO 2026-04-29 15:55:20,892 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:55:20,894 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.360s
+INFO 2026-04-29 15:57:26,455 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:57:26,457 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.438s
+INFO 2026-04-29 15:57:40,655 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:57:40,656 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.936s
+INFO 2026-04-29 15:57:49,530 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:57:49,531 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.771s
+INFO 2026-04-29 15:57:56,308 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:57:56,310 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.717s
+INFO 2026-04-29 15:58:03,942 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:58:03,945 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.844s
+INFO 2026-04-29 15:59:39,686 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 15:59:39,690 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.986s
+INFO 2026-04-29 16:00:14,305 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:00:14,309 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.066s
+INFO 2026-04-29 16:00:44,406 | SCENARIO REQUEST | user_id=1 | type=chat | topic=айбек деген кісі ақша сұрап тұр каспи банк нөмірі  | difficulty=medium | lang=English
+INFO 2026-04-29 16:00:46,505 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:00:46,507 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-29 16:00:46,507 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 2.110s
+INFO 2026-04-29 16:00:52,098 | SCENARIO REQUEST | user_id=1 | type=chat | topic=айбек деген кісі ақша сұрап тұр каспи банк нөмірі  | difficulty=medium | lang=Казахский
+INFO 2026-04-29 16:00:56,485 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:00:56,487 | SCENARIO SUCCESS | user_id=1 | type=chat
+INFO 2026-04-29 16:00:56,488 | OK: [200] POST /generate-scenario (IP: 172.18.0.8) — 4.391s
+INFO 2026-04-29 16:01:16,132 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:01:16,134 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.289s
+INFO 2026-04-29 16:01:24,638 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:01:24,641 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.502s
+INFO 2026-04-29 16:01:39,791 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:01:39,793 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.291s
+INFO 2026-04-29 16:01:47,993 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:01:47,997 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.768s
+INFO 2026-04-29 16:01:55,815 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:01:55,817 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.714s
+INFO 2026-04-29 16:06:32,127 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:06:32,129 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.853s
+INFO 2026-04-29 16:06:41,810 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:06:41,812 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.141s
+INFO 2026-04-29 16:06:51,297 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:06:51,300 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.972s
+INFO 2026-04-29 16:08:13,071 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:08:13,073 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.281s
+INFO 2026-04-29 16:08:23,606 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:08:23,608 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.130s
+INFO 2026-04-29 16:08:28,396 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:08:28,398 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.784s
+INFO 2026-04-29 16:08:38,637 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:08:38,639 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.069s
+INFO 2026-04-29 16:10:12,247 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:10:12,249 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.155s
+INFO 2026-04-29 16:10:16,260 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:10:16,262 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.739s
+INFO 2026-04-29 16:10:23,825 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:10:23,826 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.147s
+INFO 2026-04-29 16:13:03,631 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:13:03,633 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.849s
+INFO 2026-04-29 16:13:11,148 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:13:11,150 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.687s
+INFO 2026-04-29 16:13:17,421 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:13:17,423 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.916s
+INFO 2026-04-29 16:13:26,439 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:13:26,441 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.385s
+INFO 2026-04-29 16:13:58,948 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:13:58,950 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98312, Requested 3083. Please try again in 20m5.28s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:14:01,066 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:14:01,067 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98309, Requested 2267. Please try again in 8m17.664s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:14:03,186 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+ERROR 2026-04-29 16:14:03,187 | Groq API error after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98307, Requested 3083. Please try again in 20m0.96s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-04-29 16:14:03,188 | Live Chat Error: 503: AI сервис временно недоступен. Попробуйте позже.
+ERROR 2026-04-29 16:14:03,188 | SERVER ERROR: [500] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 4.417s
+INFO 2026-04-29 16:14:09,434 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:14:09,435 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98300, Requested 3083. Please try again in 19m54.912s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:14:11,549 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:14:11,550 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98297, Requested 2279. Please try again in 8m17.664s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:14:13,673 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+ERROR 2026-04-29 16:14:13,674 | Groq API error after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98295, Requested 3083. Please try again in 19m50.592s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-04-29 16:14:13,674 | Live Chat Error: 503: AI сервис временно недоступен. Попробуйте позже.
+ERROR 2026-04-29 16:14:13,675 | SERVER ERROR: [500] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 4.509s
+INFO 2026-04-29 16:15:00,602 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:15:00,604 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98241, Requested 3123. Please try again in 19m38.495999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:15:02,819 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:15:02,820 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98238, Requested 3123. Please try again in 19m35.904s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:15:04,941 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+ERROR 2026-04-29 16:15:04,942 | Groq API error after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98235, Requested 3123. Please try again in 19m33.312s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-04-29 16:15:04,943 | Live Chat Error: 503: AI сервис временно недоступен. Попробуйте позже.
+ERROR 2026-04-29 16:15:04,943 | SERVER ERROR: [500] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 4.507s
+INFO 2026-04-29 16:23:22,450 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-04-29 16:23:22,455 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.026s
+INFO 2026-04-29 16:23:32,094 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:23:32,095 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99878, Requested 2187. Please try again in 29m44.16s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:23:34,210 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING 2026-04-29 16:23:34,211 | Retrying groq_service._call_groq in 2.0 seconds as it raised RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99876, Requested 2187. Please try again in 29m42.432s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}.
+INFO 2026-04-29 16:23:36,327 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+ERROR 2026-04-29 16:23:36,328 | Groq API error after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99873, Requested 2326. Please try again in 31m39.936s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
+ERROR 2026-04-29 16:23:36,328 | Live Chat Error: 503: AI сервис временно недоступен. Попробуйте позже.
+ERROR 2026-04-29 16:23:36,329 | SERVER ERROR: [500] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 4.410s

@@ -22,6 +22,7 @@ import FakeEmail from './FakeEmail';
 import PythonEditor from './PythonEditor'; 
 import SpotThePhishing from './SpotThePhishing'; 
 import FreeResponseAI from './FreeResponseAI';
+import { t } from 'i18next';
 
 function LessonPage() {
     const { lessonId } = useParams();
@@ -122,14 +123,14 @@ function LessonPage() {
             } else {
                 // 2. ЕСЛИ ЭТО БЫЛ ПОСЛЕДНИЙ ШАГ В УРОКЕ
                 if (nextLessonObj) {
-                    toast.success("Урок пройден! Загружаем следующий...");
+                    toast.success(t('builder.toasts.simEnd'));
                     // Делаем задержку в 1.2 секунды, чтобы юзер успел увидеть зеленую плашку в симуляторе
                     setTimeout(() => {
                         navigate(`/lesson/${nextLessonObj.id}`);
                     }, 1200);
                 } else {
                     // 3. ЭТО ПОСЛЕДНИЙ УРОК В КУРСЕ
-                    toast.success("Отличная работа! Вы прошли все шаги этого модуля.");
+                    toast.success(t('builder.toasts.simCongrat'));
                     // Также даем паузу перед тем, как выкинуть на страницу курса
                     setTimeout(() => {
                         navigate(`/course/${lesson.course}`);

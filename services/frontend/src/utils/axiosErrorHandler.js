@@ -1,4 +1,6 @@
 import { toast } from 'react-toastify';
+// 🔥 Импортируем сам объект i18n напрямую (путь может отличаться, проверь его!)
+import i18n from '../i18n';
 
 export const setupAxiosInterceptors = (axiosInstance) => {
 
@@ -8,7 +10,7 @@ export const setupAxiosInterceptors = (axiosInstance) => {
 
             // 1. Ошибка сети
             if (!error.response) {
-                toast.error("🌐 Ошибка сети. Проверьте подключение или сервер недоступен.", {
+                toast.error(i18n.t('api.networkError'), {
                     toastId: 'network-error', // один тост на все сетевые ошибки
                 });
                 return Promise.reject(error);
@@ -18,7 +20,7 @@ export const setupAxiosInterceptors = (axiosInstance) => {
 
             // 2. Ошибки сервера (500+)
             if (status >= 500) {
-                toast.error(" Ошибка сервера. Мы уже решаем этот вопрос!", {
+                toast.error(i18n.t('api.serverError'), {
                     toastId: 'server-error',
                 });
                 return Promise.reject(error);
@@ -30,20 +32,20 @@ export const setupAxiosInterceptors = (axiosInstance) => {
                     const data = error.response.data;
                     const message = data.detail || JSON.stringify(data);
                     // 400 могут быть разные — не дедублируем, каждый информативен
-                    toast.warning(`Ошибка данных: ${message.substring(0, 100)}`);
+                    toast.warning(`${i18n.t('api.dataError')}: ${message.substring(0, 100)}`);
                     break;
                 }
 
                 case 401:
                     // toastId гарантирует что сколько бы запросов ни упало с 401
                     // юзер увидит ровно ОДИН тост
-                    toast.info(" Сессия истекла. Пожалуйста, войдите снова.", {
+                    toast.info(i18n.t('api.sessionExpired'), {
                         toastId: 'session-expired',
                     });
                     break;
 
                 case 403:
-                    toast.error("⛔ Доступ запрещён!", {
+                    toast.error(i18n.t('api.forbidden'), {
                         toastId: 'forbidden',
                     });
                     break;
@@ -51,11 +53,11 @@ export const setupAxiosInterceptors = (axiosInstance) => {
                 case 404:
                     // 404 часто летят на фоновые запросы — тихо игнорируем
                     // раскомментируй если нужно показывать:
-                    // toast.warn("🔍 Ресурс не найден (404).", { toastId: 'not-found' });
+                    // toast.warn(i18n.t('api.notFound'), { toastId: 'not-found' });
                     break;
 
                 default:
-                    toast.error("Произошла ошибка при запросе.", {
+                    toast.error(i18n.t('api.defaultError'), {
                         toastId: `error-${status}`,
                     });
             }

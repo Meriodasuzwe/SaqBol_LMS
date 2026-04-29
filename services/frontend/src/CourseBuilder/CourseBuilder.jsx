@@ -318,7 +318,7 @@ function CourseBuilder() {
             setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: newScenarioData }));
             
             // Уведомляем, что можно редактировать
-            toast.success("Сценарий сгенерирован! Проверьте и отредактируйте его ниже.");
+            toast.success(t('builder.toasts.simSuccess'));
         } catch (err) { 
             console.error("AI Error:", err);
             toast.error(t('builder.toasts.simError')); 

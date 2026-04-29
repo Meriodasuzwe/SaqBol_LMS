@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, User, Wifi, Battery, Signal, Terminal, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Подключаем переводы
 import api from './api';
 
 export default function FakeMessenger({ scenario: rawScenario, onComplete, stepId }) {
-    
+    const { t } = useTranslation();
+
     // Парсим начальные данные
     let scenario = rawScenario;
     while (typeof scenario === 'string') {
@@ -21,13 +23,13 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
     // При старте добавляем первое сообщение бота из сценария
     useEffect(() => {
         const now = new Date();
-        setTime(now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+        setTime(now.toLocaleTimeString(navigator.language || 'ru-RU', { hour: '2-digit', minute: '2-digit' }));
         
         if (scenario && scenario.steps && scenario.steps.length > 0) {
             setChatHistory([{ 
                 id: Date.now(), 
                 sender: 'bot', 
-                text: scenario.steps[0].text || "Здравствуйте." 
+                text: scenario.steps[0].text || "..." 
             }]);
             setGameOver(null);
         }
@@ -44,7 +46,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
     }, [chatHistory, isTyping, gameOver]);
 
     
-    // 🔥 ОТПРАВКА СВОБОДНОГО ТЕКСТА НА БЭКЕНД 🔥
+    // ОТПРАВКА СВОБОДНОГО ТЕКСТА НА БЭКЕНД И ПРОВЕРКА ЧЕРЕЗ ИИ
     const handleSendMessage = async (e) => {
         e?.preventDefault();
         if (!inputText.trim() || isTyping || gameOver) return;
@@ -57,7 +59,6 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
         setIsTyping(true); 
 
         try {
-            // Отправляем текст юзера и историю на наш Django, а он перекинет в FastAPI
             const response = await api.post(`courses/steps/${stepId}/chat-reply/`, {
                 message: userMsg,
                 history: updatedHistory 
@@ -65,12 +66,10 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
 
             const data = response.data;
 
-            // Бот отвечает
             if (data.reply) {
                 setChatHistory(prev => [...prev, { id: Date.now(), sender: 'bot', text: data.reply }]);
             }
 
-            // ИИ решил, что это конец (успех или провал)
             if (data.isSuccess === true || data.isSuccess === false) {
                 setTimeout(() => {
                     setGameOver({ 
@@ -82,7 +81,8 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
 
         } catch (error) {
             console.error("Ошибка при запросе к ИИ:", error);
-            const errorMsg = error.response?.data?.error || "⚠️ Ошибка связи с сервером. Проверьте интернет.";
+            // 🔥 Берем текст ошибки из i18n
+            const errorMsg = t('builder.messenger.serverError');
             setChatHistory(prev => [...prev, { id: Date.now(), sender: 'bot', text: errorMsg }]);
         } finally {
             setIsTyping(false);
@@ -115,9 +115,9 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                     </div>
                     <div className="truncate">
                         <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                            {scenario.contact_name || "Неизвестный номер"}
+                            {scenario.contact_name || t('builder.messenger.unknown')}
                         </h3>
-                        <p className="text-[10px] text-indigo-500 font-medium">в сети</p>
+                        <p className="text-[10px] text-indigo-500 font-medium">{t('builder.messenger.online')}</p>
                     </div>
                 </div>
 
@@ -128,7 +128,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                 >
                     <div className="text-center my-2">
                         <span className="bg-slate-200 dark:bg-slate-800 text-slate-500 text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full">
-                            Сегодня
+                            {t('builder.messenger.today')}
                         </span>
                     </div>
 
@@ -155,7 +155,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                     )}
                 </div>
 
-                {/* 🔥 ЗОНА СВОБОДНОГО ВВОДА ТЕКСТА 🔥 */}
+                {/* ЗОНА СВОБОДНОГО ВВОДА ТЕКСТА */}
                 {!gameOver && (
                     <form 
                         onSubmit={handleSendMessage}
@@ -170,7 +170,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                                     handleSendMessage();
                                 }
                             }}
-                            placeholder="Напишите ответ..."
+                            placeholder={t('builder.messenger.placeholder')}
                             disabled={isTyping}
                             className="flex-1 max-h-24 min-h-[44px] bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-indigo-400 rounded-2xl px-4 py-3 text-[14px] text-slate-900 dark:text-white outline-none resize-none transition-all disabled:opacity-50 no-scrollbar"
                             rows={1}
@@ -194,7 +194,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6">
                                         <ShieldCheck size={48} className="text-white" />
                                     </div>
-                                    <h2 className="text-2xl font-black mb-2 uppercase tracking-widest">Угроза устранена</h2>
+                                    <h2 className="text-2xl font-black mb-2 uppercase tracking-widest">{t('builder.messenger.threatEliminated')}</h2>
                                     <p className="text-sm text-emerald-50 opacity-90 leading-relaxed mb-8">
                                         {gameOver.explanation}
                                     </p>
@@ -203,7 +203,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                                     onClick={() => onComplete(10)}
                                     className="w-full bg-white text-emerald-600 font-black uppercase tracking-widest py-4 rounded-xl shadow-xl active:scale-95 transition-transform"
                                 >
-                                    Завершить шаг
+                                    {t('builder.messenger.finishStep')}
                                 </button>
                             </div>
                         ) : (
@@ -211,7 +211,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                                 <div className="flex-1 flex flex-col justify-center items-center text-center p-6 relative z-10">
                                     <Terminal size={56} className="mb-4 text-red-500" />
                                     <h2 className="text-3xl font-black mb-2 uppercase tracking-widest font-mono">
-                                        FATAL ERROR
+                                        {t('builder.messenger.fatalError')}
                                     </h2>
                                     <div className="bg-red-950/50 border border-red-900 rounded-lg p-4 mb-8 text-left w-full font-mono text-[11px] text-red-400">
                                         <p className="text-red-300 mt-2 font-bold">{gameOver.explanation}</p>
@@ -225,7 +225,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                                         }}
                                         className="w-full border-2 border-red-600 text-red-500 hover:bg-red-600 hover:text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all font-mono"
                                     >
-                                        REBOOT SYSTEM
+                                        {t('builder.messenger.rebootSystem')}
                                     </button>
                                 </div>
                             </div>

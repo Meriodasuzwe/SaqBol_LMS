@@ -21,6 +21,8 @@ from .views import (
     stripe_webhook,
     ChatReplyView,
     ChangeCertificateLanguageView,
+    B2BLeadCreateView,
+    B2BLeadListView,
     # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
     PendingCoursesView,
     ApproveCourseView
@@ -54,6 +56,9 @@ urlpatterns = [
 
     path('certificates/my/', MyCertificatesView.as_view(), name='my-certificates'),
 
+    path('b2b/leads/create/', B2BLeadCreateView.as_view(), name='b2b-lead-create'),
+    path('b2b/leads/', B2BLeadListView.as_view(), name='b2b-lead-list'),
+    
     # Для страницы верификации
     path('certificates/verify/<uuid:cert_id>/', VerifyCertificateView.as_view(), name='verify-certificate'),
     
