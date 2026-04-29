@@ -104,7 +104,8 @@ function LessonPage() {
                 return { ...prevLesson, steps: updatedSteps };
             });
 
-            if (res.data.just_completed) {
+            // Если бэкенд сказал, что ВЕСЬ КУРС только что пройден впервые
+            if (res.data?.just_completed) {
                 setShowCompletionModal(true);
                 return; 
             }
@@ -113,17 +114,26 @@ function LessonPage() {
             const nextLessonObj = currentIndexInCourse < courseLessons.length - 1 ? courseLessons[currentIndexInCourse + 1] : null;
 
             if (activeStepIndex < lesson.steps.length - 1) {
+                // 1. Если в уроке ЕЩЕ ЕСТЬ шаги — просто плавно переключаем вкладку
                 setActiveStepIndex(activeStepIndex + 1);
                 const nextStepId = lesson.steps[activeStepIndex + 1].id;
                 window.history.replaceState(null, '', `/lesson/${lessonId}?step=${nextStepId}`);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
+                // 2. ЕСЛИ ЭТО БЫЛ ПОСЛЕДНИЙ ШАГ В УРОКЕ
                 if (nextLessonObj) {
-                    toast.success("Урок завершен! Переходим к следующему");
-                    navigate(`/lesson/${nextLessonObj.id}`);
+                    toast.success("Урок пройден! Загружаем следующий...");
+                    // Делаем задержку в 1.2 секунды, чтобы юзер успел увидеть зеленую плашку в симуляторе
+                    setTimeout(() => {
+                        navigate(`/lesson/${nextLessonObj.id}`);
+                    }, 1200);
                 } else {
-                    toast.success("Урок успешно перепройден!");
-                    navigate(`/course/${lesson.course}`);
+                    // 3. ЭТО ПОСЛЕДНИЙ УРОК В КУРСЕ
+                    toast.success("Отличная работа! Вы прошли все шаги этого модуля.");
+                    // Также даем паузу перед тем, как выкинуть на страницу курса
+                    setTimeout(() => {
+                        navigate(`/course/${lesson.course}`);
+                    }, 1500);
                 }
             }
         } catch (err) {

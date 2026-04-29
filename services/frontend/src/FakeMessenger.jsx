@@ -15,12 +15,10 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [gameOver, setGameOver] = useState(null); 
-    
-    // 🔥 1. Изменили ref. Теперь он будет висеть на самом контейнере сообщений
     const chatContainerRef = useRef(null); 
     const [time, setTime] = useState('12:00');
 
-    // При старте компонента добавляем первое сообщение от бота
+    // При старте добавляем первое сообщение бота из сценария
     useEffect(() => {
         const now = new Date();
         setTime(now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
@@ -35,7 +33,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
         }
     }, [scenario]);
 
-    // 🔥 2. Правильный автоскролл, который не дергает всю страницу
+    // Мягкий автоскролл
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTo({
@@ -46,7 +44,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
     }, [chatHistory, isTyping, gameOver]);
 
     
-    // 🔥 БОЕВАЯ ОТПРАВКА СООБЩЕНИЯ К ИИ 🔥
+    // 🔥 ОТПРАВКА СВОБОДНОГО ТЕКСТА НА БЭКЕНД 🔥
     const handleSendMessage = async (e) => {
         e?.preventDefault();
         if (!inputText.trim() || isTyping || gameOver) return;
@@ -54,15 +52,12 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
         const userMsg = inputText.trim();
         setInputText('');
         
-        // 1. Создаем обновленный массив истории СРАЗУ
         const updatedHistory = [...chatHistory, { id: Date.now(), sender: 'user', text: userMsg }];
-        
-        // 2. Обновляем визуал чата
         setChatHistory(updatedHistory);
         setIsTyping(true); 
 
         try {
-            // 3. Отправляем в запросе ИМЕННО updatedHistory!
+            // Отправляем текст юзера и историю на наш Django, а он перекинет в FastAPI
             const response = await api.post(`courses/steps/${stepId}/chat-reply/`, {
                 message: userMsg,
                 history: updatedHistory 
@@ -70,10 +65,12 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
 
             const data = response.data;
 
+            // Бот отвечает
             if (data.reply) {
                 setChatHistory(prev => [...prev, { id: Date.now(), sender: 'bot', text: data.reply }]);
             }
 
+            // ИИ решил, что это конец (успех или провал)
             if (data.isSuccess === true || data.isSuccess === false) {
                 setTimeout(() => {
                     setGameOver({ 
@@ -113,18 +110,17 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
 
                 {/* Шапка чата */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center gap-3 z-10">
-                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-inner font-bold text-lg">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-inner font-bold text-lg shrink-0">
                         {scenario.contact_name ? scenario.contact_name[0] : <User size={20} />}
                     </div>
-                    <div>
-                        <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                    <div className="truncate">
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">
                             {scenario.contact_name || "Неизвестный номер"}
                         </h3>
                         <p className="text-[10px] text-indigo-500 font-medium">в сети</p>
                     </div>
                 </div>
 
-                {/* 🔥 3. Повесили ref={chatContainerRef} прямо сюда */}
                 {/* Окно сообщений */}
                 <div 
                     ref={chatContainerRef} 
@@ -157,10 +153,9 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                             </div>
                         </div>
                     )}
-                    {/* Пустой div внизу больше не нужен, мы его удалили! */}
                 </div>
 
-                {/* 🔥 ЗОНА ВВОДА ТЕКСТА 🔥 */}
+                {/* 🔥 ЗОНА СВОБОДНОГО ВВОДА ТЕКСТА 🔥 */}
                 {!gameOver && (
                     <form 
                         onSubmit={handleSendMessage}
@@ -175,7 +170,7 @@ export default function FakeMessenger({ scenario: rawScenario, onComplete, stepI
                                     handleSendMessage();
                                 }
                             }}
-                            placeholder="Сообщение..."
+                            placeholder="Напишите ответ..."
                             disabled={isTyping}
                             className="flex-1 max-h-24 min-h-[44px] bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-indigo-400 rounded-2xl px-4 py-3 text-[14px] text-slate-900 dark:text-white outline-none resize-none transition-all disabled:opacity-50 no-scrollbar"
                             rows={1}

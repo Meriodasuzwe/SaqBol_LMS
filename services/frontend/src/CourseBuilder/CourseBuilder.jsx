@@ -314,18 +314,11 @@ function CourseBuilder() {
                 newScenarioData = newScenarioData.scenario_data;
             }
 
+            // 🔥 ПРОСТО ОБНОВЛЯЕМ ЛОКАЛЬНЫЙ СТЕЙТ (БЕЗ ЗАПРОСА К DJANGO) 🔥
             setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: newScenarioData }));
             
-            const patchRes = await api.patch(`courses/steps/${activeStep.id}/`, { 
-                step_type: type, 
-                scenario_data: newScenarioData 
-            });
-            
-            const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? patchRes.data : s) } : l);
-            setLessons(updatedLessons); 
-            setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id));
-
-            toast.success("Данные успешно сгенерированы и сохранены! ✅");
+            // Уведомляем, что можно редактировать
+            toast.success("Сценарий сгенерирован! Проверьте и отредактируйте его ниже.");
         } catch (err) { 
             console.error("AI Error:", err);
             toast.error(t('builder.toasts.simError')); 
