@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next'; // ✅ Добавили переводы
+import { useTranslation } from 'react-i18next';
 import api from './api';
 import { toast } from 'react-toastify';
 import {
     Check, X, GraduationCap, BookOpen, User,
-    AlertCircle, Send, ArrowRight, Eye,
+    AlertCircle, Send, ArrowRight, Eye, Briefcase, Mail
 } from 'lucide-react';
 
 const AdminPanel = () => {
-    const { t } = useTranslation(); // ✅ Инициализировали хук
+    const { t } = useTranslation();
     
     const [applications, setApplications] = useState([]);
     const [courses, setCourses] = useState([]);
+    const [leads, setLeads] = useState([]); // 🔥 Добавили стейт для B2B заявок
+    
     const [activeTab, setActiveTab] = useState('apps');
     const [loading, setLoading] = useState(true);
 
@@ -32,7 +34,6 @@ const AdminPanel = () => {
         return () => observer.disconnect();
     }, []);
 
-    // ✅ ФИКС: Переименовали t в themeColors, чтобы не конфликтовало с функцией перевода t()
     const themeColors = {
         bg:           isDark ? '#121216' : '#f8fafc',
         panel:        isDark ? '#1e1e24' : '#ffffff',
@@ -52,9 +53,13 @@ const AdminPanel = () => {
             if (activeTab === 'apps') {
                 const res = await api.get('/users/admin/applications/pending/');
                 setApplications(res.data);
-            } else {
+            } else if (activeTab === 'courses') {
                 const res = await api.get('/courses/admin/pending/');
                 setCourses(res.data);
+            } else if (activeTab === 'leads') {
+                // 🔥 Загружаем B2B заявки
+                const res = await api.get('courses/b2b/leads/');
+                setLeads(res.data);
             }
         } catch (err) {
             toast.error(t('admin.toasts.loadError'));
@@ -116,6 +121,12 @@ const AdminPanel = () => {
         }
     };
 
+    // Функция форматирования даты
+    const formatDate = (dateString) => {
+        const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleDateString(navigator.language || 'ru-RU', options);
+    };
+
     return (
         <div style={{ minHeight: '100vh', background: themeColors.bg, padding: '40px 20px', fontFamily: "'Plus Jakarta Sans', sans-serif", transition: 'background 0.3s' }}>
             <div style={{ maxWidth: 1000, margin: '0 auto' }}>
@@ -125,14 +136,16 @@ const AdminPanel = () => {
                     <p style={{ color: themeColors.textMute, margin: 0, fontSize: 15 }}>{t('admin.subtitle')}</p>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+                {/* 🔥 Добавили вкладку Leads в меню 🔥 */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 24, overflowX: 'auto', paddingBottom: '4px' }}>
                     {[
                         { key: 'apps',    icon: <GraduationCap size={18} />, label: t('admin.tabs.apps'), count: applications.length },
                         { key: 'courses', icon: <BookOpen size={18} />,      label: t('admin.tabs.courses'),  count: courses.length },
+                        { key: 'leads',   icon: <Briefcase size={18} />,     label: t('admin.tabs.leads') || 'B2B Заявки', count: leads.length },
                     ].map(tab => (
                         <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-                            flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10,
-                            padding: '14px', borderRadius: 16, border: 'none', cursor: 'pointer', fontWeight: 700,
+                            flex: 1, minWidth: 'max-content', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10,
+                            padding: '14px 20px', borderRadius: 16, border: 'none', cursor: 'pointer', fontWeight: 700,
                             background: activeTab === tab.key ? themeColors.activeTab : themeColors.panel,
                             color: activeTab === tab.key ? themeColors.activeText : themeColors.textMute,
                             boxShadow: activeTab === tab.key ? 'none' : '0 2px 10px rgba(0,0,0,0.05)',
@@ -148,6 +161,7 @@ const AdminPanel = () => {
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+                        {/* Вкладка: Заявки в авторы */}
                         {activeTab === 'apps' && applications.map(app => (
                             <div key={app.id} style={{ background: themeColors.panel, borderRadius: 20, padding: 24, border: `1px solid ${themeColors.panelBdr}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -184,6 +198,7 @@ const AdminPanel = () => {
                             </div>
                         ))}
 
+                        {/* Вкладка: Модерация курсов */}
                         {activeTab === 'courses' && courses.map(course => (
                             <div key={course.id} style={{ background: themeColors.panel, borderRadius: 20, padding: 20, border: `1px solid ${themeColors.panelBdr}`, display: 'flex', alignItems: 'center', gap: 20 }}>
                                 <div style={{ width: 80, height: 60, borderRadius: 12, background: themeColors.bg, overflow: 'hidden', flexShrink: 0 }}>
@@ -201,11 +216,6 @@ const AdminPanel = () => {
                                         <p style={{ margin: 0, color: themeColors.textMute, fontSize: 12 }}>{course.teacher_name || t('admin.course.authorFallback')}</p>
                                         {course.lessons?.length > 0 && (
                                             <span style={{ fontSize: 11, color: themeColors.textMute }}>· {course.lessons.length} {t('admin.course.lessonsCount')}</span>
-                                        )}
-                                        {course.category_title && (
-                                            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', color: themeColors.textMute }}>
-                                                {course.category_title}
-                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -230,7 +240,48 @@ const AdminPanel = () => {
                             </div>
                         ))}
 
-                        {(activeTab === 'apps' ? applications : courses).length === 0 && (
+                        {/* 🔥 НОВАЯ Вкладка: B2B Лиды 🔥 */}
+                        {activeTab === 'leads' && leads.map(lead => (
+                            <div key={lead.id} style={{ background: themeColors.panel, borderRadius: 20, padding: 20, border: `1px solid ${themeColors.panelBdr}`, display: 'flex', alignItems: 'center', gap: 20 }}>
+                                <div style={{ width: 56, height: 56, borderRadius: 16, background: isDark ? 'rgba(99,102,241,0.15)' : '#e0e7ff', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Briefcase size={28} />
+                                </div>
+
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h3 style={{ margin: '0 0 6px 0', color: themeColors.text, fontSize: 16, fontWeight: 800 }}>
+                                        {lead.company}
+                                    </h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
+                                        <div style={{ color: themeColors.textMute, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <User size={14} /> <strong>{lead.name}</strong>
+                                        </div>
+                                        <div style={{ color: themeColors.textMute, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <Mail size={14} /> {lead.email}
+                                        </div>
+                                        <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, background: themeColors.bg, color: themeColors.textMute }}>
+                                            {t('admin.leads.employees') || 'Штат'}: {lead.employees}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                                    <span style={{ fontSize: 11, color: themeColors.textMute, fontWeight: 600 }}>
+                                        {formatDate(lead.created_at)}
+                                    </span>
+                                    <button
+                                        onClick={() => window.location.href = `mailto:${lead.email}?subject=Демо-доступ к платформе кибербезопасности`}
+                                        style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: themeColors.activeText, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'inherit' }}
+                                    >
+                                        <Send size={14} /> {t('admin.leads.emailBtn') || 'Написать'}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Заглушка, если пусто */}
+                        {((activeTab === 'apps' && applications.length === 0) || 
+                          (activeTab === 'courses' && courses.length === 0) || 
+                          (activeTab === 'leads' && leads.length === 0)) && (
                             <div style={{ textAlign: 'center', padding: '60px 0', color: themeColors.textMute, fontSize: 14 }}>
                                 {t('admin.empty')}
                             </div>
@@ -239,10 +290,11 @@ const AdminPanel = () => {
                 )}
             </div>
 
+            {/* Модалка отказа (оставил как была) */}
             {isRejectModalOpen && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
                     <div style={{ position: 'absolute', inset: 0, background: themeColors.modalOverlay, backdropFilter: 'blur(4px)' }} onClick={() => setIsRejectModalOpen(false)} />
-                    <div style={{ position: 'relative', background: themeColors.panel, width: '100%', maxWidth: 440, borderRadius: 24, padding: 32, boxShadow: '0 20px 50px rgba(0,0,0,0.3)', animation: 'dropIn 0.3s ease-out' }}>
+                    <div style={{ position: 'relative', background: themeColors.panel, width: '100%', maxWidth: 440, borderRadius: 24, padding: 32, boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
                         <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
                             <div style={{ width: 48, height: 48, borderRadius: 16, background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <AlertCircle size={24} />
@@ -277,10 +329,6 @@ const AdminPanel = () => {
                     </div>
                 </div>
             )}
-
-            <style>{`
-                @keyframes dropIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-            `}</style>
         </div>
     );
 };

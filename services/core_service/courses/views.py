@@ -20,9 +20,10 @@ from rest_framework.exceptions import ValidationError
 from .certificate_generator import generate_certificate_image
 User = get_user_model()
 
+from rest_framework.permissions import AllowAny, IsAdminUser
 # Импорты моделей и сериализаторов
-from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress, Review, Certificate
-from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer, ReviewSerializer, CertificateSerializer
+from .models import Category, Course, Enrollment, Lesson, LessonStep, StepProgress, Review, Certificate, B2BLead
+from .serializers import CategorySerializer, CourseSerializer, LessonSerializer, LessonStepSerializer, ReviewSerializer, CertificateSerializer, B2BLeadSerializer
 from quizzes.models import Quiz, Result
 
 # Инициализация ключа Stripe
@@ -614,7 +615,8 @@ class ChatReplyView(APIView):
             "message": user_message,
             "history": history,
             "contact_name": contact_name,
-            "language": "Русский"
+            "language": "Русский",
+            "scenario_rules": scenario
         }
 
         try:
@@ -639,3 +641,14 @@ class ChatReplyView(APIView):
         except requests.exceptions.RequestException as e:
             print(f"🔥 ОШИБКА СЕТИ DOCKER (не вижу ai_service): {e}")
             return Response({"error": "Сервер ИИ временно недоступен"}, status=500)
+        
+
+class B2BLeadCreateView(generics.CreateAPIView):
+    queryset = B2BLead.objects.all()
+    serializer_class = B2BLeadSerializer
+    permission_classes = [AllowAny] # Разрешаем отправлять всем
+
+class B2BLeadListView(generics.ListAPIView):
+    queryset = B2BLead.objects.all().order_by('-created_at')
+    serializer_class = B2BLeadSerializer
+    # permission_classes = [IsAdminUser] # Потом включишь только для админов

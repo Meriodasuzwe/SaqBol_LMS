@@ -216,5 +216,20 @@ class Certificate(models.Model):
         return f"Сертификат {self.id} | {self.student.username} - {self.course.title}"
         
         
-                                   
+
+class B2BLead(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Имя")
+    company = models.CharField(max_length=255, verbose_name="Компания")
+    email = models.EmailField(verbose_name="Рабочий Email")
+    employees = models.CharField(max_length=50, verbose_name="Штат сотрудников")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заявки")
+    status = models.CharField(
+        max_length=20, 
+        choices=[('new', 'Новая'), ('contacted', 'Связались'), ('closed', 'Закрыта')],
+        default='new',
+        verbose_name="Статус"
+    )
+
+    def __str__(self):
+        return f"{self.company} - {self.name}"                                 
     

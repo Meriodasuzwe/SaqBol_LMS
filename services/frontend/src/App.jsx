@@ -31,7 +31,7 @@ import Navbar from './Navbar';
 import AdminPanel from './AdminPanel';
 import AdminStats from './AdminStats';
 import About from './About';
-import SpotThePhishing from './SpotThePhishing';
+import CorporatePage from './CorporatePage';
 // Аналитика
 import TeacherDashboard from './TeacherDashboard';
 import StudentDashboard from './StudentDashboard';
@@ -104,7 +104,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
               isLoggedIn && userRole === 'admin' ? <AdminStats /> : <Navigate to="/login" />
             } />
 
-            
+            <Route path="/corporate" element={<CorporatePage />} />
             {/* Аналитика */}
             <Route path="/analytics/teacher" element={
               isLoggedIn && isTeacher ? <TeacherDashboard /> : <Navigate to="/login" />

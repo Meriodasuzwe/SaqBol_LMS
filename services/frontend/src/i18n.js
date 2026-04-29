@@ -5,6 +5,15 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   ru: {
     translation: {
+      "api": {
+      networkError: "Ошибка сети. Пожалуйста, проверьте подключение к интернету.",
+      serverError: "Ошибка сервера. Пожалуйста, попробуйте позже.",
+      dataError: "Ошибка данных. Проверьте введенные данные.",
+      sessionExpired: "Сессия истекла. Пожалуйста, войдите снова.",
+      forbidden: "Доступ запрещен.",
+      notFound: "Не найдено.",
+      defaultError: "Произошла ошибка. Пожалуйста, попробуйте позже."
+    },
         about: {
         title: "О разработчике",
         subTitle: "SaqBol LMS — создание одного студента",
@@ -660,8 +669,22 @@ const resources = {
             quizError: "Не удалось сгенерировать тест.",
             simEmptyPrompt: "Опишите сценарий!",
             simSuccess: "Сценарий создан",
-            simError: "Ошибка генерации симуляции"
+            simError: "Ошибка генерации симуляции",
+            simEnd: "Урок пройден! Загружаем следующий...",
+            simCongrat:"Отличная работа! Вы прошли все шаги этого модуля."
         },
+        "messenger": {
+    "online": "в сети",
+    "today": "Сегодня",
+    "placeholder": "Напишите ответ...",
+    "unknown": "Неизвестный номер",
+    "threatEliminated": "Угроза устранена",
+    "finishStep": "Завершить шаг",
+    "fatalError": "FATAL ERROR",
+    "rebootSystem": "ПЕРЕЗАГРУЗИТЬ СИСТЕМУ",
+    "networkError": "⚠️ Ошибка связи с сервером. Проверьте интернет.",
+    "serverError": "⚠️ Внутренняя ошибка сервера. Попробуйте позже."
+},
         "aiAssistantTitle": "AI-Ассистент",
           "aiAssistantDesc": "Сгенерировать новые вопросы по тексту лекции",
           "lectureMaterialPh": "Вставьте материал лекции сюда...",
@@ -687,8 +710,13 @@ const resources = {
     "subtitle": "Проверьте материалы перед публикацией в системе.",
     "tabs": {
         "apps": "Заявки в авторы",
-        "courses": "Новые курсы"
+        "courses": "Новые курсы",
+        "leads": "B2B Заявки"
     },
+    "leads": {
+    "employees": "Штат",
+    "emailBtn": "Написать"
+},
     "loading": "Загрузка...",
     "empty": "Нет материалов на модерации",
     "app": {
@@ -796,6 +824,9 @@ const resources = {
     "certificates": "Ваши сертификаты",
     "locked": "Заблокировано",
     "enrollToUnlock": "Запишитесь на курс, чтобы открыть этот материал",
+    "b2bTitle": "Обучение для бизнеса",
+"b2bDesc": "Хотите обучить команду? Получите корпоративный доступ с дашбордом статистики для руководителя.",
+"b2bBtn": "Оставить заявку",
     "stepTypes": {
         "interactive": "Интерактив",
         "phishing": "Фишинг",
@@ -854,6 +885,15 @@ const resources = {
   },
   kk: {
     translation: {
+      "api": {
+    "networkError": " Желі қатесі. Қосылымды тексеріңіз немесе сервер қолжетімсіз.",
+    "serverError": " Сервер қатесі. Біз бұл мәселені шешіп жатырмыз!",
+    "dataError": "Деректер қатесі",
+    "sessionExpired": " Сессия аяқталды. Қайта кіріңіз.",
+    "forbidden": " Рұқсат етілмеген!",
+    "notFound": " Ресурс табылмады (404).",
+    "defaultError": "Сұрау кезінде қате пайда болды."
+},
         about: {
           title: "Әзірлеуші туралы",
           subTitle: "SaqBol LMS — бір студенттің туындысы",
@@ -1503,8 +1543,22 @@ const resources = {
           "quizError": "Тест жасау мүмкін болмады.",
           "simEmptyPrompt": "Сценарийді сипаттаңыз!",
           "simSuccess": "Сценарий жасалды",
-          "simError": "Симуляция жасау қатесі"
+          "simError": "Симуляция жасау қатесі",
+          "simEnd": "Cабақ сәтті аяқталды, келесі қадамға өтудеміз...",
+          "simCongrat": "Керемет жұмыс! Сіз осы модульдің барлық қадамдарын өттіңіз."
       },
+      "messenger": {
+    "online": "желіде",
+    "today": "Бүгін",
+    "placeholder": "Жауап жазыңыз...",
+    "unknown": "Белгісіз нөмір",
+    "threatEliminated": "Қауіп жойылды",
+    "finishStep": "Қадамды аяқтау",
+    "fatalError": "ҚАТЕ (FATAL ERROR)",
+    "rebootSystem": "ЖҮЙЕНІ ҚАЙТА ҚОСУ",
+    "networkError": "⚠️ Сервермен байланыс қатесі. Интернетті тексеріңіз.",
+    "serverError": "⚠️ Сервер қатесі. Кейінірек қайталап көріңіз.",
+},
       "stepName": "Қадам атауы",
       "stepNamePh": "Қадам атауын енгізіңіз...",
       "delStepIconTitle": "Қадамды жою",
@@ -1541,9 +1595,14 @@ const resources = {
     "title": "Контентті модерациялау",
     "subtitle": "Жүйеде жарияламас бұрын материалдарды тексеріңіз.",
     "tabs": {
-        "apps": "Авторлыққа өтінімдер",
-        "courses": "Жаңа курстар"
-    },
+    "apps": "Авторлыққа өтініштер",
+    "courses": "Жаңа курстар",
+    "leads": "B2B Өтініштер"
+},
+"leads": {
+    "employees": "Қызметкерлер саны",
+    "emailBtn": "Хат жазу"
+},
     "loading": "Жүктелуде...",
     "empty": "Модерацияда материалдар жоқ",
     "app": {
@@ -1651,6 +1710,9 @@ const resources = {
     "certificates": "Сіздің сертификаттарыңыз",
     "locked": "Бұғатталған",
     "enrollToUnlock": "Бұл материалды ашу үшін курсқа жазылыңыз",
+    "b2bTitle": "Бизнеске арналған оқыту",
+"b2bDesc": "Командаңызды оқытқыңыз келе ме? Басшыларға арналған статистикасы бар корпоративтік оқытуға рұқсат алыңыз.",
+"b2bBtn": "Өтінім қалдыру",
     "stepTypes": {
         "interactive": "Интерактив",
         "phishing": "Фишинг",
@@ -1709,6 +1771,15 @@ const resources = {
   },
   en: {
     translation: {
+      "api": {
+    "networkError": " Network error. Check your connection or the server is down.",
+    "serverError": " Server error. We are already fixing it!",
+    "dataError": "Data error",
+    "sessionExpired": "⏱️ Session expired. Please log in again.",
+    "forbidden": " Access denied!",
+    "notFound": " Resource not found (404).",
+    "defaultError": "An error occurred during the request."
+},
       about: {
         title: "About Developer",
         subTitle: "SaqBol LMS — A student's creation",
@@ -2350,8 +2421,22 @@ const resources = {
             "quizError": "Failed to generate quiz.",
             "simEmptyPrompt": "Describe the scenario!",
             "simSuccess": "Scenario created",
-            "simError": "Error generating simulation"
+            "simError": "Error generating simulation",
+            "simEnd": "Lesson completed! Loading next...",
+            "simCongrat": "Great job! You've completed all steps of this module."
         },
+        "messenger": {
+    "online": "online",
+    "today": "Today",
+    "placeholder": "Type your reply...",
+    "unknown": "Unknown number",
+    "threatEliminated": "Threat Eliminated",
+    "finishStep": "Complete Step",
+    "fatalError": "FATAL ERROR",
+    "rebootSystem": "REBOOT SYSTEM",
+    "networkError": "⚠️ Connection error. Please check your internet.",
+    "serverError": "⚠️ Server error. Please try again later."
+},
         "stepName": "Step Name",
         "stepNamePh": "Enter step name...",
         "delStepIconTitle": "Delete step",
@@ -2398,9 +2483,14 @@ const resources = {
     "title": "Content Moderation",
     "subtitle": "Review materials before publishing them in the system.",
     "tabs": {
-        "apps": "Author Applications",
-        "courses": "New Courses"
-    },
+    "apps": "Author Applications",
+    "courses": "New Courses",
+    "leads": "B2B Leads"
+},
+"leads": {
+    "employees": "Employees",
+    "emailBtn": "Send Email"
+},
     "loading": "Loading...",
     "empty": "No materials pending moderation",
     "app": {
@@ -2508,6 +2598,9 @@ const resources = {
     "certificates": "Your Certificates",
     "locked": "Locked",
     "enrollToUnlock": "Enroll in the course to unlock this material",
+    "b2bTitle": "Training for Business",
+"b2bDesc": "Want to train your team? Get corporate access with an analytics dashboard for managers.",
+"b2bBtn": "Request a Demo",
     "stepTypes": {
         "interactive": "Interactive",
         "phishing": "Phishing",

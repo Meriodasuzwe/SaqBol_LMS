@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.db.models import Avg 
 
-from .models import Course, Lesson, Category, LessonStep, StepProgress, Review, Certificate, Enrollment
+from .models import Course, Lesson, Category, LessonStep, StepProgress, Review, Certificate, Enrollment, B2BLead
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -135,3 +135,8 @@ class CertificateSerializer(serializers.ModelSerializer):
 
     def get_student_name(self, obj):
         return f"{obj.student.first_name} {obj.student.last_name}".strip() or obj.student.username
+
+class B2BLeadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = B2BLead
+        fields = '__all__'

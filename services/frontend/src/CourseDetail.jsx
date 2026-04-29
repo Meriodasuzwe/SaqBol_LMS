@@ -6,7 +6,7 @@ import api from './api';
 import { 
     FileText, PlayCircle, ShieldCheck, HelpCircle, 
     Code2, ChevronRight, CheckCircle2, Clock, 
-    Award, Lock 
+    Award, Lock, Briefcase 
 } from 'lucide-react';
 import ReviewSection from './ReviewSection';
 
@@ -33,22 +33,17 @@ function CourseDetail({ isLoggedIn }) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 1. Загружаем инфу о курсе
                 const courseRes = await api.get(`courses/${id}/`);
                 setCourse(courseRes.data);
 
-                // 2. ВСЕГДА загружаем список уроков
                 const lessonsRes = await api.get(`courses/${id}/lessons/`);
                 setLessons(lessonsRes.data.sort((a, b) => a.id - b.id));
 
-                // 🔥 ФИКС АВТОРИЗАЦИИ: Проверяем токен напрямую, чтобы избежать моргания UI
                 const token = localStorage.getItem('access');
                 const userIsActuallyLoggedIn = isLoggedIn || !!token;
 
-                // 3. Проверяем, куплен ли курс
                 if (userIsActuallyLoggedIn) {
                     try {
-                        // Добавляем заголовки, чтобы браузер не кэшировал старый список после записи
                         const myCoursesRes = await api.get(`courses/my_courses/`, {
                             headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
                         });
@@ -66,7 +61,6 @@ function CourseDetail({ isLoggedIn }) {
                 console.error("Ошибка загрузки курса", err);
                 if (err.response?.status === 401) {
                     toast.error("Пожалуйста, войдите в систему");
-                    
                 }
             } finally {
                 setLoading(false);
@@ -78,12 +72,12 @@ function CourseDetail({ isLoggedIn }) {
     const getStepStyle = (type) => {
         const iconProps = { size: 18, className: "text-base-content/50 group-hover:text-blue-500 transition-colors" };
         switch (type) {
-            case 'simulation_chat':  return { icon: <ShieldCheck {...iconProps} />, label: t('courseDetail.stepTypes.interactive') };
-            case 'simulation_email': return { icon: <ShieldCheck {...iconProps} />, label: t('courseDetail.stepTypes.phishing') };
-            case 'video_url':        return { icon: <PlayCircle {...iconProps} />,  label: t('courseDetail.stepTypes.video') };
-            case 'quiz':             return { icon: <HelpCircle {...iconProps} />,  label: t('courseDetail.stepTypes.quiz') };
-            case 'interactive_code': return { icon: <Code2 {...iconProps} />,       label: t('courseDetail.stepTypes.code') };
-            default:                 return { icon: <FileText {...iconProps} />,    label: t('courseDetail.stepTypes.theory') };
+            case 'simulation_chat':  return { icon: <ShieldCheck {...iconProps} />, label: t('courseDetail.stepTypes.interactive') || 'Интерактив' };
+            case 'simulation_email': return { icon: <ShieldCheck {...iconProps} />, label: t('courseDetail.stepTypes.phishing') || 'Фишинг' };
+            case 'video_url':        return { icon: <PlayCircle {...iconProps} />,  label: t('courseDetail.stepTypes.video') || 'Видео' };
+            case 'quiz':             return { icon: <HelpCircle {...iconProps} />,  label: t('courseDetail.stepTypes.quiz') || 'Тест' };
+            case 'interactive_code': return { icon: <Code2 {...iconProps} />,       label: t('courseDetail.stepTypes.code') || 'Код' };
+            default:                 return { icon: <FileText {...iconProps} />,    label: t('courseDetail.stepTypes.theory') || 'Теория' };
         }
     };
 
@@ -195,7 +189,7 @@ function CourseDetail({ isLoggedIn }) {
                             dangerouslySetInnerHTML={{ __html: course.description }}
                         />
 
-                        {/* 🔥 ПРОГРАММА КУРСА ТЕПЕРЬ ВЫШЕ 🔥 */}
+                        {/* Программа курса */}
                         <div className="mb-16">
                             <h2 className="text-2xl font-black text-base-content mb-6 flex items-center gap-3">
                                 <FileText className="text-blue-600" size={24} /> 
@@ -261,7 +255,7 @@ function CourseDetail({ isLoggedIn }) {
                             </div>
                         </div>
 
-                        {/* 🔥 ИНСТРУКТОР ТЕПЕРЬ ВНИЗУ 🔥 */}
+                        {/* Инструктор */}
                         <div className="flex items-center gap-6 py-8 border-t border-base-300 mb-12">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-xl font-black text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 shadow-sm">
@@ -361,6 +355,32 @@ function CourseDetail({ isLoggedIn }) {
                                     <span>{t('courseDetail.selfPaced')}</span>
                                 </div>
                             </div>
+
+                            {/* 🔥 КОРПОРАТИВНЫЙ БЛОК (B2B) 🔥 */}
+                            <div className="mt-6 pt-6 border-t border-base-300">
+                                <div className="bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl p-5 border border-indigo-100 dark:border-indigo-900/50 flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center shrink-0">
+                                            <Briefcase size={18} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-base-content leading-tight">
+                                                {t('courseDetail.b2bTitle')}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-base-content/70 leading-relaxed">
+                                        {t('courseDetail.b2bDesc')}
+                                    </p>
+                                    <button 
+                                        onClick={() => navigate('/corporate')}
+                                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors flex items-center gap-1 mt-1 w-max"
+                                    >
+                                        {t('courseDetail.b2bBtn')} <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 

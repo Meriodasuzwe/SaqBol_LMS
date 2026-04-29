@@ -1,5 +1,6 @@
 import logging
-from typing import List, Optional
+import json
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, Request, HTTPException
 from pydantic import BaseModel
 from slowapi import Limiter
@@ -8,7 +9,6 @@ from slowapi.util import get_remote_address
 from config import settings
 from groq_service import (
     groq_chat_json,
-    groq_chat_text,  # 🔥 НОВЫЙ ИМПОРТ
     has_speaker_format,
     convert_speaker_to_interactive,
     is_interactive_chat_format,
@@ -20,7 +20,7 @@ from prompts import (
     SCENARIO_CHAT_USER_STRICT,
     SCENARIO_EMAIL_SYSTEM,
     SCENARIO_EMAIL_USER,
-    SCENARIO_FREE_SYSTEM, # 🔥 НОВЫЙ ИМПОРТ
+    SCENARIO_FREE_SYSTEM, 
 )
 from schemas import ScenarioRequest
 from security import verify_token
@@ -41,11 +41,14 @@ class ChatReplyRequest(BaseModel):
     history: List[ChatMessage]
     contact_name: str = "Мошенник"
     language: str = "Русский"
+    scenario_rules: Optional[Dict[str, Any]] = None  # 🔥 Шпаргалка от учителя
+
 
 class ChatReplyResponse(BaseModel):
     reply: str
     isSuccess: Optional[bool] = None
     explanation: Optional[str] = None
+    reasoning: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -98,7 +101,7 @@ async def generate_scenario(
     if body.scenario_type == "free_response":
         result = {
             "scenario_data": {
-                "contact_name": "Служба безопасности (АИ)",
+                "contact_name": "Служба безопасности",
                 "steps": [
                     {
                         "id": 1,
@@ -123,64 +126,52 @@ async def generate_scenario(
     return result
 
 
-# 🔥 НОВЫЙ ЭНДПОИНТ: LIVE-ЧАТ (Свободный ответ) 🔥
+# 🔥 НОВЫЙ ЭНДПОИНТ: LIVE-ЧАТ (Свободный ответ + ИИ-Судья) 🔥
 @router.post("/chat-reply", response_model=ChatReplyResponse)
-@limiter.limit("20/minute") # Отдельный лимит для чата (сообщения могут лететь часто)
+@limiter.limit("20/minute") 
 async def chat_reply(
     request: Request,
     body: ChatReplyRequest,
-    # Мы убрали Depends(verify_token) здесь, так как этот запрос делает 
-    # наш собственный Django-бэкенд, а не фронтенд (Django уже проверил токен)
 ):
     try:
-        # 1. Подготавливаем системный промпт
+        # 1. Формируем правила от учителя в строку
+        rules_str = "Правил нет, действуй на свое усмотрение"
+        if body.scenario_rules:
+            rules_str = json.dumps(body.scenario_rules, ensure_ascii=False, indent=2)
+
+        # 2. Подготавливаем системный промпт (роль + правила)
         system_prompt = SCENARIO_FREE_SYSTEM.substitute(
             contact_name=body.contact_name,
-            language=body.language
+            language=body.language,
+            scenario_rules=rules_str
         )
         
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        # 2. Восстанавливаем контекст истории
+        # 3. Собираем историю переписки в единый текстовый контекст для user_prompt
+        # (Так как groq_chat_json принимает sys_prompt и user_prompt)
+        history_text = "ИСТОРИЯ ДИАЛОГА:\n"
         for msg in body.history:
-            role = "user" if msg.sender == 'user' else "assistant"
-            messages.append({"role": role, "content": msg.text})
+            role_name = "Ученик" if msg.sender == 'user' else body.contact_name
+            history_text += f"[{role_name}]: {msg.text}\n"
             
-        # 3. Текущее сообщение пользователя
-        messages.append({"role": "user", "content": body.message})
+        user_prompt = (
+            f"{history_text}\n"
+            f"НОВОЕ СООБЩЕНИЕ ОТ УЧЕНИКА:\n[Ученик]: {body.message}\n\n"
+            f"Оцени это сообщение по правилам и верни JSON."
+        )
         
-        # 4. Отправляем в Groq
-        ai_reply = await groq_chat_text(messages=messages, temperature=0.7)
+        # 4. Отправляем в Groq с ожиданием строгого JSON
+        # Используем groq_chat_json, потому что нам нужны ключи reply, isSuccess, explanation
+        ai_response = await groq_chat_json(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=0.3  # Температура пониже, чтобы он судил логично
+        )
         
-        # 5. Парсим ответ на [SUCCESS] или [FATAL]
-        is_success = None
-        explanation = None
-
-        if "[SUCCESS]" in ai_reply:
-            is_success = True
-            ai_reply = ai_reply.replace("[SUCCESS]", "").strip()
-            explanation = "Вы успешно отразили атаку и не поддались на уловки злоумышленника!"
-            
-            # Если ИИ дал более подробное объяснение с новой строки
-            parts = ai_reply.split('\n', 1)
-            if len(parts) > 1:
-                ai_reply = parts[0].strip()
-                explanation = parts[1].strip()
-                
-        elif "[FATAL]" in ai_reply:
-            is_success = False
-            ai_reply = ai_reply.replace("[FATAL]", "").strip()
-            explanation = "Критическая ошибка. Вы выдали конфиденциальные данные злоумышленнику."
-            
-            parts = ai_reply.split('\n', 1)
-            if len(parts) > 1:
-                ai_reply = parts[0].strip()
-                explanation = parts[1].strip()
-                
+        # 5. Возвращаем распарсенный JSON на фронтенд
         return ChatReplyResponse(
-            reply=ai_reply,
-            isSuccess=is_success,
-            explanation=explanation
+            reply=ai_response.get("reply", "Ошибка генерации ответа..."),
+            isSuccess=ai_response.get("isSuccess"),
+            explanation=ai_response.get("explanation")
         )
 
     except Exception as e:
