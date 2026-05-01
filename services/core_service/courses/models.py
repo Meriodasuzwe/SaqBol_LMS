@@ -217,19 +217,55 @@ class Certificate(models.Model):
         
         
 
+#  Заявки от корпоративных клиентов (B2B)
 class B2BLead(models.Model):
     name = models.CharField(max_length=255, verbose_name="Имя")
     company = models.CharField(max_length=255, verbose_name="Компания")
     email = models.EmailField(verbose_name="Рабочий Email")
     employees = models.CharField(max_length=50, verbose_name="Штат сотрудников")
+    
+    # Связь с курсом. null=True и blank=True позволяют оставить заявку без выбора конкретного курса
+    target_course = models.ForeignKey(
+        Course, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='b2b_leads',
+        verbose_name="Целевой курс"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заявки")
     status = models.CharField(
         max_length=20, 
-        choices=[('new', 'Новая'), ('contacted', 'Связались'), ('closed', 'Закрыта')],
+        choices=[('new', 'Новая'), ('contacted', 'Связались'), ('closed', 'Закрыта'), ('rejected', 'Отклонена')],
         default='new',
         verbose_name="Статус"
     )
 
+    class Meta:
+        verbose_name = "B2B Заявка"
+        verbose_name_plural = "B2B Заявки"
+
     def __str__(self):
-        return f"{self.company} - {self.name}"                                 
+        course_info = f" ({self.target_course.title})" if self.target_course else ""
+        return f"{self.company} - {self.name}{course_info}"
+
+
+# Модель для корпоративных инвайт-кодов
+class CorporateInvite(models.Model):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Инвайт-код")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='invites', verbose_name="Целевой курс")
+    lead = models.ForeignKey(B2BLead, on_delete=models.SET_NULL, null=True, blank=True, related_name='invites', verbose_name="B2B Заявка")
     
+    max_uses = models.PositiveIntegerField(default=50, verbose_name="Лимит использований")
+    used_count = models.PositiveIntegerField(default=0, verbose_name="Использовано раз")
+    activated_by = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='corporate_invites', verbose_name="Активировали код")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+
+    class Meta:
+        verbose_name = "Инвайт-код"
+        verbose_name_plural = "Инвайт-коды"
+
+    def __str__(self):
+        return f"{self.code} - {self.course.title} ({self.used_count}/{self.max_uses})"

@@ -23,9 +23,13 @@ from .views import (
     ChangeCertificateLanguageView,
     B2BLeadCreateView,
     B2BLeadListView,
-    # === НОВЫЕ ВЬЮХИ ДЛЯ АДМИН ПАНЕЛИ ===
+    B2BLeadUpdateView,
     PendingCoursesView,
-    ApproveCourseView
+    ApproveCourseView,
+    GenerateCorporateInviteView,
+    B2BDashboardView,
+    RevokeEmployeeAccessView,
+    ActivateInviteView
 )
 
 urlpatterns = [
@@ -56,15 +60,25 @@ urlpatterns = [
 
     path('certificates/my/', MyCertificatesView.as_view(), name='my-certificates'),
 
-    path('b2b/leads/create/', B2BLeadCreateView.as_view(), name='b2b-lead-create'),
-    path('b2b/leads/', B2BLeadListView.as_view(), name='b2b-lead-list'),
-    
     # Для страницы верификации
     path('certificates/verify/<uuid:cert_id>/', VerifyCertificateView.as_view(), name='verify-certificate'),
     
     # Для переключения языка сертификата
     path('certificates/<uuid:cert_id>/change-language/', ChangeCertificateLanguageView.as_view(), name='change-certificate-language'),
     
+    # === B2B ЗАЯВКИ И ИНВАЙТ-КОДЫ ===
+    path('b2b/leads/create/', B2BLeadCreateView.as_view(), name='b2b-lead-create'),
+    path('b2b/leads/', B2BLeadListView.as_view(), name='b2b-lead-list'),
+    path('b2b/leads/<int:pk>/update/', B2BLeadUpdateView.as_view(), name='b2b-lead-update'),
+    
+    path('b2b/dashboard/', B2BDashboardView.as_view(), name='b2b-dashboard'),
+    
+    #  Маршрут для генерации кода админом в панели:
+    path('b2b/leads/<int:lead_id>/generate-invite/', GenerateCorporateInviteView.as_view(), name='generate-invite'),
+    #  Маршрут для активации кода студентом на странице курса:
+    path('<int:course_id>/activate-invite/', ActivateInviteView.as_view(), name='activate-invite'),
+    path('b2b/invites/<str:invite_code>/revoke/<int:user_id>/', RevokeEmployeeAccessView.as_view(), name='revoke-access'),
+
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
     path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),
     path('admin/<int:pk>/approve/', ApproveCourseView.as_view(), name='admin_approve_course'),

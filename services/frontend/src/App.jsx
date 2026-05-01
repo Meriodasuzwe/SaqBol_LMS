@@ -32,6 +32,7 @@ import AdminPanel from './AdminPanel';
 import AdminStats from './AdminStats';
 import About from './About';
 import CorporatePage from './CorporatePage';
+import CorporateDashboard from './CorporateDashboard';
 // Аналитика
 import TeacherDashboard from './TeacherDashboard';
 import StudentDashboard from './StudentDashboard';
@@ -113,6 +114,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
               isLoggedIn ? <StudentDashboard /> : <Navigate to="/login" />
             } />
 
+            <Route path="/corporate/dashboard" element={<CorporateDashboard />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/cookies" element={<Cookies />} />

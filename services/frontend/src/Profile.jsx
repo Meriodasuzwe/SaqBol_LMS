@@ -2,11 +2,11 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
-import { Award, Download } from 'lucide-react';
-import { useTranslation } from 'react-i18next'; // Импортируем хук для перевода
+import { Award, Download, Briefcase, ArrowRight } from 'lucide-react'; // 🔥 Добавили Briefcase и ArrowRight
+import { useTranslation } from 'react-i18next';
 
 function Profile() {
-    const { t, i18n } = useTranslation(); // Инициализируем хук для перевода
+    const { t, i18n } = useTranslation();
     const [user, setUser] = useState(null);
     const [results, setResults] = useState([]);
     const [myCourses, setMyCourses] = useState([]);
@@ -51,7 +51,7 @@ function Profile() {
 
             } catch (err) {
                 console.error("Ошибка загрузки профиля:", err);
-                toast.error(t('profile.profileLoadError'));
+                toast.error(t('profile.profileLoadError') || "Ошибка загрузки профиля");
             } finally {
                 setLoading(false);
             }
@@ -68,9 +68,9 @@ function Profile() {
         try {
             const res = await api.patch('users/me/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             setUser(res.data);
-            toast.success(t('profile.avatarUpdateSuccess'));
+            toast.success(t('profile.avatarUpdateSuccess') || "Аватар обновлен");
         } catch (err) {
-            toast.error(t('profile.avatarUpdateError'));
+            toast.error(t('profile.avatarUpdateError') || "Ошибка при обновлении аватара");
         }
     };
 
@@ -89,7 +89,7 @@ function Profile() {
             setIsModalOpen(false);
             navigate(`/teacher/course/${res.data.id}/builder`);
         } catch (err) {
-            toast.error(t('profile.courseCreateError'));
+            toast.error(t('profile.courseCreateError') || "Ошибка создания курса");
         } finally {
             setIsCreating(false);
         }
@@ -168,14 +168,14 @@ function Profile() {
                                 {user?.first_name || user?.username} {user?.last_name}
                             </h1>
                             <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                                {isTeacher ? t('profile.roleTeacher') : t('profile.roleStudent')}
+                                {isTeacher ? (t('profile.roleTeacher') || 'Преподаватель') : (t('profile.roleStudent') || 'Студент')}
                             </span>
                         </div>
                         <p className="text-sm text-base-content/50 mt-1">{displaySubtext}</p>
                     </div>
                     <div className="pb-2">
                         <Link to="/settings" className="btn btn-sm btn-outline border-base-300 text-base-content/80 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium">
-                            {t('profile.settingsBtn')}
+                            {t('profile.settingsBtn') || 'Настройки'}
                         </Link>
                     </div>
                 </div>
@@ -185,9 +185,9 @@ function Profile() {
             <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6 flex flex-col md:flex-row gap-8">
                 <div className="flex-1 overflow-x-auto">
                     <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        {t('profile.learningActivity')}
+                        {t('profile.learningActivity') || 'Активность'}
                         <span className="text-xs font-normal text-base-content/50 border border-base-300 rounded px-2 py-0.5">
-                            {t('profile.testsPerYear', { count: totalTests })}
+                            {t('profile.testsPerYear', { count: totalTests }) || `${totalTests} тестов за год`}
                         </span>
                     </h3>
                     <div className="pb-2 min-w-max">
@@ -200,7 +200,7 @@ function Profile() {
                                 return (
                                     <div key={idx}
                                         className={`w-[11px] h-[11px] rounded-[2px] transition-colors cursor-pointer hover:ring-1 hover:ring-base-content/30 ${bg}`}
-                                        title={`${new Date(day.date).toLocaleDateString(getDateLocale())}: ${day.count} ${t('profile.testsWord')}`} />
+                                        title={`${new Date(day.date).toLocaleDateString(getDateLocale())}: ${day.count} ${t('profile.testsWord') || 'тестов'}`} />
                                 );
                             })}
                         </div>
@@ -212,15 +212,37 @@ function Profile() {
 
                 {/* ── ЛЕВАЯ КОЛОНКА ── */}
                 <div className="xl:col-span-1 space-y-6">
+                    
+                    {/* 🔥 БЛОК: КАБИНЕТ РУКОВОДИТЕЛЯ (B2B) 🔥 */}
+                    <div 
+                        onClick={() => navigate('/corporate/dashboard')}
+                        className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl shadow-lg border border-indigo-500 p-6 text-white relative overflow-hidden group cursor-pointer hover:shadow-indigo-500/30 transition-all"
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 group-hover:scale-110 transition-transform"></div>
+                        <div className="relative z-10 flex items-center gap-4 mb-2">
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm shrink-0">
+                                <Briefcase size={20} className="text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg leading-tight">Кабинет руководителя</h3>
+                                <p className="text-indigo-100 text-xs mt-0.5">Корпоративная аналитика</p>
+                            </div>
+                        </div>
+                        <div className="relative z-10 mt-4 flex justify-between items-center text-sm font-medium text-white/90 group-hover:text-white">
+                            <span>Перейти в дашборд</span>
+                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
+                    </div>
+
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
-                        <h3 className="text-sm font-semibold mb-4">{t('profile.performanceTitle')}</h3>
+                        <h3 className="text-sm font-semibold mb-4">{t('profile.performanceTitle') || 'Успеваемость'}</h3>
                         <div className="grid grid-cols-2 gap-3 mb-3">
                             <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
-                                <div className="text-xs text-base-content/50 mb-1">{t('profile.totalTestsLabel')}</div>
+                                <div className="text-xs text-base-content/50 mb-1">{t('profile.totalTestsLabel') || 'Пройдено тестов'}</div>
                                 <div className="text-2xl font-bold">{totalTests}</div>
                             </div>
                             <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
-                                <div className="text-xs text-base-content/50 mb-1">{t('profile.averageScoreLabel')}</div>
+                                <div className="text-xs text-base-content/50 mb-1">{t('profile.averageScoreLabel') || 'Средний балл'}</div>
                                 <div className={`text-2xl font-bold ${averageScore >= 70 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500'}`}>
                                     {averageScore}%
                                 </div>
@@ -229,7 +251,7 @@ function Profile() {
                         <div className="p-4 rounded-xl border border-base-200 bg-base-50/50">
                             <div className="flex justify-between items-center mb-2">
                                 <div className="text-xs text-base-content/50">
-                                    {isTeacher ? t('profile.studentsInCourses') : t('profile.coursesInProgress')}
+                                    {isTeacher ? (t('profile.studentsInCourses') || 'Студентов на курсах') : (t('profile.coursesInProgress') || 'Курсов в процессе')}
                                 </div>
                                 <div className="text-lg font-bold">
                                     {isTeacher ? (totalStudents ?? '—') : inProgressCourses}
@@ -245,9 +267,9 @@ function Profile() {
                     </div>
 
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
-                        <h3 className="text-sm font-semibold mb-4">{t('profile.recentResultsTitle')}</h3>
+                        <h3 className="text-sm font-semibold mb-4">{t('profile.recentResultsTitle') || 'Последние результаты'}</h3>
                         {results.length === 0 ? (
-                            <p className="text-sm text-base-content/50">{t('profile.noData')}</p>
+                            <p className="text-sm text-base-content/50">{t('profile.noData') || 'Нет данных'}</p>
                         ) : (
                             <div className="space-y-1">
                                 {results.slice(0, 5).map(r => (
@@ -280,12 +302,12 @@ function Profile() {
                     <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold">
-                                {isTeacher ? t('profile.manageCourses') : t('profile.myLearning')}
+                                {isTeacher ? (t('profile.manageCourses') || 'Управление курсами') : (t('profile.myLearning') || 'Мое обучение')}
                             </h3>
                             {isTeacher && (
                                 <button onClick={() => setIsModalOpen(true)}
                                     className="btn btn-sm rounded-md shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-0">
-                                    {t('profile.createCourseBtn')}
+                                    {t('profile.createCourseBtn') || 'Создать курс'}
                                 </button>
                             )}
                         </div>
@@ -303,11 +325,11 @@ function Profile() {
                                         </h4>
                                         <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
                                             <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
-                                                {isTeacher ? t('profile.viewCourse') : t('profile.continueCourse')}
+                                                {isTeacher ? (t('profile.viewCourse') || 'Смотреть курс') : (t('profile.continueCourse') || 'Продолжить обучение')}
                                             </Link>
                                             {isTeacher && (
                                                 <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 border border-base-300 rounded text-base-content/70 hover:bg-base-200 transition-colors">
-                                                    {t('profile.editorBtn')}
+                                                    {t('profile.editorBtn') || 'Редактор'}
                                                 </Link>
                                             )}
                                         </div>
@@ -316,10 +338,10 @@ function Profile() {
                             </div>
                         ) : (
                             <div className="text-center py-16 border border-dashed border-base-300 rounded-xl bg-base-50/50">
-                                <p className="text-sm font-medium text-base-content/50 mb-4">{t('profile.noActiveCourses')}</p>
+                                <p className="text-sm font-medium text-base-content/50 mb-4">{t('profile.noActiveCourses') || 'У вас пока нет активных курсов'}</p>
                                 {!isTeacher && (
                                     <Link to="/courses" className="btn btn-sm btn-outline border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 shadow-sm">
-                                        {t('profile.goToCatalogBtn')}
+                                        {t('profile.goToCatalogBtn') || 'Перейти в каталог'}
                                     </Link>
                                 )}
                             </div>
@@ -336,9 +358,9 @@ function Profile() {
                                     <span className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
                                         <Award size={22} />
                                     </span>
-                                    {t('profile.myAchievements')}
+                                    {t('profile.myAchievements') || 'Мои достижения'}
                                 </h3>
-                                <p className="text-sm text-base-content/50 mt-1">{t('profile.officialDocs')}</p>
+                                <p className="text-sm text-base-content/50 mt-1">{t('profile.officialDocs') || 'Официальные документы'}</p>
                             </div>
                         </div>
 
@@ -353,7 +375,7 @@ function Profile() {
                                                     {cert.course_title}
                                                 </h4>
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-md shrink-0">
-                                                    {t('profile.verifiedBadge')}
+                                                    {t('profile.verifiedBadge') || 'Подтвержден'}
                                                 </span>
                                             </div>
 
@@ -369,21 +391,21 @@ function Profile() {
                                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
                                                     <a href={getMediaUrl(cert.file)} target="_blank" rel="noreferrer" download 
                                                        className="px-6 py-2.5 bg-white text-black hover:bg-amber-400 hover:text-black font-bold rounded-full text-sm flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
-                                                        <Download size={16} /> {t('profile.downloadBtn')}
+                                                        <Download size={16} /> {t('profile.downloadBtn') || 'Скачать'}
                                                     </a>
                                                     <Link to={`/verify/${cert.id}`} className="text-white/80 font-medium text-xs hover:text-white underline underline-offset-4 transition-colors">
-                                                        {t('profile.verificationPage')}
+                                                        {t('profile.verificationPage') || 'Страница верификации'}
                                                     </Link>
                                                 </div>
                                             </div>
                                             
                                             <div className="mt-auto pt-4 border-t border-base-200/60 flex justify-between items-end">
                                                 <div>
-                                                    <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider mb-0.5">{t('profile.issueDate')}</p>
+                                                    <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider mb-0.5">{t('profile.issueDate') || 'Выдан'}</p>
                                                     <p className="text-xs font-semibold text-base-content">{new Date(cert.issued_at).toLocaleDateString(getDateLocale())}</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider mb-0.5">{t('profile.docId')}</p>
+                                                    <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider mb-0.5">{t('profile.docId') || 'ID документа'}</p>
                                                     <p className="text-[10px] font-mono text-base-content/70">{cert.id.split('-')[0].toUpperCase()}</p>
                                                 </div>
                                             </div>
@@ -396,9 +418,9 @@ function Profile() {
                                 <div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Award size={32} className="text-base-content/20" />
                                 </div>
-                                <h4 className="text-base font-bold text-base-content mb-1">{t('profile.noCertificates')}</h4>
+                                <h4 className="text-base font-bold text-base-content mb-1">{t('profile.noCertificates') || 'Нет сертификатов'}</h4>
                                 <p className="text-sm font-medium text-base-content/50 max-w-sm mx-auto">
-                                    {t('profile.certPrompt')}
+                                    {t('profile.certPrompt') || 'Пройдите курс до конца, чтобы получить свой первый сертификат.'}
                                 </p>
                             </div>
                         )}
@@ -410,14 +432,14 @@ function Profile() {
             {isModalOpen && isTeacher && (
                 <div className="fixed inset-0 bg-base-300/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                      <div className="bg-base-100 rounded-2xl shadow-xl border border-base-200 w-full max-w-md p-6">
-                        <h3 className="font-bold text-lg mb-4">{t('profile.newCourseModalTitle')}</h3>
+                        <h3 className="font-bold text-lg mb-4">{t('profile.newCourseModalTitle') || 'Новый курс'}</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">{t('profile.courseNameLabel')}</span></label>
+                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">{t('profile.courseNameLabel') || 'Название курса'}</span></label>
                                 <input type="text" className="input input-sm input-bordered w-full" value={newCourseTitle} onChange={(e) => setNewCourseTitle(e.target.value)} />
                             </div>
                             <div>
-                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">{t('profile.categoryLabel')}</span></label>
+                                <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">{t('profile.categoryLabel') || 'Категория'}</span></label>
                                 <select className="select select-sm select-bordered w-full" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
                                     {categories.map(cat => (
                                         // ✅ Динамический перевод категории в селекторе
@@ -427,9 +449,9 @@ function Profile() {
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-8">
-                            <button className="btn btn-sm btn-ghost" onClick={() => setIsModalOpen(false)}>{t('profile.cancelBtn')}</button>
+                            <button className="btn btn-sm btn-ghost" onClick={() => setIsModalOpen(false)}>{t('profile.cancelBtn') || 'Отмена'}</button>
                             <button className={`btn btn-sm bg-blue-600 text-white border-0 ${isCreating ? 'loading' : ''}`} onClick={handleCreateCourse} disabled={isCreating || !newCourseTitle}>
-                                {t('profile.createBtn')}
+                                {t('profile.createBtn') || 'Создать'}
                             </button>
                         </div>
                     </div>

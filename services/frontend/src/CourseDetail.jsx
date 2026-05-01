@@ -23,6 +23,10 @@ function CourseDetail({ isLoggedIn }) {
     const [enrollLoading, setEnrollLoading] = useState(false); 
     const [buttonSuccess, setButtonSuccess] = useState(false);
 
+    // 🔥 Новые состояния для инвайт-кода
+    const [inviteCode, setInviteCode] = useState('');
+    const [isApplyingCode, setIsApplyingCode] = useState(false);
+
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
         if (queryParams.get('success') === 'true') {
@@ -109,6 +113,37 @@ function CourseDetail({ isLoggedIn }) {
         } catch (error) {
             console.error("Ошибка при записи", error);
             setEnrollLoading(false);
+        }
+    };
+
+    // 🔥 Функция активации инвайт-кода
+    const handleApplyInvite = async () => {
+        const token = localStorage.getItem('access');
+        if (!isLoggedIn && !token) {
+            toast.info("Пожалуйста, войдите в систему, чтобы использовать код");
+            navigate('/login');
+            return;
+        }
+
+        if (!inviteCode.trim()) return toast.warning("Введите корпоративный код");
+        
+        setIsApplyingCode(true);
+        try {
+            const res = await api.post(`/courses/${id}/activate-invite/`, { code: inviteCode });
+            toast.success(res.data.message || "Код активирован! Доступ открыт 🎉");
+            setInviteCode('');
+            
+            // Сразу обновляем интерфейс, как будто пользователь купил курс
+            setIsEnrolled(true);
+            
+            // Перезапрашиваем уроки, чтобы с них снялись "замочки" блокировки
+            const lessonsRes = await api.get(`courses/${id}/lessons/`);
+            setLessons(lessonsRes.data.sort((a, b) => a.id - b.id));
+            
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Ошибка активации кода. Проверьте правильность.");
+        } finally {
+            setIsApplyingCode(false);
         }
     };
 
@@ -309,6 +344,29 @@ function CourseDetail({ isLoggedIn }) {
                                             </>
                                         )}
                                     </button>
+
+                                    {/* 🔥 Блок активации корпоративного инвайта 🔥 */}
+                                    <div className="mt-6 p-5 bg-base-200/50 rounded-2xl border border-base-300">
+                                        <p className="text-[11px] font-black text-base-content/50 uppercase tracking-widest mb-3">
+                                            {t('courseDetail.corporateAccess') || 'Доступ от работодателя?'}
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="XXXX-XXXX-XXXX"
+                                                value={inviteCode}
+                                                onChange={(e) => setInviteCode(e.target.value)}
+                                                className="flex-1 w-full bg-base-100 border border-base-300 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-colors uppercase placeholder:normal-case"
+                                            />
+                                            <button
+                                                onClick={handleApplyInvite}
+                                                disabled={isApplyingCode || !inviteCode.trim()}
+                                                className="bg-base-content text-base-100 hover:bg-base-content/80 px-4 sm:px-6 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isApplyingCode ? "..." : (t('courseDetail.apply') || "Применить")}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </>
                             ) : (
                                 <>
@@ -373,7 +431,8 @@ function CourseDetail({ isLoggedIn }) {
                                         {t('courseDetail.b2bDesc')}
                                     </p>
                                     <button 
-                                        onClick={() => navigate('/corporate')}
+                                        // 🔥 Здесь добавлена передача данных курса! 🔥
+                                        onClick={() => navigate('/corporate', { state: { courseId: course.id, courseTitle: course.title } })}
                                         className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors flex items-center gap-1 mt-1 w-max"
                                     >
                                         {t('courseDetail.b2bBtn')} <ChevronRight size={14} />
