@@ -137,6 +137,8 @@ class CertificateSerializer(serializers.ModelSerializer):
         return f"{obj.student.first_name} {obj.student.last_name}".strip() or obj.student.username
 
 class B2BLeadSerializer(serializers.ModelSerializer):
+    # Заголовок курса для удобства отображения в админке и при сериализации заявки, чтобы видеть, на какой курс потенциальный клиент интересуется
+    course_title = serializers.CharField(source='target_course.title', read_only=True)
     class Meta:
         model = B2BLead
         fields = '__all__'

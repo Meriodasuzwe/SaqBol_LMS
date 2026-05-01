@@ -861,6 +861,75 @@ const resources = {
         "delError": "Не удалось удалить отзыв. Возможно, у вас нет прав."
     }
 },
+"common": {
+    "back": "Назад",
+    "cancel": "Отмена",
+    "confirm": "Да, отправить"
+  },
+  "mockup": {
+      "title": "Аналитика отдела",
+      "date": "Октябрь 2026",
+      "badge": "Угрозы снижены",
+      "phishing": "Попались на фишинг",
+      "protection": "Уровень защиты",
+      "depAccounting": "Бухгалтерия",
+      "depMarketing": "Маркетинг",
+      "depIT": "IT Отдел",
+      "statusSafe": "Защищен",
+      "statusProgress": "В процессе",
+      "statusVuln": "Уязвим"
+    },
+  "corporate": {
+    "badge": "B2B Решения",
+    "heroTitlePart1": "Защитите бизнес от",
+    "heroTitleHighlight": "человеческого фактора",
+    "heroSubtitle": "Превратите ваших сотрудников из главного вектора атак в надежный щит компании. Обучение, симуляции фишинга и глубокая аналитика в едином дашборде.",
+    "demoButton": "Получить демо-доступ",
+    "features": {
+      "dashboard": {
+        "title": "Дашборд руководителя",
+        "desc": "Отслеживайте прогресс каждого сотрудника в реальном времени. Находите уязвимые отделы и назначайте повторные симуляции."
+      },
+      "simulations": {
+        "title": "Реальные симуляции",
+        "desc": "Тестируйте команду безопасными фишинговыми рассылками и атаками в мессенджерах на базе AI, чтобы выработать рефлекс."
+      },
+      "access": {
+        "title": "Управление доступом",
+        "desc": "Легко импортируйте списки сотрудников, делите их на группы и в один клик рассылайте приглашения на обучение."
+      }
+    },
+    "success": {
+      "title": "Заявка принята!",
+      "desc": "Наш менеджер свяжется с вами в течение часа, чтобы обсудить детали и открыть демо-доступ.",
+      "homeButton": "Вернуться на главную"
+    },
+    "form": {
+      "courseLabel": "Заявка на курс:",
+      "title": "Начать обучение команды",
+      "subtitle": "Оставьте заявку, и мы настроим платформу под нужды вашей компании.",
+      "nameLabel": "Как к вам обращаться?",
+      "namePlaceholder": "Иван Иванов",
+      "companyLabel": "Компания",
+      "companyPlaceholder": "Название ООО/ТОО",
+      "emailLabel": "Рабочий Email",
+      "employeesLabel": "Штат сотрудников",
+      "empSize1": "До 10 человек",
+      "empSize2": "10 — 50 человек",
+      "empSize3": "50 — 200 человек",
+      "empSize4": "Более 200 человек",
+      "submitButton": "Оставить заявку",
+      "privacy": "Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности."
+    },
+    "modal": {
+      "title": "Подтвердите отправку",
+      "desc": "Вы уверены, что хотите отправить заявку? Наши менеджеры свяжутся с вами в ближайшее время."
+    },
+    "toasts": {
+      "rateLimit": "Слишком много запросов. Пожалуйста, подождите немного.",
+      "error": "Ошибка при отправке заявки. Попробуйте позже."
+    }
+  },
       footer: {
         desc: "Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.",
         col1Title: "Платформа",
@@ -1747,6 +1816,75 @@ const resources = {
         "delError": "Пікірді жою мүмкін болмады. Құқығыңыз жоқ болуы мүмкін."
     }
 },
+"common": {
+    "back": "Артқа",
+    "cancel": "Бас тарту",
+    "confirm": "Иә, жіберу"
+  },
+  "mockup": {
+      "title": "Бөлім аналитикасы",
+      "date": "Қазан 2026",
+      "badge": "Қауіптер азайды",
+      "phishing": "Фишингке ілінгендер",
+      "protection": "Қорғаныс деңгейі",
+      "depAccounting": "Бухгалтерия",
+      "depMarketing": "Маркетинг",
+      "depIT": "IT Бөлімі",
+      "statusSafe": "Қорғалған",
+      "statusProgress": "Оқуда",
+      "statusVuln": "Осал"
+    },
+  "corporate": {
+    "badge": "B2B Шешімдері",
+    "heroTitlePart1": "Бизнесіңізді адам:",
+    "heroTitleHighlight": "факторынан қорғаныз",
+    "heroSubtitle": "Қызметкерлеріңізді шабуылдың негізгі құралынан компанияның сенімді қалқанына айналдырыңыз. Оқыту, фишингтік симуляциялар және бірыңғай дашбордтағы терең аналитика.",
+    "demoButton": "Демо-нұсқаны алу",
+    "features": {
+      "dashboard": {
+        "title": "Басшы дашборды",
+        "desc": "Әр қызметкердің үлгерімін нақты уақыт режимінде қадағалаңыз. Осал бөлімдерді анықтап, қайталама симуляциялар тағайындаңыз."
+      },
+      "simulations": {
+        "title": "Шынайы симуляциялар",
+        "desc": "Рефлекс қалыптастыру үшін команданы AI негізіндегі қауіпсіз фишингтік таратылымдармен және мессенджерлердегі шабуылдармен сынап көріңіз."
+      },
+      "access": {
+        "title": "Қолжетімділікті басқару",
+        "desc": "Қызметкерлер тізімін оңай импорттаңыз, оларды топтарға бөліңіз және бір рет басу арқылы оқуға шақыру жіберіңіз."
+      }
+    },
+    "success": {
+      "title": "Өтінім қабылданды!",
+      "desc": "Біздің менеджер бөлшектерді талқылау және демо-нұсқаны ашу үшін сізбен бір сағат ішінде хабарласады.",
+      "homeButton": "Басты бетке оралу"
+    },
+    "form": {
+      "courseLabel": "Курсқа өтінім:",
+      "title": "Команданы оқытуды бастау",
+      "subtitle": "Өтінім қалдырыңыз, біз платформаны сіздің компанияңыздың қажеттіліктеріне бейімдейміз.",
+      "nameLabel": "Сізге қалай хабарласуға болады?",
+      "namePlaceholder": "Асан Үсенов",
+      "companyLabel": "Компания",
+      "companyPlaceholder": "ЖШС Атауы",
+      "emailLabel": "Жұмыс Email-і",
+      "employeesLabel": "Қызметкерлер саны",
+      "empSize1": "10 адамға дейін",
+      "empSize2": "10 — 50 адам",
+      "empSize3": "50 — 200 адам",
+      "empSize4": "200-ден астам адам",
+      "submitButton": "Өтінім қалдыру",
+      "privacy": "Түймені басу арқылы сіз құпиялылық саясатымен келісесіз."
+    },
+    "modal": {
+      "title": "Жіберуді растау",
+      "desc": "Өтінімді жібергіңіз келетініне сенімдісіз бе? Біздің менеджерлер сізбен жақын арада хабарласады."
+    },
+    "toasts": {
+      "rateLimit": "Сұраулар тым көп. Біраз күте тұрыңыз.",
+      "error": "Өтінім жіберу кезінде қате пайда болды. Кейінірек қайталап көріңіз."
+    }
+  },
       footer: {
         desc: "Корпоративтік оқытуға және қызметкерлердің цифрлық сауаттылығын арттыруға арналған зияткерлік платформа.",
         col1Title: "Платформа",
@@ -2635,6 +2773,75 @@ const resources = {
         "delError": "Failed to delete review. You might not have permission."
     }
 },
+"common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Yes, submit"
+  },
+  "mockup": {
+      "title": "Department Analytics",
+      "date": "October 2026",
+      "badge": "Threats Reduced",
+      "phishing": "Caught by Phishing",
+      "protection": "Protection Level",
+      "depAccounting": "Accounting",
+      "depMarketing": "Marketing",
+      "depIT": "IT Dept",
+      "statusSafe": "Protected",
+      "statusProgress": "In Progress",
+      "statusVuln": "Vulnerable"
+    },
+  "corporate": {
+    "badge": "B2B Solutions",
+    "heroTitlePart1": "Protect your business from",
+    "heroTitleHighlight": "the human factor",
+    "heroSubtitle": "Turn your employees from the main attack vector into a reliable company shield. Training, phishing simulations, and deep analytics in a single dashboard.",
+    "demoButton": "Get Demo Access",
+    "features": {
+      "dashboard": {
+        "title": "Manager Dashboard",
+        "desc": "Track each employee's progress in real-time. Identify vulnerable departments and assign targeted simulations."
+      },
+      "simulations": {
+        "title": "Realistic Simulations",
+        "desc": "Test your team with safe, AI-driven phishing campaigns and messenger attacks to build reflexes."
+      },
+      "access": {
+        "title": "Access Management",
+        "desc": "Easily import employee lists, group them, and send training invitations in just one click."
+      }
+    },
+    "success": {
+      "title": "Application Accepted!",
+      "desc": "Our manager will contact you within an hour to discuss details and provide demo access.",
+      "homeButton": "Return to Homepage"
+    },
+    "form": {
+      "courseLabel": "Application for course:",
+      "title": "Start Team Training",
+      "subtitle": "Leave a request, and we will customize the platform for your company's needs.",
+      "nameLabel": "How should we address you?",
+      "namePlaceholder": "John Doe",
+      "companyLabel": "Company",
+      "companyPlaceholder": "Company Name LLC",
+      "emailLabel": "Work Email",
+      "employeesLabel": "Number of Employees",
+      "empSize1": "Up to 10 people",
+      "empSize2": "10 — 50 people",
+      "empSize3": "50 — 200 people",
+      "empSize4": "More than 200 people",
+      "submitButton": "Submit Application",
+      "privacy": "By clicking the button, you agree to our privacy policy."
+    },
+    "modal": {
+      "title": "Confirm Submission",
+      "desc": "Are you sure you want to submit the application? Our managers will contact you shortly."
+    },
+    "toasts": {
+      "rateLimit": "Too many requests. Please wait a moment.",
+      "error": "Error submitting the application. Please try again later."
+    }
+  },
       footer: {
         desc: "Intelligent platform for corporate training and improving staff digital literacy.",
         col1Title: "Platform",
