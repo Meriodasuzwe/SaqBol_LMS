@@ -3199,3 +3199,25 @@ INFO 2026-05-01 19:16:18,706 | ACTION: [200] POST /api/courses/b2b/leads/13/gene
 INFO 2026-05-01 19:16:28,408 | ACTION: [200] PATCH /api/courses/b2b/leads/13/update/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
 INFO 2026-05-01 19:20:05,856 | ACTION: [200] PATCH /api/courses/b2b/leads/13/update/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.016s
 INFO 2026-05-01 19:20:16,379 | ACTION: [200] PATCH /api/courses/b2b/leads/13/update/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+WARNING 2026-05-01 19:38:26,326 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:38:56,332 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:39:26,337 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:39:56,340 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:40:56,661 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:40:56,662 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:40:56,666 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:40:56,668 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:40:56,671 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:40:56,674 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:46:00,326 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:46:29,354 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:46:59,339 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:30,328 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:54,625 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:54,627 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:54,631 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:54,633 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:54,638 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-01 19:47:54,643 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-05-01 19:50:29,772 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.106s
+INFO 2026-05-01 20:05:23,704 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.299s
