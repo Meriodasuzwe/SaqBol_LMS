@@ -994,3 +994,8 @@ INFO 2026-04-29 16:31:07,473 | HTTP Request: POST https://api.groq.com/openai/v1
 ERROR 2026-04-29 16:31:07,474 | Groq API error after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kg57kmrpecxvnt284e65h97c` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99351, Requested 2050. Please try again in 20m10.464s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
 ERROR 2026-04-29 16:31:07,475 | Live Chat Error: 503: AI сервис временно недоступен. Попробуйте позже.
 ERROR 2026-04-29 16:31:07,475 | SERVER ERROR: [500] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 4.475s
+INFO 2026-05-01 20:04:50,096 | FILE UPLOAD | user_id=1 | filename=Zayavlenie_KH_Alkham.pdf | lang=Русский
+INFO 2026-05-01 20:04:50,148 | AI COURSE | user_id=1 | chars=490
+INFO 2026-05-01 20:04:52,277 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-05-01 20:04:52,290 | AI COURSE SUCCESS | user_id=1 | title=Официальная корреспонденция: заявления и запросы
+INFO 2026-05-01 20:04:52,291 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 2.240s
