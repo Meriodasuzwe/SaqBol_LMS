@@ -5,18 +5,25 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =========================
-# SECURITY
+# SECURITY (Динамические настройки)
 # =========================
 
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'unsafe-dev-secret-key'
-)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-dev-secret-key')
 
+# Если в .env нет DEBUG=True, то по умолчанию будет False (безопасно для прода)
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ["*"]  # Временное решение для разработки. В проде нужно указать конкретные домены.
+# Читаем домены из .env через запятую (например: saqbol.asia,www.saqbol.asia,127.0.0.1)
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
+# Настройки для Nginx и Cloudflare (чтобы Django понимал, что он за HTTPS прокси)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+# Строгие куки для HTTPS в продакшене
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # =========================
 # APPLICATIONS
@@ -32,7 +39,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'analytics',
-    'django_prometheus', # ✅ Мониторинг
+    'django_prometheus', #  Мониторинг
     'courses',
     'quizzes',
     'rest_framework',
@@ -40,13 +47,12 @@ INSTALLED_APPS = [
     'users',
 ]
 
-
 # =========================
 # MIDDLEWARE
 # =========================
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware', # ✅ В САМОМ ВЕРХУ
+    'django_prometheus.middleware.PrometheusBeforeMiddleware', 
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -56,9 +62,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.SecurityAuditMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware', # ✅ В САМОМ НИЗУ
+    'django_prometheus.middleware.PrometheusAfterMiddleware', # 
 ]
-
 
 # =========================
 # URLS / WSGI
@@ -66,7 +71,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 WSGI_APPLICATION = 'core.wsgi.application'
-
 
 # =========================
 # TEMPLATES
@@ -88,7 +92,6 @@ TEMPLATES = [
     },
 ]
 
-
 # =========================
 # DATABASE
 # =========================
@@ -96,14 +99,13 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB'),
-        'USER': os.getenv('POSTGRES_USER'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_HOST', 'db_core'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'db_core'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
-
 
 # =========================
 # AUTH & PASSWORDS (ИБ)
@@ -111,7 +113,6 @@ DATABASES = {
 
 AUTH_USER_MODEL = 'users.User'
 
-# ✅ Оставляем только одну, строгую версию настроек
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -130,6 +131,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailOrUsernameModelBackend', 
+    'django.contrib.auth.backends.ModelBackend',  
+]
 
 # =========================
 # INTERNATIONALIZATION
@@ -140,7 +145,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
 # =========================
 # STATIC & MEDIA
 # =========================
@@ -150,13 +154,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/api/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-# AUTHENTICATION_BACKENDS
-AUTHENTICATION_BACKENDS = [
-    'users.backends.EmailOrUsernameModelBackend', # Наш новый метод
-    'django.contrib.auth.backends.ModelBackend',  # Стандартный метод (оставляем как запасной)
-]
 
 # =========================
 # DRF + JWT
@@ -187,7 +184,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-
 # =========================
 # DEFAULT PK & SCHEMA
 # =========================
@@ -203,21 +199,22 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_NO_READ_ONLY_FIELDS': True,
 }
 
-
 # =========================
-# CORS & PROXY
+# CORS
 # =========================
-
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost",
-    "http://127.0.0.1",
-]
-
-if os.environ.get('CORS_ALLOW_ALL_IN_DEV', 'False') == 'True':
-    CORS_ALLOW_ALL_ORIGINS = True
 
 FORCE_SCRIPT_NAME = '/api'
+
+# Читаем разрешенные источники из .env
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    'CORS_ALLOWED_ORIGINS', 
+    'http://localhost,http://127.0.0.1'
+).split(',')
+
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 
 # =========================
 # LOGGING (Аудит)
@@ -258,37 +255,19 @@ LOGGING = {
 }
 
 # =========================
-# EMERGENCY ALLOWED HOSTS
+# EMAIL & 3RD PARTY APIS
 # =========================
-ALLOWED_HOSTS = ["*"]
-CORS_ALLOW_ALL_ORIGINS = True
 
-# =========================
-# EMAIL CONFIGURATION (Gmail)
-# =========================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
-# ВНИМАНИЕ: Здесь должен быть 16-значный "Пароль приложения" Google, а не обычный пароль от почты!
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-FRONTEND_URL = 'http://localhost' 
-
-
-
-
-
-
-# Stripe
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
-
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-
-
