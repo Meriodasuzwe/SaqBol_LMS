@@ -57,14 +57,24 @@ class QuizSubmitView(APIView):
                 return Response({"error": "В тесте нет вопросов"}, status=400)
 
             correct_answers_count = 0
+            # Словарь для хранения правильных ответов
+            correct_map = {}
+
             for ans in answers:
+                question_id = ans.get('question_id')
+                # Проверяем правильность выбора студента
                 is_correct = Choice.objects.filter(
                     id=ans.get('choice_id'), 
-                    question_id=ans.get('question_id'), 
+                    question_id=question_id, 
                     is_correct=True
                 ).exists()
                 if is_correct:
                     correct_answers_count += 1
+                    
+                # Ищем правильный Choice для этого вопроса и сохраняем в карту
+                correct_choice = Choice.objects.filter(question_id=question_id, is_correct=True).first()
+                if correct_choice:
+                    correct_map[question_id] = correct_choice.id
 
             score = int((correct_answers_count / total_questions * 100))
             
@@ -74,12 +84,19 @@ class QuizSubmitView(APIView):
                 score=score
             )
             
-            return Response({
+            # Формируем базовый ответ
+            response_data = {
                 "score": score,
                 "correct_count": correct_answers_count,
                 "total_questions": total_questions,
                 "status": "Pass" if score >= 70 else "Fail"
-            }, status=status.HTTP_200_OK)
+            }
+            
+            # 🔥 НОВАЯ ЛОГИКА: Добавляем карту правильных ответов ВСЕГДА,
+            # но React сам решит (по счетчику в LocalStorage), когда их показать
+            response_data["correct_answers_map"] = correct_map
+            
+            return Response(response_data, status=status.HTTP_200_OK)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

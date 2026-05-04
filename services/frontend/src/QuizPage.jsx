@@ -149,7 +149,6 @@ function QuizPage() {
                         colors: ['#10B981', '#047857', '#059669'] 
                     });
                     toast.success(`Тест успешно сдан! Результат: ${res.data.score}%`);
-                    // Очищаем попытки при успехе
                     localStorage.removeItem(`quiz_attempts_${quiz.id}`);
                 } else {
                     const newAttempts = attempts + 1;
@@ -279,20 +278,19 @@ function QuizPage() {
                                 let labelClass = isSelected ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' : 'border-base-300 bg-base-100 hover:border-base-content/40';
 
                                 if (currentResult) {
-                                    if (isPassed) {
-                                        // Если сдал - красим выбранное в зеленое
-                                        labelClass = isSelected ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 text-emerald-900' : 'border-base-200/50 text-base-content/40 opacity-50';
-                                    } else if (showAnswers) {
-                                        // Если провалил, но попыток >= 5 - показываем правду
-                                        if (choice.is_correct) {
-                                            labelClass = 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 text-emerald-900';
-                                        } else if (isSelected && !choice.is_correct) {
+                                    // Если сдал ИЛИ попыток >= 5 -> используем карту из бэкенда
+                                    if (isPassed || showAnswers) {
+                                        const correctChoiceId = currentResult.correct_answers_map ? currentResult.correct_answers_map[currentQuestion.id] : null;
+                                        
+                                        if (choice.id === correctChoiceId) {
+                                            labelClass = 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 text-emerald-900 font-bold';
+                                        } else if (isSelected && choice.id !== correctChoiceId) {
                                             labelClass = 'border-red-500 bg-red-50 ring-1 ring-red-500 text-red-900';
                                         } else {
                                             labelClass = 'border-base-200/50 text-base-content/40 opacity-50';
                                         }
                                     } else {
-                                        // Если провалил и попыток < 5 - просто фиксируем выбранный вариант без цвета "ошибки"
+                                        // Если провалил и попыток < 5 - просто фиксируем выбранный вариант
                                         labelClass = isSelected ? 'border-base-400 bg-base-200 text-base-content/60 cursor-not-allowed' : 'border-base-200/50 text-base-content/40 opacity-50 cursor-not-allowed';
                                     }
                                 }
