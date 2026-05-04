@@ -30,3 +30,4 @@ postgres_data_auth/
 .idea/
 
 *.log
+logs/

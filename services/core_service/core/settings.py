@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-dev-secret-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Читаем домены из .env через запятую (например: saqbol.asia,www.saqbol.asia,127.0.0.1)
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,nginx').split(',')
 
 # Настройки для Nginx и Cloudflare (чтобы Django понимал, что он за HTTPS прокси)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -213,7 +213,7 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
-
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 
 # =========================

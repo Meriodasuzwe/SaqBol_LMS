@@ -3221,3 +3221,66 @@ WARNING 2026-05-01 19:47:54,638 | ACCESS DENIED: [401] GET /api/users/me/ (User:
 WARNING 2026-05-01 19:47:54,643 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
 INFO 2026-05-01 19:50:29,772 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.106s
 INFO 2026-05-01 20:05:23,704 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.299s
+WARNING 2026-05-03 14:47:19,277 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.019s
+WARNING 2026-05-03 14:47:19,278 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.017s
+WARNING 2026-05-03 14:47:19,283 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 14:47:19,285 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 14:47:19,288 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 14:47:19,292 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-05-03 14:47:23,620 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.099s
+INFO 2026-05-03 14:47:27,985 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.012s
+INFO 2026-05-03 14:47:27,995 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-05-03 14:47:37,081 | ACTION: [200] PATCH /api/courses/b2b/leads/12/update/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.015s
+INFO 2026-05-03 14:48:00,374 | ACTION: [200] POST /api/courses/b2b/leads/13/generate-invite/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.043s
+INFO 2026-05-03 14:48:38,481 | ACTION: [200] POST /api/courses/steps/128/chat-reply/ (User: almatmz [ID:1], IP: 172.18.0.1) - 1.051s
+INFO 2026-05-03 14:48:52,821 | ACTION: [200] POST /api/courses/steps/128/chat-reply/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.992s
+INFO 2026-05-03 14:52:25,003 | ACTION: [200] POST /api/users/google-login/ (User:  [ID:None], IP: 172.18.0.1) - 0.295s
+INFO 2026-05-03 14:52:53,263 | ACTION: [200] POST /api/courses/24/activate-invite/ (User: arsen [ID:25], IP: 172.18.0.1) - 0.047s
+WARNING 2026-05-03 15:23:15,399 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.002s
+WARNING 2026-05-03 15:24:15,410 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:25:15,403 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:26:15,407 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:27:15,399 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:15,401 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,279 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,281 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,284 | ACCESS DENIED: [401] GET /api/courses/b2b/dashboard/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,288 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,289 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,291 | ACCESS DENIED: [401] GET /api/courses/b2b/dashboard/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,296 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 15:28:16,300 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-05-03 18:14:31,950 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.121s
+INFO 2026-05-03 18:14:33,627 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+INFO 2026-05-03 18:14:33,637 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-05-03 18:14:36,540 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-05-03 18:14:40,679 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.011s
+INFO 2026-05-03 18:14:40,692 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-05-03 18:14:49,556 | ACTION: [200] GET /api/courses/admin/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.010s
+INFO 2026-05-03 18:14:51,343 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-05-03 18:14:52,472 | ACTION: [200] GET /api/courses/admin/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+WARNING 2026-05-03 18:45:15,405 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:46:15,397 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:47:15,407 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:48:15,396 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:15,405 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,183 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,185 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,188 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,190 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,195 | ACCESS DENIED: [401] GET /api/notifications/unread-count/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,197 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,198 | ACCESS DENIED: [401] GET /api/courses/categories/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,200 | ACCESS DENIED: [401] GET /api/courses/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,204 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+WARNING 2026-05-03 18:49:16,208 | ACCESS DENIED: [401] GET /api/users/me/ (User:  [ID:None], IP: 172.18.0.1) - 0.001s
+INFO 2026-05-03 18:53:56,967 | ACTION: [200] POST /api/users/login/ (User:  [ID:None], IP: 172.18.0.1) - 0.091s
+INFO 2026-05-03 18:53:58,732 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-05-03 18:53:58,743 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-05-03 18:56:57,942 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-05-03 18:56:57,954 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.008s
+INFO 2026-05-03 18:56:58,663 | ACTION: [200] GET /api/courses/admin/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s
+INFO 2026-05-03 18:59:03,856 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-05-03 18:59:03,866 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-05-03 18:59:14,214 | ACTION: [200] GET /api/courses/admin/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.007s
+INFO 2026-05-03 18:59:14,687 | ACTION: [200] GET /api/users/admin/applications/pending/ (User: almatmz [ID:1], IP: 172.18.0.1) - 0.009s

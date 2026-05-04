@@ -713,9 +713,21 @@ const resources = {
         "courses": "Новые курсы",
         "leads": "B2B Заявки"
     },
+    "leadStatuses": {
+    "new": "Новая",
+    "contacted": "В работе",
+    "closed": "Завершена",
+    "rejected": "Отклонена"
+},
+"leadActions": {
+    "generateCode": "Выдать код",
+    "sendEmail": "Написать"
+},
     "leads": {
     "employees": "Штат",
-    "emailBtn": "Написать"
+    "emailBtn": "Написать",
+    "courseLabel": "Курс",
+    "noCourse": "Без привязки к курсу"
 },
     "loading": "Загрузка...",
     "empty": "Нет материалов на модерации",
@@ -1666,7 +1678,17 @@ const resources = {
     "tabs": {
     "apps": "Авторлыққа өтініштер",
     "courses": "Жаңа курстар",
-    "leads": "B2B Өтініштер"
+    "leads": "B2B Өтініштер",
+    },
+    "leadStatuses": {
+    "new": "Жаңа",
+    "contacted": "Жұмыста",
+    "closed": "Аяқталды",
+    "rejected": "Қабылданбады"
+},
+"leadActions": {
+    "generateCode": "Код беру",
+    "sendEmail": "Хат жазу"
 },
 "leads": {
     "employees": "Қызметкерлер саны",
@@ -2623,11 +2645,24 @@ const resources = {
     "tabs": {
     "apps": "Author Applications",
     "courses": "New Courses",
-    "leads": "B2B Leads"
+    "leads": "B2B Leads",
+    
+},
+"leadStatuses": {
+    "new": "New",
+    "contacted": "In Progress",
+    "closed": "Completed",
+    "rejected": "Rejected"
+},
+"leadActions": {
+    "generateCode": "Issue Code",
+    "sendEmail": "Contact"
 },
 "leads": {
     "employees": "Employees",
-    "emailBtn": "Send Email"
+    "emailBtn": "Send Email",
+    "courseLabel": "Course",
+    "noCourse": "No course attached"
 },
     "loading": "Loading...",
     "empty": "No materials pending moderation",

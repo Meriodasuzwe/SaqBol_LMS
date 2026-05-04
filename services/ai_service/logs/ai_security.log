@@ -999,3 +999,11 @@ INFO 2026-05-01 20:04:50,148 | AI COURSE | user_id=1 | chars=490
 INFO 2026-05-01 20:04:52,277 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO 2026-05-01 20:04:52,290 | AI COURSE SUCCESS | user_id=1 | title=Официальная корреспонденция: заявления и запросы
 INFO 2026-05-01 20:04:52,291 | OK: [200] POST /generate-course-from-file (IP: 172.18.0.8) — 2.240s
+INFO 2026-05-03 14:48:38,474 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-05-03 14:48:38,479 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 1.023s
+INFO 2026-05-03 14:48:52,817 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-05-03 14:48:52,819 | OK: [200] POST /generate-scenario/chat-reply (IP: 172.18.0.7) — 0.979s
+INFO 2026-05-03 18:59:22,588 | INSIGHTS TEACHER | user_id=1 | lang=English
+INFO 2026-05-03 18:59:23,906 | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO 2026-05-03 18:59:23,912 | INSIGHTS TEACHER SUCCESS | user_id=1 | Translated to: English
+INFO 2026-05-03 18:59:23,913 | OK: [200] POST /analytics/insights/teacher/ (IP: 172.18.0.8) — 1.350s

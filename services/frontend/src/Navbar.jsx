@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import api from './api';
 import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; //  Импортируем хук для переводов
+import { useTranslation } from 'react-i18next';
 import {
     BookOpen, LayoutDashboard, User, LogOut, ChevronDown,
     Sun, Moon, GraduationCap, ExternalLink, X, Sparkles, Settings,
@@ -36,6 +36,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
     const [submitting, setSubmitting]  = useState(false);
     // Определение, является ли текущая тема темной для упрощения условий в стилях
     const isDark = theme === 'dark';
+    
     // Эффект для применения темы к документу и сохранения выбора в localStorage
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -97,7 +98,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         : user?.username || t('nav.user');
     const initials = displayName.split(' ').map(w => w[0]?.toUpperCase()).slice(0, 2).join('');
 
-    //  Была произведена оптимизация цветовой схемы: вместо повторяющихся тернарных операторов для каждой части интерфейса, теперь используется единый объект themeColors, который централизованно управляет всеми цветами в зависимости от текущей темы. Это не только сокращает код, но и облегчает поддержку и изменение цветовой схемы в будущем.
     const themeColors = {
         nav:      isDark ? 'rgba(30,30,35,0.97)'    : 'rgba(255,255,255,0.97)',
         border:   isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
@@ -195,7 +195,8 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                 onMouseEnter={e => e.currentTarget.style.background = themeColors.hover}
                                 onMouseLeave={e => { if(!langOpen) e.currentTarget.style.background = 'transparent'; }}
                                 title="Изменить язык">
-                                {i18n.language.slice(0, 2)}
+                                {/* ИСПРАВЛЕНИЕ 1: Страховка для языка */}
+                                {(i18n.language || 'ru').slice(0, 2)}
                             </button>
 
                             {langOpen && (
@@ -206,9 +207,10 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                         { code: 'en', label: 'English' }
                                     ].map(lng => (
                                         <button key={lng.code} onClick={() => changeLanguage(lng.code)}
-                                            style={{ width: '100%', padding: '8px 12px', border: 'none', background: i18n.language.startsWith(lng.code) ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent', color: i18n.language.startsWith(lng.code) ? '#3b82f6' : themeColors.text, borderRadius: 8, fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'background 0.1s' }}
-                                            onMouseEnter={e => { if(!i18n.language.startsWith(lng.code)) e.currentTarget.style.background = themeColors.itemHov }}
-                                            onMouseLeave={e => { if(!i18n.language.startsWith(lng.code)) e.currentTarget.style.background = 'transparent' }}>
+                                            /* ИСПРАВЛЕНИЕ 2: Опциональная цепочка ?. для startsWith */
+                                            style={{ width: '100%', padding: '8px 12px', border: 'none', background: i18n.language?.startsWith(lng.code) ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent', color: i18n.language?.startsWith(lng.code) ? '#3b82f6' : themeColors.text, borderRadius: 8, fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'background 0.1s' }}
+                                            onMouseEnter={e => { if(!i18n.language?.startsWith(lng.code)) e.currentTarget.style.background = themeColors.itemHov }}
+                                            onMouseLeave={e => { if(!i18n.language?.startsWith(lng.code)) e.currentTarget.style.background = 'transparent' }}>
                                             {lng.label}
                                         </button>
                                     ))}
@@ -334,7 +336,8 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         <div style={{ display: 'flex', gap: 8, padding: '12px 14px', marginBottom: 8, borderBottom: `1px solid ${themeColors.divider}` }}>
                              {[ { c: 'ru', l: 'RU' }, { c: 'kk', l: 'KK' }, { c: 'en', l: 'EN' } ].map(lng => (
                                 <button key={lng.c} onClick={() => { changeLanguage(lng.c); setMobileOpen(false); }}
-                                    style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: i18n.language.startsWith(lng.c) ? (isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff') : themeColors.iconBg, color: i18n.language.startsWith(lng.c) ? '#3b82f6' : themeColors.textMute }}>
+                                    /* ИСПРАВЛЕНИЕ 3: Опциональная цепочка ?. для мобильных кнопок */
+                                    style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: i18n.language?.startsWith(lng.c) ? (isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff') : themeColors.iconBg, color: i18n.language?.startsWith(lng.c) ? '#3b82f6' : themeColors.textMute }}>
                                     {lng.l}
                                 </button>
                              ))}

@@ -219,7 +219,7 @@ function App() {
   const isTeacher = userRole === 'teacher' || userRole === 'admin';
 
   return (
-    <GoogleOAuthProvider clientId="938595288066-rme6f4ga3143r5f0f9j7pl4qsihhs54r.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId="795359427397-0vumu41gldm5obb9qs5q61l7hr2vh6lg.apps.googleusercontent.com">
       <Router>
         <ToastContainer
           position="top-right"
