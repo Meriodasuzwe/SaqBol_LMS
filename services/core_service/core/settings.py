@@ -213,7 +213,7 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
-
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 
 # =========================
