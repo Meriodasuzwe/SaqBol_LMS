@@ -10,7 +10,8 @@ import {
     XCircle, 
     ArrowRight, 
     RefreshCcw, 
-    HelpCircle 
+    HelpCircle,
+    EyeOff
 } from 'lucide-react';
 
 function QuizPage() {
@@ -26,6 +27,9 @@ function QuizPage() {
     const [currentIndex, setCurrentIndex] = useState(0); 
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [currentResult, setCurrentResult] = useState(null); 
+    
+    // Счетчик попыток
+    const [attempts, setAttempts] = useState(0);
 
     const startTimeRef = useRef(Date.now());
 
@@ -36,6 +40,7 @@ function QuizPage() {
     useEffect(() => { cheatWarningsRef.current = cheatWarnings; }, [cheatWarnings]);
     useEffect(() => { selectedAnswersRef.current = selectedAnswers; }, [selectedAnswers]);
 
+    // Загрузка данных и попыток
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -45,12 +50,13 @@ function QuizPage() {
                 const validQuizzes = quizList.filter(q => q && q.id).sort((a, b) => b.id - a.id);
                 
                 if (validQuizzes.length > 0) {
-                    if (targetQuizId) {
-                        const specificQuiz = validQuizzes.find(q => String(q.id) === String(targetQuizId));
-                        setQuiz(specificQuiz || validQuizzes[0]);
-                    } else {
-                        setQuiz(validQuizzes[0]);
-                    }
+                    const specificQuiz = targetQuizId ? validQuizzes.find(q => String(q.id) === String(targetQuizId)) : validQuizzes[0];
+                    const activeQuiz = specificQuiz || validQuizzes[0];
+                    setQuiz(activeQuiz);
+                    
+                    // Загружаем количество попыток из памяти браузера
+                    const savedAttempts = parseInt(localStorage.getItem(`quiz_attempts_${activeQuiz.id}`) || '0', 10);
+                    setAttempts(savedAttempts);
                 }
             } catch (err) {
                 console.error("Ошибка загрузки данных:", err);
@@ -94,7 +100,6 @@ function QuizPage() {
         try {
             const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
             const questions = quizData.questions || [];
-
             let correctCount = 0;
             const answersPayload = questions.map(q => {
                 const choiceId = answersMap[q.id];
@@ -126,7 +131,6 @@ function QuizPage() {
         if (!quiz) return;
         
         const answersToSubmit = isForced ? selectedAnswersRef.current : selectedAnswers;
-
         const answers = Object.entries(answersToSubmit).map(([qId, oId]) => ({
             question_id: parseInt(qId),
             choice_id: oId
@@ -137,14 +141,20 @@ function QuizPage() {
                 setCurrentResult(res.data);
                 submitAnalytics(quiz, res.data, answersToSubmit);
 
-                if (res.data.score >= 70) {
+                const isPassed = res.data.score >= 70;
+
+                if (isPassed) {
                     confetti({
-                        particleCount: 150, spread: 80,
-                        origin: { y: 0.6 }, zIndex: 9999,
+                        particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 9999,
                         colors: ['#10B981', '#047857', '#059669'] 
                     });
                     toast.success(`Тест успешно сдан! Результат: ${res.data.score}%`);
+                    // Очищаем попытки при успехе
+                    localStorage.removeItem(`quiz_attempts_${quiz.id}`);
                 } else {
+                    const newAttempts = attempts + 1;
+                    setAttempts(newAttempts);
+                    localStorage.setItem(`quiz_attempts_${quiz.id}`, newAttempts);
                     toast.error(`Тест не пройден. Результат: ${res.data.score}%`);
                 }
             })
@@ -154,6 +164,14 @@ function QuizPage() {
             });
     };
 
+    const restartQuiz = () => {
+        setCurrentResult(null);
+        setSelectedAnswers({});
+        setCurrentIndex(0);
+        setCheatWarnings(0);
+        startTimeRef.current = Date.now();
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-base-200">
             <div className="w-8 h-8 border-4 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
@@ -161,13 +179,12 @@ function QuizPage() {
     );
 
     if (!quiz || !quiz.questions || quiz.questions.length === 0) return (
-        <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center pt-10 transition-colors duration-200">
-            <div className="max-w-md w-full text-center p-12 bg-base-100 shadow-sm border border-base-300 rounded-3xl transition-colors duration-200">
+        <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center pt-10">
+            <div className="max-w-md w-full text-center p-12 bg-base-100 shadow-sm border border-base-300 rounded-3xl">
                 <HelpCircle size={48} className="text-base-content/20 mx-auto mb-6" />
                 <h2 className="text-2xl font-black text-base-content mb-2">Вопросы отсутствуют</h2>
-                <p className="text-base-content/60 mb-8 font-medium">В этом модуле пока нет доступных тестов.</p>
                 <button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 w-full transition-colors shadow-lg shadow-blue-900/20" 
+                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 w-full mt-8" 
                     onClick={() => navigate(`/lesson/${lessonId}`)}
                 >
                     <ChevronLeft size={18} /> Вернуться к уроку
@@ -181,57 +198,52 @@ function QuizPage() {
     const choices = currentQuestion?.choices || []; 
     const isAllAnswered = questions.every(q => selectedAnswers[q.id]);
     
-    // Проверяем, правильно ли юзер ответил на текущий вопрос (нужно для блока объяснения)
-    const userSelectedChoice = choices.find(c => c.id === selectedAnswers[currentQuestion.id]);
-    const isCurrentAnswerCorrect = userSelectedChoice?.is_correct === true;
+    const isPassed = currentResult?.score >= 70;
+    const showAnswers = isPassed || attempts >= 5; // Показывать ответы если сдал ИЛИ 5 попыток
 
     return (
-        <div className="min-h-screen bg-base-200 py-10 px-6 font-sans text-base-content transition-colors duration-200">
+        <div className="min-h-screen bg-base-200 py-10 px-6 font-sans text-base-content">
             <div className="max-w-3xl mx-auto">
                 
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
                     <button 
                         onClick={() => navigate(`/lesson/${lessonId}`)} 
-                        className="text-[11px] font-black uppercase tracking-widest text-base-content/50 hover:text-base-content flex items-center gap-2 transition-colors w-fit group"
+                        className="text-[11px] font-black uppercase tracking-widest text-base-content/50 hover:text-base-content flex items-center gap-2"
                     >
-                        <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Покинуть тест
+                        <ChevronLeft size={16} /> Покинуть тест
                     </button>
-                    {cheatWarnings > 0 && !currentResult && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold animate-pulse">
-                            <AlertTriangle size={14} /> Предупреждений: {cheatWarnings}/3
-                        </div>
-                    )}
                 </div>
 
-                {/* ── НАВИГАЦИОННЫЕ КНОПКИ (ЦИФРЫ ВОПРОСОВ) ── */}
-                <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 mb-6 transition-colors duration-200">
+                {/* НАВИГАЦИЯ ВОПРОСОВ */}
+                <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 mb-6">
                     <div className="flex flex-wrap gap-2 justify-center">
                         {questions.map((q, idx) => {
                             const isAnswered = !!selectedAnswers[q.id];
                             const isActive = idx === currentIndex;
                             
-                            let btnClass = "border-base-300 text-base-content/50 bg-base-100 hover:border-base-content/30 hover:text-base-content/80";
+                            let btnClass = "border-base-300 text-base-content/50 bg-base-100 hover:border-base-content/30";
                             
                             if (!currentResult) {
-                                if (isAnswered) btnClass = "bg-blue-600 border-blue-600 text-white shadow-sm"; 
-                                if (isActive) btnClass += " ring-4 ring-blue-500/20 scale-110 z-10 border-blue-600 text-blue-600 dark:text-blue-400";
+                                if (isAnswered) btnClass = "bg-blue-600 border-blue-600 text-white"; 
+                                if (isActive) btnClass += " ring-4 ring-blue-500/20 scale-110 z-10 border-blue-600 text-blue-600";
                                 if (isActive && isAnswered) btnClass += " text-white";
                             } else {
-                                // 🔥 ПРОВЕРКА ПРАВИЛЬНОСТИ КОНКРЕТНОГО ВОПРОСА 🔥
-                                const userAnswerId = selectedAnswers[q.id];
-                                const userAnswer = q.choices?.find(c => c.id === userAnswerId);
-                                const isCorrect = userAnswer?.is_correct === true;
-
-                                btnClass = isCorrect ? "bg-emerald-500 border-emerald-500 text-white" : "bg-red-500 border-red-500 text-white";
+                                if (isPassed) {
+                                    btnClass = "bg-emerald-500 border-emerald-500 text-white";
+                                } else if (showAnswers) {
+                                    const userAnswerId = selectedAnswers[q.id];
+                                    const userAnswer = q.choices?.find(c => c.id === userAnswerId);
+                                    const isCorrect = userAnswer?.is_correct === true;
+                                    btnClass = isCorrect ? "bg-emerald-500 border-emerald-500 text-white" : "bg-red-500 border-red-500 text-white";
+                                } else {
+                                    // Нейтральный цвет, если завалил, но попыток < 5
+                                    btnClass = "bg-base-300 border-base-400 text-base-content/60";
+                                }
                                 if (isActive) btnClass += " ring-4 ring-base-content/20 scale-110 z-10";
                             }
 
                             return (
-                                <button
-                                    key={q.id}
-                                    onClick={() => setCurrentIndex(idx)}
-                                    className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border-2 ${btnClass}`}
-                                >
+                                <button key={q.id} onClick={() => setCurrentIndex(idx)} className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border-2 ${btnClass}`}>
                                     {idx + 1}
                                 </button>
                             );
@@ -239,128 +251,107 @@ function QuizPage() {
                     </div>
                 </div>
 
-                {/* ── ТЕЛО ВОПРОСА ── */}
-                <div className="bg-base-100 rounded-3xl shadow-sm border border-base-300 overflow-hidden transition-colors duration-200">
+                {/* ВЕРДИКТ ЕСЛИ ЗАВАЛИЛ И ПОПЫТОК < 5 */}
+                {currentResult && !isPassed && !showAnswers && (
+                    <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl mb-6 text-center animate-in fade-in">
+                        <EyeOff size={32} className="text-amber-500 mx-auto mb-3" />
+                        <h3 className="text-lg font-black text-amber-900 mb-1">Вы набрали {currentResult.score}%. Нужно минимум 70%.</h3>
+                        <p className="text-amber-800/80 text-sm mb-4">Правильные ответы скрыты, чтобы вы могли подумать сами. <br/> Они откроются после 5 попыток. (Использовано попыток: {attempts}/5)</p>
+                        <button onClick={restartQuiz} className="bg-amber-500 text-white px-6 py-2 rounded-xl font-bold inline-flex items-center gap-2 hover:bg-amber-600">
+                            <RefreshCcw size={16} /> Попробовать снова
+                        </button>
+                    </div>
+                )}
+
+                {/* ТЕЛО ВОПРОСА */}
+                <div className="bg-base-100 rounded-3xl shadow-sm border border-base-300 overflow-hidden">
                     <div className="p-8 md:p-12">
-                        
                         <div className="mb-10">
-                            <div className="flex items-center gap-3 mb-4">
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/50">Вопрос {currentIndex + 1} из {questions.length}</span>
-                                <div className="h-px flex-1 bg-base-300"></div>
-                            </div>
-                            <h1 className="text-2xl md:text-3xl font-black text-base-content leading-tight">
+                            <h1 className="text-2xl font-black text-base-content leading-tight">
                                 {currentQuestion?.question || currentQuestion?.text}
                             </h1>
                         </div>
 
-                        {/* ── ВАРИАНТЫ ОТВЕТОВ ── */}
+                        {/* ВАРИАНТЫ ОТВЕТОВ */}
                         <div className="grid gap-3">
                             {choices.map(choice => {
                                 const isSelected = selectedAnswers[currentQuestion.id] === choice.id;
-                                
-                                let labelClass = isSelected 
-                                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-600' 
-                                    : 'border-base-300 bg-base-100 hover:border-base-content/40';
+                                let labelClass = isSelected ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' : 'border-base-300 bg-base-100 hover:border-base-content/40';
 
-                                // 🔥 ЦВЕТОВЫЕ МАРКЕРЫ ДЛЯ ОТВЕТОВ ПОСЛЕ СДАЧИ 🔥
                                 if (currentResult) {
-                                    if (choice.is_correct) {
-                                        // Правильный ответ всегда горит зеленым
-                                        labelClass = 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-500 text-emerald-900 dark:text-emerald-300';
-                                    } else if (isSelected && !choice.is_correct) {
-                                        // Твой неверный ответ горит красным
-                                        labelClass = 'border-red-500 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-500 text-red-900 dark:text-red-300';
+                                    if (isPassed) {
+                                        // Если сдал - красим выбранное в зеленое
+                                        labelClass = isSelected ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 text-emerald-900' : 'border-base-200/50 text-base-content/40 opacity-50';
+                                    } else if (showAnswers) {
+                                        // Если провалил, но попыток >= 5 - показываем правду
+                                        if (choice.is_correct) {
+                                            labelClass = 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 text-emerald-900';
+                                        } else if (isSelected && !choice.is_correct) {
+                                            labelClass = 'border-red-500 bg-red-50 ring-1 ring-red-500 text-red-900';
+                                        } else {
+                                            labelClass = 'border-base-200/50 text-base-content/40 opacity-50';
+                                        }
                                     } else {
-                                        // Остальные неверные ответы просто тускнеют
-                                        labelClass = 'border-base-200/50 text-base-content/40 opacity-50';
+                                        // Если провалил и попыток < 5 - просто фиксируем выбранный вариант без цвета "ошибки"
+                                        labelClass = isSelected ? 'border-base-400 bg-base-200 text-base-content/60 cursor-not-allowed' : 'border-base-200/50 text-base-content/40 opacity-50 cursor-not-allowed';
                                     }
                                 }
 
                                 return (
-                                    <label key={choice.id} className={`flex items-center p-5 rounded-2xl border-2 cursor-pointer transition-all ${labelClass}`}>
+                                    <label key={choice.id} className={`flex items-center p-5 rounded-2xl border-2 transition-all ${currentResult ? 'cursor-not-allowed' : 'cursor-pointer'} ${labelClass}`}>
                                         <div className="relative flex items-center justify-center mr-4 shrink-0">
                                             <input 
                                                 type="radio" 
                                                 name={`q-${currentQuestion.id}`}
-                                                className="peer appearance-none w-5 h-5 border-2 border-base-300 rounded-full checked:border-blue-600 checked:bg-blue-600 transition-all cursor-pointer disabled:cursor-not-allowed disabled:checked:bg-current disabled:checked:border-current"
+                                                className="peer appearance-none w-5 h-5 border-2 border-base-300 rounded-full checked:border-blue-600 checked:bg-blue-600 transition-all disabled:cursor-not-allowed"
                                                 checked={isSelected}
                                                 disabled={!!currentResult}
                                                 onChange={() => handleAnswer(currentQuestion.id, choice.id)}
                                             />
                                             {isSelected && <div className="absolute w-2 h-2 bg-white rounded-full pointer-events-none"></div>}
                                         </div>
-                                        <span className={`font-medium ${isSelected && !currentResult ? 'text-blue-900 dark:text-blue-300 font-bold' : ''}`}>
-                                            {choice.text}
-                                        </span>
+                                        <span className="font-medium">{choice.text}</span>
                                     </label>
                                 );
                             })}
                         </div>
 
-                        {/* 🔥 БЛОК С ОБЪЯСНЕНИЕМ (ПОЯВЛЯЕТСЯ ТОЛЬКО ПОСЛЕ СДАЧИ) 🔥 */}
-                        {currentResult && (
-                            <div className={`mt-6 p-6 rounded-2xl border ${isCurrentAnswerCorrect ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800/30' : 'bg-red-50/50 border-red-100 dark:bg-red-900/10 dark:border-red-800/30'} animate-in fade-in slide-in-from-top-4`}>
-                                <h4 className="font-bold flex items-center gap-2 mb-2 text-base-content">
-                                    {isCurrentAnswerCorrect 
-                                        ? <><CheckCircle2 size={18} className="text-emerald-500"/> Верный выбор</> 
-                                        : <><XCircle size={18} className="text-red-500"/> Ошибка</>}
-                                </h4>
-                                <p className="text-sm text-base-content/80 leading-relaxed">
-                                    {currentQuestion.explanation || 'Объяснение для этого вопроса отсутствует.'}
-                                </p>
+                        {/* ОБЪЯСНЕНИЕ (ПОКАЗЫВАЕТСЯ ТОЛЬКО ЕСЛИ СДАЛ ИЛИ 5 ПОПЫТОК) */}
+                        {currentResult && showAnswers && (
+                            <div className={`mt-6 p-6 rounded-2xl border ${isPassed ? 'bg-emerald-50/50 border-emerald-100' : 'bg-base-200 border-base-300'}`}>
+                                <h4 className="font-bold mb-2">Объяснение:</h4>
+                                <p className="text-sm">{currentQuestion.explanation || 'Объяснение для этого вопроса отсутствует.'}</p>
                             </div>
                         )}
 
+                        {/* КНОПКИ УПРАВЛЕНИЯ */}
                         {!currentResult ? (
-                            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-12 gap-4">
-                                <button 
-                                    className={`text-xs font-bold uppercase tracking-widest text-base-content/50 hover:text-base-content flex items-center gap-2 transition-colors ${currentIndex === 0 ? 'invisible' : ''}`}
-                                    onClick={() => setCurrentIndex(v => v - 1)}
-                                >
-                                    <ChevronLeft size={16} /> Назад
-                                </button>
-                                
+                            <div className="flex justify-between items-center mt-12 gap-4">
+                                <button className={`text-xs font-bold uppercase text-base-content/50 ${currentIndex === 0 ? 'invisible' : ''}`} onClick={() => setCurrentIndex(v => v - 1)}>Назад</button>
                                 {currentIndex < questions.length - 1 ? (
-                                    <button 
-                                        className="w-full sm:w-auto bg-base-200 text-base-content px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-base-300 transition-all"
-                                        onClick={() => setCurrentIndex(v => v + 1)}
-                                    >
-                                        Далее <ArrowRight size={16} />
-                                    </button>
+                                    <button className="bg-base-200 px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 hover:bg-base-300" onClick={() => setCurrentIndex(v => v + 1)}>Далее <ArrowRight size={16} /></button>
                                 ) : (
                                     <button 
-                                        className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm
-                                            ${isAllAnswered ? 'bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-900/20' : 'bg-base-200 text-base-content/40 cursor-not-allowed'}`}
+                                        className={`px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 ${isAllAnswered ? 'bg-blue-600 text-white shadow-lg' : 'bg-base-200 text-base-content/40'}`}
                                         disabled={!isAllAnswered}
                                         onClick={() => submitQuiz(false)}
                                     >
-                                        {isAllAnswered ? 'Завершить тест' : 'Ответьте на все вопросы'}
+                                        Завершить тест
                                     </button>
                                 )}
                             </div>
                         ) : (
-                            <div className="mt-10 pt-8 border-t border-base-300 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <button 
-                                    className={`text-xs font-bold uppercase tracking-widest text-base-content/50 hover:text-base-content flex items-center gap-2 transition-colors ${currentIndex === 0 ? 'invisible' : ''}`}
-                                    onClick={() => setCurrentIndex(v => v - 1)}
-                                >
-                                    <ChevronLeft size={16} /> Предыдущий вопрос
-                                </button>
-
+                            <div className="mt-10 pt-8 border-t border-base-300 flex justify-between items-center gap-4">
+                                <button className={`text-xs font-bold uppercase text-base-content/50 ${currentIndex === 0 ? 'invisible' : ''}`} onClick={() => setCurrentIndex(v => v - 1)}>Назад</button>
                                 {currentIndex < questions.length - 1 ? (
-                                    <button 
-                                        className="w-full sm:w-auto bg-base-200 text-base-content px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-base-300 transition-all"
-                                        onClick={() => setCurrentIndex(v => v + 1)}
-                                    >
-                                        Следующий вопрос <ArrowRight size={16} />
-                                    </button>
+                                    <button className="bg-base-200 px-6 py-3 rounded-xl font-bold hover:bg-base-300" onClick={() => setCurrentIndex(v => v + 1)}>Следующий вопрос</button>
                                 ) : (
-                                    <button 
-                                        className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20"
-                                        onClick={() => navigate(`/lesson/${lessonId}`)}
-                                    >
-                                        Вернуться к уроку <ArrowRight size={16} />
-                                    </button>
+                                    <div className="flex gap-4">
+                                        {!isPassed && showAnswers && (
+                                            <button onClick={restartQuiz} className="px-6 py-3 bg-base-200 text-base-content rounded-xl font-bold">Пройти еще раз</button>
+                                        )}
+                                        <button className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold flex items-center gap-2" onClick={() => navigate(`/lesson/${lessonId}`)}>Вернуться к уроку</button>
+                                    </div>
                                 )}
                             </div>
                         )}

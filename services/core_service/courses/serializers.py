@@ -27,9 +27,10 @@ class LessonStepSerializer(serializers.ModelSerializer):
         from quizzes.models import Quiz, Result 
 
         if obj.step_type == 'quiz':
-            quizzes = Quiz.objects.filter(lesson=obj.lesson)
-            if quizzes.exists():
-                return Result.objects.filter(student=request.user, quiz__in=quizzes, score__gte=70).exists()
+            # Ищем конкретный ID теста, привязанный к этому квадратику
+            quiz_id = obj.scenario_data.get('quiz_id') if obj.scenario_data else None
+            if quiz_id:
+                return Result.objects.filter(student=request.user, quiz_id=quiz_id, score__gte=70).exists()
             return False
 
         return StepProgress.objects.filter(
@@ -88,7 +89,7 @@ class CourseSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return 0
         
-        # 🔥 Если юзер НЕ записан, сразу отдаем 0 (нет смысла лезть в базу)
+        
         if not Enrollment.objects.filter(course=obj, student=request.user).exists():
             return 0
         
@@ -102,14 +103,13 @@ class CourseSerializer(serializers.ModelSerializer):
 
         for step in steps:
             if step.step_type == 'quiz':
-                quizzes = Quiz.objects.filter(lesson=step.lesson)
-                if quizzes.exists() and Result.objects.filter(student=request.user, quiz__in=quizzes, score__gte=70).exists():
+                # Проверяем конкретный тест для подсчета прогресса курса
+                quiz_id = step.scenario_data.get('quiz_id') if step.scenario_data else None
+                if quiz_id and Result.objects.filter(student=request.user, quiz_id=quiz_id, score__gte=70).exists():
                     completed_count += 1
             else:
                 if StepProgress.objects.filter(student=request.user, step=step, is_completed=True).exists():
                     completed_count += 1
-        
-        return int((completed_count / total_steps) * 100)
 
     def get_average_rating(self, obj):
         avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
