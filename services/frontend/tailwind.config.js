@@ -1,20 +1,21 @@
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(), 
   ],
-  theme: {
-    extend: {},
+  build: {
+    sourcemap: false, 
   },
-  // Подключаем плагин daisyui
-  plugins: [require("daisyui"), require('@tailwindcss/typography')],
-  
-  // Настройка тем
-  daisyui: {
-    // Включаем светлую и темную темы
-    themes: ["light", "dark"],
-    // Указываем, какая тема считается "темной" по умолчанию
-    darkTheme: "dark", 
+  server: {
+    host: true,
+    port: 5173,
+    allowedHosts: ['lvh.me','saqbol.asia', 'www.saqbol.asia', 'localhost'],
+    watch: {
+      usePolling: true,
+    },
   },
-}
+})

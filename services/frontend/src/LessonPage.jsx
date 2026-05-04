@@ -14,7 +14,8 @@ import {
     ArrowLeft,
     Award,
     BrainCircuit, 
-    Search 
+    Search,
+    Lock // Добавили иконку замка
 } from 'lucide-react';
 
 import FakeMessenger from './FakeMessenger'; 
@@ -105,6 +106,14 @@ function LessonPage() {
                 return { ...prevLesson, steps: updatedSteps };
             });
 
+            // ИСПРАВЛЕНИЕ №1: Запрашиваем обновленные данные курса, чтобы прогресс-бар сдвинулся!
+            try {
+                const updatedCourseRes = await api.get(`courses/${lesson.course}/`);
+                setCourse(updatedCourseRes.data);
+            } catch (courseErr) {
+                console.error("Не удалось обновить прогресс курса", courseErr);
+            }
+
             // Если бэкенд сказал, что ВЕСЬ КУРС только что пройден впервые
             if (res.data?.just_completed) {
                 setShowCompletionModal(true);
@@ -124,14 +133,12 @@ function LessonPage() {
                 // 2. ЕСЛИ ЭТО БЫЛ ПОСЛЕДНИЙ ШАГ В УРОКЕ
                 if (nextLessonObj) {
                     toast.success(t('builder.toasts.simEnd'));
-                    // Делаем задержку в 1.2 секунды, чтобы юзер успел увидеть зеленую плашку в симуляторе
                     setTimeout(() => {
                         navigate(`/lesson/${nextLessonObj.id}`);
                     }, 1200);
                 } else {
                     // 3. ЭТО ПОСЛЕДНИЙ УРОК В КУРСЕ
                     toast.success(t('builder.toasts.simCongrat'));
-                    // Также даем паузу перед тем, как выкинуть на страницу курса
                     setTimeout(() => {
                         navigate(`/course/${lesson.course}`);
                     }, 1500);
@@ -161,6 +168,22 @@ function LessonPage() {
             case 'interactive_code': return <Code2 {...props} />;
             default: return <FileText {...props} />;
         }
+    };
+
+    // Функция проверки: заблокирован ли модуль?
+    const isModuleLocked = (idx) => {
+        // Мы блокируем ТОЛЬКО последний модуль
+        if (idx !== courseLessons.length - 1) return false;
+        
+        // Если бэкенд отдает поле is_completed для уроков, используем его:
+        if (courseLessons[0]?.hasOwnProperty('is_completed')) {
+            return courseLessons.slice(0, -1).some(l => !l.is_completed);
+        }
+        
+        // Если бэкенд не отдает is_completed, высчитываем по общему прогрессу курса.
+        // Чтобы открыть последний урок, прогресс должен быть пропорционален пройденным модулям.
+        const requiredProgress = ((courseLessons.length - 1) / courseLessons.length) * 100;
+        return course?.progress < (requiredProgress - 2); // -2% для погрешности округления бэкенда
     };
 
     if (loading) return (
@@ -211,23 +234,44 @@ function LessonPage() {
                         </div>
 
                         <nav className="p-2 overflow-y-auto max-h-[50vh]">
-                            {courseLessons.map((l, idx) => (
-                                <Link 
-                                    key={l.id}
-                                    to={`/lesson/${l.id}`}
-                                    className={`flex items-center gap-4 p-3 rounded-xl transition-all
-                                        ${l.id === lesson.id
-                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20'
-                                            : 'hover:bg-base-200 text-base-content/80 hover:text-base-content'
-                                        }`}
-                                >
-                                    <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border
-                                        ${l.id === lesson.id ? 'border-white/30' : 'border-base-300 text-base-content/50'}`}>
-                                        {idx + 1}
-                                    </span>
-                                    <span className="text-xs font-bold truncate">{l.title}</span>
-                                </Link>
-                            ))}
+                            {courseLessons.map((l, idx) => {
+                                const isLocked = isModuleLocked(idx);
+
+                                // Если модуль заблокирован, мы рендерим <div> вместо <Link>
+                                if (isLocked) {
+                                    return (
+                                        <div 
+                                            key={l.id}
+                                            onClick={() => toast.info('Пройдите предыдущие модули, чтобы открыть финальное тестирование')}
+                                            className="flex items-center gap-4 p-3 rounded-xl transition-all cursor-not-allowed opacity-60 bg-base-100"
+                                        >
+                                            <span className="text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border border-base-300 bg-base-200 text-base-content/40">
+                                                <Lock size={10} />
+                                            </span>
+                                            <span className="text-xs font-bold truncate text-base-content/50">{l.title}</span>
+                                        </div>
+                                    );
+                                }
+
+                                // Обычный рендер доступного модуля
+                                return (
+                                    <Link 
+                                        key={l.id}
+                                        to={`/lesson/${l.id}`}
+                                        className={`flex items-center gap-4 p-3 rounded-xl transition-all
+                                            ${l.id === lesson.id
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20'
+                                                : 'hover:bg-base-200 text-base-content/80 hover:text-base-content'
+                                            }`}
+                                    >
+                                        <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border
+                                            ${l.id === lesson.id ? 'border-white/30' : 'border-base-300 text-base-content/50'}`}>
+                                            {idx + 1}
+                                        </span>
+                                        <span className="text-xs font-bold truncate">{l.title}</span>
+                                    </Link>
+                                );
+                            })}
                         </nav>
                     </div>
                 </aside>
