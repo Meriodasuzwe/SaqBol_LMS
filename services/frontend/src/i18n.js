@@ -837,6 +837,8 @@ const resources = {
     "locked": "Заблокировано",
     "enrollToUnlock": "Запишитесь на курс, чтобы открыть этот материал",
     "b2bTitle": "Обучение для бизнеса",
+    "apply":"Применить",
+    "corporateAccess": "Доступ от работодателя?",
 "b2bDesc": "Хотите обучить команду? Получите корпоративный доступ с дашбордом статистики для руководителя.",
 "b2bBtn": "Оставить заявку",
     "stepTypes": {
@@ -1185,7 +1187,7 @@ const resources = {
         },
         cta: {
           title: "Команданы оқытуды бүгін бастаңыз",
-          desc: "Алғашқы модульдерге тегін қол жеткізу. Картасыз.",
+          desc: "Алғашқы модульдерге тегін қол жеткізіңіз. Орнатуды қажет етпейді — бірден оқытуға кірісіңіз.",
           placeholder: "Жұмыс email",
           btn: "Аккаунт жасау",
           trust1: "Алғашқы модульдер тегін",
@@ -1802,6 +1804,8 @@ const resources = {
     "locked": "Бұғатталған",
     "enrollToUnlock": "Бұл материалды ашу үшін курсқа жазылыңыз",
     "b2bTitle": "Бизнеске арналған оқыту",
+    "apply": "Қолдану",
+    "corporateAccess": "Корпоративтік кодты енгізіңіз",
 "b2bDesc": "Командаңызды оқытқыңыз келе ме? Басшыларға арналған статистикасы бар корпоративтік оқытуға рұқсат алыңыз.",
 "b2bBtn": "Өтінім қалдыру",
     "stepTypes": {
@@ -2772,8 +2776,10 @@ const resources = {
     "locked": "Locked",
     "enrollToUnlock": "Enroll in the course to unlock this material",
     "b2bTitle": "Training for Business",
-"b2bDesc": "Want to train your team? Get corporate access with an analytics dashboard for managers.",
-"b2bBtn": "Request a Demo",
+    "apply": "Apply",
+    "corporateAccess": "Do you have a corporate code?",
+    "b2bDesc": "Want to train your team? Get corporate access with an analytics dashboard for managers.",
+    "b2bBtn": "Request a Demo",
     "stepTypes": {
         "interactive": "Interactive",
         "phishing": "Phishing",

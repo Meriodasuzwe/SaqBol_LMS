@@ -21,6 +21,7 @@ services:
       retries: 5
 
   core_service:
+    restart: always
     build: ./services/core_service
     container_name: saqbol_core_service
     command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
@@ -46,6 +47,7 @@ services:
       - lms_network
 
   ai_service:
+    restart: always
     build: ./services/ai_service
     container_name: saqbol_ai_service
     env_file:
@@ -62,6 +64,7 @@ services:
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
 
   frontend:
+    restart: always
     build: ./services/frontend
     volumes:
       - ./services/frontend:/app
