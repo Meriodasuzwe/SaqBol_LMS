@@ -338,15 +338,12 @@ class BulkCreateCourseView(APIView):
             print(f"🔥 ОШИБКА СОХРАНЕНИЯ В БД: {str(e)}") 
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @csrf_exempt
 def stripe_webhook(request):
     import stripe
     import traceback
     from django.http import HttpResponse
     from django.contrib.auth import get_user_model
-    
-    # Подгружаем твои модели (проверь, чтобы названия совпадали с твоими!)
     from .models import Course, Enrollment 
 
     print("\n" + "="*40, flush=True)
@@ -371,10 +368,15 @@ def stripe_webhook(request):
         if event['type'] == 'checkout.session.completed':
             session = event['data']['object']
             
-            # Безопасное чтение метадаты
-            metadata = session.get('metadata') or {}
-            course_id = metadata.get('course_id')
-            user_id = metadata.get('user_id')
+            # Правильное чтение из объекта Stripe (через getattr)
+            metadata = getattr(session, 'metadata', None)
+            
+            if metadata:
+                # В metadata тоже лежат атрибуты
+                course_id = getattr(metadata, 'course_id', None)
+                user_id = getattr(metadata, 'user_id', None)
+            else:
+                course_id, user_id = None, None
 
             if course_id and user_id:
                 User = get_user_model()
@@ -391,7 +393,7 @@ def stripe_webhook(request):
 
     except Exception as e:
         print("❌ КРИТИЧЕСКАЯ ОШИБКА В ВЕБХУКЕ:", flush=True)
-        traceback.print_exc() # Эта штука выведет точную строку, где упал код
+        traceback.print_exc()
         return HttpResponse(status=500)
 
 
