@@ -28,28 +28,33 @@ function CourseDetail({ isLoggedIn }) {
     const [inviteCode, setInviteCode] = useState('');
     const [isApplyingCode, setIsApplyingCode] = useState(false);
 
-    // 🔥 Обработка успешной оплаты или отмены от Stripe
+    //  Обработка успешной оплаты или отмены от Strip
     useEffect(() => {
-        const isSuccess = searchParams.get('success');
-        const isCanceled = searchParams.get('canceled');
+        // Берем параметры прямо из окна браузера
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSuccess = urlParams.get('success');
+        const isCanceled = urlParams.get('canceled');
 
         if (isSuccess === 'true') {
-            toast.success(t('courseDetail.toasts.paymentSuccess', '🎉 Оплата прошла успешно! Вы записаны на курс.'));
+            // Даем React полсекунды на отрисовку страницы, затем стреляем тостом
+            setTimeout(() => {
+                toast.success(t('courseDetail.toasts.paymentSuccess', '🎉 Оплата прошла успешно! Вы записаны на курс.'));
+            }, 500);
+            
             setIsEnrolled(true); // Сразу открываем доступ
             
-            // Очищаем URL от параметров
-            searchParams.delete('success');
-            setSearchParams(searchParams, { replace: true });
+            // Тихо очищаем URL, чтобы при обновлении страницы тост не вылезал снова
+            window.history.replaceState(null, '', window.location.pathname);
         } 
         
         if (isCanceled === 'true') {
-            toast.info(t('courseDetail.toasts.paymentCanceled', 'Оплата отменена. Вы можете попробовать снова позже.'));
+            setTimeout(() => {
+                toast.info(t('courseDetail.toasts.paymentCanceled', 'Оплата отменена. Вы можете попробовать снова позже.'));
+            }, 500);
             
-            // Очищаем URL
-            searchParams.delete('canceled');
-            setSearchParams(searchParams, { replace: true });
+            window.history.replaceState(null, '', window.location.pathname);
         }
-    }, [searchParams, setSearchParams, t]);
+    }, [t]);
 
     useEffect(() => {
         const fetchData = async () => {
