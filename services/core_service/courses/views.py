@@ -339,51 +339,60 @@ class BulkCreateCourseView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# --- STRIPE WEBHOOK ---
 @csrf_exempt
 def stripe_webhook(request):
-    import sys
+    import stripe
+    import traceback
+    from django.http import HttpResponse
+    from django.contrib.auth import get_user_model
+    
+    # Подгружаем твои модели (проверь, чтобы названия совпадали с твоими!)
+    from .models import Course, Enrollment 
+
     print("\n" + "="*40, flush=True)
     print("🔥 СТРАЙП СТУЧИТСЯ В ВЕБХУК!", flush=True)
 
-    webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', None)
-    
-    if not webhook_secret:
-        print("❌ ОШИБКА: STRIPE_WEBHOOK_SECRET пустой в settings.py!", flush=True)
-        return HttpResponse("No secret", status=500)
-
     try:
+        webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', None)
+        if not webhook_secret:
+            print("❌ ОШИБКА: STRIPE_WEBHOOK_SECRET пустой в settings.py!", flush=True)
+            return HttpResponse("No secret", status=500)
+
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-        
+
+        # Проверка подписи
         event = stripe.Webhook.construct_event(
             payload, sig_header, webhook_secret
         )
         print(f"✅ Успешно принято событие: {event['type']}", flush=True)
-        
-    except Exception as e:
-        print(f"❌ ОШИБКА ПОДПИСИ ИЛИ ПАРСИНГА: {str(e)}", flush=True)
-        return HttpResponse(status=400)
 
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        
-        course_id = session.get('metadata', {}).get('course_id')
-        user_id = session.get('metadata', {}).get('user_id')
-        
-        if course_id and user_id:
-            try:
+        # Выдача курса
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            
+            # Безопасное чтение метадаты
+            metadata = session.get('metadata') or {}
+            course_id = metadata.get('course_id')
+            user_id = metadata.get('user_id')
+
+            if course_id and user_id:
+                User = get_user_model()
                 course = Course.objects.get(id=course_id)
                 user = User.objects.get(id=user_id)
                 
                 Enrollment.objects.get_or_create(student=user, course=course)
                 print(f"🎉 УРА! Пользователь {user.email} записан на курс!", flush=True)
-            except Exception as e:
-                print(f"❌ ОШИБКА БАЗЫ ДАННЫХ: {str(e)}", flush=True)
-                return HttpResponse(status=500)
+            else:
+                print("⚠️ ВНИМАНИЕ: В metadata не оказалось course_id или user_id", flush=True)
 
-    print("="*40 + "\n", flush=True)
-    return HttpResponse(status=200)
+        print("="*40 + "\n", flush=True)
+        return HttpResponse(status=200)
+
+    except Exception as e:
+        print("❌ КРИТИЧЕСКАЯ ОШИБКА В ВЕБХУКЕ:", flush=True)
+        traceback.print_exc() # Эта штука выведет точную строку, где упал код
+        return HttpResponse(status=500)
 
 
 @api_view(['POST'])
