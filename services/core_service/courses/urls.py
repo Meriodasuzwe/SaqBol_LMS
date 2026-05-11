@@ -16,6 +16,7 @@ from .views import (
     MyCertificatesView,
     VerifyCertificateView,
     ReviewDeleteView,
+    promo_slots,
     upload_image,
     CreateStripeCheckoutSessionView,
     stripe_webhook,
@@ -82,6 +83,7 @@ urlpatterns = [
     # Маршрут для активации кода студентом на странице курса:
     path('<int:course_id>/activate-invite/', ActivateInviteView.as_view(), name='activate-invite'),
     path('b2b/invites/<str:invite_code>/revoke/<int:user_id>/', RevokeEmployeeAccessView.as_view(), name='revoke-access'),
+    path('courses/promo-slots/', promo_slots, name='promo-slots'),
 
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
     path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),

@@ -961,3 +961,10 @@ class RevokeEmployeeAccessView(APIView):
         
         return Response({"error": "Этот сотрудник не использует данный код."}, status=400)
 
+#  эндпоинт для проверки количества оставшихся промо-слотов
+@api_view(['GET'])
+def promo_slots(request):
+    total = 100
+    used = B2BLead.objects.count()  
+    remaining = max(0, total - used)
+    return Response({'remaining': remaining})

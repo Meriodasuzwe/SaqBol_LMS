@@ -189,6 +189,14 @@ function FilterBlock({ title, children, defaultOpen = true }) {
 
 function PromoBanner() {
     const { t } = useTranslation();
+    const [slots, setSlots] = useState(null);
+
+    useEffect(() => {
+        api.get('courses/promo-slots/')
+            .then(res => setSlots(res.data.remaining))
+            .catch(() => setSlots(63));
+    }, []);
+
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 p-6 mb-8 flex items-center justify-between gap-6">
             <div className="absolute -top-6 -right-6 w-40 h-40 rounded-full bg-white/5"></div>
@@ -204,8 +212,19 @@ function PromoBanner() {
                 <p className="text-blue-200 text-sm font-medium max-w-xs">
                     {t('courseList.promoDesc')}
                 </p>
+
+                {/* 👇 счётчик мест */}
+                {slots !== null && (
+                    <div className="flex items-center gap-1.5 mt-2 mb-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-300 flex-shrink-0" />
+                        <span className="text-blue-100 text-xs font-semibold">
+                            {t('courseList.promoSlots', { count: slots })}
+                        </span>
+                    </div>
+                )}
+
                 <Link
-                    to="/courses"
+                    to="/corporate"
                     className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20"
                 >
                     {t('courseList.promoBtn')} <ArrowRight size={14} />

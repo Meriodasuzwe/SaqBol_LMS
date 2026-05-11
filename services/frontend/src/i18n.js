@@ -403,7 +403,8 @@ const resources = {
         completedBadge: "Пройден",
         completedBtn: "Пройден",
         completedStatus: "Завершен",
-        showCourses: "Показать курсы"
+        showCourses: "Показать курсы",
+        promoSlots: "Осталось {{count}} из 100 бесплатных мест",
       },
       analyticsStudent: {
         title: "Аналитика",
@@ -864,7 +865,7 @@ const resources = {
         "paymentSuccess": "🎉 Оплата прошла успешно! Вы записаны на курс.",
         "paymentCanceled": "Оплата отменена. Вы можете попробовать снова позже."
     }
-}
+},
 "reviewSection": {
     "title": "Отзывы студентов",
     "leaveReview": "Оставьте свой отзыв",
@@ -1423,7 +1424,8 @@ const resources = {
         completedBadge: "Аяқталды",
         completedBtn: "Аяқталды",
         completedStatus: "Аяқталды",
-        showCourses: "Курстарды көрсету"
+        showCourses: "Курстарды көрсету",
+        promoSlots: "100 тегін орыннан {{count}} қалды"
       },
       analyticsStudent: {
         title: "Аналитика",
@@ -2451,7 +2453,8 @@ const resources = {
         completedBadge: "Completed",
         completedBtn: "Completed",
         completedStatus: "Finished",
-        showCourses: "Show courses"
+        showCourses: "Show courses",
+        promoSlots: "{{count}} of 100 free spots remaining"
       },
       analyticsStudent: {
         title: "Analytics",
