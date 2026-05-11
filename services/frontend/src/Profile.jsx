@@ -224,12 +224,12 @@ function Profile() {
                                 <Briefcase size={20} className="text-white" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-lg leading-tight">Кабинет руководителя</h3>
-                                <p className="text-indigo-100 text-xs mt-0.5">Корпоративная аналитика</p>
+                                <h3 className="font-bold text-lg leading-tight">{t('profile.headsoffice')}</h3>
+                                <p className="text-indigo-100 text-xs mt-0.5">{t('profile.headsanalytic')}</p>
                             </div>
                         </div>
                         <div className="relative z-10 mt-4 flex justify-between items-center text-sm font-medium text-white/90 group-hover:text-white">
-                            <span>Перейти в дашборд</span>
+                            <span>{t('profile.gotodashboard')}</span>
                             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                         </div>
                     </div>

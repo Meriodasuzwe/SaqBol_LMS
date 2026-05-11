@@ -561,7 +561,10 @@ const resources = {
         courseNameLabel: "Название",
         categoryLabel: "Категория",
         cancelBtn: "Отмена",
-        createBtn: "Создать"
+        createBtn: "Создать",
+        headsoffice: "Кабинет руководителя",
+        headsanalytic: "Корпоративная аналитика",
+        gotodashboard: "Перейти на страницу"
       },
       verify: {
         notFoundTitle: "Сертификат не найден",
@@ -944,6 +947,49 @@ const resources = {
       "error": "Ошибка при отправке заявки. Попробуйте позже."
     }
   },
+  "corpDashboard": {
+    "analyticsLoadError": "Не удалось загрузить аналитику",
+    "accessRevoked": "Доступ отозван, 1 место освобождено!",
+    "revokeError": "Ошибка при отзыве доступа",
+    "title": "Кабинет руководителя",
+    "noActiveRequests": "У вас пока нет активных заявок. Оставьте заявку на обучение, чтобы получить доступ к аналитике.",
+    "chooseTraining": "Выбрать обучение",
+    "subtitle": "Ваши заявки и аналитика",
+    "requestFrom": "Заявка от",
+    "statusRejected": "Отклонена",
+    "statusOpen": "Доступ открыт",
+    "statusPending": "Ожидает оформления",
+    "rejectedTitle": "Заявка отклонена",
+    "rejectedDesc": "К сожалению, администратор закрыл доступ к этому корпоративному курсу. Если вы считаете, что произошла ошибка, пожалуйста, свяжитесь с нашей службой поддержки.",
+    "accessCode": "Код доступа",
+    "usedPlaces": "Использовано мест",
+    "employeeStats": "Статистика сотрудников",
+    "searchPlaceholder": "Поиск по имени...",
+    "colEmployee": "Сотрудник",
+    "colProgress": "Прогресс",
+    "colStatus": "Статус",
+    "colActions": "Действия",
+    "actionAnalyze": "Анализ успеваемости",
+    "btnAnalyze": "Анализ",
+    "actionRevoke": "Отозвать доступ",
+    "noEmployees": "Пока ни один сотрудник не активировал код доступа",
+    "pendingTitle": "Заявка на рассмотрении",
+    "pendingDesc": "Наш менеджер скоро свяжется с вами для оформления доступа. Как только код будет сгенерирован, статистика ваших сотрудников появится здесь.",
+    "revokeModalTitle": "Отозвать доступ?",
+    "revokeModalDesc1": "Вы собираетесь забрать доступ к курсу у сотрудника",
+    "revokeModalDesc2": "Его прогресс сохранится в базе, но он больше не сможет войти в материалы курса.",
+    "revokeModalBonus": "+1 место вернется на ваш баланс",
+    "btnCancel": "Отмена",
+    "btnRevokeConfirm": "Да, отозвать",
+    "currentProgress": "Текущий прогресс",
+    "learningStatus": "Статус обучения",
+    "testResults": "Результаты тестов и симуляций",
+    "passedDate": "Сдано:",
+    "unknown": "Неизвестно",
+    "passed": "Сдал",
+    "failed": "Провал",
+    "noTests": "Сотрудник пока не прошел ни одного теста."
+},
       footer: {
         desc: "Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.",
         col1Title: "Платформа",
@@ -1167,16 +1213,16 @@ const resources = {
           f2Title: "ЖИ-бейімделу", f2Desc: "Жүйе әр қызметкер үшін күрделілік пен қарқынды автоматты түрде реттейді.",
           f3Title: "Интерактивті тренажерлар", f3Desc: "Фишинг-симуляциялар, Python IDE, браузерде нақты оқиғаларды талдау.",
           f4Title: "Прогресс аналитикасы", f4Desc: "Басшылар команда нәтижелерін нақты уақытта көреді. Бөлімдер бойынша есептер.",
-          f5Title: "Сертификаттар", f5Desc: "Әр модульден кейін расталған куәліктер. HR-жүйелерімен интеграция.",
+          f5Title: "Сертификаттар", f5Desc: "Әр курстан кейін расталған сертификаттар.",
           f6Title: "Масштабталуы", f6Desc: "Микросервистік архитектура. 10-нан 10 000-ға дейін пайдаланушымен жоғалтусыз жұмыс істейді."
         },
         howItWorks: {
           sub: "Бұл қалай жұмыс істейді",
           title: "Нәтижеге дейін төрт қадам",
-          s1Title: "Тіркелу", s1Desc: "Компания аккаунтын жасап, қызметкерлерді шақырыңыз.",
+          s1Title: "Тіркелу", s1Desc: "Компаниянын атынан тіркеліп, қызметкерлерді инвайт код арқылы шақырыңыз.",
           s2Title: "Курстарды таңдау", s2Desc: "Рөлдеріне қарай тректерді таңдаңыз — бухгалтер мен IT маманы үшін әртүрлі.",
           s3Title: "Оқыту", s3Desc: "Бейнелер, тренажерлар, тестілер, симуляциялар — барлығы браузерде.",
-          s4Title: "Аналитика", s4Desc: "Прогресті бақылаңыз және сертификаттар беріңіз."
+          s4Title: "Аналитика", s4Desc: "Прогресті бақылап қызметкерлерді сертификциядан өткізіңіз."
         },
         reviews: {
           sub: "Пікірлер",
@@ -1402,7 +1448,7 @@ const resources = {
         btnUpdate: "Жаңарту",
         btnGet: "Ұсыныстар алу",
         aiErrorDefault: "Қызмет уақытша қолжетімсіз",
-        aiHint: "«Ұсыныстар алу» түймесін басыңыз — ЖИ нәтижелеріңізді зерттейді",
+        aiHint: "«Ұсыныстар алу» батырмасын бассаңыз — ЖИ нәтижелеріңізді зерттейді",
         loadingError: "Жүктеу қатесі"
       },
       analyticsTeacher: {
@@ -1440,7 +1486,7 @@ const resources = {
         btnUpdate: "Жаңарту",
         btnGet: "Талдауды іске қосу",
         aiErrorDefault: "Қызмет уақытша қолжетімсіз",
-        aiHint: "«Талдауды іске қосу» түймесін басыңыз — ЖИ деректерді зерттеп, нақты ұсыныстар береді",
+        aiHint: "«Талдауды іске қосу» батырмасын бассаңыз — ЖИ деректерді зерттеп, нақты ұсыныстар береді",
         loadingError: "Жүктеу қатесі",
         currentCourse: "Ағымдағы курс"
       },
@@ -1523,7 +1569,10 @@ const resources = {
         courseNameLabel: "Атауы",
         categoryLabel: "Санат",
         cancelBtn: "Бас тарту",
-        createBtn: "Жасау"
+        createBtn: "Жасау",
+        headsoffice: "Басшы кабинеті",
+        headsanalytic: "Корпоративтік аналитика",
+        gotodashboard: "Бетке өту"
       },
       verify: {
         notFoundTitle: "Сертификат табылмады",
@@ -1862,7 +1911,7 @@ const resources = {
     },
   "corporate": {
     "badge": "B2B Шешімдері",
-    "heroTitlePart1": "Бизнесіңізді адам:",
+    "heroTitlePart1": "Бизнесіңізді адам",
     "heroTitleHighlight": "факторынан қорғаныз",
     "heroSubtitle": "Қызметкерлеріңізді шабуылдың негізгі құралынан компанияның сенімді қалқанына айналдырыңыз. Оқыту, фишингтік симуляциялар және бірыңғай дашбордтағы терең аналитика.",
     "demoButton": "Демо-нұсқаны алу",
@@ -1877,7 +1926,7 @@ const resources = {
       },
       "access": {
         "title": "Қолжетімділікті басқару",
-        "desc": "Қызметкерлер тізімін оңай импорттаңыз, оларды топтарға бөліңіз және бір рет басу арқылы оқуға шақыру жіберіңіз."
+        "desc": "Қызметкерлер тізімін оңай қадағалаңыз. Рұқсаттарды ашу немесе қайтару арқылы оқыту процесін икемді түрде басқарыңыз."
       }
     },
     "success": {
@@ -1900,7 +1949,7 @@ const resources = {
       "empSize3": "50 — 200 адам",
       "empSize4": "200-ден астам адам",
       "submitButton": "Өтінім қалдыру",
-      "privacy": "Түймені басу арқылы сіз құпиялылық саясатымен келісесіз."
+      "privacy": "Батырманы басу арқылы сіз құпиялылық саясатымен келісесіз."
     },
     "modal": {
       "title": "Жіберуді растау",
@@ -1911,6 +1960,49 @@ const resources = {
       "error": "Өтінім жіберу кезінде қате пайда болды. Кейінірек қайталап көріңіз."
     }
   },
+  "corpDashboard": {
+    "analyticsLoadError": "Аналитиканы жүктеу мүмкін болмады",
+    "accessRevoked": "Рұқсат қайтарылды, 1 орын босатылды!",
+    "revokeError": "Рұқсатты қайтару кезінде қате кетті",
+    "title": "Басшы кабинеті",
+    "noActiveRequests": "Сізде әзірге белсенді өтінімдер жоқ. Аналитикаға рұқсат алу үшін оқуға өтінім қалдырыңыз.",
+    "chooseTraining": "Оқуды таңдау",
+    "subtitle": "Сіздің өтінімдеріңіз бен аналитикаңыз",
+    "requestFrom": "Өтінім күні:",
+    "statusRejected": "Қабылданбады",
+    "statusOpen": "Рұқсат ашық",
+    "statusPending": "Рәсімделуде",
+    "rejectedTitle": "Өтінім қабылданбады",
+    "rejectedDesc": "Өкінішке орай, әкімші бұл корпоративтік курсқа рұқсатты жапты. Егер сіз бұл қате деп ойласаңыз, біздің қолдау қызметіне хабарласыңыз.",
+    "accessCode": "Рұқсат коды",
+    "usedPlaces": "Пайдаланылған орындар",
+    "employeeStats": "Қызметкерлер статистикасы",
+    "searchPlaceholder": "Есім бойынша іздеу...",
+    "colEmployee": "Қызметкер",
+    "colProgress": "Прогресс",
+    "colStatus": "Статус",
+    "colActions": "Әрекеттер",
+    "actionAnalyze": "Үлгерімді талдау",
+    "btnAnalyze": "Талдау",
+    "actionRevoke": "Рұқсатты қайтару",
+    "noEmployees": "Әзірге бірде-бір қызметкер рұқсат кодын іске қосқан жоқ",
+    "pendingTitle": "Өтінім қаралуда",
+    "pendingDesc": "Біздің менеджер рұқсатты рәсімдеу үшін жақын арада сізбен хабарласады. Код жасалған бойда қызметкерлеріңіздің статистикасы осында пайда болады.",
+    "revokeModalTitle": "Рұқсатты қайтару керек пе?",
+    "revokeModalDesc1": "Сіз қызметкерден курсқа рұқсатты алып тастамақсыз:",
+    "revokeModalDesc2": "Оның прогресі базада сақталады, бірақ ол бұдан былай курс материалдарына кіре алмайды.",
+    "revokeModalBonus": "+1 орынға босатылады",
+    "btnCancel": "Бас тарту",
+    "btnRevokeConfirm": "Иә, қайтару",
+    "currentProgress": "Ағымдағы прогресс",
+    "learningStatus": "Оқу статусы",
+    "testResults": "Тесттер мен симуляциялар нәтижесі",
+    "passedDate": "Тапсырылды:",
+    "unknown": "Белгісіз",
+    "passed": "Тапсырды",
+    "failed": "Құлады",
+    "noTests": "Қызметкер әзірге бірде-бір тест тапсырған жоқ."
+},
       footer: {
         desc: "Корпоративтік оқытуға және қызметкерлердің цифрлық сауаттылығын арттыруға арналған зияткерлік платформа.",
         col1Title: "Платформа",
@@ -2491,7 +2583,10 @@ const resources = {
         courseNameLabel: "Title",
         categoryLabel: "Category",
         cancelBtn: "Cancel",
-        createBtn: "Create"
+        createBtn: "Create",
+        headsoffice: "Head Office",
+        headsanalytic: "Corporate Analytics",
+        gotodashboard: "Go to Page"
       },
       verify: {
         notFoundTitle: "Certificate Not Found",
@@ -2883,6 +2978,49 @@ const resources = {
       "error": "Error submitting the application. Please try again later."
     }
   },
+  "corpDashboard": {
+    "analyticsLoadError": "Failed to load analytics",
+    "accessRevoked": "Access revoked, 1 seat is now free!",
+    "revokeError": "Error revoking access",
+    "title": "Manager Dashboard",
+    "noActiveRequests": "You have no active requests yet. Apply for training to get access to analytics.",
+    "chooseTraining": "Choose Training",
+    "subtitle": "Your requests and analytics",
+    "requestFrom": "Request from",
+    "statusRejected": "Rejected",
+    "statusOpen": "Access Granted",
+    "statusPending": "Processing",
+    "rejectedTitle": "Request Rejected",
+    "rejectedDesc": "Unfortunately, the administrator has closed access to this corporate course. If you believe this is an error, please contact our support team.",
+    "accessCode": "Access Code",
+    "usedPlaces": "Seats Used",
+    "employeeStats": "Employee Statistics",
+    "searchPlaceholder": "Search by name...",
+    "colEmployee": "Employee",
+    "colProgress": "Progress",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "actionAnalyze": "Performance Analysis",
+    "btnAnalyze": "Analyze",
+    "actionRevoke": "Revoke Access",
+    "noEmployees": "No employees have activated the access code yet",
+    "pendingTitle": "Request Under Review",
+    "pendingDesc": "Our manager will contact you soon to set up access. Once the code is generated, your employee statistics will appear here.",
+    "revokeModalTitle": "Revoke Access?",
+    "revokeModalDesc1": "You are about to revoke course access for",
+    "revokeModalDesc2": "Their progress will be saved in the database, but they will no longer be able to access the course materials.",
+    "revokeModalBonus": "+1 seat will be returned to your balance",
+    "btnCancel": "Cancel",
+    "btnRevokeConfirm": "Yes, Revoke",
+    "currentProgress": "Current Progress",
+    "learningStatus": "Learning Status",
+    "testResults": "Test and Simulation Results",
+    "passedDate": "Passed on:",
+    "unknown": "Unknown",
+    "passed": "Passed",
+    "failed": "Failed",
+    "noTests": "The employee has not completed any tests yet."
+},
       footer: {
         desc: "Intelligent platform for corporate training and improving staff digital literacy.",
         col1Title: "Platform",

@@ -639,14 +639,18 @@ class B2BLeadCreateView(generics.CreateAPIView):
 class B2BLeadListView(generics.ListAPIView):
     queryset = B2BLead.objects.all().order_by('-created_at')
     serializer_class = B2BLeadSerializer
-    # permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser]
 
 class B2BLeadUpdateView(generics.UpdateAPIView): 
     queryset = B2BLead.objects.all()
     serializer_class = B2BLeadSerializer
-    # permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser]
 
-
+class B2BLeadDeleteView(generics.DestroyAPIView):
+    queryset = B2BLead.objects.all()
+    
+    permission_classes = [IsAdminUser]
+    
 def generate_smart_code(company_name, course_title):
     clean_company = ''.join(e for e in company_name if e.isalnum()).upper()[:8]
     clean_course = ''.join(e for e in course_title if e.isalnum()).upper()[:4]
@@ -780,7 +784,7 @@ class GenerateCorporateInviteView(APIView):
             created_new_user = True
 
         # 3. Отправляем письмо со всеми явками и паролями!
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://saqbol.asia')
         
         subject = f'Ваш корпоративный доступ к курсу "{lead.target_course.title}"'
         

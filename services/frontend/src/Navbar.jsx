@@ -195,8 +195,8 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                 onMouseEnter={e => e.currentTarget.style.background = themeColors.hover}
                                 onMouseLeave={e => { if(!langOpen) e.currentTarget.style.background = 'transparent'; }}
                                 title="Изменить язык">
-                                {/* ИСПРАВЛЕНИЕ 1: Страховка для языка */}
-                                {(i18n.language || 'ru').slice(0, 2)}
+                                
+                                {(i18n.language || 'ru').startsWith('kk') ? 'KZ' : (i18n.language || 'ru').slice(0, 2)}
                             </button>
 
                             {langOpen && (
@@ -334,7 +334,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         
                         {/* Выбор языка для мобильной версии */}
                         <div style={{ display: 'flex', gap: 8, padding: '12px 14px', marginBottom: 8, borderBottom: `1px solid ${themeColors.divider}` }}>
-                             {[ { c: 'ru', l: 'RU' }, { c: 'kk', l: 'KK' }, { c: 'en', l: 'EN' } ].map(lng => (
+                             {[ { c: 'ru', l: 'RU' }, { c: 'kk', l: 'KZ' }, { c: 'en', l: 'EN' } ].map(lng => (
                                 <button key={lng.c} onClick={() => { changeLanguage(lng.c); setMobileOpen(false); }}
                                     /* ИСПРАВЛЕНИЕ 3: Опциональная цепочка ?. для мобильных кнопок */
                                     style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: i18n.language?.startsWith(lng.c) ? (isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff') : themeColors.iconBg, color: i18n.language?.startsWith(lng.c) ? '#3b82f6' : themeColors.textMute }}>

@@ -29,6 +29,7 @@ from .views import (
     GenerateCorporateInviteView,
     B2BDashboardView,
     RevokeEmployeeAccessView,
+    B2BLeadDeleteView,
     ActivateInviteView
 )
 
@@ -71,11 +72,14 @@ urlpatterns = [
     path('b2b/leads/', B2BLeadListView.as_view(), name='b2b-lead-list'),
     path('b2b/leads/<int:pk>/update/', B2BLeadUpdateView.as_view(), name='b2b-lead-update'),
     
+    #
+    path('b2b/leads/<int:pk>/', B2BLeadDeleteView.as_view(), name='b2b-lead-delete'),
+    
     path('b2b/dashboard/', B2BDashboardView.as_view(), name='b2b-dashboard'),
     
-    #  Маршрут для генерации кода админом в панели:
+    # Маршрут для генерации кода админом в панели:
     path('b2b/leads/<int:lead_id>/generate-invite/', GenerateCorporateInviteView.as_view(), name='generate-invite'),
-    #  Маршрут для активации кода студентом на странице курса:
+    # Маршрут для активации кода студентом на странице курса:
     path('<int:course_id>/activate-invite/', ActivateInviteView.as_view(), name='activate-invite'),
     path('b2b/invites/<str:invite_code>/revoke/<int:user_id>/', RevokeEmployeeAccessView.as_view(), name='revoke-access'),
 
