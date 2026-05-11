@@ -851,6 +851,10 @@ const resources = {
         "quiz": "Тест",
         "code": "Код",
         "theory": "Теория"
+    },
+    "toasts": {
+        "paymentSuccess": "Платеж успешно обработан! Доступ к курсу открыт.",
+        "paymentCanceled": "Платеж отменен. Попробуйте еще раз позже."
     }
 },
 "reviewSection": {
@@ -1864,6 +1868,10 @@ const resources = {
         "quiz": "Тест",
         "code": "Код",
         "theory": "Теория"
+    },
+    "toasts": {
+        "paymentSuccess": "Төлем сәтті өтті! Курсқа қол жеткізу ашылды.",
+        "paymentCanceled": "Төлемді өңдеу кезінде қате пайда болды. Қайтадан көріңіз."
     }
 },
 "reviewSection": {
@@ -1888,9 +1896,11 @@ const resources = {
         "addSuccess": "Пікір сәтті қосылды!",
         "addError": "Пікірді жіберу кезінде қате пайда болды",
         "delSuccess": "Пікір сәтті жойылды!",
-        "delError": "Пікірді жою мүмкін болмады. Құқығыңыз жоқ болуы мүмкін."
+        "delError": "Пікірді жою мүмкін болмады. Құқығыңыз жоқ болуы мүмкін.",
+
     }
 },
+
 "common": {
     "back": "Артқа",
     "cancel": "Бас тарту",
@@ -2882,6 +2892,10 @@ const resources = {
         "quiz": "Quiz",
         "code": "Code",
         "theory": "Theory"
+    },
+    "toasts": {
+        "paymentSuccess": "Payment successful! You now have access to the course.",
+        "paymentCanceled": "Payment processing error occurred. Please try again later."
     }
 },
 "reviewSection": {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import api from './api';
@@ -14,6 +14,7 @@ function CourseDetail({ isLoggedIn }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { t } = useTranslation();
 
     const [course, setCourse] = useState(null);
@@ -23,16 +24,32 @@ function CourseDetail({ isLoggedIn }) {
     const [enrollLoading, setEnrollLoading] = useState(false); 
     const [buttonSuccess, setButtonSuccess] = useState(false);
 
-    // 🔥 Новые состояния для инвайт-кода
+    // Состояния для инвайт-кода
     const [inviteCode, setInviteCode] = useState('');
     const [isApplyingCode, setIsApplyingCode] = useState(false);
 
+    // 🔥 Обработка успешной оплаты или отмены от Stripe
     useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        if (queryParams.get('success') === 'true') {
-            window.history.replaceState(null, '', window.location.pathname);
+        const isSuccess = searchParams.get('success');
+        const isCanceled = searchParams.get('canceled');
+
+        if (isSuccess === 'true') {
+            toast.success(t('courseDetail.toasts.paymentSuccess', '🎉 Оплата прошла успешно! Вы записаны на курс.'));
+            setIsEnrolled(true); // Сразу открываем доступ
+            
+            // Очищаем URL от параметров
+            searchParams.delete('success');
+            setSearchParams(searchParams, { replace: true });
+        } 
+        
+        if (isCanceled === 'true') {
+            toast.info(t('courseDetail.toasts.paymentCanceled', 'Оплата отменена. Вы можете попробовать снова позже.'));
+            
+            // Очищаем URL
+            searchParams.delete('canceled');
+            setSearchParams(searchParams, { replace: true });
         }
-    }, [location]);
+    }, [searchParams, setSearchParams, t]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -64,14 +81,14 @@ function CourseDetail({ isLoggedIn }) {
             } catch (err) {
                 console.error("Ошибка загрузки курса", err);
                 if (err.response?.status === 401) {
-                    toast.error("Пожалуйста, войдите в систему");
+                    toast.error(t('courseDetail.toasts.loginRequired', 'Пожалуйста, войдите в систему'));
                 }
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
-    }, [id, isLoggedIn]);
+    }, [id, isLoggedIn, t]);
 
     const getStepStyle = (type) => {
         const iconProps = { size: 18, className: "text-base-content/50 group-hover:text-blue-500 transition-colors" };
@@ -116,32 +133,32 @@ function CourseDetail({ isLoggedIn }) {
         }
     };
 
-    // 🔥 Функция активации инвайт-кода
+    // Функция активации инвайт-кода
     const handleApplyInvite = async () => {
         const token = localStorage.getItem('access');
         if (!isLoggedIn && !token) {
-            toast.info("Пожалуйста, войдите в систему, чтобы использовать код");
+            toast.info(t('courseDetail.toasts.loginToUseCode', 'Пожалуйста, войдите в систему, чтобы использовать код'));
             navigate('/login');
             return;
         }
 
-        if (!inviteCode.trim()) return toast.warning("Введите корпоративный код");
+        if (!inviteCode.trim()) {
+            return toast.warning(t('courseDetail.toasts.enterCorporateCode', 'Введите корпоративный код'));
+        }
         
         setIsApplyingCode(true);
         try {
             const res = await api.post(`/courses/${id}/activate-invite/`, { code: inviteCode });
-            toast.success(res.data.message || "Код активирован! Доступ открыт 🎉");
+            toast.success(res.data.message || t('courseDetail.toasts.codeActivated', 'Код активирован! Доступ открыт 🎉'));
             setInviteCode('');
             
-            // Сразу обновляем интерфейс, как будто пользователь купил курс
             setIsEnrolled(true);
             
-            // Перезапрашиваем уроки, чтобы с них снялись "замочки" блокировки
             const lessonsRes = await api.get(`courses/${id}/lessons/`);
             setLessons(lessonsRes.data.sort((a, b) => a.id - b.id));
             
         } catch (error) {
-            toast.error(error.response?.data?.error || "Ошибка активации кода. Проверьте правильность.");
+            toast.error(error.response?.data?.error || t('courseDetail.toasts.codeActivationError', 'Ошибка активации кода. Проверьте правильность.'));
         } finally {
             setIsApplyingCode(false);
         }
@@ -160,10 +177,11 @@ function CourseDetail({ isLoggedIn }) {
             <div className="w-6 h-6 border-2 border-base-300 border-t-blue-600 rounded-full animate-spin"></div>
         </div>
     );
+    
     if (!course) return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center bg-base-200 text-base-content/50">
-            <h2 className="text-xl font-bold mb-2">Курс не найден</h2>
-            <p>Возможно, у вас нет доступа, или нужно авторизоваться.</p>
+            <h2 className="text-xl font-bold mb-2">{t('courseDetail.notFoundTitle', 'Курс не найден')}</h2>
+            <p>{t('courseDetail.notFoundDesc', 'Возможно, у вас нет доступа, или нужно авторизоваться.')}</p>
         </div>
     );
 
@@ -345,7 +363,7 @@ function CourseDetail({ isLoggedIn }) {
                                         )}
                                     </button>
 
-                                    {/* 🔥 Блок активации корпоративного инвайта 🔥 */}
+                                    {/* Блок активации корпоративного инвайта */}
                                     <div className="mt-6 p-5 bg-base-200/50 rounded-2xl border border-base-300">
                                         <p className="text-[11px] font-black text-base-content/50 uppercase tracking-widest mb-3">
                                             {t('courseDetail.corporateAccess') || 'Доступ от работодателя?'}
@@ -374,7 +392,7 @@ function CourseDetail({ isLoggedIn }) {
                                         <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-base-100 shadow-md">
                                             <span className="text-xl font-black">{course.progress || 0}%</span>
                                         </div>
-                                        <h3 className="font-bold text-base-content">Ваш прогресс</h3>
+                                        <h3 className="font-bold text-base-content">{t('courseDetail.yourProgress', 'Ваш прогресс')}</h3>
                                     </div>
                                     <div className="w-full bg-base-200 rounded-full h-2.5 mb-8 overflow-hidden">
                                         <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${course.progress || 0}%` }}></div>
@@ -414,7 +432,7 @@ function CourseDetail({ isLoggedIn }) {
                                 </div>
                             </div>
 
-                            {/* 🔥 КОРПОРАТИВНЫЙ БЛОК (B2B) 🔥 */}
+                            {/* КОРПОРАТИВНЫЙ БЛОК (B2B) */}
                             <div className="mt-6 pt-6 border-t border-base-300">
                                 <div className="bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl p-5 border border-indigo-100 dark:border-indigo-900/50 flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
@@ -431,7 +449,6 @@ function CourseDetail({ isLoggedIn }) {
                                         {t('courseDetail.b2bDesc')}
                                     </p>
                                     <button 
-                                        // 🔥 Здесь добавлена передача данных курса! 🔥
                                         onClick={() => navigate('/corporate', { state: { courseId: course.id, courseTitle: course.title } })}
                                         className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors flex items-center gap-1 mt-1 w-max"
                                     >
