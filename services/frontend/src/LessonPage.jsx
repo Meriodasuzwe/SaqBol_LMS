@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import api from './api';
 import { 
     ChevronLeft, 
@@ -15,7 +16,7 @@ import {
     Award,
     BrainCircuit, 
     Search,
-    Lock // Добавили иконку замка
+    Lock
 } from 'lucide-react';
 
 import FakeMessenger from './FakeMessenger'; 
@@ -23,24 +24,19 @@ import FakeEmail from './FakeEmail';
 import PythonEditor from './PythonEditor'; 
 import SpotThePhishing from './SpotThePhishing'; 
 import FreeResponseAI from './FreeResponseAI';
-import { t } from 'i18next';
 
 function LessonPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
-    
     const location = useLocation();
+    const { t } = useTranslation(); 
     
     const [lesson, setLesson] = useState(null);
     const [courseLessons, setCourseLessons] = useState([]);
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeStepIndex, setActiveStepIndex] = useState(0);
-    
     const [showCompletionModal, setShowCompletionModal] = useState(false);
-    const [certLanguage, setCertLanguage] = useState('ru');
-    const [isGeneratingCert, setIsGeneratingCert] = useState(false);
-    const [certGenerated, setCertGenerated] = useState(false);
 
     const getYoutubeEmbedUrl = (url) => {
         if (!url) return null;
@@ -106,7 +102,6 @@ function LessonPage() {
                 return { ...prevLesson, steps: updatedSteps };
             });
 
-            // ИСПРАВЛЕНИЕ №1: Запрашиваем обновленные данные курса, чтобы прогресс-бар сдвинулся!
             try {
                 const updatedCourseRes = await api.get(`courses/${lesson.course}/`);
                 setCourse(updatedCourseRes.data);
@@ -114,7 +109,6 @@ function LessonPage() {
                 console.error("Не удалось обновить прогресс курса", courseErr);
             }
 
-            // Если бэкенд сказал, что ВЕСЬ КУРС только что пройден впервые
             if (res.data?.just_completed) {
                 setShowCompletionModal(true);
                 return; 
@@ -124,21 +118,20 @@ function LessonPage() {
             const nextLessonObj = currentIndexInCourse < courseLessons.length - 1 ? courseLessons[currentIndexInCourse + 1] : null;
 
             if (activeStepIndex < lesson.steps.length - 1) {
-                // 1. Если в уроке ЕЩЕ ЕСТЬ шаги — просто плавно переключаем вкладку
+                // Если в текущем уроке еще есть шаги
                 setActiveStepIndex(activeStepIndex + 1);
                 const nextStepId = lesson.steps[activeStepIndex + 1].id;
                 window.history.replaceState(null, '', `/lesson/${lessonId}?step=${nextStepId}`);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                // 2. ЕСЛИ ЭТО БЫЛ ПОСЛЕДНИЙ ШАГ В УРОКЕ
+                // Если шаги закончились (конец урока)
                 if (nextLessonObj) {
-                    toast.success(t('builder.toasts.simEnd'));
+                    toast.success(t('builder.toasts.simEnd', 'Раздел завершен! Переходим к следующему.'));
                     setTimeout(() => {
                         navigate(`/lesson/${nextLessonObj.id}`);
                     }, 1200);
                 } else {
-                    // 3. ЭТО ПОСЛЕДНИЙ УРОК В КУРСЕ
-                    toast.success(t('builder.toasts.simCongrat'));
+                    toast.success(t('builder.toasts.simCongrat', 'Поздравляем! Вы завершили курс.'));
                     setTimeout(() => {
                         navigate(`/course/${lesson.course}`);
                     }, 1500);
@@ -170,20 +163,22 @@ function LessonPage() {
         }
     };
 
-    // Функция проверки: заблокирован ли модуль?
+    // 🔥 ИДЕАЛЬНАЯ ЛОГИКА БЛОКИРОВКИ 🔥
     const isModuleLocked = (idx) => {
-        // Мы блокируем ТОЛЬКО последний модуль
+        // Блокируем только последний урок (финал)
         if (idx !== courseLessons.length - 1) return false;
+        if (courseLessons.length <= 1) return false; // Если урок всего один, не блокируем
         
-        // Если бэкенд отдает поле is_completed для уроков, используем его:
+        // ЗАЩИТА: Если пользователя УЖЕ перекинуло на этот урок (он нажал завершить предыдущий) - СНИМАЕМ ЗАМОК!
+        if (lesson?.id === courseLessons[idx].id) return false;
+
         if (courseLessons[0]?.hasOwnProperty('is_completed')) {
             return courseLessons.slice(0, -1).some(l => !l.is_completed);
         }
         
-        // Если бэкенд не отдает is_completed, высчитываем по общему прогрессу курса.
-        // Чтобы открыть последний урок, прогресс должен быть пропорционален пройденным модулям.
+        // Даем поблажку по прогрессу (снижаем требование на 5%), чтобы не было бага из-за округлений бэкенда
         const requiredProgress = ((courseLessons.length - 1) / courseLessons.length) * 100;
-        return course?.progress < (requiredProgress - 2); // -2% для погрешности округления бэкенда
+        return (course?.progress || 0) < (requiredProgress - 5); 
     };
 
     if (loading) return (
@@ -192,11 +187,13 @@ function LessonPage() {
         </div>
     );
 
-    if (!lesson) return <div className="p-10 text-center font-bold text-base-content/50">Урок не найден</div>;
+    if (!lesson) return <div className="p-10 text-center font-bold text-base-content/50">{t('lesson.notFound', 'Урок не найден')}</div>;
 
     const currentStep = lesson.steps && lesson.steps.length > 0 ? lesson.steps[activeStepIndex] : null;
-    
     const isSimulation = currentStep && ['simulation_chat', 'simulation_email', 'interactive_spot', 'interactive_free'].includes(currentStep.step_type);
+
+    // Определяем, является ли этот урок последним в курсе
+    const isLastLessonInCourse = courseLessons.findIndex(l => l.id === lesson.id) === courseLessons.length - 1;
 
     return (
         <div className="min-h-screen bg-base-200 flex justify-center pb-20 font-sans text-base-content transition-colors duration-200">
@@ -209,7 +206,7 @@ function LessonPage() {
                         className="text-[11px] font-black uppercase tracking-widest text-base-content/50 hover:text-base-content mb-8 flex items-center gap-2 transition-all group"
                     >
                         <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                        Вернуться к курсу
+                        {t('lesson.backToCourse', 'Вернуться к курсу')}
                     </button>
                     
                     <div className="bg-base-100 rounded-2xl border border-base-300 shadow-sm overflow-hidden sticky top-8 transition-colors duration-200">
@@ -220,13 +217,14 @@ function LessonPage() {
                             {course && (
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-[10px] font-bold text-base-content/50 uppercase tracking-widest">
-                                        <span>Прогресс</span>
-                                        <span className="text-blue-600 dark:text-blue-400">{course.progress}%</span>
+                                        <span>{t('lesson.progress', 'Прогресс')}</span>
+                                        <span className="text-blue-600 dark:text-blue-400">{course?.progress || 0}%</span>
                                     </div>
                                     <div className="h-1.5 w-full bg-base-300 rounded-full overflow-hidden">
+                                        {/* 🔥 ПОЧИНИЛИ ПРОГРЕСС-БАР ТУТ (добавили || 0) */}
                                         <div
                                             className="h-full bg-blue-600 transition-all duration-500"
-                                            style={{ width: `${course.progress}%` }}
+                                            style={{ width: `${course?.progress || 0}%` }}
                                         ></div>
                                     </div>
                                 </div>
@@ -235,15 +233,16 @@ function LessonPage() {
 
                         <nav className="p-2 overflow-y-auto max-h-[50vh]">
                             {courseLessons.map((l, idx) => {
-                                const isLocked = isModuleLocked(idx);
+                                // Если это текущий урок — он точно не заблокирован
+                                const isActiveLesson = lesson.id === l.id;
+                                const isLocked = !isActiveLesson && isModuleLocked(idx);
 
-                                // Если модуль заблокирован, мы рендерим <div> вместо <Link>
                                 if (isLocked) {
                                     return (
                                         <div 
                                             key={l.id}
-                                            onClick={() => toast.info('Пройдите предыдущие модули, чтобы открыть финальное тестирование')}
-                                            className="flex items-center gap-4 p-3 rounded-xl transition-all cursor-not-allowed opacity-60 bg-base-100"
+                                            onClick={() => toast.info(t('lesson.lockedModuleToast', 'Пройдите предыдущие модули, чтобы открыть финальное тестирование'))}
+                                            className="flex items-center gap-4 p-3 rounded-xl transition-all cursor-not-allowed opacity-60 bg-base-100 hover:bg-base-200/50"
                                         >
                                             <span className="text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border border-base-300 bg-base-200 text-base-content/40">
                                                 <Lock size={10} />
@@ -253,19 +252,18 @@ function LessonPage() {
                                     );
                                 }
 
-                                // Обычный рендер доступного модуля
                                 return (
                                     <Link 
                                         key={l.id}
                                         to={`/lesson/${l.id}`}
                                         className={`flex items-center gap-4 p-3 rounded-xl transition-all
-                                            ${l.id === lesson.id
+                                            ${isActiveLesson
                                                 ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20'
                                                 : 'hover:bg-base-200 text-base-content/80 hover:text-base-content'
                                             }`}
                                     >
                                         <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border
-                                            ${l.id === lesson.id ? 'border-white/30' : 'border-base-300 text-base-content/50'}`}>
+                                            ${isActiveLesson ? 'border-white/30' : 'border-base-300 text-base-content/50'}`}>
                                             {idx + 1}
                                         </span>
                                         <span className="text-xs font-bold truncate">{l.title}</span>
@@ -281,7 +279,7 @@ function LessonPage() {
                     <header className="mb-8">
                         <div className="flex items-center gap-3 mb-2">
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/50">
-                                Урок {courseLessons.findIndex(l => l.id === lesson.id) + 1}
+                                {t('lesson.lessonLabel', 'Урок')} {courseLessons.findIndex(l => l.id === lesson.id) + 1}
                             </span>
                             <div className="h-px flex-1 bg-base-300"></div>
                         </div>
@@ -366,15 +364,15 @@ function LessonPage() {
                                                     <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6">
                                                         <HelpCircle className="text-blue-600 dark:text-blue-400" size={32} />
                                                     </div>
-                                                    <h3 className="text-xl font-black mb-2 text-base-content">Проверка знаний</h3>
+                                                    <h3 className="text-xl font-black mb-2 text-base-content">{t('lesson.quizTitle', 'Проверка знаний')}</h3>
                                                     <p className="text-base-content/60 text-sm mb-8 max-w-xs mx-auto">
-                                                        Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.
+                                                        {t('lesson.quizDesc', 'Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.')}
                                                     </p>
                                                     <Link 
                                                         to={`/quiz/lesson/${lesson.id}?quiz_id=${currentStep.scenario_data?.quiz_id || ''}`} 
                                                         className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
                                                     >
-                                                        Начать тест <ArrowRight size={18} />
+                                                        {t('lesson.startQuiz', 'Начать тест')} <ArrowRight size={18} />
                                                     </Link>
                                                 </div>
                                             ) : (
@@ -388,7 +386,7 @@ function LessonPage() {
                                 </div>
                             ) : (
                                 <div className="flex-1 flex items-center justify-center text-base-content/30 italic">
-                                    Контент шага пуст
+                                    {t('lesson.emptyContent', 'Контент шага пуст')}
                                 </div>
                             )}
                         </div>
@@ -403,7 +401,7 @@ function LessonPage() {
                                     }}
                                         className="flex items-center gap-2 text-xs font-bold text-base-content/50 hover:text-base-content transition-colors uppercase tracking-widest"
                                     >
-                                        <ArrowLeft size={16} /> Назад
+                                        <ArrowLeft size={16} /> {t('lesson.back', 'Назад')}
                                     </button>
                                 ) : <div />}
 
@@ -411,10 +409,13 @@ function LessonPage() {
                                     onClick={() => handleStepComplete(10)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20 ml-auto"
                                 >
+                                    {/* 🔥 ДИНАМИЧЕСКИЙ ТЕКСТ КНОПКИ В ЗАВИСИМОСТИ ОТ СИТУАЦИИ 🔥 */}
                                     {activeStepIndex < lesson.steps.length - 1 ? (
-                                        <>Следующий шаг <ArrowRight size={18} /></>
+                                        <>{t('lesson.nextStep', 'Следующий шаг')} <ArrowRight size={18} /></>
+                                    ) : !isLastLessonInCourse ? (
+                                        <>{t('lesson.finishSection', 'Завершить раздел')} <Check size={18} /></>
                                     ) : (
-                                        <>Завершить урок <Check size={18} /></>
+                                        <>{t('lesson.finishCourse', 'Завершить курс')} <Award size={18} /></>
                                     )}
                                 </button>
                             </div>
@@ -428,15 +429,15 @@ function LessonPage() {
                         <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/30">
                             <Award size={48} className="text-white" />
                         </div>
-                        <h2 className="text-2xl font-black mb-2 text-base-content">Курс пройден!</h2>
+                        <h2 className="text-2xl font-black mb-2 text-base-content">{t('lesson.courseCompletedTitle', 'Курс пройден!')}</h2>
                         <p className="text-sm text-base-content/60 mb-8">
-                            Вы проделали отличную работу. Ваш сертификат готов и ждет вас в профиле.
+                            {t('lesson.courseCompletedDesc', 'Вы проделали отличную работу. Ваш сертификат готов и ждет вас в профиле.')}
                         </p>
                         <Link 
                             to="/profile" 
                             className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
                         >
-                            Перейти в профиль <ArrowRight size={18} />
+                            {t('lesson.goToProfile', 'Перейти в профиль')} <ArrowRight size={18} />
                         </Link>
                         <button 
                             onClick={() => {
@@ -445,7 +446,7 @@ function LessonPage() {
                             }} 
                             className="mt-4 text-sm text-base-content/50 hover:text-base-content font-medium w-full py-2"
                         >
-                            Закрыть
+                            {t('lesson.close', 'Закрыть')}
                         </button>
                     </div>
                 </div>
