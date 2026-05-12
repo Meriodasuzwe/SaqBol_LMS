@@ -1003,11 +1003,16 @@ const resources = {
     "failed": "Провал",
     "noTests": "Сотрудник пока не прошел ни одного теста."
 },
-      footer: {
-        desc: "Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.",
-        col1Title: "Платформа",
-        navCatalog: "Каталог курсов",
-        navTracks: "Направления",
+weekdays: {
+    "mon": "Пн",
+    "wed": "Ср",
+    "fri": "Пт",
+},
+  footer: {
+    desc: "Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.",
+    col1Title: "Платформа",
+    navCatalog: "Каталог курсов",
+    navTracks: "Направления",
         navFeatures: "Возможности",
         navStart: "Начать бесплатно",
         col2Title: "Разработчик",
@@ -2030,6 +2035,11 @@ const resources = {
     "passed": "Тапсырды",
     "failed": "Құлады",
     "noTests": "Қызметкер әзірге бірде-бір тест тапсырған жоқ."
+},
+weekdays: {
+    "mon": "Дс",
+    "wed": "Ср",
+    "fri": "Жм",
 },
       footer: {
         desc: "Корпоративтік оқытуға және қызметкерлердің цифрлық сауаттылығын арттыруға арналған зияткерлік платформа.",
@@ -3061,6 +3071,11 @@ const resources = {
     "passed": "Passed",
     "failed": "Failed",
     "noTests": "The employee has not completed any tests yet."
+},
+weekdays: {
+    "mon": "Mon",
+    "wed": "Wed",
+    "fri": "Fri",
 },
       footer: {
         desc: "Intelligent platform for corporate training and improving staff digital literacy.",

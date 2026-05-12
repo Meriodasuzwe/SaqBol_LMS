@@ -2,14 +2,18 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from './api';
 import { toast } from 'react-toastify';
-import { Award, Download, Briefcase, ArrowRight } from 'lucide-react'; // 🔥 Добавили Briefcase и ArrowRight
+import { Award, Download, Briefcase, ArrowRight, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 function Profile() {
     const { t, i18n } = useTranslation();
     const [user, setUser] = useState(null);
     const [results, setResults] = useState([]);
-    const [myCourses, setMyCourses] = useState([]);
+    
+    // 🔥 ТЕПЕРЬ ДВА ОТДЕЛЬНЫХ СПИСКА 🔥
+    const [learningCourses, setLearningCourses] = useState([]);
+    const [teachingCourses, setTeachingCourses] = useState([]);
+    
     const [categories, setCategories] = useState([]);
     const [certificates, setCertificates] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -23,7 +27,6 @@ function Profile() {
 
     const navigate = useNavigate();
 
-    // Функция для определения локали для дат
     const getDateLocale = () => {
         if (i18n.language === 'en') return 'en-US';
         if (i18n.language === 'kk') return 'kk-KZ';
@@ -34,7 +37,7 @@ function Profile() {
         const fetchData = async () => {
             try {
                 const userRes = await api.get('users/me/');
-                const userData = userRes.data; // Сохраняем данные юзера в переменную
+                const userData = userRes.data;
                 setUser(userData);
 
                 const resultsRes = await api.get('quizzes/my-results/');
@@ -44,15 +47,15 @@ function Profile() {
                 setCategories(catRes.data);
                 if (catRes.data.length > 0) setSelectedCategory(catRes.data[0].id);
 
-                
-                // Если юзер учитель или админ -> просим его СОЗДАННЫЕ курсы
-                // Если обычный студент -> просим его КУПЛЕННЫЕ курсы
-                const coursesUrl = (userData.role === 'teacher' || userData.role === 'admin') 
-                    ? 'courses/my_courses/?type=teaching' 
-                    : 'courses/my_courses/';
-                
-                const coursesRes = await api.get(coursesUrl);
-                setMyCourses(coursesRes.data);
+                // 1. Получаем курсы, которые пользователь ИЗУЧАЕТ
+                const learningRes = await api.get('courses/my_courses/');
+                setLearningCourses(learningRes.data);
+
+                // 2. Если это учитель, получаем курсы, которые он СОЗДАЛ
+                if (userData.role === 'teacher' || userData.role === 'admin') {
+                    const teachingRes = await api.get('courses/my_courses/?type=teaching');
+                    setTeachingCourses(teachingRes.data);
+                }
 
                 const certRes = await api.get('courses/certificates/my/').catch(() => ({ data: [] }));
                 setCertificates(certRes.data);
@@ -109,29 +112,49 @@ function Profile() {
         ? Math.round(results.reduce((acc, c) => acc + c.score, 0) / totalTests)
         : 0;
 
-    const inProgressCourses = myCourses.filter(c => !c.is_completed).length;
+    const inProgressCourses = learningCourses.filter(c => !c.is_completed).length;
     const totalStudents = isTeacher
-        ? myCourses.reduce((acc, c) => acc + (c.enrolled_students_count || 0), 0)
+        ? teachingCourses.reduce((acc, c) => acc + (c.enrolled_students_count || 0), 0)
         : null;
 
     const isFakeEmail = user?.email?.includes('@telegram.fake') || user?.email?.includes('@telegram.com');
     const displaySubtext = isFakeEmail ? `@${user?.username} (Telegram)` : user?.email;
 
+    const availableYears = useMemo(() => {
+        const years = results.map(r => new Date(r.completed_at).getFullYear());
+        const currentYear = new Date().getFullYear();
+        years.push(currentYear);
+        return Array.from(new Set(years)).sort((a, b) => b - a);
+    }, [results]);
+
     const activityMap = useMemo(() => {
         const map = {};
         results.forEach(r => {
             if (r.completed_at) {
-                const date = new Date(r.completed_at).toISOString().split('T')[0];
-                map[date] = (map[date] || 0) + 1;
+                const d = new Date(r.completed_at);
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                map[dateStr] = (map[dateStr] || 0) + 1;
             }
         });
-        const endDate = new Date(activityYear, 11, 31);
+
+        const start = new Date(activityYear, 0, 1);
+        const end = new Date(activityYear, 11, 31);
         const days = [];
-        for (let i = 364; i >= 0; i--) {
-            const d = new Date(endDate);
-            d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            days.push({ date: dateStr, count: map[dateStr] || 0 });
+
+        let startDay = start.getDay();
+        startDay = startDay === 0 ? 6 : startDay - 1;
+
+        for(let i = 0; i < startDay; i++) {
+            days.push({ date: null, count: 0, empty: true });
+        }
+
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(d.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${dayStr}`;
+
+            days.push({ date: dateStr, count: map[dateStr] || 0, empty: false });
         }
         return days;
     }, [results, activityYear]);
@@ -147,7 +170,7 @@ function Profile() {
     return (
         <div className="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8 text-base-content animate-fade-in">
 
-            {/* ── ШАПКА ПРОФИЛЯ ── */}
+            {/* ШАПКА ПРОФИЛЯ */}
             <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden mb-6">
                 <div className="h-32 bg-base-200/50 border-b border-base-200"></div>
                 <div className="px-8 pb-8 flex flex-col sm:flex-row gap-6 items-start sm:items-end relative -mt-12">
@@ -189,26 +212,44 @@ function Profile() {
                 </div>
             </div>
 
-            {/* ── АКТИВНОСТЬ ── */}
-            <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6 flex flex-col md:flex-row gap-8">
-                <div className="flex-1 overflow-x-auto">
-                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        {t('profile.learningActivity') || 'Активность'}
-                        <span className="text-xs font-normal text-base-content/50 border border-base-300 rounded px-2 py-0.5">
-                            {t('profile.testsPerYear', { count: totalTests }) || `${totalTests} тестов за год`}
-                        </span>
+            {/* АКТИВНОСТЬ С ВЫБОРОМ ГОДА */}
+            <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Calendar size={18} className="text-base-content/50" />
+                        {t('profile.learningActivity') || 'Активность за год'}
                     </h3>
-                    <div className="pb-2 min-w-max">
+                    <select 
+                        className="select select-sm select-bordered bg-base-50 font-medium w-28"
+                        value={activityYear}
+                        onChange={(e) => setActivityYear(Number(e.target.value))}
+                    >
+                        {availableYears.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="overflow-x-auto pb-4 pt-1">
+                    <div className="min-w-max flex gap-2">
+                        <div className="flex flex-col gap-[3px] text-[9px] font-medium text-base-content/40 justify-between py-1 mt-1 pr-1">
+                            <span>{t('weekdays.mon') || 'Пн'}</span>
+                            <span>{t('weekdays.wed') || 'Ср'}</span>
+                            <span>{t('weekdays.fri') || 'Пт'}</span>
+                        </div>
                         <div className="grid grid-rows-7 grid-flow-col gap-[3px]">
                             {activityMap.map((day, idx) => {
+                                if (day.empty) return <div key={`empty-${idx}`} className="w-[11px] h-[11px] bg-transparent" />;
                                 let bg = "bg-gray-200 dark:bg-base-300";
                                 if (day.count === 1) bg = "bg-emerald-300 dark:bg-emerald-800";
                                 if (day.count === 2) bg = "bg-emerald-400 dark:bg-emerald-600";
                                 if (day.count >= 3) bg = "bg-emerald-500 dark:bg-emerald-500";
+                                
                                 return (
-                                    <div key={idx}
-                                        className={`w-[11px] h-[11px] rounded-[2px] transition-colors cursor-pointer hover:ring-1 hover:ring-base-content/30 ${bg}`}
-                                        title={`${new Date(day.date).toLocaleDateString(getDateLocale())}: ${day.count} ${t('profile.testsWord') || 'тестов'}`} />
+                                    <div key={day.date}
+                                        className={`w-[11px] h-[11px] rounded-[2px] transition-colors cursor-pointer hover:ring-1 hover:ring-base-content/40 hover:scale-110 ${bg}`}
+                                        title={`${new Date(day.date).toLocaleDateString(getDateLocale())}: ${day.count} ${t('profile.testsWord') || 'тестов'}`} 
+                                    />
                                 );
                             })}
                         </div>
@@ -218,14 +259,10 @@ function Profile() {
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-                {/* ── ЛЕВАЯ КОЛОНКА ── */}
+                {/* ЛЕВАЯ КОЛОНКА (СТАТИСТИКА И B2B) */}
                 <div className="xl:col-span-1 space-y-6">
-                    
-                    {/* 🔥 БЛОК: КАБИНЕТ РУКОВОДИТЕЛЯ (B2B) 🔥 */}
-                    <div 
-                        onClick={() => navigate('/corporate/dashboard')}
-                        className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl shadow-lg border border-indigo-500 p-6 text-white relative overflow-hidden group cursor-pointer hover:shadow-indigo-500/30 transition-all"
-                    >
+                    <div onClick={() => navigate('/corporate/dashboard')}
+                        className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl shadow-lg border border-indigo-500 p-6 text-white relative overflow-hidden group cursor-pointer hover:shadow-indigo-500/30 transition-all">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 group-hover:scale-110 transition-transform"></div>
                         <div className="relative z-10 flex items-center gap-4 mb-2">
                             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm shrink-0">
@@ -265,10 +302,10 @@ function Profile() {
                                     {isTeacher ? (totalStudents ?? '—') : inProgressCourses}
                                 </div>
                             </div>
-                            {!isTeacher && myCourses.length > 0 && (
+                            {!isTeacher && learningCourses.length > 0 && (
                                 <div className="w-full bg-base-200 rounded-full h-1.5 mt-1">
                                     <div className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.round((inProgressCourses / myCourses.length) * 100)}%` }} />
+                                        style={{ width: `${Math.round((inProgressCourses / learningCourses.length) * 100)}%` }} />
                                 </div>
                             )}
                         </div>
@@ -304,42 +341,75 @@ function Profile() {
                     </div>
                 </div>
 
-                {/* ── ПРАВАЯ КОЛОНКА ── */}
+                {/* ПРАВАЯ КОЛОНКА */}
                 <div className="xl:col-span-2 space-y-6">
-                    {/* КУРСЫ */}
-                    <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold">
-                                {isTeacher ? (t('profile.manageCourses') || 'Управление курсами') : (t('profile.myLearning') || 'Мое обучение')}
-                            </h3>
-                            {isTeacher && (
+                    
+                    {/* 🔥 БЛОК 1: УПРАВЛЕНИЕ КУРСАМИ (ТОЛЬКО ДЛЯ УЧИТЕЛЕЙ) 🔥 */}
+                    {isTeacher && (
+                        <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold">
+                                    {t('profile.manageCourses') || 'Мои созданные курсы'}
+                                </h3>
                                 <button onClick={() => setIsModalOpen(true)}
                                     className="btn btn-sm rounded-md shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-0">
                                     {t('profile.createCourseBtn') || 'Создать курс'}
                                 </button>
+                            </div>
+
+                            {teachingCourses.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    {teachingCourses.map(course => (
+                                        <div key={course.id} className="p-5 rounded-xl border border-blue-200 bg-blue-50/30 dark:bg-blue-900/10 hover:shadow-md transition-all group flex flex-col">
+                                            <div className="text-[10px] font-bold text-base-content/40 mb-2 uppercase tracking-widest">
+                                                {t(`categories.${course.category_title}`, { defaultValue: course.category_title })}
+                                            </div>
+                                            <h4 className="font-semibold mb-4 line-clamp-2 text-sm group-hover:text-blue-600 transition-colors">
+                                                {course.title}
+                                            </h4>
+                                            <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
+                                                <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
+                                                    Смотреть курс
+                                                </Link>
+                                                {/* Кнопка "Редактор" теперь 100% будет здесь, и только здесь! */}
+                                                <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 bg-blue-600 text-white rounded shadow-sm hover:bg-blue-700 transition-colors">
+                                                    {t('profile.editorBtn') || 'Редактор'}
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-10 border border-dashed border-base-300 rounded-xl bg-base-50/50">
+                                    <p className="text-sm font-medium text-base-content/50 mb-4">У вас пока нет созданных курсов</p>
+                                </div>
                             )}
                         </div>
+                    )}
 
-                        {myCourses.length > 0 ? (
+                    {/* 🔥 БЛОК 2: МОЕ ОБУЧЕНИЕ (ДЛЯ ВСЕХ) 🔥 */}
+                    <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold">
+                                {t('profile.myLearning') || 'Мое обучение'}
+                            </h3>
+                        </div>
+
+                        {learningCourses.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                {myCourses.map(course => (
+                                {learningCourses.map(course => (
                                     <div key={course.id} className="p-5 rounded-xl border border-base-200 bg-base-50/50 hover:bg-base-100 hover:shadow-md hover:border-blue-200 transition-all group flex flex-col">
                                         <div className="text-[10px] font-bold text-base-content/40 mb-2 uppercase tracking-widest">
-                                            {/* ✅ Динамический перевод категории */}
                                             {t(`categories.${course.category_title}`, { defaultValue: course.category_title })}
                                         </div>
                                         <h4 className="font-semibold mb-4 line-clamp-2 text-sm group-hover:text-blue-600 transition-colors">
                                             {course.title}
                                         </h4>
                                         <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
-                                            <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
-                                                {isTeacher ? (t('profile.viewCourse') || 'Смотреть курс') : (t('profile.continueCourse') || 'Продолжить обучение')}
+                                            {/* Тут только кнопка "Продолжить", редактора больше нет! */}
+                                            <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+                                                {t('profile.continueCourse') || 'Продолжить обучение'} <ArrowRight size={14} />
                                             </Link>
-                                            {(user?.role === 'admin' || course.teacher === user?.id) && (
-                                                <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 border border-base-300 rounded text-base-content/70 hover:bg-base-200 transition-colors">
-                                                    {t('profile.editorBtn') || 'Редактор'}
-                                                </Link>
-                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -347,16 +417,14 @@ function Profile() {
                         ) : (
                             <div className="text-center py-16 border border-dashed border-base-300 rounded-xl bg-base-50/50">
                                 <p className="text-sm font-medium text-base-content/50 mb-4">{t('profile.noActiveCourses') || 'У вас пока нет активных курсов'}</p>
-                                {!isTeacher && (
-                                    <Link to="/courses" className="btn btn-sm btn-outline border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 shadow-sm">
-                                        {t('profile.goToCatalogBtn') || 'Перейти в каталог'}
-                                    </Link>
-                                )}
+                                <Link to="/courses" className="btn btn-sm btn-outline border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 shadow-sm">
+                                    {t('profile.goToCatalogBtn') || 'Перейти в каталог'}
+                                </Link>
                             </div>
                         )}
                     </div>
 
-                    {/* ✅ СЕРТИФИКАТЫ */}
+                    {/* СЕРТИФИКАТЫ */}
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 p-6 sm:p-8 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -450,7 +518,6 @@ function Profile() {
                                 <label className="label py-0 pb-1.5"><span className="text-xs font-medium text-base-content/70">{t('profile.categoryLabel') || 'Категория'}</span></label>
                                 <select className="select select-sm select-bordered w-full" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
                                     {categories.map(cat => (
-                                        // ✅ Динамический перевод категории в селекторе
                                         <option key={cat.id} value={cat.id}>{t(`categories.${cat.title}`, { defaultValue: cat.title })}</option>
                                     ))}
                                 </select>

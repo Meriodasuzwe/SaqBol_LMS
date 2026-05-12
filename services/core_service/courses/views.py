@@ -238,13 +238,16 @@ class MyCoursesView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        request_type = self.request.query_params.get('type')
+
+        # 1. Если фронтенд запрашивает курсы, которые юзер ПРЕПОДАЕТ
+        if request_type == 'teaching':
+            if getattr(user, 'role', '') in ['teacher', 'admin'] or user.is_superuser:
+                return Course.objects.filter(teacher=user)
+            return Course.objects.none()
+        
+        # 2. ПО УМОЛЧАНИЮ отдаем курсы, которые юзер КУПИЛ (Изучает)
         enrolled_course_ids = Enrollment.objects.filter(student=user).values_list('course_id', flat=True)
-        
-        if user.role in ['teacher', 'admin'] or user.is_superuser:
-            return Course.objects.filter(
-                Q(teacher=user) | Q(id__in=enrolled_course_ids)
-            ).distinct()
-        
         return Course.objects.filter(id__in=enrolled_course_ids)
 
 
