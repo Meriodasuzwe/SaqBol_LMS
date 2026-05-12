@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'notifications',
     'users',
+    'bug_reports',
 ]
 
 # =========================
@@ -174,6 +175,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/minute',  
         'user': '1000/minute',
+        'bug_reports': '5/hour',
         'b2b_leads': '3/hour'  
     }
 }

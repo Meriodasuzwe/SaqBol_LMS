@@ -30,6 +30,7 @@ import DataProcessing from './pages/legal/DataProcessing';
 import Navbar from './Navbar';
 import AdminPanel from './AdminPanel';
 import AdminStats from './AdminStats';
+import BugReportWidget from './BugReportWidget';
 import About from './About';
 import CorporatePage from './CorporatePage';
 import CorporateDashboard from './CorporateDashboard';
@@ -100,7 +101,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             <Route path="/admin" element={
               isLoggedIn && userRole === 'admin' ? <AdminPanel /> : <Navigate to="/login" />
             } />
-
+            
             <Route path="/admin/stats" element={
               isLoggedIn && userRole === 'admin' ? <AdminStats /> : <Navigate to="/login" />
             } />
@@ -148,6 +149,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 <li><Link to="/#features" className="hover:text-white transition-colors">{t('footer.navFeatures')}</Link></li>
                 <li><Link to="/register" className="hover:text-white transition-colors">{t('footer.navStart')}</Link></li>
               </ul>
+              
             </div>
             
             
@@ -183,6 +185,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
           </div>
         </div>
       </footer>
+      <BugReportWidget />
     </div>
   );
 }
