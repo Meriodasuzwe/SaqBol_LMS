@@ -335,7 +335,7 @@ function Profile() {
                                             <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
                                                 {isTeacher ? (t('profile.viewCourse') || 'Смотреть курс') : (t('profile.continueCourse') || 'Продолжить обучение')}
                                             </Link>
-                                            {isTeacher && (
+                                            {(user?.role === 'admin' || course.teacher === user?.id) && (
                                                 <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 border border-base-300 rounded text-base-content/70 hover:bg-base-200 transition-colors">
                                                     {t('profile.editorBtn') || 'Редактор'}
                                                 </Link>
