@@ -34,7 +34,8 @@ function Profile() {
         const fetchData = async () => {
             try {
                 const userRes = await api.get('users/me/');
-                setUser(userRes.data);
+                const userData = userRes.data; // Сохраняем данные юзера в переменную
+                setUser(userData);
 
                 const resultsRes = await api.get('quizzes/my-results/');
                 setResults(resultsRes.data);
@@ -43,7 +44,14 @@ function Profile() {
                 setCategories(catRes.data);
                 if (catRes.data.length > 0) setSelectedCategory(catRes.data[0].id);
 
-                const coursesRes = await api.get('courses/my_courses/');
+                
+                // Если юзер учитель или админ -> просим его СОЗДАННЫЕ курсы
+                // Если обычный студент -> просим его КУПЛЕННЫЕ курсы
+                const coursesUrl = (userData.role === 'teacher' || userData.role === 'admin') 
+                    ? 'courses/my_courses/?type=teaching' 
+                    : 'courses/my_courses/';
+                
+                const coursesRes = await api.get(coursesUrl);
                 setMyCourses(coursesRes.data);
 
                 const certRes = await api.get('courses/certificates/my/').catch(() => ({ data: [] }));
