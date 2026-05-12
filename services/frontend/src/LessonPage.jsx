@@ -118,13 +118,11 @@ function LessonPage() {
             const nextLessonObj = currentIndexInCourse < courseLessons.length - 1 ? courseLessons[currentIndexInCourse + 1] : null;
 
             if (activeStepIndex < lesson.steps.length - 1) {
-                // Если в текущем уроке еще есть шаги
                 setActiveStepIndex(activeStepIndex + 1);
                 const nextStepId = lesson.steps[activeStepIndex + 1].id;
                 window.history.replaceState(null, '', `/lesson/${lessonId}?step=${nextStepId}`);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                // Если шаги закончились (конец урока)
                 if (nextLessonObj) {
                     toast.success(t('builder.toasts.simEnd', 'Раздел завершен! Переходим к следующему.'));
                     setTimeout(() => {
@@ -138,6 +136,7 @@ function LessonPage() {
                 }
             }
         } catch (err) {
+            // 🔥 Защита от дурака срабатывает здесь! Бэкенд возвращает ошибку, мы показываем ее юзеру
             if (err.response?.data?.error) toast.error(err.response.data.error);
         }
     };
@@ -163,20 +162,16 @@ function LessonPage() {
         }
     };
 
-    // 🔥 ИДЕАЛЬНАЯ ЛОГИКА БЛОКИРОВКИ 🔥
     const isModuleLocked = (idx) => {
-        // Блокируем только последний урок (финал)
         if (idx !== courseLessons.length - 1) return false;
-        if (courseLessons.length <= 1) return false; // Если урок всего один, не блокируем
+        if (courseLessons.length <= 1) return false; 
         
-        // ЗАЩИТА: Если пользователя УЖЕ перекинуло на этот урок (он нажал завершить предыдущий) - СНИМАЕМ ЗАМОК!
         if (lesson?.id === courseLessons[idx].id) return false;
 
         if (courseLessons[0]?.hasOwnProperty('is_completed')) {
             return courseLessons.slice(0, -1).some(l => !l.is_completed);
         }
         
-        // Даем поблажку по прогрессу (снижаем требование на 5%), чтобы не было бага из-за округлений бэкенда
         const requiredProgress = ((courseLessons.length - 1) / courseLessons.length) * 100;
         return (course?.progress || 0) < (requiredProgress - 5); 
     };
@@ -191,8 +186,6 @@ function LessonPage() {
 
     const currentStep = lesson.steps && lesson.steps.length > 0 ? lesson.steps[activeStepIndex] : null;
     const isSimulation = currentStep && ['simulation_chat', 'simulation_email', 'interactive_spot', 'interactive_free'].includes(currentStep.step_type);
-
-    // Определяем, является ли этот урок последним в курсе
     const isLastLessonInCourse = courseLessons.findIndex(l => l.id === lesson.id) === courseLessons.length - 1;
 
     return (
@@ -221,7 +214,6 @@ function LessonPage() {
                                         <span className="text-blue-600 dark:text-blue-400">{course?.progress || 0}%</span>
                                     </div>
                                     <div className="h-1.5 w-full bg-base-300 rounded-full overflow-hidden">
-                                        {/* 🔥 ПОЧИНИЛИ ПРОГРЕСС-БАР ТУТ (добавили || 0) */}
                                         <div
                                             className="h-full bg-blue-600 transition-all duration-500"
                                             style={{ width: `${course?.progress || 0}%` }}
@@ -233,7 +225,6 @@ function LessonPage() {
 
                         <nav className="p-2 overflow-y-auto max-h-[50vh]">
                             {courseLessons.map((l, idx) => {
-                                // Если это текущий урок — он точно не заблокирован
                                 const isActiveLesson = lesson.id === l.id;
                                 const isLocked = !isActiveLesson && isModuleLocked(idx);
 
@@ -360,20 +351,60 @@ function LessonPage() {
                                                     <PythonEditor stepData={currentStep} onSuccess={() => handleStepComplete(20)} />
                                                 </div>
                                             ) : currentStep.step_type === 'quiz' ? (
+                                                /* 🔥 ОБНОВЛЕННЫЙ И ИДЕАЛЬНЫЙ БЛОК ТЕСТА 🔥 */
                                                 <div className="text-center py-16 bg-base-200 rounded-2xl border border-dashed border-base-300">
-                                                    <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6">
-                                                        <HelpCircle className="text-blue-600 dark:text-blue-400" size={32} />
+                                                    <div className={`w-16 h-16 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6 ${currentStep.is_completed ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                                                        {currentStep.is_completed ? (
+                                                            <Check className="text-emerald-600 dark:text-emerald-400" size={32} />
+                                                        ) : (
+                                                            <HelpCircle className="text-blue-600 dark:text-blue-400" size={32} />
+                                                        )}
                                                     </div>
-                                                    <h3 className="text-xl font-black mb-2 text-base-content">{t('lesson.quizTitle', 'Проверка знаний')}</h3>
+                                                    <h3 className="text-xl font-black mb-2 text-base-content">
+                                                        {currentStep.is_completed ? t('lesson.quizPassed', 'Тест пройден!') : t('lesson.quizTitle', 'Проверка знаний')}
+                                                    </h3>
                                                     <p className="text-base-content/60 text-sm mb-8 max-w-xs mx-auto">
-                                                        {t('lesson.quizDesc', 'Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.')}
+                                                        {currentStep.is_completed 
+                                                            ? t('lesson.quizPassedDesc', 'Вы успешно сдали тест. Нажмите кнопку ниже, чтобы перейти к следующему этапу.') 
+                                                            : t('lesson.quizDesc', 'Пройдите тест по материалам урока, чтобы разблокировать следующий модуль.')}
                                                     </p>
-                                                    <Link 
-                                                        to={`/quiz/lesson/${lesson.id}?quiz_id=${currentStep.scenario_data?.quiz_id || ''}`} 
-                                                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
-                                                    >
-                                                        {t('lesson.startQuiz', 'Начать тест')} <ArrowRight size={18} />
-                                                    </Link>
+                                                    
+                                                    <div className="flex flex-col items-center gap-3">
+                                                        {/* Кнопка "Начать тест" (скрывается, если тест уже сдан) */}
+                                                        {!currentStep.is_completed && (
+                                                            <Link 
+                                                                to={`/quiz/lesson/${lesson.id}?quiz_id=${currentStep.scenario_data?.quiz_id || ''}`} 
+                                                                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
+                                                            >
+                                                                {t('lesson.startQuiz', 'Начать тест')} <ArrowRight size={18} />
+                                                            </Link>
+                                                        )}
+                                                        
+                                                        {/* 🔥 Та самая кнопка, которая решит проблему застревания! */}
+                                                        <button 
+                                                            onClick={() => handleStepComplete(10)}
+                                                            className={`inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${
+                                                                currentStep.is_completed 
+                                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/20" 
+                                                                    : "bg-base-100 border border-base-300 text-base-content/70 hover:bg-base-300"
+                                                            }`}
+                                                        >
+                                                            {activeStepIndex < lesson.steps.length - 1 ? (
+                                                                <>{t('lesson.nextStep', 'Следующий шаг')} <ArrowRight size={18} /></>
+                                                            ) : !isLastLessonInCourse ? (
+                                                                <>{t('lesson.finishSection', 'Завершить раздел')} <Check size={18} /></>
+                                                            ) : (
+                                                                <>{t('lesson.finishCourse', 'Завершить курс')} <Award size={18} /></>
+                                                            )}
+                                                        </button>
+
+                                                        {/* Маленькая подсказка, чтобы не путались */}
+                                                        {!currentStep.is_completed && (
+                                                            <p className="text-[10px] text-base-content/40 mt-2 uppercase tracking-widest">
+                                                                {t('lesson.clickAfterQuiz', 'Нажмите эту кнопку после сдачи теста')}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div
@@ -391,6 +422,7 @@ function LessonPage() {
                             )}
                         </div>
 
+                        {/* Стандартный подвал для обычных шагов (скрыт для симуляций и тестов) */}
                         {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
                             <div className="p-6 bg-base-200/50 border-t border-base-300 flex items-center justify-between mt-auto">
                                 {activeStepIndex > 0 ? (
@@ -409,7 +441,6 @@ function LessonPage() {
                                     onClick={() => handleStepComplete(10)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20 ml-auto"
                                 >
-                                    {/* 🔥 ДИНАМИЧЕСКИЙ ТЕКСТ КНОПКИ В ЗАВИСИМОСТИ ОТ СИТУАЦИИ 🔥 */}
                                     {activeStepIndex < lesson.steps.length - 1 ? (
                                         <>{t('lesson.nextStep', 'Следующий шаг')} <ArrowRight size={18} /></>
                                     ) : !isLastLessonInCourse ? (
@@ -423,6 +454,7 @@ function LessonPage() {
                     </div>
                 </main>
 
+                {/* Модалка завершения курса */}
                 {showCompletionModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-base-300/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-base-100 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center relative animate-in zoom-in-95 duration-300">
