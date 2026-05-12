@@ -28,22 +28,18 @@ function CourseDetail({ isLoggedIn }) {
     const [inviteCode, setInviteCode] = useState('');
     const [isApplyingCode, setIsApplyingCode] = useState(false);
 
-    //  Обработка успешной оплаты или отмены от Strip
+    //  Обработка успешной оплаты или отмены от Stripe
     useEffect(() => {
-        // Берем параметры прямо из окна браузера
         const urlParams = new URLSearchParams(window.location.search);
         const isSuccess = urlParams.get('success');
         const isCanceled = urlParams.get('canceled');
 
         if (isSuccess === 'true') {
-            // Даем React полсекунды на отрисовку страницы, затем стреляем тостом
             setTimeout(() => {
                 toast.success(t('courseDetail.toasts.paymentSuccess', '🎉 Оплата прошла успешно! Вы записаны на курс.'));
             }, 500);
             
-            setIsEnrolled(true); // Сразу открываем доступ
-            
-            // Тихо очищаем URL, чтобы при обновлении страницы тост не вылезал снова
+            setIsEnrolled(true); 
             window.history.replaceState(null, '', window.location.pathname);
         } 
         
@@ -59,6 +55,7 @@ function CourseDetail({ isLoggedIn }) {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Получаем публичную информацию о курсе
                 const courseRes = await api.get(`courses/${id}/`);
                 setCourse(courseRes.data);
 
@@ -74,8 +71,17 @@ function CourseDetail({ isLoggedIn }) {
                             headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
                         });
                         
-                        const isUserEnrolled = myCoursesRes.data.some(c => c.id === parseInt(id));
-                        setIsEnrolled(isUserEnrolled); 
+                        // 🔥 ИЩЕМ ЭТОТ КУРС В СПИСКЕ КУПЛЕННЫХ
+                        const enrolledCourse = myCoursesRes.data.find(c => c.id === parseInt(id));
+                        
+                        if (enrolledCourse) {
+                            setIsEnrolled(true); 
+                            // 🔥 ВОТ ОНО! ПЕРЕЗАПИСЫВАЕМ ПУСТОЙ ПРОГРЕСС РЕАЛЬНЫМ!
+                            setCourse(prev => ({ ...prev, progress: enrolledCourse.progress }));
+                        } else {
+                            setIsEnrolled(false);
+                        }
+
                     } catch (err) {
                         console.error("Ошибка при запросе моих курсов:", err);
                         setIsEnrolled(false);
@@ -126,6 +132,9 @@ function CourseDetail({ isLoggedIn }) {
                 
                 setEnrollLoading(false);
                 setButtonSuccess(true);
+                
+                // Сбрасываем прогресс на 0 при новой записи
+                setCourse(prev => ({ ...prev, progress: 0 }));
 
                 setTimeout(() => {
                     setButtonSuccess(false);
@@ -138,7 +147,6 @@ function CourseDetail({ isLoggedIn }) {
         }
     };
 
-    // Функция активации инвайт-кода
     const handleApplyInvite = async () => {
         const token = localStorage.getItem('access');
         if (!isLoggedIn && !token) {
@@ -158,6 +166,7 @@ function CourseDetail({ isLoggedIn }) {
             setInviteCode('');
             
             setIsEnrolled(true);
+            setCourse(prev => ({ ...prev, progress: 0 })); // Устанавливаем 0% при активации
             
             const lessonsRes = await api.get(`courses/${id}/lessons/`);
             setLessons(lessonsRes.data.sort((a, b) => a.id - b.id));
@@ -395,11 +404,13 @@ function CourseDetail({ isLoggedIn }) {
                                 <>
                                     <div className="text-center mb-6">
                                         <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-base-100 shadow-md">
+                                            {/* 🔥 Цифра прогресса теперь всегда актуальная! */}
                                             <span className="text-xl font-black">{course.progress || 0}%</span>
                                         </div>
                                         <h3 className="font-bold text-base-content">{t('courseDetail.yourProgress', 'Ваш прогресс')}</h3>
                                     </div>
                                     <div className="w-full bg-base-200 rounded-full h-2.5 mb-8 overflow-hidden">
+                                        {/* 🔥 И полоса теперь заполняется корректно */}
                                         <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${course.progress || 0}%` }}></div>
                                     </div>
 

@@ -1024,7 +1024,10 @@ weekdays: {
     "goToProfile": "Перейти в профиль",
     "close": "Закрыть",
     "emptyContent": "Контент шага пуст",
-    "lockedModuleToast": "Пройдите предыдущие модули, чтобы открыть финальное тестирование"
+    "lockedModuleToast": "Пройдите предыдущие модули, чтобы открыть финальное тестирование",
+    "quizPassed": "Тест пройден!",
+"quizPassedDesc": "Вы успешно сдали тест. Нажмите кнопку ниже, чтобы перейти к следующему этапу.",
+"clickAfterQuiz": "Нажмите эту кнопку после сдачи теста",
 },
   footer: {
     desc: "Интеллектуальная платформа для корпоративного обучения и повышения цифровой грамотности персонала.",
@@ -2075,7 +2078,10 @@ weekdays: {
     "goToProfile": "Профильге өту",
     "close": "Жабу",
     "emptyContent": "Қадам мазмұны бос",
-    "lockedModuleToast": "Қорытынды тестілеуді ашу үшін алдыңғы модульдерді аяқтаңыз"
+    "lockedModuleToast": "Қорытынды тестілеуді ашу үшін алдыңғы модульдерді аяқтаңыз",
+    "quizPassed": "Тест сәтті өтті!",
+"quizPassedDesc": "Сіз тестті сәтті тапсырдыңыз. Келесі кезеңге өту үшін төмендегі түймені басыңыз.",
+"clickAfterQuiz": "Тест тапсырғаннан кейін осы түймені басыңыз",
 },
       footer: {
         desc: "Корпоративтік оқытуға және қызметкерлердің цифрлық сауаттылығын арттыруға арналған зияткерлік платформа.",
@@ -3129,7 +3135,10 @@ weekdays: {
     "goToProfile": "Go to Profile",
     "close": "Close",
     "emptyContent": "Step content is empty",
-    "lockedModuleToast": "Please complete previous modules to unlock the final testing"
+    "lockedModuleToast": "Please complete previous modules to unlock the final testing",
+    "quizPassed": "Quiz Passed!",
+"quizPassedDesc": "You have successfully passed the quiz. Click the button below to proceed.",
+"clickAfterQuiz": "Click this button after passing the quiz",
 },
       footer: {
         desc: "Intelligent platform for corporate training and improving staff digital literacy.",

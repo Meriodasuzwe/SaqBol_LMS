@@ -60,7 +60,6 @@ class CourseSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
     
-    # поле для проверки, записан ли текущий юзер на курс (для отображения кнопки "Записаться" или "Продолжить")
     is_enrolled = serializers.SerializerMethodField()
 
     class Meta:
@@ -71,13 +70,12 @@ class CourseSerializer(serializers.ModelSerializer):
             'price', 'category', 'category_title', 
             'teacher_name', 'lessons', 'progress', 'status',
             'average_rating', 'reviews_count', 
-            'is_enrolled' # <-- Добавили в выдачу
+            'is_enrolled'
         ]
         
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
 
-    # Метод для проверки записи конкретного юзера
     def get_is_enrolled(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -88,7 +86,6 @@ class CourseSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return 0
-        
         
         if not Enrollment.objects.filter(course=obj, student=request.user).exists():
             return 0
@@ -103,13 +100,15 @@ class CourseSerializer(serializers.ModelSerializer):
 
         for step in steps:
             if step.step_type == 'quiz':
-                # Проверяем конкретный тест для подсчета прогресса курса
                 quiz_id = step.scenario_data.get('quiz_id') if step.scenario_data else None
                 if quiz_id and Result.objects.filter(student=request.user, quiz_id=quiz_id, score__gte=70).exists():
                     completed_count += 1
             else:
                 if StepProgress.objects.filter(student=request.user, step=step, is_completed=True).exists():
                     completed_count += 1
+                    
+        # 🔥 ВОТ ЭТОГО НЕ ХВАТАЛО! Мы посчитали, но забыли вернуть результат!
+        return int((completed_count / total_steps) * 100)
 
     def get_average_rating(self, obj):
         avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
@@ -137,7 +136,6 @@ class CertificateSerializer(serializers.ModelSerializer):
         return f"{obj.student.first_name} {obj.student.last_name}".strip() or obj.student.username
 
 class B2BLeadSerializer(serializers.ModelSerializer):
-    # Заголовок курса для удобства отображения в админке и при сериализации заявки, чтобы видеть, на какой курс потенциальный клиент интересуется
     course_title = serializers.CharField(source='target_course.title', read_only=True)
     class Meta:
         model = B2BLead
