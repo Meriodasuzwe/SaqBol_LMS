@@ -4,7 +4,7 @@ import api from './api';
 import { toast } from 'react-toastify';
 import {
     Check, X, GraduationCap, BookOpen, User,
-    AlertCircle, Send, ArrowRight, Eye, Briefcase, Mail, Key, Trash2,Bug, ExternalLink, MessageSquare
+    AlertCircle, Send, ArrowRight, Eye, Briefcase, Mail, Key, Trash2, Bug, ExternalLink, MessageSquare
 } from 'lucide-react';
 
 const AdminPanel = () => {
@@ -28,7 +28,6 @@ const AdminPanel = () => {
     const [adminNote, setAdminNote] = useState('');
     const [noteSubmitting, setNoteSubmitting] = useState(false);
 
-    // Новое состояние для модалки удаления заявок
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, isBulk: false, title: '' });
 
     const [generatedCodes, setGeneratedCodes] = useState({});
@@ -71,9 +70,9 @@ const AdminPanel = () => {
                 const res = await api.get('courses/b2b/leads/');
                 setLeads(res.data);
             } else if (activeTab === 'bugs') {
-     const res = await api.get('/bugs/list/');
-     setBugReports(res.data);
-        }
+                const res = await api.get('/bugs/list/');
+                setBugReports(res.data);
+            }
         } catch (err) {
             toast.error(t('admin.toasts.loadError', 'Ошибка загрузки данных'));
         } finally {
@@ -166,17 +165,14 @@ const AdminPanel = () => {
         window.open(gmailUrl, '_blank');
     };
 
-    // ФУНКЦИЯ: Выполнение удаления (одной или всех заявок)
     const executeDelete = async () => {
         setIsSubmitting(true);
         try {
             if (deleteConfirm.isBulk) {
-                // Параллельно удаляем все заявки (если нет bulk эндпоинта)
                 await Promise.all(leads.map(lead => api.delete(`courses/b2b/leads/${lead.id}/`)));
                 setLeads([]);
                 toast.success(t('admin.toasts.allLeadsDeleted', 'Все заявки успешно удалены'));
             } else {
-                // Удаляем одну заявку
                 await api.delete(`courses/b2b/leads/${deleteConfirm.id}/`);
                 setLeads(leads.filter(l => l.id !== deleteConfirm.id));
                 toast.success(t('admin.toasts.leadDeleted', 'Заявка удалена'));
@@ -238,7 +234,6 @@ const AdminPanel = () => {
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-                        {/* КНОПКА: Очистить все заявки (только для вкладки B2B) */}
                         {activeTab === 'leads' && leads.length > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                                 <button
@@ -335,6 +330,9 @@ const AdminPanel = () => {
                         {activeTab === 'leads' && leads.map(lead => {
                             const statusStyle = getStatusStyle(lead.status);
                             
+                            // Проверяем, можно ли сгенерировать код
+                            const canGenerate = lead.course_title && lead.status !== 'rejected';
+                            
                             return (
                                 <div key={lead.id} style={{ background: themeColors.panel, borderRadius: 20, padding: 20, border: `1px solid ${themeColors.panelBdr}`, display: 'flex', alignItems: 'center', gap: 20 }}>
                                     <div style={{ width: 56, height: 56, borderRadius: 16, background: isDark ? 'rgba(99,102,241,0.15)' : '#e0e7ff', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -398,7 +396,6 @@ const AdminPanel = () => {
                                                 <option value="rejected">{t('admin.leadStatuses.rejected', 'Отклонена')}</option>
                                             </select>
 
-                                            {/* КНОПКА: Удалить одну заявку */}
                                             <button
                                                 onClick={() => setDeleteConfirm({ isOpen: true, id: lead.id, isBulk: false, title: lead.company })}
                                                 title={t('admin.actions.delete', 'Удалить заявку')}
@@ -407,25 +404,49 @@ const AdminPanel = () => {
                                                 <Trash2 size={16} />
                                             </button>
 
-                                            {/* Выдать код */}
-                                            {lead.course_title && lead.status !== 'rejected' && (
-                                                generatedCodes[lead.id] ? (
-                                                    <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#d1fae5', color: '#10b981', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #a7f3d0' }}>
-                                                        <Key size={14} /> {generatedCodes[lead.id]}
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleGenerateCode(lead.id)}
-                                                        style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${themeColors.activeText}`, background: 'transparent', color: themeColors.activeText, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'inherit', transition: 'all 0.2s' }}
-                                                        onMouseEnter={e => { e.currentTarget.style.background = themeColors.activeText; e.currentTarget.style.color = '#fff'; }}
-                                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = themeColors.activeText; }}
-                                                    >
-                                                        <Key size={14} /> {t('admin.leadActions.generateCode', 'Сгенерировать код')}
-                                                    </button>
-                                                )
+                                            {/* 🔥 КНОПКА ГЕНЕРАЦИИ КОДА (ТЕПЕРЬ ВСЕГДА ВИДНА) 🔥 */}
+                                            {generatedCodes[lead.id] ? (
+                                                <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#d1fae5', color: '#10b981', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #a7f3d0' }}>
+                                                    <Key size={14} /> {generatedCodes[lead.id]}
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleGenerateCode(lead.id)}
+                                                    disabled={!canGenerate}
+                                                    title={!lead.course_title ? "Нет привязанного курса" : lead.status === 'rejected' ? "Заявка отклонена" : "Сгенерировать код"}
+                                                    style={{ 
+                                                        padding: '8px 12px', 
+                                                        borderRadius: 10, 
+                                                        border: canGenerate ? `1px solid ${themeColors.activeText}` : `1px solid ${themeColors.divider}`, 
+                                                        background: 'transparent', 
+                                                        color: canGenerate ? themeColors.activeText : themeColors.textMute, 
+                                                        cursor: canGenerate ? 'pointer' : 'not-allowed', 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        gap: 6, 
+                                                        fontSize: 13, 
+                                                        fontWeight: 700, 
+                                                        fontFamily: 'inherit', 
+                                                        transition: 'all 0.2s',
+                                                        opacity: canGenerate ? 1 : 0.6
+                                                    }}
+                                                    onMouseEnter={e => { 
+                                                        if (canGenerate) {
+                                                            e.currentTarget.style.background = themeColors.activeText; 
+                                                            e.currentTarget.style.color = '#fff'; 
+                                                        }
+                                                    }}
+                                                    onMouseLeave={e => { 
+                                                        if (canGenerate) {
+                                                            e.currentTarget.style.background = 'transparent'; 
+                                                            e.currentTarget.style.color = themeColors.activeText; 
+                                                        }
+                                                    }}
+                                                >
+                                                    <Key size={14} /> {t('admin.leadActions.generateCode', 'Сгенерировать код')}
+                                                </button>
                                             )}
 
-                                            {/* Написать */}
                                             <button
                                                 onClick={() => handleSendEmailViaGmail(lead.email, generatedCodes[lead.id])}
                                                 style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: themeColors.activeText, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, fontFamily: 'inherit' }}
@@ -437,6 +458,7 @@ const AdminPanel = () => {
                                 </div>
                             );
                         })}
+
                         {/* ── BUG РЕПОРТЫ ── */}
                         {activeTab === 'bugs' && (
                             <>
@@ -587,7 +609,7 @@ const AdminPanel = () => {
                 )}
             </div>
 
-            {/* ── Модалка отказа (Существующая) ── */}
+            {/* Модалки (Удаление / Отклонение) */}
             {isRejectModalOpen && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
                     <div style={{ position: 'absolute', inset: 0, background: themeColors.modalOverlay, backdropFilter: 'blur(4px)' }} onClick={() => setIsRejectModalOpen(false)} />
@@ -627,7 +649,6 @@ const AdminPanel = () => {
                 </div>
             )}
 
-            {/* ── НОВАЯ Модалка подтверждения удаления ── */}
             {deleteConfirm.isOpen && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
                     <div style={{ position: 'absolute', inset: 0, background: themeColors.modalOverlay, backdropFilter: 'blur(4px)' }} onClick={() => !isSubmitting && setDeleteConfirm({ isOpen: false, id: null, isBulk: false, title: '' })} />
