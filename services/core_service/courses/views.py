@@ -619,6 +619,14 @@ class ChatReplyView(APIView):
 
 class B2BLeadThrottle(AnonRateThrottle):
     scope = 'b2b_leads'
+    def get_ident(self, request):
+        # Достаем реальный IP-адрес, даже если мы за Nginx / Docker
+        xff = request.META.get('HTTP_X_FORWARDED_FOR')
+        if xff:
+            # Если запрос прошел через цепочку прокси, берем самый первый (реальный IP клиента)
+            return xff.split(',')[0].strip()
+        # Если прокси нет, берем стандартный IP
+        return super().get_ident(request)
 
 
 class B2BLeadCreateView(generics.CreateAPIView):

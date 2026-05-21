@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
+
 function Navbar({ isLoggedIn, userRole, onLogout }) {
     const isTeacher = userRole === 'teacher' || userRole === 'admin';
     const isAdmin   = userRole === 'admin';

@@ -174,7 +174,7 @@ const resources = {
           mod4: "Безопасность email",
           active: "Активен",
           onlineLabel: "Сейчас онлайн",
-          onlineCount: "2 841 сотрудник",
+          onlineCount: "47 сотрудников",
           certLabel: "Сертификат",
           certStatus: "Получен!"
         },
@@ -1222,7 +1222,7 @@ weekdays: {
           mod4: "Email қауіпсіздігі",
           active: "Белсенді",
           onlineLabel: "Қазір желіде",
-          onlineCount: "2 841 қызметкер",
+          onlineCount: "47  қызметкер",
           certLabel: "Сертификат",
           certStatus: "Алынды!"
         },
@@ -2277,7 +2277,7 @@ weekdays: {
           mod4: "Email Security",
           active: "Active",
           onlineLabel: "Online Now",
-          onlineCount: "2,841 employees",
+          onlineCount: "47 employees",
           certLabel: "Certificate",
           certStatus: "Earned!"
         },

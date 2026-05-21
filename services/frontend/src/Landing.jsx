@@ -81,10 +81,10 @@ export default function Landing() {
 
     // Массивы вынесены внутрь компонента, чтобы t() работал реактивно
     const STATS = [
-        { value: '47 000+', label: t('landing.stats.s1') },
-        { value: '200+',    label: t('landing.stats.s2') },
-        { value: '98%',     label: t('landing.stats.s3') },
-        { value: '4.9 ★',  label: t('landing.stats.s4') },
+        { value: '300+', label: t('landing.stats.s1') },
+        { value: '20+',    label: t('landing.stats.s2') },
+        { value: '93%',     label: t('landing.stats.s3') },
+        { value: '4.7 ★',  label: t('landing.stats.s4') },
     ];
 
     const FEATURES = [
