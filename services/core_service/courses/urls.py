@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import (
     CourseListView, 
     CourseDetailView, 
@@ -31,6 +32,7 @@ from .views import (
     B2BDashboardView,
     RevokeEmployeeAccessView,
     B2BLeadDeleteView,
+    system_stats,
     ActivateInviteView
 )
 
@@ -85,6 +87,7 @@ urlpatterns = [
     path('b2b/invites/<str:invite_code>/revoke/<int:user_id>/', RevokeEmployeeAccessView.as_view(), name='revoke-access'),
     path('courses/promo-slots/', promo_slots, name='promo-slots'),
 
+    path('system-stats/', system_stats, name='system-stats'),
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
     path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),
     path('admin/<int:pk>/approve/', ApproveCourseView.as_view(), name='admin_approve_course'),

@@ -43,13 +43,16 @@ class QuizSerializer(serializers.ModelSerializer):
         model = Quiz
         fields = ['id', 'title', 'description', 'questions', 'lesson']
 
-# Сериализатор для отправки ответов на тест
-# serializers.Serializer используется потому что answers не сохраняется в базу в таком виде это просто форма проверки данных
+class AnswerItemSerializer(serializers.Serializer):
+    question_id = serializers.IntegerField()
+    choice_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1
+    )
+
 class QuizSubmissionSerializer(serializers.Serializer):
-    # Внутри списка должны быть словари а внутри словарей должны быть целые числа для question_id и choice_id
     answers = serializers.ListField(
-        # child указывает, что каждый элемент списка должен быть словарем с определенными полями и типами данных
-        child=serializers.DictField(child=serializers.IntegerField()),
+        child=AnswerItemSerializer(),
         min_length=1,
         max_length=50
     )

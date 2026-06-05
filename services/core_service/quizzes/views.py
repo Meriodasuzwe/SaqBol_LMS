@@ -57,26 +57,28 @@ class QuizSubmitView(APIView):
                 return Response({"error": "В тесте нет вопросов"}, status=400)
 
             correct_answers_count = 0
-            # Словарь для хранения правильных ответов
-            correct_map = {}
+            # Словарь для хранения правильных ответов { question_id: [id1, id2, ...] }
+            correct_answers_ids = {}
 
             for ans in answers:
                 question_id = ans.get('question_id')
-                # Проверяем правильность выбора студента
-                is_correct = Choice.objects.filter(
-                    id=ans.get('choice_id'), 
-                    question_id=question_id, 
-                    is_correct=True
-                ).exists()
+                choice_ids = ans.get('choice_ids', [])
+
+                # Получаем все правильные ID для этого вопроса
+                correct_ids = set(
+                    Choice.objects.filter(question_id=question_id, is_correct=True)
+                    .values_list('id', flat=True)
+                )
+
+                # Строгая проверка: выбранное множество должно точно совпадать с правильным
+                is_correct = set(choice_ids) == correct_ids
                 if is_correct:
                     correct_answers_count += 1
-                    
-                # Ищем правильный Choice для этого вопроса и сохраняем в карту
-                correct_choice = Choice.objects.filter(question_id=question_id, is_correct=True).first()
-                if correct_choice:
-                    correct_map[question_id] = correct_choice.id
 
-            score = int((correct_answers_count / total_questions * 100))
+                # Сохраняем правильные ID для фронта
+                correct_answers_ids[question_id] = list(correct_ids)
+
+            score = int((correct_answers_count / total_questions) * 100)
             
             Result.objects.create(
                 student=request.user,
@@ -84,17 +86,13 @@ class QuizSubmitView(APIView):
                 score=score
             )
             
-            # Формируем базовый ответ
             response_data = {
                 "score": score,
                 "correct_count": correct_answers_count,
                 "total_questions": total_questions,
-                "status": "Pass" if score >= 70 else "Fail"
+                "status": "Pass" if score >= 70 else "Fail",
+                "correct_answers_ids": correct_answers_ids,
             }
-            
-            # 🔥 НОВАЯ ЛОГИКА: Добавляем карту правильных ответов ВСЕГДА,
-            # но React сам решит (по счетчику в LocalStorage), когда их показать
-            response_data["correct_answers_map"] = correct_map
             
             return Response(response_data, status=status.HTTP_200_OK)
             
@@ -173,7 +171,6 @@ class SaveGeneratedView(APIView):
                 title = quiz_title or f"Тест: {lesson.title}"
                 quiz = Quiz.objects.create(title=title, lesson=lesson)
 
-            # Сохранение вопросов
             for q_item in questions_data:
                 q_text = str(q_item.get('question', '')).strip()
                 if not q_text: continue
@@ -186,31 +183,24 @@ class SaveGeneratedView(APIView):
 
                 options = q_item.get('options', [])
                 
+                # 🔥 ИСПРАВЛЕНИЕ: Получаем массив индексов правильных ответов
+                # Фронтенд теперь присылает 'correct_index' как массив [0, 2]
+                correct_indices = q_item.get('correct_index', [])
                 
-                correct_index = 0
-                
-                # Ищем ключи, которые реально присылает React-фронтенд
-                if 'correct_option_index' in q_item and q_item['correct_option_index'] is not None:
-                    correct_index = int(q_item['correct_option_index'])
-                elif 'user_selected_index' in q_item and q_item['user_selected_index'] is not None:
-                    correct_index = int(q_item['user_selected_index'])
-                elif 'correct_index' in q_item and q_item['correct_index'] is not None:
-                    correct_index = int(q_item['correct_index'])
-                else:
-                    # Фолбек на старый 'correct_answer' от AI
-                    correct_idx_str = str(q_item.get('correct_answer', '0'))
-                    if correct_idx_str.isdigit():
-                        correct_index = int(correct_idx_str)
-
-                # Защита от багов фронтенда: если индекс больше количества вариантов, ставим 0
-                if correct_index < 0 or correct_index >= len(options):
-                    correct_index = 0
+                # Если пришло одно число (старый формат), превращаем в массив
+                if isinstance(correct_indices, (int, str)):
+                    correct_indices = [int(correct_indices)]
+                elif not isinstance(correct_indices, list):
+                    correct_indices = []
 
                 for i, opt_text in enumerate(options):
+                    # 🔥 Проверяем наличие индекса в списке правильных
+                    is_correct = i in correct_indices
+                    
                     Choice.objects.create(
                         question=question,
                         text=str(opt_text).strip(),
-                        is_correct=(i == correct_index)
+                        is_correct=is_correct
                     )
 
             return Response({"message": "Тест сохранен", "quiz_id": quiz.id}, status=201)

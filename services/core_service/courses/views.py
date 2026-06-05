@@ -924,3 +924,12 @@ def promo_slots(request):
     used = B2BLead.objects.count()  
     remaining = max(0, total - used)
     return Response({'remaining': remaining})
+
+
+@api_view(['GET'])
+def system_stats(request):
+    return Response({
+        "total_users": User.objects.count(),
+        "total_courses": Course.objects.count(),
+        "total_certificates": Certificate.objects.count()
+    })
