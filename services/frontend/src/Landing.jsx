@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
     ArrowRight, ShieldCheck, Award, CheckCircle, 
-    ChevronRight, Users, BookOpen, PlayCircle
+    ChevronRight, Users, BookOpen, PlayCircle, Star,
+    Zap, Trophy, Clock
 } from 'lucide-react';
-import api from './api'; // Проверь правильность пути до твоего файла api.js
+import api from './api';
 
-// Компонент визуализации (оставляем, он красивый и не мешает)
 function HeroVisual() {
     const { t } = useTranslation();
     const MODULES = [
@@ -19,11 +19,15 @@ function HeroVisual() {
 
     return (
         <div className="relative w-full max-w-md" style={{ paddingTop: 16, paddingRight: 20, paddingBottom: 20 }}>
-            <div className="lms-hero-card bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/70 p-6 relative z-10">
+            <div className="lms-hero-card rounded-3xl border border-base-200 shadow-2xl p-6 relative z-10 bg-base-100">
                 <div className="flex items-center justify-between mb-5">
                     <div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{t('landing.heroVisual.progress', { defaultValue: 'Прогресс' })}</p>
-                        <p className="text-base font-extrabold text-slate-900">{t('landing.heroVisual.course', { defaultValue: 'Основы IT' })}</p>
+                        <p className="text-[11px] font-bold text-base-content/40 uppercase tracking-wider mb-0.5">
+                            {t('landing.heroVisual.progress', { defaultValue: 'Прогресс' })}
+                        </p>
+                        <p className="text-base font-extrabold text-base-content">
+                            {t('landing.heroVisual.course', { defaultValue: 'Основы IT' })}
+                        </p>
                     </div>
                     <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                         <ShieldCheck size={18} className="text-white" />
@@ -31,20 +35,20 @@ function HeroVisual() {
                 </div>
                 <div className="mb-5">
                     <div className="flex justify-between text-xs font-semibold mb-2">
-                        <span className="text-slate-500">{t('landing.heroVisual.module', { defaultValue: 'Модуль 3 из 4' })}</span>
+                        <span className="text-base-content/50">{t('landing.heroVisual.module', { defaultValue: 'Модуль 3 из 4' })}</span>
                         <span className="text-blue-600 font-bold">75%</span>
                     </div>
-                    <div className="lms-hero-progress-bg h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-base-200 rounded-full overflow-hidden">
                         <div className="h-full w-[75%] bg-blue-600 rounded-full"></div>
                     </div>
                 </div>
                 <div className="space-y-2">
                     {MODULES.map((m, i) => (
-                        <div key={i} className={`lms-hero-module${m.active ? '-active' : ''} flex items-center gap-3 p-3 rounded-xl ${m.active ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}>
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${m.done ? 'bg-emerald-500' : m.active ? 'bg-blue-600' : 'bg-slate-200'}`}>
+                        <div key={i} className={`flex items-center gap-3 p-3 rounded-xl ${m.active ? 'bg-blue-50 border border-blue-100' : 'bg-base-200/50'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${m.done ? 'bg-emerald-500' : m.active ? 'bg-blue-600' : 'bg-base-300'}`}>
                                 {m.done ? <CheckCircle size={13} className="text-white" /> : <span className="w-2 h-2 rounded-full bg-white"></span>}
                             </div>
-                            <span className={`text-sm font-semibold flex-1 ${m.active ? 'text-blue-700' : m.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                            <span className={`text-sm font-semibold flex-1 ${m.active ? 'text-blue-700' : m.done ? 'text-base-content/30 line-through' : 'text-base-content/70'}`}>
                                 {m.title}
                             </span>
                         </div>
@@ -52,13 +56,17 @@ function HeroVisual() {
                 </div>
             </div>
             
-            <div className="lms-float-card absolute -bottom-2 -left-4 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
+            <div className="absolute -bottom-2 -left-4 bg-base-100 border border-base-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
                     <Users size={16} className="text-emerald-600" />
                 </div>
                 <div>
-                    <p className="text-[10px] text-slate-400 font-semibold">{t('landing.heroVisual.onlineLabel', { defaultValue: 'Сейчас на платформе' })}</p>
-                    <p className="text-sm font-extrabold text-slate-900">12 {t('landing.heroVisual.onlineCount', { defaultValue: 'студентов' })}</p>
+                    <p className="text-[10px] text-base-content/40 font-semibold">
+                        {t('landing.heroVisual.onlineLabel', { defaultValue: 'Сейчас на платформе' })}
+                    </p>
+                    <p className="text-sm font-extrabold text-base-content">
+                        12 {t('landing.heroVisual.onlineCount', { defaultValue: 'студентов' })}
+                    </p>
                 </div>
             </div>
         </div>
@@ -68,17 +76,13 @@ function HeroVisual() {
 export default function Landing() {
     const { t } = useTranslation();
     const [email, setEmail] = useState('');
-    
-    // Стейты для реальных данных
     const [stats, setStats] = useState({ users: 0, courses: 0, certificates: 0 });
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Подтягиваем статистику и популярные курсы при загрузке
     useEffect(() => {
         Promise.all([
             api.get('courses/system-stats/').catch(() => ({ data: { total_users: 12, total_courses: 3, total_certificates: 5 }})),
-            // Запрашиваем 4 курса для главной страницы
             api.get('courses/?limit=4').catch(() => ({ data: [] }))
         ]).then(([statsRes, coursesRes]) => {
             setStats({
@@ -86,19 +90,25 @@ export default function Landing() {
                 courses: statsRes.data.total_courses || 0,
                 certificates: statsRes.data.total_certificates || 0
             });
-            // У Django DRF данные обычно лежат в results, если есть пагинация
             setCourses(coursesRes.data.results || coursesRes.data || []);
             setLoading(false);
         });
     }, []);
 
-    // Динамический массив статистики
     const DYNAMIC_STATS = [
-        { value: stats.users, label: t('landing.stats.users', { defaultValue: 'Активных студентов' }) },
-        { value: stats.courses, label: t('landing.stats.courses', { defaultValue: 'Доступных курсов' }) },
-        { value: stats.certificates, label: t('landing.stats.certs', { defaultValue: 'Выдано сертификатов' }) },
-        { value: '4.9 ★', label: t('landing.stats.rating', { defaultValue: 'Средняя оценка' }) },
+        { value: stats.users, label: t('landing.stats.users', { defaultValue: 'Активных студентов' }), icon: <Users size={20} />, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { value: stats.courses, label: t('landing.stats.courses', { defaultValue: 'Доступных курсов' }), icon: <BookOpen size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { value: stats.certificates, label: t('landing.stats.certs', { defaultValue: 'Выдано сертификатов' }), icon: <Trophy size={20} />, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { value: '4.9 ★', label: t('landing.stats.rating', { defaultValue: 'Средняя оценка' }), icon: <Star size={20} />, color: 'text-purple-600', bg: 'bg-purple-50' },
     ];
+
+    const getModulesCount = (course) => {
+        return course.lessons_count ?? course.modules_count ?? course.lessons?.length ?? course.sections_count ?? 0;
+    };
+
+    const getImageSrc = (course) => {
+        return course.cover_image || course.image || course.image_url || course.thumbnail || null;
+    };
 
     return (
         <>
@@ -108,71 +118,74 @@ export default function Landing() {
                 .lms-fade-d1 { animation: lmsFade 0.7s 0.12s cubic-bezier(0.16,1,0.3,1) both; }
                 .lms-fade-d2 { animation: lmsFade 0.7s 0.22s cubic-bezier(0.16,1,0.3,1) both; }
                 @keyframes lmsFade { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
-                
-                /* Оставляем только нужные стили для Dark Mode */
-                [data-theme='dark'] .lms-root { background-color:#111318; color:#e2e8f0; }
-                [data-theme='dark'] .lms-section-white { background-color:#111318 !important; }
-                [data-theme='dark'] .lms-hero { background:linear-gradient(to bottom,#16181f,#111318) !important; }
-                [data-theme='dark'] .lms-root h1, [data-theme='dark'] .lms-root h2 { color:#f1f5f9 !important; }
-                [data-theme='dark'] .lms-root p { color:#64748b; }
-                [data-theme='dark'] .lms-stat-val { color:#f1f5f9 !important; }
-                [data-theme='dark'] .lms-card { background-color:#1e2028 !important; border-color:rgba(255,255,255,0.08) !important; }
-                [data-theme='dark'] .lms-card:hover { border-color:rgba(59,130,246,0.5) !important; }
-                [data-theme='dark'] .lms-hero-card, [data-theme='dark'] .lms-float-card { background-color:#1e2028 !important; border-color:rgba(255,255,255,0.08) !important; }
-                [data-theme='dark'] .lms-hero-module { background-color:rgba(255,255,255,0.05) !important; }
-                [data-theme='dark'] .lms-hero-module-active { background-color:rgba(59,130,246,0.15) !important; border-color:rgba(59,130,246,0.3) !important; }
-                [data-theme='dark'] .lms-border-t { border-color:rgba(255,255,255,0.07) !important; }
             `}</style>
 
-            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="lms-root -mx-4 lg:-mx-8 -mt-4 lg:-mt-8">
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="-mx-4 lg:-mx-8 -mt-4 lg:-mt-8">
 
                 {/* ── HERO ── */}
-                <section className="lms-hero lms-section-white pt-20 pb-28 px-6 md:px-10 bg-gradient-to-b from-slate-50/70 to-white">
+                <section className="pt-20 pb-16 px-6 md:px-10 bg-base-200/40">
                     <div className="max-w-7xl mx-auto">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center" style={{ overflow: "visible" }}>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
                             <div className="lms-fade">
-                                <h1 className="text-4xl md:text-5xl xl:text-[3.4rem] font-extrabold tracking-tight leading-[1.1] mb-5 text-slate-900">
-                                    {t('landing.hero.title1', { defaultValue: 'Обучайся новому' })}<br />
-                                    <span className="text-blue-600">{t('landing.hero.title2', { defaultValue: 'вместе с SaqBol' })}</span>
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-6 border border-blue-100">
+                                    <Zap size={12} /> {t('landing.hero.badge', { defaultValue: 'Платформа нового поколения' })}
+                                </div>
+                                <h1 className="text-4xl md:text-5xl xl:text-[3.4rem] font-extrabold tracking-tight leading-[1.1] mb-5 text-base-content">
+                                    {t('landing.hero.title1', { defaultValue: 'Обучите команду' })}<br />
+                                    <span className="text-blue-600">{t('landing.hero.title2', { defaultValue: 'цифровой безопасности' })}</span>
                                 </h1>
-                                <p className="text-lg text-slate-500 font-medium leading-relaxed mb-8 max-w-md">
-                                    {t('landing.hero.desc', { defaultValue: 'Современная платформа для прохождения курсов, тестирования и получения сертификатов.' })}
+                                <p className="text-lg text-base-content/60 font-medium leading-relaxed mb-8 max-w-md">
+                                    {t('landing.hero.desc', { defaultValue: 'Интерактивные курсы, ИИ-тестирование и реальные сценарии атак. Для любого сотрудника — от бухгалтера до сисадмина.' })}
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-3 mb-9">
+                                <div className="flex flex-col sm:flex-row gap-3">
                                     <Link to="/courses" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors text-sm shadow-lg shadow-blue-200">
-                                        {t('landing.hero.btnCatalog', { defaultValue: 'Смотреть курсы' })} <ArrowRight size={16} />
+                                        {t('landing.hero.btnCatalog', { defaultValue: 'Посмотреть каталог' })} <ArrowRight size={16} />
                                     </Link>
-                                    <Link to="/corporate" className="lms-btn-outline inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white border-2 border-slate-200 hover:border-blue-300 text-slate-800 font-bold rounded-xl transition-colors text-sm">
+                                    <Link to="/corporate" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-base-100 border-2 border-base-300 hover:border-blue-300 text-base-content font-bold rounded-xl transition-colors text-sm">
                                         {t('landing.hero.btnCorporate', { defaultValue: 'Корпоративный сектор' })}
                                     </Link>
                                 </div>
                             </div>
-                            <div className="lms-fade-d2 hidden lg:flex justify-end items-center" style={{ paddingTop: 16, paddingRight: 20 }}>
+
+                            <div className="lms-fade-d2 hidden lg:flex justify-end items-center">
                                 <HeroVisual />
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        {/* ── ДИНАМИЧЕСКАЯ СТАТИСТИКА ── */}
-                        <div className="lms-border-t mt-16 pt-10 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-8 lms-fade-d1">
+                {/* ── СТАТИСТИКА ── */}
+                <section className="py-12 px-6 md:px-10 bg-base-100 border-y border-base-200">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lms-fade-d1">
                             {DYNAMIC_STATS.map((s, i) => (
-                                <div key={i}>
-                                    <p className="lms-stat-val text-3xl font-extrabold text-slate-900 mb-1">
-                                        {loading ? <span className="loading loading-dots loading-sm"></span> : s.value}
-                                    </p>
-                                    <p className="lms-mute text-sm text-slate-500 font-medium">{s.label}</p>
+                                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-base-200/50 border border-base-200">
+                                    <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center ${s.color} shrink-0`}>
+                                        {s.icon}
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-extrabold text-base-content leading-none mb-1">
+                                            {loading ? <span className="loading loading-dots loading-xs"></span> : s.value}
+                                        </p>
+                                        <p className="text-xs text-base-content/50 font-medium">{s.label}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                {/* ── РЕАЛЬНЫЕ КУРСЫ ── */}
-                <section className="lms-section-white py-20 px-6 md:px-10 bg-slate-50 dark:bg-[#16181f]">
+                {/* ── КУРСЫ ── */}
+                <section className="py-20 px-6 md:px-10 bg-base-200/40">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-end justify-between mb-10">
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">{t('landing.courses.sub', { defaultValue: 'Обучение' })}</p>
-                                <h2 className="text-3xl font-extrabold tracking-tight">{t('landing.courses.title', { defaultValue: 'Популярные курсы' })}</h2>
+                                <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">
+                                    {t('landing.courses.sub', { defaultValue: 'Обучение' })}
+                                </p>
+                                <h2 className="text-3xl font-extrabold tracking-tight text-base-content">
+                                    {t('landing.courses.title', { defaultValue: 'Популярные курсы' })}
+                                </h2>
                             </div>
                             <Link to="/courses" className="hidden md:flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors">
                                 {t('landing.courses.all', { defaultValue: 'Все курсы' })} <ChevronRight size={16} />
@@ -180,27 +193,65 @@ export default function Landing() {
                         </div>
                         
                         {loading ? (
-                            <div className="flex justify-center py-10"><span className="loading loading-spinner text-blue-600 w-10"></span></div>
+                            <div className="flex justify-center py-10">
+                                <span className="loading loading-spinner text-blue-600 w-10"></span>
+                            </div>
                         ) : courses.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {courses.map((course) => {
-                                    // Умная проверка картинки (как бы она ни называлась на бэкенде)
-                                    const imgSource = course.image || course.image_url || course.thumbnail || course.cover_image;
-                                    
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                                {courses.slice(0, 4).map((course) => {
+                                    const imgSrc = getImageSrc(course);
+                                    const modulesCount = getModulesCount(course);
+
                                     return (
-                                        <Link to={`/courses/${course.id}`} key={course.id} className="lms-card bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col">
-                                            <div className="aspect-video bg-slate-100 overflow-hidden relative">
-                                                {imgSource ? (
-                                                    <img src={imgSource} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        <Link 
+                                            to={`/courses/${course.id}`} 
+                                            key={course.id} 
+                                            className="group flex flex-col bg-base-100 border border-base-200 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-base-300/60 hover:-translate-y-1 transition-all duration-300"
+                                        >
+                                            <div className="aspect-video bg-base-200 overflow-hidden relative">
+                                                {imgSrc ? (
+                                                    <img 
+                                                        src={imgSrc} 
+                                                        alt={course.title} 
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                                    />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-200"><PlayCircle size={32} /></div>
+                                                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/20">
+                                                        <PlayCircle size={32} />
+                                                        <span className="text-xs font-semibold">{t('landing.courses.noCover', { defaultValue: 'Нет обложки' })}</span>
+                                                    </div>
+                                                )}
+                                                {course.price === 0 || course.price === '0.00' || !course.price ? (
+                                                    <span className="absolute top-3 left-3 px-2.5 py-1 bg-emerald-500 text-white text-[10px] font-black rounded-lg shadow-sm">
+                                                        {t('landing.courses.free', { defaultValue: 'Бесплатно' })}
+                                                    </span>
+                                                ) : (
+                                                    <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-sm">
+                                                        {course.price} ₸
+                                                    </span>
                                                 )}
                                             </div>
+
                                             <div className="p-5 flex flex-col flex-1">
-                                                <h3 className="font-bold text-slate-900 mb-2 line-clamp-2">{course.title}</h3>
-                                                <div className="mt-auto flex items-center justify-between text-xs text-slate-500 font-medium pt-4 border-t border-slate-100">
-                                                    <span className="flex items-center gap-1"><BookOpen size={14} /> Модулей: {course.modules_count || 0}</span>
-                                                    <span className="flex items-center gap-1"><Users size={14} /> {course.students_count || 0}</span>
+                                                <h3 className="font-bold text-base-content mb-3 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">
+                                                    {course.title}
+                                                </h3>
+                                                
+                                                {course.description && (
+                                                    <p className="text-xs text-base-content/50 line-clamp-2 mb-3 leading-relaxed">
+                                                        {course.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="mt-auto flex items-center justify-between pt-4 border-t border-base-200">
+                                                    <span className="flex items-center gap-1.5 text-xs text-base-content/50 font-semibold">
+                                                        <BookOpen size={13} className="text-base-content/30" />
+                                                        {modulesCount} {modulesCount === 1 ? 'раздел' : modulesCount < 5 ? 'раздела' : 'разделов'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1.5 text-xs text-base-content/50 font-semibold">
+                                                        <Users size={13} className="text-base-content/30" />
+                                                        {course.students_count || course.enrolled_count || 0}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </Link>
@@ -208,20 +259,50 @@ export default function Landing() {
                                 })}
                             </div>
                         ) : (
-                            <div className="text-center py-10 bg-white rounded-2xl border border-slate-200">
-                                <p className="text-slate-500 font-medium">Курсы скоро появятся!</p>
+                            <div className="text-center py-16 bg-base-100 rounded-2xl border border-base-200">
+                                <BookOpen size={32} className="text-base-content/20 mx-auto mb-3" />
+                                <p className="text-base-content/50 font-medium">{t('landing.courses.empty', { defaultValue: 'Курсы скоро появятся!' })}</p>
                             </div>
                         )}
-                        
+
                         <div className="mt-8 flex justify-center md:hidden">
-                            <Link to="/courses" className="btn btn-outline border-slate-300 text-slate-700 w-full rounded-xl">
+                            <Link to="/courses" className="btn btn-outline border-base-300 text-base-content w-full rounded-xl">
                                 {t('landing.courses.all', { defaultValue: 'Все курсы' })}
                             </Link>
                         </div>
                     </div>
                 </section>
 
-                {/* ── CTA (ОСТАВЛЯЕМ, ЧТОБЫ БЫЛ КРАСИВЫЙ ФИНАЛ) ── */}
+                {/* ── ПРЕИМУЩЕСТВА ── */}
+                <section className="py-20 px-6 md:px-10 bg-base-100">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-12">
+                            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">
+                                {t('landing.features.sub', { defaultValue: 'Почему SaqBol' })}
+                            </p>
+                            <h2 className="text-3xl font-extrabold text-base-content">
+                                {t('landing.features.title', { defaultValue: 'Всё что нужно для обучения' })}
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                                { icon: <Zap size={24} />, color: 'text-blue-600', bg: 'bg-blue-50', title: t('landing.features.f1title', { defaultValue: 'Интерактивные симуляции' }), desc: t('landing.features.f1desc', { defaultValue: 'AI-сценарии для отработки навыков в безопасной среде' }) },
+                                { icon: <Trophy size={24} />, color: 'text-amber-600', bg: 'bg-amber-50', title: t('landing.features.f2title', { defaultValue: 'Сертификаты' }), desc: t('landing.features.f2desc', { defaultValue: 'Получайте официальные сертификаты после прохождения курсов' }) },
+                                { icon: <Clock size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-50', title: t('landing.features.f3title', { defaultValue: 'Учитесь в своём темпе' }), desc: t('landing.features.f3desc', { defaultValue: 'Доступ к материалам 24/7, проходите курсы в удобное время' }) },
+                            ].map((f, i) => (
+                                <div key={i} className="p-6 rounded-2xl border border-base-200 bg-base-200/30 hover:shadow-lg transition-all">
+                                    <div className={`w-12 h-12 rounded-2xl ${f.bg} ${f.color} flex items-center justify-center mb-4`}>
+                                        {f.icon}
+                                    </div>
+                                    <h3 className="font-bold text-base-content mb-2">{f.title}</h3>
+                                    <p className="text-sm text-base-content/50 leading-relaxed">{f.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ── CTA ── */}
                 <section className="py-24 px-6 md:px-10 bg-blue-600">
                     <div className="max-w-2xl mx-auto text-center">
                         <h2 className="text-4xl font-extrabold text-white tracking-tight mb-4">
@@ -236,7 +317,7 @@ export default function Landing() {
                                 placeholder={t('landing.cta.placeholder', { defaultValue: 'Ваш Email' })}
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
-                                className="lms-cta-input flex-1 px-5 py-4 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none bg-white"
+                                className="flex-1 px-5 py-4 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none bg-white"
                             />
                             <Link to={`/register?email=${email}`} className="px-6 py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-sm whitespace-nowrap transition-colors">
                                 {t('landing.cta.btn', { defaultValue: 'Создать аккаунт' })}
