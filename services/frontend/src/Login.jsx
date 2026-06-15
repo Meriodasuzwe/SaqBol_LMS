@@ -40,34 +40,34 @@ function Login({ onLoginSuccess }) {
     };
 
     const googleLogin = useGoogleLogin({
-    flow: 'implicit',
-    onSuccess: async (tokenResponse) => {
-        setLoading(true);
-        setError('');
-        try {
-            const response = await api.post('users/google-login/', {
-                credential: tokenResponse.access_token,
-            });
-            localStorage.setItem('access', response.data.access);
-            localStorage.setItem('refresh', response.data.refresh);
-            toast.success(isNewUser
-                ? `${t('auth.welcomeNew')}, ${response.data.username}!`
-                : `${t('auth.welcomeBack')}, ${response.data.username}!`
-            );
-            onLoginSuccess();
-            navigate('/courses');
-        } catch (err) {
-            console.error(err);
+        flow: 'implicit',
+        onSuccess: async (tokenResponse) => {
+            setLoading(true);
+            setError('');
+            try {
+                const response = await api.post('users/google-login/', {
+                    credential: tokenResponse.access_token,
+                });
+                localStorage.setItem('access', response.data.access);
+                localStorage.setItem('refresh', response.data.refresh);
+                toast.success(isNewUser
+                    ? `${t('auth.welcomeNew')}, ${response.data.username}!`
+                    : `${t('auth.welcomeBack')}, ${response.data.username}!`
+                );
+                onLoginSuccess();
+                navigate('/courses');
+            } catch (err) {
+                console.error(err);
+                setError(t('auth.errorGoogle'));
+                toast.error(t('auth.errorGoogleToast'));
+            } finally {
+                setLoading(false);
+            }
+        },
+        onError: () => {
             setError(t('auth.errorGoogle'));
             toast.error(t('auth.errorGoogleToast'));
-        } finally {
-            setLoading(false);
-        }
-    },
-    onError: () => {
-        setError(t('auth.errorGoogle'));
-        toast.error(t('auth.errorGoogleToast'));
-    },
+        },
     });
 
     const handleTelegramResponse = async (tgData) => {
@@ -143,13 +143,12 @@ function Login({ onLoginSuccess }) {
 
                 .tg-hidden-wrap {
                     position: absolute;
-                    inset: 0;
-                    opacity: 0;
-                    overflow: hidden;
-                    border-radius: 50%;
-                    cursor: pointer;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    opacity: 0.01;
+                    z-index: 5;
                 }
-                .tg-hidden-wrap iframe { transform: scale(3); }
 
                 [data-theme='dark'] .auth-page  { background-color: #111318 !important; }
                 [data-theme='dark'] .auth-card  { background-color: #1e2028 !important; border-color: rgba(255,255,255,0.08) !important; box-shadow: 0 24px 64px rgba(0,0,0,0.5) !important; }
@@ -360,7 +359,7 @@ function Login({ onLoginSuccess }) {
                                 className="social-icon-btn"
                                 disabled={loading}
                                 title="Telegram"
-                                style={{ background: '#29aae1', borderColor: '#29aae1', width: 52, height: 52 }}
+                                style={{ background: '#29aae1', borderColor: '#29aae1', width: 52, height: 52, position: 'relative', zIndex: 1, pointerEvents: 'none' }}
                                 onMouseEnter={e => { e.currentTarget.style.background = '#1a96cc'; e.currentTarget.style.borderColor = '#1a96cc'; }}
                                 onMouseLeave={e => { e.currentTarget.style.background = '#29aae1'; e.currentTarget.style.borderColor = '#29aae1'; }}
                             >
@@ -372,8 +371,9 @@ function Login({ onLoginSuccess }) {
                                 <TelegramLoginButton
                                     dataOnauth={handleTelegramResponse}
                                     botName="saqbol_authorization_bot"
-                                    buttonSize="large"
+                                    buttonSize="small"
                                     usePic={false}
+                                    cornerRadius={20}
                                 />
                             </div>
                         </div>
