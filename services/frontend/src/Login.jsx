@@ -40,33 +40,34 @@ function Login({ onLoginSuccess }) {
     };
 
     const googleLogin = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            setLoading(true);
-            setError('');
-            try {
-                const response = await api.post('users/google-login/', {
-                    access_token: tokenResponse.access_token,
-                });
-                localStorage.setItem('access', response.data.access);
-                localStorage.setItem('refresh', response.data.refresh);
-                toast.success(isNewUser
-                    ? `${t('auth.welcomeNew')}, ${response.data.username}!`
-                    : `${t('auth.welcomeBack')}, ${response.data.username}!`
-                );
-                onLoginSuccess();
-                navigate('/courses');
-            } catch (err) {
-                console.error(err);
-                setError(t('auth.errorGoogle'));
-                toast.error(t('auth.errorGoogleToast'));
-            } finally {
-                setLoading(false);
-            }
-        },
-        onError: () => {
+    flow: 'implicit',
+    onSuccess: async (tokenResponse) => {
+        setLoading(true);
+        setError('');
+        try {
+            const response = await api.post('users/google-login/', {
+                credential: tokenResponse.access_token,
+            });
+            localStorage.setItem('access', response.data.access);
+            localStorage.setItem('refresh', response.data.refresh);
+            toast.success(isNewUser
+                ? `${t('auth.welcomeNew')}, ${response.data.username}!`
+                : `${t('auth.welcomeBack')}, ${response.data.username}!`
+            );
+            onLoginSuccess();
+            navigate('/courses');
+        } catch (err) {
+            console.error(err);
             setError(t('auth.errorGoogle'));
             toast.error(t('auth.errorGoogleToast'));
-        },
+        } finally {
+            setLoading(false);
+        }
+    },
+    onError: () => {
+        setError(t('auth.errorGoogle'));
+        toast.error(t('auth.errorGoogleToast'));
+    },
     });
 
     const handleTelegramResponse = async (tgData) => {
@@ -367,7 +368,6 @@ function Login({ onLoginSuccess }) {
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.93c-.12.56-.46.7-.92.43l-2.56-1.89-1.23 1.19c-.14.13-.26.24-.52.24l.19-2.64 4.83-4.36c.21-.19-.05-.29-.32-.1L7.7 14.16l-2.52-.79c-.55-.17-.56-.55.11-.81l9.85-3.8c.46-.17.86.11.5.24z" fill="white"/>
                                 </svg>
                             </button>
-                            {/* Невидимая TG кнопка поверх */}
                             <div className="tg-hidden-wrap">
                                 <TelegramLoginButton
                                     dataOnauth={handleTelegramResponse}

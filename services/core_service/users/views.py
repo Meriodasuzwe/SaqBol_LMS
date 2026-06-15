@@ -173,33 +173,48 @@ class ResendVerificationView(generics.GenericAPIView):
 # ---------------------------
 # Авторизация через Google (OAuth 2.0)
 # ---------------------------
+import requests as http_requests
+
 class GoogleLoginView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        token = request.data.get('credential')
-        if not token:
+        access_token = request.data.get('credential')
+        if not access_token:
             return Response({'error': 'Токен не предоставлен'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        try:
-            # Наш Client ID из Google Cloud Console
-            CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
-            
-            # Проверка подлинности токена через сервера Google
-            idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
 
-            email = idinfo['email']
+        try:
+            # Проверяем access_token и получаем данные пользователя через Google API
+            userinfo_resp = http_requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'},
+                timeout=5,
+            )
+
+            if userinfo_resp.status_code != 200:
+                logger.error(f"Google userinfo error: {userinfo_resp.status_code} {userinfo_resp.text}")
+                return Response({'error': 'Недействительный токен Google'}, status=status.HTTP_400_BAD_REQUEST)
+
+            idinfo = userinfo_resp.json()
+
+            email = idinfo.get('email')
+            if not email:
+                return Response({'error': 'Не удалось получить email из Google'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Дополнительно проверяем, что email подтверждён Google
+            if not idinfo.get('email_verified', False):
+                return Response({'error': 'Email не подтверждён в Google'}, status=status.HTTP_400_BAD_REQUEST)
+
             first_name = idinfo.get('given_name', '')
             last_name = idinfo.get('family_name', '')
 
             # Ищем пользователя в нашей БД
             user = User.objects.filter(email=email).first()
-            
+
             # Если такого юзера нет, тихо создаем его
             if not user:
                 base_username = email.split('@')[0]
                 username = base_username
-                # Если такой username уже есть, добавляем случайные символы
                 if User.objects.filter(username=username).exists():
                     username = f"{base_username}_{uuid.uuid4().hex[:5]}"
 
@@ -209,12 +224,11 @@ class GoogleLoginView(generics.GenericAPIView):
                     first_name=first_name,
                     last_name=last_name,
                     role='student',
-                    is_active=True # Аккаунты от Google считаются подтвержденными
+                    is_active=True
                 )
-                user.set_unusable_password() # Блокируем вход по обычному паролю
+                user.set_unusable_password()
                 user.save()
 
-            # Выдаем пользователю наши стандартные токены доступа к системе
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -224,9 +238,9 @@ class GoogleLoginView(generics.GenericAPIView):
                 'message': 'Успешный вход через Google'
             }, status=status.HTTP_200_OK)
 
-        except ValueError as e:
-            logger.error(f"Ошибка проверки токена Google: {str(e)}")
-            return Response({'error': 'Недействительный токен Google'}, status=status.HTTP_400_BAD_REQUEST)
+        except http_requests.RequestException as e:
+            logger.error(f"Ошибка запроса к Google: {str(e)}")
+            return Response({'error': 'Не удалось проверить токен Google'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ---------------------------
 # Обычный логин (по email/логину и паролю)
