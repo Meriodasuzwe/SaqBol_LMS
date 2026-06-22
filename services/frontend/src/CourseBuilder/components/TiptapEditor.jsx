@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -8,6 +8,9 @@ import TiptapLink from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
+import Mathematics from '@tiptap/extension-mathematics';
+import 'katex/dist/katex.min.css';
+import katex from 'katex';
 
 // РАСШИРЕНИЯ ДЛЯ ТАБЛИЦ И КОДА
 import { Table } from '@tiptap/extension-table';
@@ -19,7 +22,6 @@ import { CodeBlock } from '@tiptap/extension-code-block';
 import { toast } from 'react-toastify';
 import api from '../../api';
 
-// 🔥 ФИКС: Оставили только 100% безопасные базовые иконки
 import { 
     Bold, Italic, Code, TerminalSquare, 
     AlignLeft, AlignCenter, AlignJustify, Heading2,
@@ -27,9 +29,81 @@ import {
     Table as TableIcon, Plus, Minus, Trash2
 } from 'lucide-react';
 
+// Иконка для формулы (sigma)
+const SigmaIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 4H6l6 8-6 8h12" />
+    </svg>
+);
+
+// Шаблоны и символы для быстрой вставки
+const MATH_SYMBOLS = [
+    {
+        category: 'Реляционная алгебра',
+        items: [
+            { label: 'Выборка', sym: '\\sigma_{условие}(R)', desc: 'σ — WHERE' },
+            { label: 'Проекция', sym: '\\pi_{col1,col2}(R)', desc: 'π — SELECT col' },
+            { label: 'Соединение', sym: 'R \\bowtie S', desc: '⋈ — JOIN' },
+            { label: 'Объединение', sym: '\\cup', desc: '∪ — UNION' },
+            { label: 'Пересечение', sym: '\\cap', desc: '∩ — INTERSECT' },
+            { label: 'Разность', sym: '\\setminus', desc: '— EXCEPT' },
+        ]
+    },
+    {
+        category: 'Арифметика',
+        items: [
+            { label: 'Дробь', sym: '\\frac{a}{b}', desc: 'a/b' },
+            { label: 'Степень', sym: 'x^{n}', desc: 'xⁿ' },
+            { label: 'Индекс', sym: 'a_{i}', desc: 'aᵢ' },
+            { label: 'Корень', sym: '\\sqrt{x}', desc: '√x' },
+            { label: 'Корень n', sym: '\\sqrt[n]{x}', desc: 'ⁿ√x' },
+            { label: 'Сумма', sym: '\\sum_{i=1}^{n} x_i', desc: 'Σ' },
+            { label: 'Произведение', sym: '\\prod_{i=1}^{n} x_i', desc: 'Π' },
+        ]
+    },
+    {
+        category: 'Символы',
+        items: [
+            { label: '±', sym: '\\pm', desc: 'плюс-минус' },
+            { label: '≤', sym: '\\leq', desc: 'меньше или равно' },
+            { label: '≥', sym: '\\geq', desc: 'больше или равно' },
+            { label: '≠', sym: '\\neq', desc: 'не равно' },
+            { label: '∞', sym: '\\infty', desc: 'бесконечность' },
+            { label: '→', sym: '\\rightarrow', desc: 'стрелка' },
+            { label: '∈', sym: '\\in', desc: 'принадлежит' },
+            { label: '∅', sym: '\\emptyset', desc: 'пустое множество' },
+        ]
+    },
+    {
+        category: 'Логика',
+        items: [
+            { label: 'И', sym: 'A \\land B', desc: '∧ — AND' },
+            { label: 'ИЛИ', sym: 'A \\lor B', desc: '∨ — OR' },
+            { label: 'НЕ', sym: '\\lnot A', desc: '¬ — NOT' },
+            { label: 'Следует', sym: 'A \\Rightarrow B', desc: '⇒' },
+            { label: 'Равносильно', sym: 'A \\Leftrightarrow B', desc: '⟺' },
+        ]
+    },
+];
+
 const TiptapEditor = ({ content, onChange }) => {
     const { t } = useTranslation();
     const [mediaModal, setMediaModal] = useState({ isOpen: false, type: 'image', url: '' });
+    const [mathModal, setMathModal] = useState({ isOpen: false, formula: '', isBlock: false });
+    const [showSymbols, setShowSymbols] = useState(false);
+
+    // Превью формулы
+    const mathPreview = useMemo(() => {
+        if (!mathModal.formula.trim()) return null;
+        try {
+            return katex.renderToString(mathModal.formula, { 
+                throwOnError: false, 
+                displayMode: mathModal.isBlock 
+            });
+        } catch {
+            return null;
+        }
+    }, [mathModal.formula, mathModal.isBlock]);
 
     const uploadFileToServer = async (file) => {
         const formData = new FormData();
@@ -61,13 +135,10 @@ const TiptapEditor = ({ content, onChange }) => {
             TextAlign.configure({ types: ['heading', 'paragraph'], alignments: ['left', 'center', 'justify'] }),
             Placeholder.configure({ placeholder: '...' }),
             CharacterCount.configure({ limit: 20000 }),
-            
-            
-            // ТАБЛИЦЫ
+            Mathematics,
             Table.configure({
                 resizable: true,
                 HTMLAttributes: {
-                    // 🔥 Убрали класс .table от DaisyUI, добавили жесткие границы и table-fixed
                     class: 'w-full table-fixed border-collapse border-2 border-base-300 my-6 bg-base-100',
                 },
             }),
@@ -80,8 +151,6 @@ const TiptapEditor = ({ content, onChange }) => {
             TableCell.configure({ 
                 HTMLAttributes: { class: 'p-4 border-2 border-base-300 text-base-content align-top min-w-[100px]' } 
             }),
-            
-            // БЛОК КОДА
             CodeBlock.configure({
                 HTMLAttributes: {
                     class: 'bg-slate-900 text-slate-50 p-5 rounded-xl font-mono text-sm my-6 overflow-x-auto shadow-inner',
@@ -140,6 +209,24 @@ const TiptapEditor = ({ content, onChange }) => {
         } else toast.update(toastId, { render: t('builder.editor.uploadError'), type: "error", isLoading: false, autoClose: 3000 });
     };
 
+    // Вставка формулы через модалку
+    const handleMathSubmit = () => {
+        if (!editor || !mathModal.formula.trim()) return;
+        const formula = mathModal.formula.trim();
+        if (mathModal.isBlock) {
+            editor.chain().focus().insertContent({
+                type: 'blockMath',
+                attrs: { latex: formula }
+            }).run();
+        } else {
+            editor.chain().focus().insertContent({
+                type: 'inlineMath',
+                attrs: { latex: formula }
+            }).run();
+        }
+        setMathModal({ isOpen: false, formula: '', isBlock: false });
+    };
+
     if (!editor) return <div className="p-10 text-center opacity-40 font-bold">{t('builder.editor.loading')}</div>;
 
     const activeBtnClass = "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400";
@@ -170,17 +257,29 @@ const TiptapEditor = ({ content, onChange }) => {
                         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`join-item btn btn-sm btn-ghost px-3 ${editor.isActive('orderedList') ? activeBtnClass : 'text-base-content/70'}`} title={t('builder.editor.orderedList')}><ListOrdered size={16} /></button>
                     </div>
 
-                    
-                    <div className="join bg-base-100 border border-base-200 shadow-sm">
+                    <div className="join bg-base-100 border border-base-200 shadow-sm mr-1">
                         <button 
                             type="button" 
                             onMouseDown={(e) => e.preventDefault()} 
                             onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} 
-                            disabled={isTableActive} // 🔥 Блокируем кнопку, если мы уже в таблице!
+                            disabled={isTableActive}
                             className={`join-item btn btn-sm btn-ghost px-3 ${isTableActive ? 'opacity-30 cursor-not-allowed' : 'text-base-content/70 hover:text-blue-600'}`} 
                             title={t('builder.editor.insertTable')}
                         >
                             <TableIcon size={16} />
+                        </button>
+                    </div>
+
+                    {/* КНОПКА ФОРМУЛЫ */}
+                    <div className="join bg-base-100 border border-base-200 shadow-sm">
+                        <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => setMathModal({ isOpen: true, formula: '', isBlock: false })}
+                            className="join-item btn btn-sm btn-ghost px-3 text-base-content/70 hover:text-purple-600 font-bold"
+                            title="Вставить формулу (LaTeX)"
+                        >
+                            <SigmaIcon />
                         </button>
                     </div>
                 </div>
@@ -198,7 +297,7 @@ const TiptapEditor = ({ content, onChange }) => {
                 </div>
             </div>
 
-            {/* 🔥 ПАНЕЛЬ ТАБЛИЦЫ (показывается только внутри таблицы) */}
+            {/* ПАНЕЛЬ ТАБЛИЦЫ */}
             {isTableActive && (
                 <div className="flex flex-wrap items-center gap-2 p-2 bg-blue-50/50 dark:bg-blue-900/10 border-b border-base-200 animate-in slide-in-from-top-2">
                     <div className="join bg-base-100 border border-blue-200/50 shadow-sm">
@@ -226,6 +325,7 @@ const TiptapEditor = ({ content, onChange }) => {
                 </button>
             </div>
 
+            {/* МОДАЛКА МЕДИА */}
             {mediaModal.isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-base-300/80 backdrop-blur-sm p-4 animate-in fade-in">
                     <div className="bg-base-100 rounded-3xl shadow-2xl border border-base-200 w-full max-w-sm overflow-hidden animate-in zoom-in-95">
@@ -247,6 +347,95 @@ const TiptapEditor = ({ content, onChange }) => {
                         <div className="p-4 bg-base-200/50 flex gap-2 justify-end border-t border-base-200">
                             <button type="button" onClick={() => setMediaModal({ isOpen: false, type: 'image', url: '' })} className="btn btn-ghost btn-sm px-6 text-base-content/60 hover:text-base-content">{t('builder.cancel')}</button>
                             <button type="button" onClick={handleMediaSubmit} className="btn bg-blue-600 text-white hover:bg-blue-700 btn-sm px-8 shadow-md shadow-blue-600/20">{t('builder.addBtn')}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* МОДАЛКА ФОРМУЛЫ */}
+            {mathModal.isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-base-300/80 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-base-100 rounded-3xl shadow-2xl border border-base-200 w-full max-w-md overflow-hidden animate-in zoom-in-95">
+                        <div className="p-6">
+                            <h3 className="text-xl font-bold mb-1 text-base-content flex items-center gap-2">
+                                <SigmaIcon /> Вставить формулу
+                            </h3>
+                            <p className="text-sm text-base-content/50 mb-5">Введите формулу в формате LaTeX</p>
+
+                            {/* Переключатель инлайн / блок */}
+                            <div className="flex gap-2 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setMathModal(m => ({ ...m, isBlock: false }))}
+                                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${!mathModal.isBlock ? 'bg-purple-600 text-white border-purple-600' : 'bg-base-200 text-base-content/60 border-transparent'}`}
+                                >
+                                    Инлайн — внутри текста
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setMathModal(m => ({ ...m, isBlock: true }))}
+                                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${mathModal.isBlock ? 'bg-purple-600 text-white border-purple-600' : 'bg-base-200 text-base-content/60 border-transparent'}`}
+                                >
+                                    Блок — отдельная строка
+                                </button>
+                            </div>
+
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 bg-base-200 border border-base-300 rounded-xl text-sm font-mono focus:border-purple-500 outline-none transition-all mb-3"
+                                placeholder="\sigma_{condition}(Relation)"
+                                value={mathModal.formula}
+                                onChange={(e) => setMathModal(m => ({ ...m, formula: e.target.value }))}
+                                autoFocus
+                            />
+
+                            {/* ПРЕВЬЮ ФОРМУЛЫ */}
+                            {mathModal.formula.trim() && (
+                                <div className="bg-base-200/50 rounded-xl p-4 text-center border border-purple-200 dark:border-purple-800 mb-3 min-h-[56px] flex items-center justify-center">
+                                    {mathPreview ? (
+                                        <div dangerouslySetInnerHTML={{ __html: mathPreview }} />
+                                    ) : (
+                                        <span className="text-xs text-red-400 font-medium">Ошибка в формуле</span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Кнопка раскрытия */}
+                            <button
+                                type="button"
+                                onClick={() => setShowSymbols(s => !s)}
+                                className="w-full text-left text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center justify-between py-2 px-1 border-t border-base-200 mt-2"
+                            >
+                                <span>Символы и шаблоны</span>
+                                <span>{showSymbols ? '▲' : '▼'}</span>
+                            </button>
+
+                            {showSymbols && (
+                                <div className="space-y-3 max-h-52 overflow-y-auto pr-1 mt-2">
+                                    {MATH_SYMBOLS.map(group => (
+                                        <div key={group.category}>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1.5">{group.category}</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {group.items.map(item => (
+                                                    <button
+                                                        key={item.sym}
+                                                        type="button"
+                                                        onClick={() => setMathModal(m => ({ ...m, formula: m.formula + item.sym }))}
+                                                        className="px-2.5 py-1.5 bg-base-200 hover:bg-purple-100 hover:text-purple-700 rounded-lg text-xs font-mono transition-all"
+                                                        title={item.desc}
+                                                    >
+                                                        {item.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 bg-base-200/50 flex gap-2 justify-end border-t border-base-200">
+                            <button type="button" onClick={() => setMathModal({ isOpen: false, formula: '', isBlock: false })} className="btn btn-ghost btn-sm px-6 text-base-content/60 hover:text-base-content">Отмена</button>
+                            <button type="button" onClick={handleMathSubmit} className="btn bg-purple-600 text-white hover:bg-purple-700 btn-sm px-8 shadow-md shadow-purple-600/20">Вставить</button>
                         </div>
                     </div>
                 </div>

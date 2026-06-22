@@ -23,6 +23,7 @@
     "@tiptap/extension-dropcursor": "^3.20.1",
     "@tiptap/extension-image": "^3.20.1",
     "@tiptap/extension-link": "^3.20.1",
+    "@tiptap/extension-mathematics": "^3.27.1",
     "@tiptap/extension-placeholder": "^3.20.1",
     "@tiptap/extension-table": "^3.22.4",
     "@tiptap/extension-table-cell": "^3.22.4",
@@ -38,6 +39,7 @@
     "dompurify": "^3.3.1",
     "highlight.js": "^11.11.1",
     "i18next": "^26.0.4",
+    "katex": "^0.16.4",
     "lucide-react": "^0.563.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -47,7 +49,9 @@
     "react-telegram-login": "^1.1.2",
     "react-toastify": "^11.0.5",
     "recharts": "^3.8.0",
-    "rehype-highlight": "^7.0.2"
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
