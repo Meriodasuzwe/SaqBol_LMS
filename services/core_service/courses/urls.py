@@ -33,7 +33,10 @@ from .views import (
     RevokeEmployeeAccessView,
     B2BLeadDeleteView,
     system_stats,
-    ActivateInviteView
+    ActivateInviteView,
+    # 🔥 НОВЫЕ ВЬЮХИ — не забудь добавить их в views.py
+    ArchiveCourseView,
+    SubmitForReviewView,
 )
 
 urlpatterns = [
@@ -45,6 +48,10 @@ urlpatterns = [
     path('<int:course_id>/reviews/', ReviewListCreateView.as_view(), name='course-reviews'),
     path('<int:pk>/', CourseDetailView.as_view(), name='course-detail'),
     path('<int:pk>/enroll/', EnrollCourseView.as_view(), name='course-enroll'),
+
+    # 🔥 АРХИВАЦИЯ И ОТПРАВКА НА МОДЕРАЦИЮ
+    path('<int:pk>/archive/', ArchiveCourseView.as_view(), name='course-archive'),
+    path('<int:pk>/submit-review/', SubmitForReviewView.as_view(), name='course-submit-review'),
     
     # ССЫЛКА НА ОПЛАТУ STRIPE И ВЕБХУК
     path('<int:course_id>/create-checkout-session/', CreateStripeCheckoutSessionView.as_view(), name='create-checkout-session'),
@@ -63,31 +70,22 @@ urlpatterns = [
     path('reviews/<int:pk>/', ReviewDeleteView.as_view(), name='review-delete'),
 
     path('certificates/my/', MyCertificatesView.as_view(), name='my-certificates'),
-
-    # Для страницы верификации
     path('certificates/verify/<uuid:cert_id>/', VerifyCertificateView.as_view(), name='verify-certificate'),
-    
-    # Для переключения языка сертификата
     path('certificates/<uuid:cert_id>/change-language/', ChangeCertificateLanguageView.as_view(), name='change-certificate-language'),
     
     # === B2B ЗАЯВКИ И ИНВАЙТ-КОДЫ ===
     path('b2b/leads/create/', B2BLeadCreateView.as_view(), name='b2b-lead-create'),
     path('b2b/leads/', B2BLeadListView.as_view(), name='b2b-lead-list'),
     path('b2b/leads/<int:pk>/update/', B2BLeadUpdateView.as_view(), name='b2b-lead-update'),
-    
-    #
     path('b2b/leads/<int:pk>/', B2BLeadDeleteView.as_view(), name='b2b-lead-delete'),
-    
     path('b2b/dashboard/', B2BDashboardView.as_view(), name='b2b-dashboard'),
-    
-    # Маршрут для генерации кода админом в панели:
     path('b2b/leads/<int:lead_id>/generate-invite/', GenerateCorporateInviteView.as_view(), name='generate-invite'),
-    # Маршрут для активации кода студентом на странице курса:
     path('<int:course_id>/activate-invite/', ActivateInviteView.as_view(), name='activate-invite'),
     path('b2b/invites/<str:invite_code>/revoke/<int:user_id>/', RevokeEmployeeAccessView.as_view(), name='revoke-access'),
     path('courses/promo-slots/', promo_slots, name='promo-slots'),
 
     path('system-stats/', system_stats, name='system-stats'),
+
     # === МАРШРУТЫ ДЛЯ АДМИН ПАНЕЛИ (МОДЕРАЦИЯ КУРСОВ) ===
     path('admin/pending/', PendingCoursesView.as_view(), name='admin_pending_courses'),
     path('admin/<int:pk>/approve/', ApproveCourseView.as_view(), name='admin_approve_course'),

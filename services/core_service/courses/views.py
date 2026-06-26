@@ -31,6 +31,7 @@ from rest_framework.throttling import AnonRateThrottle
 User = get_user_model()
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
 
+
 # 🔥 КАСТОМНЫЙ ПЕРМИШЕН ДЛЯ РЕАЛЬНЫХ АДМИНОВ 🔥
 # Он гарантирует, что обычный учитель со статусом "is_staff" не получит права модератора
 class IsActualAdminRole(permissions.BasePermission):
@@ -71,18 +72,33 @@ class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         course = super().get_object()
-        
-        is_admin = self.request.user.is_authenticated and (getattr(self.request.user, 'role', '') == 'admin' or self.request.user.is_superuser)
+        is_admin = self.request.user.is_authenticated and (
+            getattr(self.request.user, 'role', '') == 'admin' or self.request.user.is_superuser
+        )
 
         if self.request.method in permissions.SAFE_METHODS:
-            if course.status != 'published':
-                if not self.request.user.is_authenticated or (course.teacher != self.request.user and not is_admin):
+            if course.status not in ('published', 'archived'):
+                if not self.request.user.is_authenticated or (
+                    course.teacher != self.request.user and not is_admin
+                ):
                     raise PermissionDenied("Этот курс скрыт или находится на модерации.")
             return course
 
         if course.teacher != self.request.user and not is_admin:
             raise PermissionDenied("Только преподаватель может редактировать этот курс.")
         return course
+
+    def destroy(self, request, *args, **kwargs):
+        course = self.get_object()
+        # Удалять можно только черновики и отклонённые
+        if course.status not in ('draft', 'rejected'):
+            return Response(
+                {'detail': 'Нельзя удалить курс со статусом "{}". Сначала переведите его в архив.'.format(
+                    course.get_status_display()
+                )},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class EnrollCourseView(APIView):
@@ -433,8 +449,44 @@ class PendingCoursesView(generics.ListAPIView):
     serializer_class = CourseSerializer
 
     def get_queryset(self):
-        return Course.objects.filter(status='draft')
+        return Course.objects.filter(status='review')
 
+class SubmitForReviewView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        course = get_object_or_404(Course, pk=pk)
+
+        if course.teacher != request.user:
+            raise PermissionDenied("Только автор может отправить курс на модерацию.")
+
+        if course.status not in ('draft', 'rejected'):
+            return Response(
+                {'detail': 'Курс уже отправлен или опубликован.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Минимальная валидация перед отправкой
+        if not course.lessons.exists():
+            return Response(
+                {'detail': 'Нельзя отправить пустой курс. Добавьте хотя бы один урок.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        course.status = 'review'
+        course.save()
+
+        # Уведомляем админов
+        for admin in User.objects.filter(role='admin'):
+            send_notification(
+                recipient=admin,
+                notification_type='course_submitted',
+                title='Новый курс на модерации',
+                message=f'Преподаватель {course.teacher.username} отправил курс «{course.title}» на проверку.',
+            )
+
+        return Response({'message': 'Курс отправлен на модерацию.'})
+    
 class ApproveCourseView(generics.UpdateAPIView):
     permission_classes = [IsActualAdminRole]
     queryset = Course.objects.all()
@@ -455,7 +507,26 @@ class ApproveCourseView(generics.UpdateAPIView):
         )
         return Response({"message": "Курс успешно опубликован!"})
  
- 
+class ArchiveCourseView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        course = get_object_or_404(Course, pk=pk)
+        is_admin = request.user.role == 'admin' or request.user.is_superuser
+
+        if course.teacher != request.user and not is_admin:
+            raise PermissionDenied("Только автор курса может архивировать его.")
+
+        if course.status not in ('published', 'rejected', 'draft'):
+            return Response(
+                {'detail': 'Нельзя архивировать курс с текущим статусом.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        course.status = 'archived'
+        course.save()
+        return Response({'message': 'Курс перемещён в архив.'}) 
+    
 class RejectCourseView(generics.UpdateAPIView):
     permission_classes = [IsActualAdminRole]
     queryset = Course.objects.all()

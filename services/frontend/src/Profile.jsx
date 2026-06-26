@@ -10,7 +10,7 @@ function Profile() {
     const [user, setUser] = useState(null);
     const [results, setResults] = useState([]);
     
-    // 🔥 ТЕПЕРЬ ДВА ОТДЕЛЬНЫХ СПИСКА 🔥
+    // 🔥 ДВА ОТДЕЛЬНЫХ СПИСКА 🔥
     const [learningCourses, setLearningCourses] = useState([]);
     const [teachingCourses, setTeachingCourses] = useState([]);
     
@@ -103,6 +103,44 @@ function Profile() {
             toast.error(t('profile.courseCreateError') || "Ошибка создания курса");
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    // 🔥 НОВЫЕ ФУНКЦИИ ДЛЯ УПРАВЛЕНИЯ СТАТУСАМИ КУРСА 🔥
+    
+    const handleDeleteCourse = async (id) => {
+        if (!window.confirm("Вы уверены, что хотите удалить этот курс навсегда?")) return;
+        try {
+            await api.delete(`courses/${id}/`);
+            setTeachingCourses(prev => prev.filter(c => c.id !== id));
+            toast.success("Курс успешно удален");
+        } catch (err) {
+            toast.error("Ошибка при удалении курса");
+            console.error(err);
+        }
+    };
+
+    const handleArchiveCourse = async (id) => {
+        try {
+            // Отправляем PATCH запрос для изменения статуса
+            await api.patch(`courses/${id}/`, { status: 'archived' });
+            setTeachingCourses(prev => prev.map(c => c.id === id ? { ...c, status: 'archived' } : c));
+            toast.success("Курс перемещен в архив");
+        } catch (err) {
+            toast.error("Ошибка при архивации курса");
+            console.error(err);
+        }
+    };
+
+    const handleSubmitReview = async (id) => {
+        try {
+            // Отправляем PATCH запрос для изменения статуса
+            await api.patch(`courses/${id}/`, { status: 'review' });
+            setTeachingCourses(prev => prev.map(c => c.id === id ? { ...c, status: 'review' } : c));
+            toast.success("Курс отправлен на модерацию");
+        } catch (err) {
+            toast.error("Ошибка при отправке на модерацию");
+            console.error(err);
         }
     };
 
@@ -360,21 +398,62 @@ function Profile() {
                             {teachingCourses.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     {teachingCourses.map(course => (
-                                        <div key={course.id} className="p-5 rounded-xl border border-blue-200 bg-blue-50/30 dark:bg-blue-900/10 hover:shadow-md transition-all group flex flex-col">
-                                            <div className="text-[10px] font-bold text-base-content/40 mb-2 uppercase tracking-widest">
-                                                {t(`categories.${course.category_title}`, { defaultValue: course.category_title })}
+                                        <div key={course.id} className="p-5 rounded-xl border border-blue-200 bg-blue-50/30 dark:bg-blue-900/10 hover:shadow-md transition-all group flex flex-col relative">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
+                                                    {t(`categories.${course.category_title}`, { defaultValue: course.category_title })}
+                                                </div>
+                                                {/* Бейдж статуса */}
+                                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                                    course.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 
+                                                    course.status === 'review' ? 'bg-amber-100 text-amber-700' :
+                                                    course.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                    'bg-base-200 text-base-content/60'
+                                                }`}>
+                                                    {course.status || 'draft'}
+                                                </span>
                                             </div>
+                                            
                                             <h4 className="font-semibold mb-4 line-clamp-2 text-sm group-hover:text-blue-600 transition-colors">
                                                 {course.title}
                                             </h4>
-                                            <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
-                                                <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
-                                                    Смотреть курс
-                                                </Link>
-                                                {/* Кнопка "Редактор" теперь 100% будет здесь, и только здесь! */}
-                                                <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 bg-blue-600 text-white rounded shadow-sm hover:bg-blue-700 transition-colors">
-                                                    {t('profile.editorBtn') || 'Редактор'}
-                                                </Link>
+                                            
+                                            <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-base-200">
+                                                <div className="flex justify-between items-center">
+                                                    <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline">
+                                                        Смотреть курс
+                                                    </Link>
+                                                    <Link to={`/teacher/course/${course.id}/builder`} className="text-xs font-semibold px-2.5 py-1.5 bg-blue-600 text-white rounded shadow-sm hover:bg-blue-700 transition-colors">
+                                                        {t('profile.editorBtn') || 'Редактор'}
+                                                    </Link>
+                                                </div>
+
+                                                {/* 🔥 НОВЫЕ КНОПКИ ДЛЯ УПРАВЛЕНИЯ СТАТУСОМ 🔥 */}
+                                                <div className="flex flex-wrap gap-2 pt-2">
+                                                    {/* Удалить — только для draft и rejected */}
+                                                    {['draft', 'rejected'].includes(course.status || 'draft') && (
+                                                        <button onClick={() => handleDeleteCourse(course.id)}
+                                                            className="text-[10px] font-bold px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition-colors">
+                                                            Удалить
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Архивировать — только для published */}
+                                                    {course.status === 'published' && (
+                                                        <button onClick={() => handleArchiveCourse(course.id)}
+                                                            className="text-[10px] font-bold px-2.5 py-1.5 bg-base-200 text-base-content/60 border border-base-300 rounded hover:bg-base-300 transition-colors">
+                                                            В архив
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Отправить на модерацию — для draft и rejected */}
+                                                    {['draft', 'rejected'].includes(course.status || 'draft') && (
+                                                        <button onClick={() => handleSubmitReview(course.id)}
+                                                            className="text-[10px] font-bold px-2.5 py-1.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded hover:bg-yellow-100 transition-colors">
+                                                            На модерацию
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -406,7 +485,6 @@ function Profile() {
                                             {course.title}
                                         </h4>
                                         <div className="flex justify-between items-center mt-auto pt-4 border-t border-base-200">
-                                            {/* Тут только кнопка "Продолжить", редактора больше нет! */}
                                             <Link to={`/courses/${course.id}`} className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
                                                 {t('profile.continueCourse') || 'Продолжить обучение'} <ArrowRight size={14} />
                                             </Link>

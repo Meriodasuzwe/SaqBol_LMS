@@ -59,19 +59,39 @@ class CourseSerializer(serializers.ModelSerializer):
     progress = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
-    
     is_enrolled = serializers.SerializerMethodField()
+
+    # === НОВЫЕ ПОЛЯ ДЛЯ ЛЕНДИНГА ===
+    modules_count = serializers.SerializerMethodField()
+    # 🔥 ИЗМЕНЕНИЕ 1: Заменили students_count на enrolled_students_count
+    enrolled_students_count = serializers.SerializerMethodField()
+    
+    # Создаем алиас, чтобы React сразу увидел картинку по ключу image_url
+    image_url = serializers.ImageField(source='cover_image', read_only=True)
 
     class Meta:
         model = Course
         fields = [
             'id', 'title', 'description', 
-            'short_description', 'cover_image', 
+            'short_description', 'cover_image', 'image_url',
             'price', 'category', 'category_title', 
             'teacher_name', 'lessons', 'progress', 'status',
             'average_rating', 'reviews_count', 
-            'is_enrolled'
+            'is_enrolled', 'modules_count', 'enrolled_students_count' # 🔥 ИЗМЕНЕНИЕ 2: Обновили в fields
         ]
+
+    # Метод для подсчета модулей (уроков)
+    def get_modules_count(self, obj):
+        return obj.lessons.count() if hasattr(obj, 'lessons') else 0
+
+    # 🔥 ИЗМЕНЕНИЕ 3: Новый метод для подсчета студентов
+    def get_enrolled_students_count(self, obj):
+        # На всякий случай проверяем оба варианта связи (с related_name и без него)
+        if hasattr(obj, 'enrolled_students'):
+            return obj.enrolled_students.count()
+        elif hasattr(obj, 'enrollment_set'):
+            return obj.enrollment_set.count()
+        return 0
         
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
@@ -107,7 +127,6 @@ class CourseSerializer(serializers.ModelSerializer):
                 if StepProgress.objects.filter(student=request.user, step=step, is_completed=True).exists():
                     completed_count += 1
                     
-        # 🔥 ВОТ ЭТОГО НЕ ХВАТАЛО! Мы посчитали, но забыли вернуть результат!
         return int((completed_count / total_steps) * 100)
 
     def get_average_rating(self, obj):

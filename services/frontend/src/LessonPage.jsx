@@ -19,11 +19,31 @@ import {
     Lock
 } from 'lucide-react';
 
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
 import FakeMessenger from './FakeMessenger'; 
 import FakeEmail from './FakeEmail';
 import PythonEditor from './PythonEditor'; 
 import SpotThePhishing from './SpotThePhishing'; 
 import FreeResponseAI from './FreeResponseAI';
+
+const renderMath = (html) => {
+    if (!html) return '';
+    // Блочные формулы $$...$$
+    let result = html.replace(/\$\$(.+?)\$\$/gs, (_, formula) => {
+        try {
+            return katex.renderToString(formula, { displayMode: true, throwOnError: false });
+        } catch { return _; }
+    });
+    // Инлайн формулы $...$
+    result = result.replace(/\$(.+?)\$/g, (_, formula) => {
+        try {
+            return katex.renderToString(formula, { displayMode: false, throwOnError: false });
+        } catch { return _; }
+    });
+    return result;
+};
 
 function LessonPage() {
     const { lessonId } = useParams();
@@ -413,7 +433,7 @@ function LessonPage() {
                                             ) : (
                                                 <div
                                                     className="prose prose-sm sm:prose-base max-w-none prose-headings:font-black prose-img:rounded-2xl dark:prose-invert prose-a:text-blue-600 hover:prose-a:text-blue-500"
-                                                    dangerouslySetInnerHTML={{ __html: currentStep.content }}
+                                                    dangerouslySetInnerHTML={{ __html: renderMath(currentStep.content) }}
                                                 />
                                             )}
                                         </div>

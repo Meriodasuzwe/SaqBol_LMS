@@ -23,6 +23,7 @@ class Course(models.Model):
         ('review', 'На модерации (Проверяется админом)'),
         ('published', 'Опубликован (Видят все студенты)'),
         ('rejected', 'Отклонен (Нужны правки)'),
+        ('archived', 'В архиве (Скрыт из каталога)'),
     )
     #  Категория связана через внешний ключ удаление через каскад что бы при удалении все курсы удалялись related имя для удобного доступа к курсам категории verbose_name для отображения в админке
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='courses', verbose_name="Категория")
