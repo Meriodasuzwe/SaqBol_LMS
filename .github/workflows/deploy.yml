@@ -1,0 +1,34 @@
+name: Deploy SAQBOL LMS to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}          # Изменили password на key
+          port: 22
+          script: |
+            # Переходим в точную папку твоего проекта
+            cd /home/raxataliev05/SaqBol_LMS
+            
+            # Стягиваем свежий код
+            git pull origin main
+            
+            # Перезапускаем контейнеры (AI сервис пока оставляем, раз он в файле)
+            docker compose up -d --build
+            
+            # Чистим старые образы, чтобы Google Cloud не забился мусором
+            docker image prune -f
