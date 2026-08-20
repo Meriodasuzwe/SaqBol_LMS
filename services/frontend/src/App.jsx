@@ -20,7 +20,7 @@ import QuizPage from './QuizPage';
 import Profile from './Profile';
 import VerifyCertificate from './VerifyCertificate';
 import LessonPage from './LessonPage';
-import TeacherPanel from './TeacherPanel';
+
 import CourseBuilder from './CourseBuilder/CourseBuilder';
 import Terms from './pages/legal/Terms';
 import Privacy from './pages/legal/Privacy';
@@ -34,9 +34,6 @@ import BugReportWidget from './BugReportWidget';
 import About from './About';
 import CorporatePage from './CorporatePage';
 import CorporateDashboard from './CorporateDashboard';
-// Аналитика
-import TeacherDashboard from './TeacherDashboard';
-import StudentDashboard from './StudentDashboard';
 
 function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }) {
   const location = useLocation();
@@ -89,11 +86,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
                 isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />
               ) : <Navigate to="/login" />
             } />
-            <Route path="/teacher" element={
-              isLoggedIn ? (
-                isTeacher ? <TeacherPanel /> : <Navigate to="/courses" />
-              ) : <Navigate to="/login" />
-            } />
+            
             <Route path="/settings" element={<Settings />} />
 
             <Route path="/about" element={<About />} />
@@ -107,13 +100,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             } />
 
             <Route path="/corporate" element={<CorporatePage />} />
-            {/* Аналитика */}
-            <Route path="/analytics/teacher" element={
-              isLoggedIn && isTeacher ? <TeacherDashboard /> : <Navigate to="/login" />
-            } />
-            <Route path="/analytics/student" element={
-              isLoggedIn ? <StudentDashboard /> : <Navigate to="/login" />
-            } />
+            
 
             <Route path="/corporate/dashboard" element={<CorporateDashboard />} />
             <Route path="/terms" element={<Terms />} />

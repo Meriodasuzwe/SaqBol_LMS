@@ -36,7 +36,6 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    # В блоке environment оставляем только то, что не влезло в .env или требует переопределения
     environment:
       - POSTGRES_HOST=db_core
       - POSTGRES_PORT=5432
@@ -46,22 +45,24 @@ services:
     networks:
       - lms_network
 
-  ai_service:
-    restart: always
-    build: ./services/ai_service
-    container_name: saqbol_ai_service
-    env_file:
-      - .env
-    volumes:
-      - ./services/ai_service:/app
-      - ./services/ai_service/logs:/app/logs
-    expose:
-      - "8000"
-    networks:
-      - lms_network
-    environment:
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+# --- НАЧАЛО ЗАКОММЕНТИРОВАННОГО AI СЕРВИСА ---
+#  ai_service:
+#    restart: always
+#    build: ./services/ai_service
+#    container_name: saqbol_ai_service
+#    env_file:
+#      - .env
+#    volumes:
+#      - ./services/ai_service:/app
+#      - ./services/ai_service/logs:/app/logs
+#    expose:
+#      - "8000"
+#    networks:
+#      - lms_network
+#    environment:
+#      - GROQ_API_KEY=${GROQ_API_KEY}
+#      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+# --- КОНЕЦ ЗАКОММЕНТИРОВАННОГО AI СЕРВИСА ---
 
   frontend:
     restart: always
@@ -79,7 +80,6 @@ services:
     image: prom/prometheus:latest
     container_name: saqbol_prometheus
     volumes:
-      # Убедись, что создал этот файл на прошлом шаге!
       - ./services/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - lms_network
@@ -95,11 +95,11 @@ services:
     networks:
       - lms_network
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin # Пароль для входа
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
     depends_on:
       - prometheus
     volumes:
-      - grafana_data:/var/lib/grafana # Чтобы дашборды сохранялись
+      - grafana_data:/var/lib/grafana 
 
   nginx:
     image: nginx:alpine
@@ -112,7 +112,7 @@ services:
       - media_volume:/app/media:ro
     depends_on:
       - core_service
-      - ai_service
+      # - ai_service  <--- ЗДЕСЬ МЫ ТОЖЕ ЗАКОММЕНТИРОВАЛИ ЗАВИСИМОСТЬ
       - frontend
     networks:
       - lms_network
@@ -121,7 +121,7 @@ volumes:
   postgres_data_core:
   static_volume:
   media_volume:
-  grafana_data: # 👈 Не забудь добавить этот том
+  grafana_data: 
 
 networks:
   lms_network:

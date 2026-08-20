@@ -179,6 +179,16 @@ const AdminPanel = () => {
         window.open(gmailUrl, '_blank');
     };
 
+    const handleBugStatusChange = async (id, newStatus) => {
+        try {
+            const res = await api.patch(`/bugs/${id}/`, { status: newStatus });
+            setBugReports(bugReports.map(b => b.id === id ? res.data : b));
+            toast.success(t('admin.toasts.statusUpdated', 'Статус обновлен'));
+        } catch (err) {
+            toast.error(t('admin.toasts.statusError', 'Ошибка обновления статуса'));
+        }
+    };
+
     const executeDelete = async () => {
         setIsSubmitting(true);
         try {
@@ -210,9 +220,13 @@ const AdminPanel = () => {
             case 'contacted':return { bg: isDark ? 'rgba(245,158,11,0.1)' : '#fef3c7',  color: '#f59e0b', border: '#fde68a' };
             case 'closed':   return { bg: isDark ? 'rgba(16,185,129,0.1)' : '#d1fae5',  color: '#10b981', border: '#a7f3d0' };
             case 'rejected': return { bg: isDark ? 'rgba(239,68,68,0.1)'  : '#fee2e2',  color: '#ef4444', border: '#fecaca' };
+            case 'in_progress': return { bg: isDark ? 'rgba(245,158,11,0.1)' : '#fef3c7', color: '#f59e0b', border: '#fde68a' };
+            case 'resolved': return { bg: isDark ? 'rgba(16,185,129,0.1)' : '#d1fae5', color: '#10b981', border: '#a7f3d0' };
             default:         return { bg: themeColors.bg, color: themeColors.textMute, border: themeColors.divider };
         }
     };
+
+    const filteredBugs = bugFilter === 'all' ? bugReports : bugReports.filter(b => b.status === bugFilter);
 
     return (
         <div style={{ minHeight: '100vh', background: themeColors.bg, padding: '40px 20px', fontFamily: "'Plus Jakarta Sans', sans-serif", transition: 'background 0.3s' }}>
@@ -487,8 +501,93 @@ const AdminPanel = () => {
                             );
                         })}
 
-                        {/* ── BUG РЕПОРТЫ (Оставлено без изменений) ── */}
-                        {/* ... остальной код рендеринга багов ... */}
+                        {/* ── BUG РЕПОРТЫ ── */}
+                        {activeTab === 'bugs' && (
+                            <>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                                    {['all', 'new', 'in_progress', 'resolved'].map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => setBugFilter(f)}
+                                            style={{
+                                                padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                                                fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
+                                                background: bugFilter === f ? themeColors.activeTab : themeColors.panel,
+                                                color: bugFilter === f ? themeColors.activeText : themeColors.textMute,
+                                            }}
+                                        >
+                                            {f === 'all' ? 'Все' : f === 'new' ? 'Новые' : f === 'in_progress' ? 'В работе' : 'Решено'}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {filteredBugs.map(bug => {
+                                    const bugStatusStyle = getStatusStyle(bug.status);
+                                    return (
+                                        <div key={bug.id} style={{ background: themeColors.panel, borderRadius: 20, padding: 20, border: `1px solid ${themeColors.panelBdr}` }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 12 }}>
+                                                <div style={{ display: 'flex', gap: 12 }}>
+                                                    <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? 'rgba(239,68,68,0.1)' : '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                        <Bug size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ color: themeColors.text, fontWeight: 700, fontSize: 15 }}>{bug.title}</div>
+                                                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 4 }}>
+                                                            {bug.category_display && (
+                                                                <span style={{ fontSize: 11, color: themeColors.textMute, fontWeight: 600 }}>{bug.category_display}</span>
+                                                            )}
+                                                            <span style={{ fontSize: 11, color: themeColors.textMute }}>{formatDate(bug.created_at)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <select
+                                                    value={bug.status || 'new'}
+                                                    onChange={(e) => handleBugStatusChange(bug.id, e.target.value)}
+                                                    style={{
+                                                        padding: '8px 12px', borderRadius: 10,
+                                                        border: `1px solid ${bugStatusStyle.border}`,
+                                                        background: bugStatusStyle.bg, color: bugStatusStyle.color,
+                                                        fontSize: 13, fontWeight: 700, outline: 'none', cursor: 'pointer', flexShrink: 0
+                                                    }}
+                                                >
+                                                    <option value="new">Новый</option>
+                                                    <option value="in_progress">В работе</option>
+                                                    <option value="resolved">Решено</option>
+                                                </select>
+                                            </div>
+
+                                            <div style={{ background: themeColors.bg, padding: 14, borderRadius: 12, fontSize: 14, color: themeColors.text, lineHeight: 1.6, marginBottom: bug.screenshots?.length || bug.page_url ? 12 : 0 }}>
+                                                {bug.description}
+                                            </div>
+
+                                            {bug.page_url && (
+                                                <a href={bug.page_url} target="_blank" rel="noreferrer"
+                                                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: themeColors.activeText, fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: bug.screenshots?.length ? 12 : 0 }}>
+                                                    <LinkIcon size={14} /> {bug.page_url} <ExternalLink size={12} />
+                                                </a>
+                                            )}
+
+                                            {bug.screenshots?.length > 0 && (
+                                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                                    {bug.screenshots.map(s => (
+                                                        <a key={s.id} href={s.image_url} target="_blank" rel="noreferrer">
+                                                            <img src={s.image_url} alt="screenshot" style={{ width: 90, height: 70, objectFit: 'cover', borderRadius: 8, border: `1px solid ${themeColors.divider}` }} />
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+
+                                {filteredBugs.length === 0 && (
+                                    <div style={{ textAlign: 'center', padding: '60px 0', color: themeColors.textMute, fontSize: 14 }}>
+                                        {t('admin.empty', 'Список пуст')}
+                                    </div>
+                                )}
+                            </>
+                        )}
 
                         {((activeTab === 'apps' && applications.length === 0) ||
                           (activeTab === 'courses' && courses.length === 0) ||

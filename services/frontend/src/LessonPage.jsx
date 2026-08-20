@@ -7,26 +7,19 @@ import {
     ChevronLeft, 
     Check, 
     PlayCircle, 
-    ShieldCheck, 
     HelpCircle, 
     Code2, 
     FileText, 
     ArrowRight,
     ArrowLeft,
     Award,
-    BrainCircuit, 
-    Search,
     Lock
 } from 'lucide-react';
 
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
-import FakeMessenger from './FakeMessenger'; 
-import FakeEmail from './FakeEmail';
 import PythonEditor from './PythonEditor'; 
-import SpotThePhishing from './SpotThePhishing'; 
-import FreeResponseAI from './FreeResponseAI';
 
 const renderMath = (html) => {
     if (!html) return '';
@@ -171,10 +164,6 @@ function LessonPage() {
         switch (type) {
             case 'video_url':
             case 'video_file': return <PlayCircle {...props} />;
-            case 'simulation_chat':
-            case 'simulation_email': return <ShieldCheck {...props} />;
-            case 'interactive_spot': return <Search {...props} />; 
-            case 'interactive_free': return <BrainCircuit {...props} />; 
             case 'quiz': return <HelpCircle {...props} />;
             case 'interactive_code': return <Code2 {...props} />;
             default: return <FileText {...props} />;
@@ -210,7 +199,6 @@ function LessonPage() {
     if (!lesson) return <div className="p-10 text-center font-bold text-base-content/50">{t('lesson.notFound', 'Урок не найден')}</div>;
 
     const currentStep = lesson.steps && lesson.steps.length > 0 ? lesson.steps[activeStepIndex] : null;
-    const isSimulation = currentStep && ['simulation_chat', 'simulation_email', 'interactive_spot', 'interactive_free'].includes(currentStep.step_type);
     const isLastLessonInCourse = courseLessons.findIndex(l => l.id === lesson.id) === courseLessons.length - 1;
 
     return (
@@ -347,31 +335,7 @@ function LessonPage() {
                                         )}
 
                                         <div className="text-base-content/80">
-                                            {currentStep.step_type === 'simulation_chat' ? (
-                                                <div className="flex justify-center py-4">
-                                                    <FakeMessenger 
-                                                        scenario={currentStep.scenario_data} 
-                                                        onComplete={handleStepComplete} 
-                                                        stepId={currentStep.id}
-                                                        onExit={() => navigate(`/course/${lesson.course}`)}
-                                                    />
-                                                </div>
-                                            ) : currentStep.step_type === 'simulation_email' ? (
-                                                <div className="flex justify-center py-4">
-                                                    <FakeEmail scenario={currentStep.scenario_data} onComplete={handleStepComplete} />
-                                                </div>
-                                            ) : currentStep.step_type === 'interactive_spot' ? (
-                                                <div className="flex justify-center py-4">
-                                                    <SpotThePhishing 
-                                                        data={currentStep.scenario_data} 
-                                                        onComplete={handleStepComplete} 
-                                                    />
-                                                </div>
-                                            ) : currentStep.step_type === 'interactive_free' ? (
-                                                <div className="flex justify-center py-4 w-full">
-                                                    <FreeResponseAI stepData={currentStep} onComplete={handleStepComplete} />
-                                                </div>
-                                            ) : currentStep.step_type === 'interactive_code' ? (
+                                            {currentStep.step_type === 'interactive_code' ? (
                                                 <div className="rounded-xl overflow-hidden border border-base-300 dark:border-slate-700">
                                                     <PythonEditor stepData={currentStep} onSuccess={() => handleStepComplete(20)} />
                                                 </div>
@@ -447,7 +411,7 @@ function LessonPage() {
                         </div>
 
                         {/* Стандартный подвал для текста и видео */}
-                        {!isSimulation && currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
+                        {currentStep && !['quiz', 'interactive_code'].includes(currentStep.step_type) && (
                             <div className="p-6 bg-base-200/50 border-t border-base-300 flex items-center justify-between mt-auto">
                                 {activeStepIndex > 0 ? (
                                     <button onClick={() => {

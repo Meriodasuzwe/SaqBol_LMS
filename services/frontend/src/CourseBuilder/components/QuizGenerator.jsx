@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-    BrainCircuit, Plus, Trash2, ChevronDown, 
+    Plus, Trash2, ChevronDown, 
     ChevronUp, CheckSquare, Square, HelpCircle, GripVertical, X
 } from 'lucide-react';
 
 const QuizGenerator = ({ 
-    quizQuestions, quizPrompt, setQuizPrompt, 
-    quizDifficulty, setQuizDifficulty, quizCount, setQuizCount, 
-    isGeneratingQuiz, onGenerate, onQuestionChange, onOptionChange, 
+    quizQuestions, onQuestionChange, onOptionChange, 
     onCorrectSelect, onAddManual, onDeleteQuestion,
-    onAddOption, onRemoveOption // 🔥 Новые пропсы
+    onAddOption, onRemoveOption
 }) => {
     const { t } = useTranslation();
     const questions = Array.isArray(quizQuestions) ? quizQuestions : [];
-    const [isAIOpen, setIsAIOpen] = useState(questions.length === 0);
     
     const [collapsedQs, setCollapsedQs] = useState({});
 
@@ -25,62 +22,7 @@ const QuizGenerator = ({
     return (
         <div className="space-y-6 animate-in fade-in">
             
-            {/* === БЛОК AI-ГЕНЕРАЦИИ === */}
-            <div className="bg-base-100 rounded-2xl border border-base-200 overflow-hidden shadow-sm transition-all">
-                <button 
-                    onClick={() => setIsAIOpen(!isAIOpen)}
-                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-base-200/50 transition-colors"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20">
-                            <BrainCircuit size={16} />
-                        </div>
-                        <div className="text-left">
-                            <h3 className="text-sm font-bold text-base-content">{t('builder.aiAssistantTitle', 'AI-Помощник')}</h3>
-                        </div>
-                    </div>
-                    <div className="text-base-content/40 bg-base-200 p-1.5 rounded-lg">
-                        {isAIOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </div>
-                </button>
-
-                {isAIOpen && (
-                    <div className="p-5 border-t border-base-200 bg-base-200/20">
-                        <textarea 
-                            className="w-full h-24 p-3 bg-base-100 border border-base-300 rounded-xl text-sm focus:border-blue-600 focus:outline-none transition-all mb-4 resize-none shadow-sm" 
-                            placeholder={t('builder.lectureMaterialPh', 'Вставьте текст лекции...')} 
-                            value={quizPrompt || ''} 
-                            onChange={e => setQuizPrompt(e.target.value)}
-                        />
-                        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                            <div className="flex-1">
-                                <label className="text-[10px] font-bold text-base-content/50 uppercase tracking-wider mb-1.5 block">Кол-во вопросов</label>
-                                <input type="number" min="1" max="15" 
-                                    className="w-full px-3 py-2.5 bg-base-100 border border-base-300 rounded-xl text-sm font-semibold focus:border-blue-600 outline-none" 
-                                    value={quizCount || 3} onChange={e => setQuizCount(e.target.value)} />
-                            </div>
-                            <div className="flex-1">
-                                <label className="text-[10px] font-bold text-base-content/50 uppercase tracking-wider mb-1.5 block">Сложность</label>
-                                <select className="w-full px-3 py-2.5 bg-base-100 border border-base-300 rounded-xl text-sm font-semibold focus:border-blue-600 outline-none" 
-                                    value={quizDifficulty || 'medium'} onChange={e => setQuizDifficulty(e.target.value)}>
-                                    <option value="easy">{t('builder.diffEasy', 'Легко')}</option>
-                                    <option value="medium">{t('builder.diffMedium', 'Средне')}</option>
-                                    <option value="hard">{t('builder.diffHard', 'Сложно')}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button 
-                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 disabled:bg-base-300 disabled:text-base-content/40 flex justify-center items-center gap-2" 
-                            onClick={onGenerate} disabled={isGeneratingQuiz || !quizPrompt?.trim()}
-                        >
-                            {isGeneratingQuiz ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> 
-                            : <>{t('builder.generateQuestionsBtn', 'Сгенерировать')} <BrainCircuit size={16} /></>}
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* === ОСНОВНОЙ РЕДАКТОР ВОПРОСОВ === */}
+            {/* === РЕДАКТОР ВОПРОСОВ === */}
             <div>
                 <div className="flex justify-between items-center mb-4 px-1">
                     <h3 className="text-lg font-black text-base-content flex items-center gap-2">
@@ -97,7 +39,7 @@ const QuizGenerator = ({
                     <div className="bg-base-100 border-2 border-dashed border-base-300 rounded-2xl p-10 text-center flex flex-col items-center">
                         <HelpCircle size={28} className="text-base-content/20 mb-3" />
                         <p className="text-base font-bold text-base-content mb-1">{t('builder.noQuestionsYet', 'Пока нет вопросов')}</p>
-                        <p className="text-xs text-base-content/50">{t('builder.noQuestionsDesc', 'Сгенерируйте их с помощью AI или добавьте вручную.')}</p>
+                        <p className="text-xs text-base-content/50">{t('builder.noQuestionsDescManual', 'Добавьте первый вопрос вручную.')}</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -172,7 +114,7 @@ const QuizGenerator = ({
                                                                 placeholder={t('builder.optionPh', { num: oIndex + 1 })} 
                                                             />
                                                             
-                                                            {/* 🔥 Кнопка удаления варианта (показывается при наведении, если вариантов > 2) */}
+                                                            {/* Кнопка удаления варианта (показывается при наведении, если вариантов > 2) */}
                                                             {q.options.length > 2 && (
                                                                 <button
                                                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-base-content/30 hover:text-red-500 opacity-0 group-hover/opt:opacity-100 hover:bg-white rounded-md transition-all"
@@ -187,7 +129,7 @@ const QuizGenerator = ({
                                                 })}
                                             </div>
 
-                                            {/* 🔥 Кнопка добавления нового варианта (если вариантов < 6) */}
+                                            {/* Кнопка добавления нового варианта (если вариантов < 6) */}
                                             {q.options && q.options.length < 6 && (
                                                 <button
                                                     className="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 border-2 border-dashed border-base-300 text-base-content/50 rounded-xl hover:border-blue-400 hover:text-blue-600 transition-colors text-sm font-bold"

@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-    ArrowRight, ShieldCheck, Award, CheckCircle, 
-    ChevronRight, Users, BookOpen, PlayCircle, Star,
-    Zap, Trophy, Clock
+    ArrowRight, GraduationCap, CheckCircle,
+    ChevronRight, Users, BookOpen, PlayCircle,
+    Zap, Clock, TrendingUp, Target, ListChecks
 } from 'lucide-react';
 import api from './api';
 
 function HeroVisual() {
     const { t } = useTranslation();
     const MODULES = [
-        { title: t('landing.heroVisual.mod1', { defaultValue: 'Введение' }), done: true },
-        { title: t('landing.heroVisual.mod2', { defaultValue: 'Базовые понятия' }), done: true },
-        { title: t('landing.heroVisual.mod3', { defaultValue: 'Практика' }), done: false, active: true },
-        { title: t('landing.heroVisual.mod4', { defaultValue: 'Тестирование' }), done: false },
+        { title: t('landing.heroVisual.mod1', { defaultValue: 'Читательская грамотность' }), done: true },
+        { title: t('landing.heroVisual.mod2', { defaultValue: 'Критическое мышление' }), done: true },
+        { title: t('landing.heroVisual.mod3', { defaultValue: 'Профильный предмет' }), done: false, active: true },
+        { title: t('landing.heroVisual.mod4', { defaultValue: 'Пробный КТА' }), done: false },
     ];
 
     return (
@@ -23,19 +23,19 @@ function HeroVisual() {
                 <div className="flex items-center justify-between mb-5">
                     <div>
                         <p className="text-[11px] font-bold text-base-content/40 uppercase tracking-wider mb-0.5">
-                            {t('landing.heroVisual.progress', { defaultValue: 'Прогресс' })}
+                            {t('landing.heroVisual.progress', { defaultValue: 'Ваш прогресс' })}
                         </p>
                         <p className="text-base font-extrabold text-base-content">
-                            {t('landing.heroVisual.course', { defaultValue: 'Основы IT' })}
+                            {t('landing.heroVisual.course', { defaultValue: 'Подготовка к КТА' })}
                         </p>
                     </div>
                     <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                        <ShieldCheck size={18} className="text-white" />
+                        <GraduationCap size={18} className="text-white" />
                     </div>
                 </div>
                 <div className="mb-5">
                     <div className="flex justify-between text-xs font-semibold mb-2">
-                        <span className="text-base-content/50">{t('landing.heroVisual.module', { defaultValue: 'Модуль 3 из 4' })}</span>
+                        <span className="text-base-content/50">{t('landing.heroVisual.module', { defaultValue: 'Раздел 3 из 4' })}</span>
                         <span className="text-blue-600 font-bold">75%</span>
                     </div>
                     <div className="h-2 bg-base-200 rounded-full overflow-hidden">
@@ -55,17 +55,17 @@ function HeroVisual() {
                     ))}
                 </div>
             </div>
-            
+
             <div className="absolute -bottom-2 -left-4 bg-base-100 border border-base-200 rounded-2xl shadow-xl p-3.5 flex items-center gap-3 z-20">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
-                    <Users size={16} className="text-emerald-600" />
+                    <TrendingUp size={16} className="text-emerald-600" />
                 </div>
                 <div>
                     <p className="text-[10px] text-base-content/40 font-semibold">
-                        {t('landing.heroVisual.onlineLabel', { defaultValue: 'Сейчас на платформе' })}
+                        {t('landing.heroVisual.forecastLabel', { defaultValue: 'После каждого пробника' })}
                     </p>
                     <p className="text-sm font-extrabold text-base-content">
-                        12 {t('landing.heroVisual.onlineCount', { defaultValue: 'студентов' })}
+                        {t('landing.heroVisual.forecastValue', { defaultValue: 'Прогноз балла' })}
                     </p>
                 </div>
             </div>
@@ -76,30 +76,21 @@ function HeroVisual() {
 export default function Landing() {
     const { t } = useTranslation();
     const [email, setEmail] = useState('');
-    const [stats, setStats] = useState({ users: 0, courses: 0, certificates: 0 });
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([
-            api.get('courses/system-stats/').catch(() => ({ data: { total_users: 12, total_courses: 3, total_certificates: 5 }})),
-            api.get('courses/?limit=4').catch(() => ({ data: [] }))
-        ]).then(([statsRes, coursesRes]) => {
-            setStats({
-                users: statsRes.data.total_users || 0,
-                courses: statsRes.data.total_courses || 0,
-                certificates: statsRes.data.total_certificates || 0
-            });
-            setCourses(coursesRes.data.results || coursesRes.data || []);
-            setLoading(false);
-        });
+        api.get('courses/?limit=4')
+            .then(res => setCourses(res.data.results || res.data || []))
+            .catch(() => setCourses([]))
+            .finally(() => setLoading(false));
     }, []);
 
-    const DYNAMIC_STATS = [
-        { value: stats.users, label: t('landing.stats.users', { defaultValue: 'Активных студентов' }), icon: <Users size={20} />, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { value: stats.courses, label: t('landing.stats.courses', { defaultValue: 'Доступных курсов' }), icon: <BookOpen size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { value: stats.certificates, label: t('landing.stats.certs', { defaultValue: 'Выдано сертификатов' }), icon: <Trophy size={20} />, color: 'text-amber-600', bg: 'bg-amber-50' },
-        { value: '4.9 ★', label: t('landing.stats.rating', { defaultValue: 'Средняя оценка' }), icon: <Star size={20} />, color: 'text-purple-600', bg: 'bg-purple-50' },
+    const PLATFORM_ITEMS = [
+        { icon: <BookOpen size={20} />, color: 'text-blue-600', bg: 'bg-blue-50', label: t('landing.platform.courses', { defaultValue: 'Курсы по темам' }) },
+        { icon: <ListChecks size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50', label: t('landing.platform.tests', { defaultValue: 'Тесты по темам' }) },
+        { icon: <Clock size={20} />, color: 'text-amber-600', bg: 'bg-amber-50', label: t('landing.platform.mock', { defaultValue: 'Пробный КТА' }) },
+        { icon: <TrendingUp size={20} />, color: 'text-purple-600', bg: 'bg-purple-50', label: t('landing.platform.forecast', { defaultValue: 'Прогноз балла' }) },
     ];
 
     const getModulesCount = (course) => {
@@ -128,22 +119,22 @@ export default function Landing() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
                             <div className="lms-fade">
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-6 border border-blue-100">
-                                    <Zap size={12} /> {t('landing.hero.badge', { defaultValue: 'Платформа нового поколения' })}
+                                    <Zap size={12} /> {t('landing.hero.badge', { defaultValue: 'Платформа подготовки к КТА' })}
                                 </div>
                                 <h1 className="text-4xl md:text-5xl xl:text-[3.4rem] font-extrabold tracking-tight leading-[1.1] mb-5 text-base-content">
-                                    {t('landing.hero.title1', { defaultValue: 'Обучите команду' })}<br />
-                                    <span className="text-blue-600">{t('landing.hero.title2', { defaultValue: 'цифровой безопасности' })}</span>
+                                    {t('landing.hero.title1', { defaultValue: 'Готовьтесь к КТА' })}<br />
+                                    <span className="text-blue-600">{t('landing.hero.title2', { defaultValue: 'на магистратуру' })}</span>
                                 </h1>
                                 <p className="text-lg text-base-content/60 font-medium leading-relaxed mb-8 max-w-md">
-                                    {t('landing.hero.desc', { defaultValue: 'Интерактивные курсы, ИИ-тестирование и реальные сценарии атак. Для любого сотрудника — от бухгалтера до сисадмина.' })}
+                                    {t('landing.hero.desc', { defaultValue: 'Курсы по темам, тесты по каждому разделу, пробный КТА в реальном формате и прогноз балла — всё, что нужно для системной подготовки к поступлению.' })}
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <Link to="/courses" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors text-sm shadow-lg shadow-blue-200">
-                                        {t('landing.hero.btnCatalog', { defaultValue: 'Посмотреть каталог' })} <ArrowRight size={16} />
+                                        {t('landing.hero.btnCatalog', { defaultValue: 'Смотреть курсы' })} <ArrowRight size={16} />
                                     </Link>
-                                    <Link to="/corporate" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-base-100 border-2 border-base-300 hover:border-blue-300 text-base-content font-bold rounded-xl transition-colors text-sm">
-                                        {t('landing.hero.btnCorporate', { defaultValue: 'Корпоративный сектор' })}
-                                    </Link>
+                                    <a href="#features" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-base-100 border-2 border-base-300 hover:border-blue-300 text-base-content font-bold rounded-xl transition-colors text-sm">
+                                        {t('landing.hero.btnHow', { defaultValue: 'Как это устроено' })}
+                                    </a>
                                 </div>
                             </div>
 
@@ -154,21 +145,19 @@ export default function Landing() {
                     </div>
                 </section>
 
-                {/* ── СТАТИСТИКА ── */}
+                {/* ── ЧТО ВХОДИТ В ПЛАТФОРМУ ── */}
                 <section className="py-12 px-6 md:px-10 bg-base-100 border-y border-base-200">
                     <div className="max-w-7xl mx-auto">
+                        <p className="text-xs font-bold uppercase tracking-widest text-base-content/40 mb-6 text-center lms-fade-d1">
+                            {t('landing.platform.sub', { defaultValue: 'Что входит в платформу' })}
+                        </p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lms-fade-d1">
-                            {DYNAMIC_STATS.map((s, i) => (
+                            {PLATFORM_ITEMS.map((s, i) => (
                                 <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-base-200/50 border border-base-200">
                                     <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center ${s.color} shrink-0`}>
                                         {s.icon}
                                     </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-base-content leading-none mb-1">
-                                            {loading ? <span className="loading loading-dots loading-xs"></span> : s.value}
-                                        </p>
-                                        <p className="text-xs text-base-content/50 font-medium">{s.label}</p>
-                                    </div>
+                                    <p className="text-sm font-bold text-base-content leading-snug">{s.label}</p>
                                 </div>
                             ))}
                         </div>
@@ -184,7 +173,7 @@ export default function Landing() {
                                     {t('landing.courses.sub', { defaultValue: 'Обучение' })}
                                 </p>
                                 <h2 className="text-3xl font-extrabold tracking-tight text-base-content">
-                                    {t('landing.courses.title', { defaultValue: 'Популярные курсы' })}
+                                    {t('landing.courses.title', { defaultValue: 'Курсы по темам' })}
                                 </h2>
                             </div>
                             <Link to="/courses" className="hidden md:flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors">
@@ -273,24 +262,55 @@ export default function Landing() {
                     </div>
                 </section>
 
-                {/* ── ПРЕИМУЩЕСТВА ── */}
+                {/* ── КАК ПРОХОДИТ ПОДГОТОВКА ── */}
                 <section className="py-20 px-6 md:px-10 bg-base-100">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-12">
+                            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">
+                                {t('landing.howItWorks.sub', { defaultValue: 'Как это устроено' })}
+                            </p>
+                            <h2 className="text-3xl font-extrabold text-base-content">
+                                {t('landing.howItWorks.title', { defaultValue: 'От темы до пробного экзамена' })}
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {[
+                                { step: '01', icon: <BookOpen size={22} />, title: t('landing.howItWorks.s1title', { defaultValue: 'Проходите курс по теме' }), desc: t('landing.howItWorks.s1desc', { defaultValue: 'Разбираете материал раздел за разделом, в своём темпе' }) },
+                                { step: '02', icon: <ListChecks size={22} />, title: t('landing.howItWorks.s2title', { defaultValue: 'Закрепляете тестом' }), desc: t('landing.howItWorks.s2desc', { defaultValue: 'Проверяете себя по каждой теме отдельно и видите ошибки' }) },
+                                { step: '03', icon: <Clock size={22} />, title: t('landing.howItWorks.s3title', { defaultValue: 'Сдаёте пробный КТА' }), desc: t('landing.howItWorks.s3desc', { defaultValue: 'Полный пробный экзамен в формате и таймингах настоящего теста' }) },
+                                { step: '04', icon: <TrendingUp size={22} />, title: t('landing.howItWorks.s4title', { defaultValue: 'Смотрите прогноз балла' }), desc: t('landing.howItWorks.s4desc', { defaultValue: 'Понимаете текущий уровень и слабые темы, над которыми стоит поработать' }) },
+                            ].map((s, i) => (
+                                <div key={i} className="relative p-6 rounded-2xl border border-base-200 bg-base-200/30 hover:shadow-lg transition-all">
+                                    <span className="absolute top-5 right-5 text-2xl font-black text-base-content/10">{s.step}</span>
+                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                                        {s.icon}
+                                    </div>
+                                    <h3 className="font-bold text-base-content mb-2">{s.title}</h3>
+                                    <p className="text-sm text-base-content/50 leading-relaxed">{s.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ── ВОЗМОЖНОСТИ ── */}
+                <section id="features" className="py-20 px-6 md:px-10 bg-base-200/40 scroll-mt-20">
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-12">
                             <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">
                                 {t('landing.features.sub', { defaultValue: 'Почему SaqBol' })}
                             </p>
                             <h2 className="text-3xl font-extrabold text-base-content">
-                                {t('landing.features.title', { defaultValue: 'Всё что нужно для обучения' })}
+                                {t('landing.features.title', { defaultValue: 'Всё, что нужно для подготовки к КТА' })}
                             </h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
-                                { icon: <Zap size={24} />, color: 'text-blue-600', bg: 'bg-blue-50', title: t('landing.features.f1title', { defaultValue: 'Интерактивные симуляции' }), desc: t('landing.features.f1desc', { defaultValue: 'AI-сценарии для отработки навыков в безопасной среде' }) },
-                                { icon: <Trophy size={24} />, color: 'text-amber-600', bg: 'bg-amber-50', title: t('landing.features.f2title', { defaultValue: 'Сертификаты' }), desc: t('landing.features.f2desc', { defaultValue: 'Получайте официальные сертификаты после прохождения курсов' }) },
-                                { icon: <Clock size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-50', title: t('landing.features.f3title', { defaultValue: 'Учитесь в своём темпе' }), desc: t('landing.features.f3desc', { defaultValue: 'Доступ к материалам 24/7, проходите курсы в удобное время' }) },
+                                { icon: <Target size={24} />, color: 'text-blue-600', bg: 'bg-blue-50', title: t('landing.features.f1title', { defaultValue: 'Тесты по каждой теме' }), desc: t('landing.features.f1desc', { defaultValue: 'Тренируетесь точечно по разделам и сразу видите разбор ошибок' }) },
+                                { icon: <Clock size={24} />, color: 'text-amber-600', bg: 'bg-amber-50', title: t('landing.features.f2title', { defaultValue: 'Пробный КТА в реальном формате' }), desc: t('landing.features.f2desc', { defaultValue: 'Структура, тайминг и правила как на настоящем экзамене' }) },
+                                { icon: <TrendingUp size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-50', title: t('landing.features.f3title', { defaultValue: 'Прогноз балла' }), desc: t('landing.features.f3desc', { defaultValue: 'Отслеживаете прогресс и понимаете, сколько баллов принесёт текущий уровень подготовки' }) },
                             ].map((f, i) => (
-                                <div key={i} className="p-6 rounded-2xl border border-base-200 bg-base-200/30 hover:shadow-lg transition-all">
+                                <div key={i} className="p-6 rounded-2xl border border-base-200 bg-base-100 hover:shadow-lg transition-all">
                                     <div className={`w-12 h-12 rounded-2xl ${f.bg} ${f.color} flex items-center justify-center mb-4`}>
                                         {f.icon}
                                     </div>
@@ -306,10 +326,10 @@ export default function Landing() {
                 <section className="py-24 px-6 md:px-10 bg-blue-600">
                     <div className="max-w-2xl mx-auto text-center">
                         <h2 className="text-4xl font-extrabold text-white tracking-tight mb-4">
-                            {t('landing.cta.title', { defaultValue: 'Готовы начать обучение?' })}
+                            {t('landing.cta.title', { defaultValue: 'Готовы начать подготовку?' })}
                         </h2>
                         <p className="text-blue-200 font-medium mb-10 text-lg">
-                            {t('landing.cta.desc', { defaultValue: 'Присоединяйтесь к платформе и получайте новые знания уже сегодня.' })}
+                            {t('landing.cta.desc', { defaultValue: 'Присоединяйтесь к платформе и начните готовиться к КТА по темам, тестам и пробным экзаменам уже сегодня.' })}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                             <input

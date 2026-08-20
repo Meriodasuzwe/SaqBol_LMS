@@ -4,41 +4,30 @@ import api from './api';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import {
-    BookOpen, LayoutDashboard, User, LogOut, ChevronDown,
-    Sun, Moon, GraduationCap, ExternalLink, X, Sparkles, Settings,
-    BarChart2, ShieldCheck, Globe
+    BookOpen, User, LogOut, ChevronDown,
+    Sun, Moon, X, Settings,
+    BarChart2, ShieldCheck
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
 
 function Navbar({ isLoggedIn, userRole, onLogout }) {
-    const isTeacher = userRole === 'teacher' || userRole === 'admin';
     const isAdmin   = userRole === 'admin';
     const location  = useLocation();
 
-    // Инициализация переводов
     const { t, i18n } = useTranslation();
-    // Состояние для темы, пользователя, открытости дропдаунов и мобильного меню
     const [theme, setTheme]           = useState(localStorage.getItem('theme') || 'light');
     const [user, setUser]             = useState(null);
     const [dropOpen, setDropOpen]     = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [scrolled, setScrolled]     = useState(false);
     
-    // Стейт для меню языков
     const [langOpen, setLangOpen]     = useState(false); 
-    // Рефы для отслеживания кликов вне дропдаунов (профиль и язык)
     const dropRef = useRef(null);
     const langRef = useRef(null);
-    // Стейты для модального окна "Стать автором"
-    const [modalOpen, setModalOpen]    = useState(false);
-    const [cvText, setCvText]          = useState('');
-    const [portfolioUrl, setPortfolio] = useState('');
-    const [submitting, setSubmitting]  = useState(false);
-    // Определение, является ли текущая тема темной для упрощения условий в стилях
+
     const isDark = theme === 'dark';
     
-    // Эффект для применения темы к документу и сохранения выбора в localStorage
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -55,7 +44,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         return () => window.removeEventListener('scroll', fn);
     }, []);
 
-    // Закрытие дропдаунов при клике вне их области
     useEffect(() => {
         const fn = e => { 
             if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false); 
@@ -73,19 +61,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         return `http://localhost:8000${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
-    const submitAuthor = async () => {
-        if (!cvText) { toast.warning(t('toast.needExperience')); return; }
-        setSubmitting(true);
-        try {
-            const r = await api.post('users/apply-teacher/', { cv_text: cvText, portfolio_url: portfolioUrl });
-            toast.success(t('toast.success') + ' ' + (r.data.message || ''));
-            setModalOpen(false); setCvText(''); setPortfolio('');
-        } catch (e) {
-            toast.error(e.response?.data?.error || t('toast.error'));
-        } finally { setSubmitting(false); }
-    };
-
-    // Смена языка с сохранением выбора в localStorage и закрытием меню после выбора
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
         localStorage.setItem('language', lng);
@@ -137,16 +112,13 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
     };
 
     const dropItems = [
-        { to: '/profile',           icon: <User size={14} />,           label: t('nav.profile'),          show: true },
-        { to: '/settings',          icon: <Settings size={14} />,       label: t('nav.settings'),         show: true },
-        { to: '/analytics/teacher', icon: <BarChart2 size={14} />,      label: t('nav.analyticsTeacher'), show: isTeacher },
-        { to: '/analytics/student', icon: <BarChart2 size={14} />,      label: t('nav.analyticsStudent'), show: !isTeacher },
-        { to: '/teacher',           icon: <LayoutDashboard size={14} />, label: t('nav.dashboard'),        show: isTeacher },
-        { to: '/admin',             icon: <ShieldCheck size={14} />,    label: t('nav.moderation'),       show: isAdmin },
-        { to: '/admin/stats',       icon: <BarChart2 size={14}/>,       label: t('nav.stats'),            show: isAdmin },
+        { to: '/profile',     icon: <User size={14} />,       label: t('nav.profile'),    show: true },
+        { to: '/settings',    icon: <Settings size={14} />,   label: t('nav.settings'),   show: true },
+        { to: '/admin',       icon: <ShieldCheck size={14} />, label: t('nav.moderation'), show: isAdmin },
+        { to: '/admin/stats', icon: <BarChart2 size={14}/>,    label: t('nav.stats'),      show: isAdmin },
     ].filter(i => i.show);
 
-    const mobileItems = dropItems; // Используем тот же массив для мобилки
+    const mobileItems = dropItems;
 
     return (
         <>
@@ -172,31 +144,23 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                             <span style={{ color: '#fff', fontWeight: 900, fontSize: 11, letterSpacing: '-0.5px' }}>SQ</span>
                         </div>
                         <span style={{ fontWeight: 800, color: themeColors.text, fontSize: 15, letterSpacing: '-0.3px' }}>
-                            SaqBol <span style={{ fontWeight: 400, color: themeColors.textMute }}>LMS</span>
+                            SaqBol <span style={{ fontWeight: 400, color: themeColors.textMute }}>Магистратура</span>
                         </span>
                     </Link>
 
                     {isLoggedIn && (
                         <nav style={{ display: 'flex', alignItems: 'center', gap: 24, marginLeft: 8 }} className="hidden lg:flex">
                             <NavLink to="/courses" icon={<BookOpen size={14} style={{ opacity: 0.7 }} />}>{t('nav.catalog')}</NavLink>
-                            {isTeacher && <NavLink to="/teacher" icon={<LayoutDashboard size={14} style={{ opacity: 0.7 }} />}>{t('nav.dashboard')}</NavLink>}
-                            {isTeacher
-                                ? <NavLink to="/analytics/teacher" icon={<BarChart2 size={14} style={{ opacity: 0.7 }} />}>{t('nav.analyticsTeacher')}</NavLink>
-                                : <NavLink to="/analytics/student" icon={<BarChart2 size={14} style={{ opacity: 0.7 }} />}>{t('nav.analyticsStudent')}</NavLink>
-                            }
                         </nav>
                     )}
 
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-
-                        {/*  МЕНЮ ВЫБОРА ЯЗЫКА */}
                         <div style={{ position: 'relative' }} ref={langRef} className="hidden sm:block">
                             <button onClick={() => setLangOpen(o => !o)}
                                 style={{ width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', background: langOpen ? themeColors.hover : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: themeColors.textMute, transition: 'background 0.15s', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}
                                 onMouseEnter={e => e.currentTarget.style.background = themeColors.hover}
                                 onMouseLeave={e => { if(!langOpen) e.currentTarget.style.background = 'transparent'; }}
                                 title="Изменить язык">
-                                
                                 {(i18n.language || 'ru').startsWith('kk') ? 'KZ' : (i18n.language || 'ru').slice(0, 2)}
                             </button>
 
@@ -208,7 +172,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                         { code: 'en', label: 'English' }
                                     ].map(lng => (
                                         <button key={lng.code} onClick={() => changeLanguage(lng.code)}
-                                            /* ИСПРАВЛЕНИЕ 2: Опциональная цепочка ?. для startsWith */
                                             style={{ width: '100%', padding: '8px 12px', border: 'none', background: i18n.language?.startsWith(lng.code) ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent', color: i18n.language?.startsWith(lng.code) ? '#3b82f6' : themeColors.text, borderRadius: 8, fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'background 0.1s' }}
                                             onMouseEnter={e => { if(!i18n.language?.startsWith(lng.code)) e.currentTarget.style.background = themeColors.itemHov }}
                                             onMouseLeave={e => { if(!i18n.language?.startsWith(lng.code)) e.currentTarget.style.background = 'transparent' }}>
@@ -219,10 +182,8 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                             )}
                         </div>
 
-                        {/* КОЛОКОЛЬЧИК */}
                         {isLoggedIn && <NotificationBell isDark={isDark} t={themeColors} />}
 
-                        {/* СМЕНА ТЕМЫ */}
                         <button onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
                             style={{ width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: themeColors.textMute, transition: 'background 0.15s' }}
                             onMouseEnter={e => e.currentTarget.style.background = themeColors.hover}
@@ -275,17 +236,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                                     {item.label}
                                                 </Link>
                                             ))}
-
-                                            {!isTeacher && (
-                                                <button onClick={() => { setDropOpen(false); setModalOpen(true); }}
-                                                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: themeColors.text, fontSize: 13, fontWeight: 500, transition: 'background 0.12s', textAlign: 'left' }}
-                                                    onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(59,130,246,0.12)' : '#eff6ff'}
-                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? 'rgba(59,130,246,0.15)' : '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}><Sparkles size={14} /></div>
-                                                    {t('nav.becomeAuthor')}
-                                                    <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: '#3b82f6', background: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff', border: '1px solid rgba(59,130,246,0.3)', padding: '2px 6px', borderRadius: 99 }}>NEW</span>
-                                                </button>
-                                            )}
                                         </div>
 
                                         <div style={{ padding: '6px', borderTop: `1px solid ${themeColors.divider}` }}>
@@ -333,16 +283,21 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                 {mobileOpen && isLoggedIn && (
                     <div className="sq-slide lg:hidden" style={{ borderTop: `1px solid ${themeColors.border}`, background: themeColors.nav, padding: '8px 20px 16px' }}>
                         
-                        {/* Выбор языка для мобильной версии */}
                         <div style={{ display: 'flex', gap: 8, padding: '12px 14px', marginBottom: 8, borderBottom: `1px solid ${themeColors.divider}` }}>
                              {[ { c: 'ru', l: 'RU' }, { c: 'kk', l: 'KZ' }, { c: 'en', l: 'EN' } ].map(lng => (
                                 <button key={lng.c} onClick={() => { changeLanguage(lng.c); setMobileOpen(false); }}
-                                    /* ИСПРАВЛЕНИЕ 3: Опциональная цепочка ?. для мобильных кнопок */
                                     style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: i18n.language?.startsWith(lng.c) ? (isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff') : themeColors.iconBg, color: i18n.language?.startsWith(lng.c) ? '#3b82f6' : themeColors.textMute }}>
                                     {lng.l}
                                 </button>
                              ))}
                         </div>
+
+                        <Link to="/courses"
+                            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, textDecoration: 'none', marginBottom: 2, fontSize: 13, fontWeight: 600, color: isActive('/courses') ? '#3b82f6' : themeColors.text, background: isActive('/courses') ? (isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff') : 'transparent', transition: 'background 0.15s' }}
+                            onMouseEnter={e => { if (!isActive('/courses')) e.currentTarget.style.background = themeColors.hover; }}
+                            onMouseLeave={e => { if (!isActive('/courses')) e.currentTarget.style.background = 'transparent'; }}>
+                            <BookOpen size={15} style={{ opacity: 0.7 }} />{t('nav.catalog')}
+                        </Link>
 
                         {mobileItems.map(item => (
                             <Link key={item.to} to={item.to}
@@ -352,17 +307,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                 {item.icon}{item.label}
                             </Link>
                         ))}
-                        
-                        {!isTeacher && (
-                            <button onClick={() => { setMobileOpen(false); setModalOpen(true); }}
-                                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: themeColors.text, fontSize: 13, fontWeight: 600, transition: 'background 0.15s', textAlign: 'left', marginBottom: 2 }}
-                                onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(59,130,246,0.12)' : '#eff6ff'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                <Sparkles size={15} style={{ color: '#3b82f6' }} />
-                                {t('nav.becomeAuthor')}
-                                <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: '#3b82f6', background: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff', border: '1px solid rgba(59,130,246,0.3)', padding: '2px 6px', borderRadius: 99 }}>NEW</span>
-                            </button>
-                        )}
 
                         <div style={{ borderTop: `1px solid ${themeColors.divider}`, marginTop: 8, paddingTop: 8 }}>
                             <button onClick={onLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
@@ -372,56 +316,6 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                     </div>
                 )}
             </header>
-
-            {modalOpen && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                    <div style={{ position: 'absolute', inset: 0, background: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)' }} onClick={() => setModalOpen(false)} />
-                    <div className="sq-drop" style={{ position: 'relative', background: themeColors.panel, border: `1px solid ${themeColors.panelBdr}`, borderRadius: 20, width: '100%', maxWidth: 440, overflow: 'hidden', boxShadow: isDark ? '0 25px 80px rgba(0,0,0,0.7)' : '0 25px 80px rgba(0,0,0,0.15)' }}>
-                        <div style={{ padding: '20px 24px 18px', borderBottom: `1px solid ${themeColors.divider}` }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: isDark ? 'rgba(59,130,246,0.15)' : '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <GraduationCap size={18} style={{ color: '#3b82f6' }} />
-                                    </div>
-                                    <div>
-                                        <h3 style={{ fontSize: 16, fontWeight: 800, color: themeColors.text, margin: 0 }}>{t('modal.title')}</h3>
-                                        <p style={{ fontSize: 12, color: themeColors.textMute, margin: 0 }}>{t('modal.subtitle')}</p>
-                                    </div>
-                                </div>
-                                <button onClick={() => setModalOpen(false)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: themeColors.textMute }}><X size={14} /></button>
-                            </div>
-                        </div>
-                        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            <div>
-                                <label style={{ fontSize: 11, fontWeight: 700, color: themeColors.textMute, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>{t('modal.experience')} <span style={{ color: '#ef4444' }}>*</span></label>
-                                <textarea rows={4} placeholder={t('modal.placeholder')}
-                                    value={cvText} onChange={e => setCvText(e.target.value)}
-                                    style={{ width: '100%', padding: '12px 14px', background: themeColors.input, border: `1px solid ${themeColors.inputBdr}`, borderRadius: 12, fontSize: 13, color: themeColors.text, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                                    onFocus={e => e.target.style.borderColor = '#3b82f6'}
-                                    onBlur={e => e.target.style.borderColor = themeColors.inputBdr} />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: 11, fontWeight: 700, color: themeColors.textMute, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>{t('modal.portfolio')}</label>
-                                <div style={{ position: 'relative' }}>
-                                    <ExternalLink size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: themeColors.textMute, pointerEvents: 'none' }} />
-                                    <input type="url" placeholder="https://linkedin.com/in/..."
-                                        value={portfolioUrl} onChange={e => setPortfolio(e.target.value)}
-                                        style={{ width: '100%', padding: '12px 14px 12px 36px', background: themeColors.input, border: `1px solid ${themeColors.inputBdr}`, borderRadius: 12, fontSize: 13, color: themeColors.text, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                                        onFocus={e => e.target.style.borderColor = '#3b82f6'}
-                                        onBlur={e => e.target.style.borderColor = themeColors.inputBdr} />
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ padding: '0 24px 24px', display: 'flex', gap: 10 }}>
-                            <button onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '12px', border: `1px solid ${themeColors.inputBdr}`, borderRadius: 12, fontSize: 13, fontWeight: 700, color: themeColors.text, background: 'transparent', cursor: 'pointer' }}>{t('modal.cancel')}</button>
-                            <button onClick={submitAuthor} disabled={submitting || !cvText}
-                                style={{ flex: 1, padding: '12px', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, color: '#fff', background: submitting || !cvText ? '#93c5fd' : '#2563eb', cursor: submitting || !cvText ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}>
-                                {submitting ? t('modal.submitting') : t('modal.submit')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }

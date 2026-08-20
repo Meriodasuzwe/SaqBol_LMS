@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom'; 
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import api from '../api';
-import aiApi from '../aiApi'; 
-import { toast } from 'react-toastify'; 
+ 
 import CourseSettingsTab from './components/CourseSettingsTab';
 import StepEditor from './components/StepEditor';
 import { 
     Settings, Eye, Plus, Trash2, FileText, PlayCircle, HelpCircle, 
-    ShieldAlert, Code2, AlertTriangle, LayoutGrid, CheckCircle2, X, ChevronRight, GripVertical
+    Code2, AlertTriangle, LayoutGrid, X, ChevronRight, GripVertical
 } from 'lucide-react';
 
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -66,12 +66,7 @@ function SortableStep({ step, index, isActive, onClick, getStepIcon, t }) {
 
 function CourseBuilder() {
     const { courseId } = useParams();
-    const { t, i18n } = useTranslation(); 
-    
-    const getAiLanguage = () => {
-        const langMap = { 'kk': 'Казахский', 'ru': 'Русский', 'en': 'English' };
-        return langMap[i18n.language] || 'Русский';
-    };
+    const { t } = useTranslation(); 
 
     const [lessons, setLessons] = useState([]);
     const [courseData, setCourseData] = useState({ title: '', description: '', price: 0 }); 
@@ -90,14 +85,8 @@ function CourseBuilder() {
         setPendingReorder(null);
     };
 
-    const [aiTopic, setAiTopic] = useState('');
-    const [aiLoading, setAiLoading] = useState(false);
     const [quizQuestions, setQuizQuestions] = useState(null);
     const [currentQuizId, setCurrentQuizId] = useState(null); 
-    const [quizPrompt, setQuizPrompt] = useState("");
-    const [quizDifficulty, setQuizDifficulty] = useState("medium");
-    const [quizCount, setQuizCount] = useState(3);
-    const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -242,7 +231,7 @@ function CourseBuilder() {
                             id: q.id, question: q.text || q.question || "", options: optionsList,
                             correct_answer: correctIdx.map(i => optionsList[i]).join(' | '), 
                             user_selected_index: correctIdx,
-                            correct_option_index: correctIdx, ai_suggested_index: -1 
+                            correct_option_index: correctIdx
                         };
                     });
                     setQuizQuestions(mapped);
@@ -361,36 +350,6 @@ function CourseBuilder() {
         } catch (err) { toast.error(t('builder.toasts.stepSaveError')); } finally { setLoading(false); }
     };
 
-    const handlePreGenerateQuiz = () => {
-        if (!quizPrompt.trim()) return toast.warning(t('builder.toasts.quizEmptyPrompt'));
-        if (quizQuestions && quizQuestions.length > 0) {
-            setConfirmDialog({
-                isOpen: true, title: t('builder.rewriteQuizTitle'), message: t('builder.rewriteQuizMsg', { count: quizQuestions.length }),
-                confirmText: t('builder.generateNewBtn'), isDanger: true,
-                onConfirm: () => { closeDialog(); executeQuizGeneration(); }
-            });
-        } else executeQuizGeneration();
-    };
-
-    const executeQuizGeneration = async () => {
-        setIsGeneratingQuiz(true);
-        try {
-            const res = await aiApi.post('generate-quiz', { text: quizPrompt, count: Number(quizCount), difficulty: quizDifficulty, language: getAiLanguage() });
-            const questions = res.data.generated_questions || res.data;
-            const normalized = Array.isArray(questions) ? questions.map(q => {
-                const questionText = (q.question || q.text || q.prompt || q.title || '').trim();
-                let rawOptions = q.options || q.choices || q.answers || q.variants || q.options_list || [];
-                if (typeof rawOptions === 'string') rawOptions = rawOptions.split(/\r?\n|\||;|,|•|\-|\u2022/).map(s => s.trim()).filter(Boolean);
-                let options = Array.isArray(rawOptions) ? rawOptions.map(o => String(o.text || o).trim()).filter(Boolean) : [];
-                let correct = (q.correct_answer || q.correctAnswer || q.correct || '').toString().trim();
-                let aiSuggestedIndex = options.indexOf(correct);
-                if (aiSuggestedIndex === -1) { aiSuggestedIndex = 0; correct = options[0]; }
-                return { id: null, question: questionText, options, correct_answer: correct, user_selected_index: [aiSuggestedIndex], correct_option_index: [aiSuggestedIndex], ai_suggested_index: aiSuggestedIndex };
-            }) : [];
-            setQuizQuestions(normalized); toast.success(t('builder.toasts.quizSuccess'));
-        } catch (err) { toast.error(t('builder.toasts.quizError')); } finally { setIsGeneratingQuiz(false); }
-    };
-
     const handleQuestionChange = (index, field, value) => { const updated = [...quizQuestions]; updated[index][field] = value; setQuizQuestions(updated); };
     
     const handleOptionChange = (qIndex, oIndex, value) => {
@@ -423,7 +382,7 @@ function CourseBuilder() {
         const newQuestion = { 
             id: null, question: "Новый вопрос", 
             options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], 
-            correct_answer: "Вариант 1", user_selected_index: [0], correct_option_index: [0], ai_suggested_index: -1 
+            correct_answer: "Вариант 1", user_selected_index: [0], correct_option_index: [0]
         };
         setQuizQuestions(quizQuestions ? [...quizQuestions, newQuestion] : [newQuestion]);
     };
@@ -455,27 +414,8 @@ function CourseBuilder() {
         }
     };
 
-    const handleGenerateScenario = async (type) => {
-        if (!aiTopic) return toast.warning(t('builder.toasts.simEmptyPrompt'));
-        setAiLoading(true);
-        try {
-            const res = await aiApi.post('generate-scenario', { 
-                topic: aiTopic, scenario_type: type === 'simulation_email' ? 'email' : 'chat', 
-                difficulty: 'medium', language: getAiLanguage() 
-            });
-            let newScenarioData = res.data;
-            if (typeof newScenarioData === 'string') {
-                try { newScenarioData = JSON.parse(newScenarioData); } catch(e) {}
-            }
-            if (newScenarioData && newScenarioData.scenario_data) newScenarioData = newScenarioData.scenario_data;
-            setActiveStep(prev => ({ ...prev, step_type: type, scenario_data: newScenarioData }));
-            toast.success(t('builder.toasts.simSuccess'));
-        } catch (err) { toast.error(t('builder.toasts.simError')); } finally { setAiLoading(false); }
-    }; 
-
     const getStepIcon = (type, size = 20) => {
         if (type === 'video_url') return <PlayCircle size={size} />;
-        if (type.includes('simulation') || type.includes('interactive')) return <ShieldAlert size={size} />;
         if (type === 'quiz') return <HelpCircle size={size} />;
         if (type === 'interactive_code') return <Code2 size={size} />;
         return <FileText size={size} />;
@@ -490,8 +430,6 @@ function CourseBuilder() {
     }
 
     return (
-        // ⚠️ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: убираем h-screen, вешаем fixed на весь билдер
-        // чтобы он занимал оставшееся место под навбаром
         <div className="fixed inset-0 top-[var(--navbar-height,64px)] flex w-full overflow-hidden bg-base-100 font-sans text-base-content animate-in fade-in">
             
             {/* === ЛЕВАЯ КОЛОНКА === */}
@@ -599,15 +537,12 @@ function CourseBuilder() {
                                     handleDeleteStep={handleDeleteStep} handleSaveStep={handleSaveStep} 
                                     loading={loading}
                                     quizProps={{
-                                        quizQuestions, setQuizQuestions, quizPrompt, setQuizPrompt,
-                                        quizDifficulty, setQuizDifficulty, quizCount, setQuizCount,
-                                        isGeneratingQuiz, onGenerate: handlePreGenerateQuiz,
+                                        quizQuestions, setQuizQuestions,
                                         onQuestionChange: handleQuestionChange, onOptionChange: handleOptionChange,
                                         onCorrectSelect: handleCorrectSelect, onAddManual: handleAddManualQuestion,
                                         onDeleteQuestion: handleDeleteQuestion,
                                         onAddOption: handleAddOption, onRemoveOption: handleRemoveOption  
                                     }}
-                                    aiProps={{ aiTopic, setAiTopic, aiLoading, handleGenerateScenario }}
                                 />
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-[60vh] text-center">
@@ -670,14 +605,12 @@ function CourseBuilder() {
                                 { type: 'text', icon: <FileText size={32} strokeWidth={1.5} />, title: t('builder.formats.text'), desc: t('builder.formats.textDesc') },
                                 { type: 'video_url', icon: <PlayCircle size={32} strokeWidth={1.5} />, title: t('builder.formats.video'), desc: t('builder.formats.videoDesc') },
                                 { type: 'quiz', icon: <HelpCircle size={32} strokeWidth={1.5} />, title: t('builder.formats.quiz'), desc: t('builder.formats.quizDesc') },
-                                { type: 'simulation_chat', icon: <ShieldAlert size={32} strokeWidth={1.5} />, title: t('builder.formats.sim'), desc: t('builder.formats.simDesc'), badge: 'AI' },
                                 { type: 'interactive_code', icon: <Code2 size={32} strokeWidth={1.5} />, title: t('builder.formats.code'), desc: t('builder.formats.codeDesc') },
                             ].map((item) => (
                                 <button 
                                     key={item.type} onClick={() => handleCreateStep(item.type)} 
                                     className="flex flex-col items-center justify-center p-6 border-2 border-base-200 bg-base-200/30 rounded-2xl hover:border-blue-600 hover:bg-base-100 hover:shadow-lg transition-all group relative text-center"
                                 >
-                                    {item.badge && <span className="absolute top-4 right-4 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px] font-black uppercase tracking-widest">{item.badge}</span>}
                                     <div className="text-base-content/40 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-300 mb-4">{item.icon}</div>
                                     <span className="font-bold text-base-content mb-1">{item.title}</span>
                                     <span className="text-xs text-base-content/50 font-medium">{item.desc}</span>
