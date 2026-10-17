@@ -9,6 +9,7 @@ import {
     BarChart2, ShieldCheck
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import { getMediaUrl } from './utils/mediaUrl';
 
 
 function Navbar({ isLoggedIn, userRole, onLogout }) {
@@ -55,11 +56,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
 
     useEffect(() => { setMobileOpen(false); setDropOpen(false); setLangOpen(false); }, [location.pathname]);
 
-    const getAvatarUrl = path => {
-        if (!path) return null;
-        if (path.startsWith('http')) return path;
-        return `http://localhost:8000${path.startsWith('/') ? '' : '/'}${path}`;
-    };
+    const getAvatarUrl = getMediaUrl;
 
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);

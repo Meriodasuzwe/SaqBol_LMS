@@ -132,6 +132,7 @@ async def generate_scenario(
 async def chat_reply(
     request: Request,
     body: ChatReplyRequest,
+    user_data: dict = Depends(verify_token),
 ):
     try:
         # 1. Формируем правила от учителя в строку
@@ -174,6 +175,8 @@ async def chat_reply(
             explanation=ai_response.get("explanation")
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Live Chat Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

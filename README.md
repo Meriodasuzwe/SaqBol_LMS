@@ -1,147 +1,137 @@
+# SaqBol LMS
 
-```markdown
-# SaqBol LMS: AI-Powered & Secure Learning Platform
+Платформа обучения: React 19 / Vite, Django REST Framework, PostgreSQL 15,
+Nginx, Prometheus и Grafana. Код отдельного FastAPI/Groq сервиса находится
+в `services/ai_service`, но AI намеренно выключен в текущей конфигурации.
 
-SaqBol is a modern, microservices-based Learning Management System (LMS) designed to automate teaching processes while maintaining enterprise-grade security. The core feature is an **AI Quiz Generator** that analyzes lesson content and creates interactive quizzes for students in seconds, combined with a **Stepik-style** multi-quiz interface.
+## Локальный запуск
 
-## 🚀 Key Features
+Нужны Docker Desktop с Linux containers и Docker Compose. Команды выполняются
+из корня проекта. Существующий `.env` и Docker volumes содержат настройки
+и данные проекта — сохраняйте их при повторном запуске.
 
-* **AI Quiz Laboratory:** Generate quizzes using Llama 3 (via Groq API) with customizable difficulty and question counts.
-* **Teacher Panel:** Draft, review, edit, and save AI-generated questions before publishing them to the database.
-* **Stepik-Style Navigation:** Students can seamlessly switch between multiple quiz variants within a single lesson, with real-time success tracking (color-coded UI).
-* **🔒 Enterprise-Grade Security (Zero Trust):** * **API Gateway:** Nginx acts as a single entry point, handling routing and serving static/media files.
-  * **Isolated Network:** Backend and AI services are hidden inside a private Docker network.
-  * **Cross-Service Auth:** The FastAPI AI service securely verifies Django JWT tokens before executing generations.
-* **🛡️ Audit & Monitoring:** Centralized security logging (`security.log` and `ai_security.log`) tracks login attempts, admin actions, and AI resource usage.
+Для новой установки создайте `.env` с переменными:
 
----
-
-## 🛠 Tech Stack
-
-* **Frontend:** React 18, Vite, Tailwind CSS, DaisyUI.
-* **Core Backend:** Django 5, Django REST Framework, PostgreSQL.
-* **AI Microservice:** FastAPI, Groq Python SDK, python-jose (JWT validation).
-* **Infrastructure:** Docker, Docker Compose, Nginx (API Gateway / Reverse Proxy).
-
----
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-* [Docker](https://www.docker.com/get-started) and Docker Compose.
-* A **Groq API Key** (Get it at [console.groq.com](https://console.groq.com/)).
-
----
-
-## ⚙️ Installation & Setup
-
-Follow these steps to get the project running locally:
-
-### 1. Clone the Repository
-
-```bash
-git clone [https://github.com/your-username/SaqBol_LMS.git](https://github.com/your-username/SaqBol_LMS.git)
-cd SaqBol_LMS
-
-```
-
-### 2. Configure Environment Variables
-
-Create a `.env` file in the **root directory** of the project:
-
-```bash
-touch .env
-
-```
-
-Add your keys to the `.env` file. **Note:** The `DJANGO_SECRET_KEY` must be identical for both Core and AI services to validate JWT tokens.
-
-```env
-# AI Service Configuration
-GROQ_API_KEY=gsk_your_secret_key_here
-
-# Security
-DJANGO_SECRET_KEY=your_super_secret_long_jwt_key_here
-
-# Core Service Configuration
-DEBUG=True
+```dotenv
+DJANGO_SECRET_KEY=replace-with-a-long-random-secret
 POSTGRES_DB=saqbol_db
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-
+POSTGRES_PASSWORD=replace-with-a-local-password
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
 ```
 
-### 3. Build and Start the Containers
+Запуск на этом компьютере:
 
-Use Docker Compose to build images and spin up the entire isolated network:
-
-```bash
-docker-compose up -d --build
-
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build --wait --wait-timeout 180
+docker compose ps
 ```
 
-Thanks to the **Nginx API Gateway**, everything is now accessible via standard HTTP port 80:
+`docker-compose.local.yml` задаёт localhost для ссылок и CORS, включает DEBUG
+и разрешает cookies по локальному HTTP. Не подключайте этот файл на публичном
+сервере. Основной файл использует настройки из `.env`; это конфигурация
+разработки с Django runserver и Vite, а не готовый production deployment.
 
-* **Frontend (React):** `http://localhost/`
-* **Backend API (Django):** `http://localhost/api/`
-* **Django Admin Panel:** `http://localhost/api/admin/`
-* **AI Service Swagger UI:** `http://localhost/ai/docs`
+Миграции и сбор static выполняются при запуске Django. Nginx ждёт готовности
+Django и frontend; все шесть сервисов имеют healthcheck и `restart: unless-stopped`.
+После ручного `stop` снова выполните команду `up` выше.
 
-### 4. Database Migrations & Superuser
+| Сервис | Адрес |
+|---|---|
+| Приложение | http://localhost/ |
+| Django Admin | http://localhost/api/admin/ |
+| Документация API | http://localhost/api/docs/ |
+| Проверка Django и БД | http://localhost/api/health/ |
+| Prometheus | http://localhost:9090/ |
+| Grafana | http://localhost:3000/ |
 
-Run migrations to set up the database schema and create an admin account:
+Для новой базы администратор создаётся интерактивно:
 
-```bash
-# Run migrations
-docker-compose exec core_service python manage.py migrate
-
-# Create admin (Teacher) account
-docker-compose exec core_service python manage.py createsuperuser
-
+```powershell
+docker compose exec core_service python manage.py createsuperuser
 ```
 
----
+## Диагностика
 
-## 🖥 Usage
+```powershell
+docker compose ps -a
+docker compose logs --tail 80 core_service nginx db_core
+docker compose exec core_service python manage.py check
+docker compose exec core_service python manage.py migrate --check
+```
 
-1. **Login:** Access the platform at `http://localhost/` and log in with your credentials.
-2. **Course Management:** Use the Django Admin at `http://localhost/api/admin/` to add courses and lessons.
-3. **Generate Quizzes:**
-* Navigate to the **Teacher Panel** via the main app interface.
-* Select a lesson or paste custom lecture text.
-* Adjust settings (difficulty, number of questions).
-* Click **"Сгенерировать"**, review the drafted questions, manually edit if necessary, and hit **"Сохранить"**.
+`/api/health/` возвращает 200 при доступной БД и 503 при недоступной.
+В Prometheus на странице Targets цель `django_core` должна быть UP;
+метрики собираются напрямую с `core-service:8000/prometheus/metrics`.
+DNS alias использует дефис: Django не принимает HTTP Host с подчёркиванием.
+Статус healthy проверяет доступность сервиса, но не все пользовательские сценарии.
 
+Для остановки с сохранением данных:
 
-4. **Take Quizzes:** Go to a lesson and try the new Stepik-style multi-variant quiz interface!
+```powershell
+docker compose stop
+```
 
----
+Не используйте `docker compose down -v` для обычного перезапуска: флаг `-v`
+удаляет тома БД и медиа.
 
-## 📂 Project Structure
+## Проверки кода
+
+Backend tests используют отдельную SQLite в памяти и локальную почту:
+
+```powershell
+docker compose exec core_service python -m pytest --ds=core.test_settings
+```
+
+Frontend:
+
+```powershell
+cd services/frontend
+npm ci --legacy-peer-deps
+npm test
+npm run build
+```
+
+## Внешние интеграции
+
+- AI отключён: `AI_ENABLED=false`; `/ai/` и Django AI-прокси возвращают 503.
+  Ручное создание и сохранение тестов работают без Groq.
+- Отправка почты требует `EMAIL_HOST_USER` и `EMAIL_HOST_PASSWORD`.
+- Google-вход требует согласованных Google OAuth client settings и разрешённых origins.
+- Stripe требует `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` и
+  `STRIPE_WEBHOOK_SECRET`, а также доступного webhook.
+- Telegram требует `TELEGRAM_BOT_TOKEN`.
+
+При локальной проверке 17.10.2026 Telegram-виджет вернул `Bot domain invalid`
+для localhost. Обычная форма входа доступна; Telegram-вход требует отдельной
+настройки разрешённого домена у провайдера.
+
+Наличие переменных не подтверждает действительность ключей или работу провайдера.
+Локальные regression tests подменяют внешние запросы и не отправляют письма,
+не выполняют платежи и не вызывают Groq.
+
+## Результат локальной проверки 17.10.2026
+
+Все шесть контейнеров healthy; Prometheus получает метрики (`django_core` UP).
+Каталог загрузил 17 курсов в браузере. Админка, API docs и static отвечают 200.
+Прошли 21 backend test, 10 frontend tests и 7 offline AI tests; frontend build
+успешен. Backend tests выполнены на временной SQLite, AI tests — с подменённым
+провайдером. Миграции существующей PostgreSQL применены, новых не требуется.
+
+Это проверка восстановления сервисов и конкретных исправлений. Вопросы доступа
+к платному контенту и другие пункты прежнего `docs/audit/` не закрыты полностью;
+результат не означает готовность всех коммерческих сценариев.
+
+## Структура
 
 ```text
-SaqBol_LMS/
-├── services/
-│   ├── frontend/        # React + Tailwind (Runs on Nginx /)
-│   ├── core_service/    # Django + DRF (Runs on Nginx /api/)
-│   └── ai_service/      # FastAPI + Groq (Runs on Nginx /ai/)
-├── nginx/               # API Gateway Configuration & Static serving
-├── logs/                # Security Audit Trails (Ignored by Git)
-├── docker-compose.yml   # Orchestration & Network isolation
-└── .env                 # Secret keys (Not tracked by Git)
-
+services/core_service/   Django API, модели, миграции, тесты
+services/frontend/       React-приложение
+services/ai_service/     Отключённый AI-сервис
+services/prometheus/     Сбор метрик
+nginx/                   HTTP gateway, static/media
+docker-compose.yml       Основная конфигурация сервисов
+docker-compose.local.yml Настройки локального HTTP
 ```
-
----
-
-## 🤝 Contributing
-
-1. Fork the project.
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
-
-```
-

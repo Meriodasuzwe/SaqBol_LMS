@@ -273,3 +273,7 @@ STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+
+# AI is opt-in; disabling it must not block the core learning workflows.
+AI_ENABLED = os.environ.get('AI_ENABLED', 'False').lower() in ('true', '1', 'yes')
+AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://ai_service:8000').rstrip('/')

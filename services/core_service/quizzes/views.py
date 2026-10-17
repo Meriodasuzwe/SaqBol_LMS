@@ -1,21 +1,27 @@
 # Этот импорт нужен для работы с AI-сервисом
 import requests
+from django.conf import settings
+from django.shortcuts import get_object_or_404
 # Стандартные импорты Django и DRF
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from drf_spectacular.utils import extend_schema
 
 from .models import Quiz, Question, Choice, Result
+from .grading import calculate_submission_score
 # Импорт модели Lesson для получения контента урока при генерации тестов через AI
 from courses.models import Lesson
 from .serializers import (
     QuizSerializer, 
     QuizSubmissionSerializer, 
     QuizResultSerializer, 
-    MyResultSerializer
+    MyResultSerializer,
+    GeneratePreviewSerializer,
+    SaveGeneratedSerializer,
 )
 
 # 1. ОБЫЧНЫЙ СПИСОК (для админки или общих целей)
@@ -47,56 +53,23 @@ class QuizSubmitView(APIView):
     
     @extend_schema(request=QuizSubmissionSerializer, responses={200: QuizResultSerializer})
     def post(self, request, quiz_id):
-        serializer = QuizSubmissionSerializer(data=request.data)
-        if serializer.is_valid():
-            answers = serializer.validated_data.get('answers')
-            questions = Question.objects.filter(quiz_id=quiz_id)
-            total_questions = questions.count()
-            
-            if total_questions == 0:
-                return Response({"error": "В тесте нет вопросов"}, status=400)
+        questions = Question.objects.filter(quiz_id=quiz_id).prefetch_related('choices')
+        question_choices = {
+            question.id: {choice.id: choice.is_correct for choice in question.choices.all()}
+            for question in questions
+        }
+        if not question_choices:
+            return Response({'error': 'В тесте нет вопросов'}, status=status.HTTP_400_BAD_REQUEST)
 
-            correct_answers_count = 0
-            # Словарь для хранения правильных ответов { question_id: [id1, id2, ...] }
-            correct_answers_ids = {}
+        serializer = QuizSubmissionSerializer(
+            data=request.data, context={'question_choices': question_choices},
+        )
+        serializer.is_valid(raise_exception=True)
+        response_data = calculate_submission_score(question_choices, serializer.validated_data['answers'])
 
-            for ans in answers:
-                question_id = ans.get('question_id')
-                choice_ids = ans.get('choice_ids', [])
-
-                # Получаем все правильные ID для этого вопроса
-                correct_ids = set(
-                    Choice.objects.filter(question_id=question_id, is_correct=True)
-                    .values_list('id', flat=True)
-                )
-
-                # Строгая проверка: выбранное множество должно точно совпадать с правильным
-                is_correct = set(choice_ids) == correct_ids
-                if is_correct:
-                    correct_answers_count += 1
-
-                # Сохраняем правильные ID для фронта
-                correct_answers_ids[question_id] = list(correct_ids)
-
-            score = int((correct_answers_count / total_questions) * 100)
-            
-            Result.objects.create(
-                student=request.user,
-                quiz_id=quiz_id,
-                score=score
-            )
-            
-            response_data = {
-                "score": score,
-                "correct_count": correct_answers_count,
-                "total_questions": total_questions,
-                "status": "Pass" if score >= 70 else "Fail",
-                "correct_answers_ids": correct_answers_ids,
-            }
-            
-            return Response(response_data, status=status.HTTP_200_OK)
-            
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # No result records are written until the entire submission is validated.
+        Result.objects.create(student=request.user, quiz_id=quiz_id, score=response_data['score'])
+        return Response(response_data, status=status.HTTP_200_OK)
 
 # 5. Результаты пользователя
 class MyQuizResultsView(generics.ListAPIView):
@@ -111,98 +84,80 @@ class GeneratePreviewView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        lesson_id = request.data.get('lesson_id')
-        custom_text = request.data.get('custom_text')
-        count = request.data.get('count', 3)
-        difficulty = request.data.get('difficulty', 'medium')
+        if not settings.AI_ENABLED:
+            return Response({'error': 'AI-функции сейчас отключены.'}, status=503)
+
+        serializer = GeneratePreviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        lesson_id = data.get('lesson_id')
+        custom_text = data.get('custom_text')
         content = ""
 
-        if custom_text and len(str(custom_text).strip()) > 5:
+        if custom_text and len(custom_text) > 5:
             content = custom_text
         elif lesson_id:
-            try:
-                content = Lesson.objects.get(id=lesson_id).content
-            except Lesson.DoesNotExist:
-                return Response({"error": "Урок не найден"}, status=404)
+            lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+            if not (lesson.course.teacher_id == request.user.id or request.user.is_superuser or request.user.role == 'admin'):
+                raise PermissionDenied('Только автор курса может генерировать тесты по уроку.')
+            content = '\n\n'.join(
+                lesson.steps.filter(step_type='text').exclude(content='')
+                .order_by('order', 'id').values_list('content', flat=True)
+            )
         else:
             return Response({"error": "Введите текст или выберите урок"}, status=400)
 
         if not content or len(content) < 10:
             return Response({"error": "Слишком короткий текст"}, status=400)
+        if len(content) > 50000:
+            return Response({'error': 'Текст не должен превышать 50000 символов.'}, status=400)
 
         try:
-            ai_url = "http://saqbol_ai_service:8000/generate-quiz"
-            payload = {"text": content, "count": int(count), "difficulty": difficulty}
-            response = requests.post(ai_url, json=payload, timeout=60)
+            ai_url = f"{settings.AI_SERVICE_URL.rstrip('/')}/generate-quiz"
+            payload = {"text": content, "count": data['count'], "difficulty": data['difficulty'], "language": data['language']}
+            response = requests.post(
+                ai_url, json=payload, timeout=60,
+                headers={'Authorization': request.headers.get('Authorization', '')},
+            )
             
             if response.status_code != 200:
                 return Response({"error": "AI-сервис вернул ошибку"}, status=503)
             
             return Response(response.json(), status=200)
-        except Exception as e:
-            return Response({"error": f"Ошибка связи с AI: {str(e)}"}, status=500)
+        except (requests.exceptions.RequestException, ValueError):
+            return Response({"error": "Сервер ИИ временно недоступен"}, status=503)
 
 class SaveGeneratedView(APIView):
     permission_classes = [IsAuthenticated]
     
     @transaction.atomic
     def post(self, request):
-        lesson_id = request.data.get('lesson_id')
-        questions_data = request.data.get('questions')
-        quiz_id = request.data.get('quiz_id')
-        quiz_title = request.data.get('quiz_title')
+        serializer = SaveGeneratedSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=data['lesson_id'])
+        if not (lesson.course.teacher_id == request.user.id or request.user.is_superuser or request.user.role == 'admin'):
+            raise PermissionDenied('Только автор курса может сохранять тесты.')
 
-        if not lesson_id or not questions_data:
-            return Response({"error": "Данные неполные"}, status=400)
+        quiz_id = data.get('quiz_id')
+        quiz_title = data.get('quiz_title')
+        if quiz_id:
+            quiz = get_object_or_404(Quiz.objects.select_for_update(), id=quiz_id, lesson=lesson)
+            if quiz_title:
+                quiz.title = quiz_title
+                quiz.save(update_fields=['title'])
+            quiz.questions.all().delete()
+        else:
+            quiz = Quiz.objects.create(title=quiz_title or f'Тест: {lesson.title}', lesson=lesson)
 
-        try:
-            lesson = Lesson.objects.get(id=lesson_id)
-            
-            if quiz_id:
-                quiz = Quiz.objects.get(id=quiz_id)
-                if quiz_title:
-                    quiz.title = quiz_title
-                    quiz.save()
-                
-                # 🔥 ГЛАВНЫЙ ФИКС: Удаляем старые вопросы перед сохранением новых!
-                # Без этой строки старые неправильные варианты копились дубликатами в БД.
-                Question.objects.filter(quiz=quiz).delete()
-            else:
-                title = quiz_title or f"Тест: {lesson.title}"
-                quiz = Quiz.objects.create(title=title, lesson=lesson)
-
-            for q_item in questions_data:
-                q_text = str(q_item.get('question', '')).strip()
-                if not q_text: continue
-                
-                question = Question.objects.create(
-                    quiz=quiz, 
-                    text=q_text, 
-                    explanation=q_item.get('explanation', '')
-                )
-
-                options = q_item.get('options', [])
-                
-                # 🔥 ИСПРАВЛЕНИЕ: Получаем массив индексов правильных ответов
-                # Фронтенд теперь присылает 'correct_index' как массив [0, 2]
-                correct_indices = q_item.get('correct_index', [])
-                
-                # Если пришло одно число (старый формат), превращаем в массив
-                if isinstance(correct_indices, (int, str)):
-                    correct_indices = [int(correct_indices)]
-                elif not isinstance(correct_indices, list):
-                    correct_indices = []
-
-                for i, opt_text in enumerate(options):
-                    # 🔥 Проверяем наличие индекса в списке правильных
-                    is_correct = i in correct_indices
-                    
-                    Choice.objects.create(
-                        question=question,
-                        text=str(opt_text).strip(),
-                        is_correct=is_correct
-                    )
-
-            return Response({"message": "Тест сохранен", "quiz_id": quiz.id}, status=201)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        # Validate the entire payload before replacing existing content. Database
+        # failures escape the transaction so the previous quiz is restored.
+        for item in data['questions']:
+            question = Question.objects.create(
+                quiz=quiz, text=item['question'], explanation=item['explanation'],
+            )
+            Choice.objects.bulk_create([
+                Choice(question=question, text=option, is_correct=index in item['correct_index'])
+                for index, option in enumerate(item['options'])
+            ])
+        return Response({'message': 'Тест сохранен', 'quiz_id': quiz.id}, status=201)

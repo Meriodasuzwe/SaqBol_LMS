@@ -1,7 +1,6 @@
-version: '3.8'
-
 services:
   db_core:
+    restart: unless-stopped
     image: postgres:15
     container_name: saqbol_db_core
     environment:
@@ -21,7 +20,7 @@ services:
       retries: 5
 
   core_service:
-    restart: always
+    restart: unless-stopped
     build: ./services/core_service
     container_name: saqbol_core_service
     command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
@@ -39,11 +38,21 @@ services:
     environment:
       - POSTGRES_HOST=db_core
       - POSTGRES_PORT=5432
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1},localhost,127.0.0.1,core-service,nginx
+      - AI_ENABLED=false
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     networks:
-      - lms_network
+      lms_network:
+        aliases:
+          - core-service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
 # --- НАЧАЛО ЗАКОММЕНТИРОВАННОГО AI СЕРВИСА ---
 #  ai_service:
@@ -65,7 +74,7 @@ services:
 # --- КОНЕЦ ЗАКОММЕНТИРОВАННОГО AI СЕРВИСА ---
 
   frontend:
-    restart: always
+    restart: unless-stopped
     build: ./services/frontend
     volumes:
       - ./services/frontend:/app
@@ -74,9 +83,16 @@ services:
       - VITE_API_URL=/api/
     networks:
       - lms_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
   # ---  МОНИТОРИНГ: PROMETHEUS ---
   prometheus:
+    restart: unless-stopped
     image: prom/prometheus:latest
     container_name: saqbol_prometheus
     volumes:
@@ -85,9 +101,15 @@ services:
       - lms_network
     ports:
       - "9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   # ---  МОНИТОРИНГ: GRAFANA ---
   grafana:
+    restart: unless-stopped
     image: grafana/grafana:latest
     container_name: saqbol_grafana
     ports:
@@ -100,8 +122,15 @@ services:
       - prometheus
     volumes:
       - grafana_data:/var/lib/grafana 
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   nginx:
+    restart: unless-stopped
     image: nginx:alpine
     container_name: saqbol_gateway
     ports:
@@ -111,11 +140,17 @@ services:
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
     depends_on:
-      - core_service
-      # - ai_service  <--- ЗДЕСЬ МЫ ТОЖЕ ЗАКОММЕНТИРОВАЛИ ЗАВИСИМОСТЬ
-      - frontend
+      core_service:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     networks:
       - lms_network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data_core:

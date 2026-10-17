@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.parsers import MultiPartParser
 from django.core.files.storage import default_storage
 from rest_framework.views import APIView
@@ -652,6 +652,9 @@ class ChatReplyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
+        if not settings.AI_ENABLED:
+            return Response({'error': 'AI-функции сейчас отключены.'}, status=503)
+
         step = get_object_or_404(LessonStep, pk=pk)
         user_message = request.data.get('message')
         history = request.data.get('history', [])
@@ -674,18 +677,21 @@ class ChatReplyView(APIView):
         }
 
         try:
-            ai_service_url = getattr(settings, 'AI_SERVICE_URL', 'http://ai_service:8000') 
+            ai_service_url = settings.AI_SERVICE_URL.rstrip('/')
             endpoint_url = f"{ai_service_url}/generate-scenario/chat-reply"
             
-            response = requests.post(endpoint_url, json=payload, timeout=30)
+            response = requests.post(
+                endpoint_url, json=payload, timeout=30,
+                headers={'Authorization': request.headers.get('Authorization', '')},
+            )
             
             if not response.ok:
-                return Response({"error": f"FastAPI вернул ошибку: {response.text}"}, status=500)
+                return Response({"error": "Сервер ИИ временно недоступен"}, status=503)
             
             return Response(response.json())
             
-        except requests.exceptions.RequestException as e:
-            return Response({"error": "Сервер ИИ временно недоступен"}, status=500)
+        except (requests.exceptions.RequestException, ValueError):
+            return Response({"error": "Сервер ИИ временно недоступен"}, status=503)
         
 
 class B2BLeadThrottle(AnonRateThrottle):
@@ -990,6 +996,7 @@ class RevokeEmployeeAccessView(APIView):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def promo_slots(request):
     total = 100
     used = B2BLead.objects.count()  
