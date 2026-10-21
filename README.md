@@ -1,147 +1,97 @@
+# SaqBol LMS
 
-```markdown
-# SaqBol LMS: AI-Powered & Secure Learning Platform
+SaqBol is an educational web application being developed into a platform for master's admission test preparation in Kazakhstan.
 
-SaqBol is a modern, microservices-based Learning Management System (LMS) designed to automate teaching processes while maintaining enterprise-grade security. The core feature is an **AI Quiz Generator** that analyzes lesson content and creates interactive quizzes for students in seconds, combined with a **Stepik-style** multi-quiz interface.
+The project started as a university LMS project. Its current direction is preparation for Comprehensive Testing (CT / КТ), with a focus on clear learning materials, topic-based practice, answer explanations, and progress tracking.
 
-## 🚀 Key Features
+## Project status
 
-* **AI Quiz Laboratory:** Generate quizzes using Llama 3 (via Groq API) with customizable difficulty and question counts.
-* **Teacher Panel:** Draft, review, edit, and save AI-generated questions before publishing them to the database.
-* **Stepik-Style Navigation:** Students can seamlessly switch between multiple quiz variants within a single lesson, with real-time success tracking (color-coded UI).
-* **🔒 Enterprise-Grade Security (Zero Trust):** * **API Gateway:** Nginx acts as a single entry point, handling routing and serving static/media files.
-  * **Isolated Network:** Backend and AI services are hidden inside a private Docker network.
-  * **Cross-Service Auth:** The FastAPI AI service securely verifies Django JWT tokens before executing generations.
-* **🛡️ Audit & Monitoring:** Centralized security logging (`security.log` and `ai_security.log`) tracks login attempts, admin actions, and AI resource usage.
+**Active development.** The repository contains the LMS foundation and an AI-assisted quiz authoring workflow. Adaptation to CT preparation is ongoing; complete subject coverage, full-length mock exams, and a learner-facing AI assistant are part of the development roadmap.
 
----
+The first target track is **M094 - Information Technology**.
 
-## 🛠 Tech Stack
+## Current functionality
 
-* **Frontend:** React 18, Vite, Tailwind CSS, DaisyUI.
-* **Core Backend:** Django 5, Django REST Framework, PostgreSQL.
-* **AI Microservice:** FastAPI, Groq Python SDK, python-jose (JWT validation).
-* **Infrastructure:** Docker, Docker Compose, Nginx (API Gateway / Reverse Proxy).
+- User authentication with JWT.
+- Courses and lessons for organizing learning materials.
+- Lesson quizzes with single-choice and multiple-choice questions.
+- Navigation between questions and quiz variants within a lesson.
+- Answer explanations, saved results, and attempt history.
+- Server-side validation of submitted answers before grading and saving results.
+- AI-assisted generation of draft quiz questions from lesson content.
+- Teacher tools for reviewing and editing generated questions before saving them.
 
----
+## CT preparation scope
 
-## 📋 Prerequisites
+The first public version is planned to cover four subjects:
 
-Before you begin, ensure you have the following installed:
+- Algorithms and Data Structures.
+- Databases.
+- ТГО.
+- English.
 
-* [Docker](https://www.docker.com/get-started) and Docker Compose.
-* A **Groq API Key** (Get it at [console.groq.com](https://console.groq.com/)).
+Lessons will use short explanations, worked examples, tables, and diagrams, followed by practice questions. The planned practice modes include lesson exercises, module tests, subject-specific mock exams, and a full mock exam.
 
----
+Learners will be able to follow a recommended study path or choose topics freely. Completed material, practice results, and topics that need revision will be tracked separately.
 
-## ⚙️ Installation & Setup
+The interface is designed primarily for desktop and laptop use, with responsive layouts for phones. Russian is the initial language for learning materials and explanations; a Kazakh version is planned for the next stage.
 
-Follow these steps to get the project running locally:
+## AI features
 
-### 1. Clone the Repository
+### Quiz authoring
 
-```bash
-git clone [https://github.com/your-username/SaqBol_LMS.git](https://github.com/your-username/SaqBol_LMS.git)
-cd SaqBol_LMS
+The existing authoring workflow uses a separate FastAPI service and the Groq API to generate draft questions from lesson content. Generated questions can be reviewed and edited through the teacher interface before they are saved.
 
-```
+Content review remains part of the authoring process: generated questions need a checked answer and a clear explanation.
 
-### 2. Configure Environment Variables
+### Learner assistant — planned
 
-Create a `.env` file in the **root directory** of the project:
+The first learner-facing AI features are intended to:
 
-```bash
-touch .env
+- Explain a mistake using the question, the learner's answer, and the prepared solution.
+- Clarify a lesson fragment and provide an additional example.
 
-```
+In mock-exam mode, assistance is planned for the review stage after submission. Scores will be calculated using defined grading rules independently of the assistant.
 
-Add your keys to the `.env` file. **Note:** The `DJANGO_SECRET_KEY` must be identical for both Core and AI services to validate JWT tokens.
+## Technology stack
 
-```env
-# AI Service Configuration
-GROQ_API_KEY=gsk_your_secret_key_here
+| Component | Technologies | Responsibility |
+| --- | --- | --- |
+| Frontend | React, Vite, Tailwind CSS, DaisyUI | Learning interface, quiz navigation, and results |
+| Core backend | Django, Django REST Framework | Users, learning content, quizzes, and grading |
+| Database | PostgreSQL | Application data and learning results |
+| AI service | FastAPI, OpenAI Python SDK | Draft question generation |
+| Authentication | JWT, python-jose | Authentication and token validation |
+| Infrastructure | Docker, Docker Compose, Nginx | Service orchestration, routing, and static/media delivery |
 
-# Security
-DJANGO_SECRET_KEY=your_super_secret_long_jwt_key_here
+The Django backend handles the main learning workflows. AI-assisted question generation runs in a separate FastAPI service. Docker Compose provides the service environment, and Nginx handles incoming requests.
 
-# Core Service Configuration
-DEBUG=True
-POSTGRES_DB=saqbol_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
+## Development roadmap
 
-```
+### First public release
 
-### 3. Build and Start the Containers
+- [ ] Organize preparation materials around the CT syllabus for M094 and the common subjects.
+- [ ] Build a reviewed question bank with topic, difficulty, question type, language, and explanation metadata.
+- [ ] Add module tests, subject-specific mock exams, and full mock exams.
+- [ ] Assemble mock exams according to the selected specification and reduce repeated questions where the available bank allows it.
+- [ ] Add topic-level progress, mistake review, and study recommendations.
+- [ ] Introduce the learner-facing AI assistant with controlled usage limits.
+- [ ] Add paid access and payment integration.
 
-Use Docker Compose to build images and spin up the entire isolated network:
+### Further development
 
-```bash
-docker-compose up -d --build
+- [ ] Add learning materials and explanations in Kazakh.
+- [ ] Expand to additional admission tracks as reviewed subject content becomes available.
+- [ ] Develop workflows for subject authors and contributors.
 
-```
+Development priorities include consistent grading, access control, reliable attempt storage, and recovery after interrupted sessions.
 
-Thanks to the **Nginx API Gateway**, everything is now accessible via standard HTTP port 80:
+## Learning content
 
-* **Frontend (React):** `http://localhost/`
-* **Backend API (Django):** `http://localhost/api/`
-* **Django Admin Panel:** `http://localhost/api/admin/`
-* **AI Service Swagger UI:** `http://localhost/ai/docs`
+SaqBol is an independent educational project. Its practice materials are intended for preparation and are not presented as official NTC exam questions.
 
-### 4. Database Migrations & Superuser
+The planned content process uses published specifications, topic lists, official examples, and recommended literature as references for original lessons and practice questions. Questions and explanations should be checked before publication.
 
-Run migrations to set up the database schema and create an admin account:
+## Author
 
-```bash
-# Run migrations
-docker-compose exec core_service python manage.py migrate
-
-# Create admin (Teacher) account
-docker-compose exec core_service python manage.py createsuperuser
-
-```
-
----
-
-## 🖥 Usage
-
-1. **Login:** Access the platform at `http://localhost/` and log in with your credentials.
-2. **Course Management:** Use the Django Admin at `http://localhost/api/admin/` to add courses and lessons.
-3. **Generate Quizzes:**
-* Navigate to the **Teacher Panel** via the main app interface.
-* Select a lesson or paste custom lecture text.
-* Adjust settings (difficulty, number of questions).
-* Click **"Сгенерировать"**, review the drafted questions, manually edit if necessary, and hit **"Сохранить"**.
-
-
-4. **Take Quizzes:** Go to a lesson and try the new Stepik-style multi-variant quiz interface!
-
----
-
-## 📂 Project Structure
-
-```text
-SaqBol_LMS/
-├── services/
-│   ├── frontend/        # React + Tailwind (Runs on Nginx /)
-│   ├── core_service/    # Django + DRF (Runs on Nginx /api/)
-│   └── ai_service/      # FastAPI + Groq (Runs on Nginx /ai/)
-├── nginx/               # API Gateway Configuration & Static serving
-├── logs/                # Security Audit Trails (Ignored by Git)
-├── docker-compose.yml   # Orchestration & Network isolation
-└── .env                 # Secret keys (Not tracked by Git)
-
-```
-
----
-
-## 🤝 Contributing
-
-1. Fork the project.
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
-
-```
-
+**Rakhat Aliyev**
