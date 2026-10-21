@@ -2,7 +2,7 @@
 
 SaqBol is an educational web application being developed into a platform for master's admission test preparation in Kazakhstan.
 
-The project started as a university LMS project. Its current direction is preparation for Comprehensive Testing (CT / КТ), with a focus on clear learning materials, topic-based practice, answer explanations, and progress tracking.
+The project started as a university LMS project. Its current direction is preparation for Comprehensive Testing (KTA / КТ), with a focus on clear learning materials, topic-based practice, answer explanations, and progress tracking.
 
 ## Project status
 
