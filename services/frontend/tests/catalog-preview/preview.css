@@ -1,0 +1,15 @@
+@import "../../src/index.css";
+@source "../../src";
+
+:root { font-family: Arial, "Segoe UI", sans-serif; }
+body { margin: 0; }
+.catalog-preview-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 10px 20px; background: #e8eef8; color: #314a6b; border-bottom: 1px solid #c7d5ea; font: 11px/1.5 Arial, sans-serif; }
+.catalog-preview-controls strong { letter-spacing: .04em; }
+.catalog-preview-controls p { margin: 2px 0 0; }
+.catalog-preview-selects { display: flex; gap: 10px; flex-wrap: wrap; }
+.catalog-preview-selects label { display: flex; flex-direction: column; gap: 3px; font-weight: 700; }
+.catalog-preview-selects select { padding: 5px 8px; border: 1px solid #b9c8df; border-radius: 4px; background: white; color: #314a6b; font: inherit; }
+.catalog-preview-destination { padding: 32px 0; line-height: 1.7; }
+.catalog-preview-destination h1 { font-size: 22px; font-weight: 700; }
+.catalog-preview-destination a { color: #2563eb; text-decoration: underline; }
+[data-theme="dark"] .catalog-preview-controls { background: #17243a; color: #cad8ec; border-color: #33445f; }

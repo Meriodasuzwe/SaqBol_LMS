@@ -4,6 +4,7 @@ import api from './api';
 import { toast } from 'react-toastify';
 import { Award, Download, Briefcase, ArrowRight, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getMediaUrl } from './utils/mediaUrl';
 
 function Profile() {
     const { t, i18n } = useTranslation();
@@ -83,12 +84,6 @@ function Profile() {
         } catch (err) {
             toast.error(t('profile.avatarUpdateError') || "Ошибка при обновлении аватара");
         }
-    };
-
-    const getMediaUrl = (path) => {
-        if (!path) return null;
-        if (path.startsWith('http://') || path.startsWith('blob:')) return path;
-        return `http://localhost:8000${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
     const handleCreateCourse = async () => {

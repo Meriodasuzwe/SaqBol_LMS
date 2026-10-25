@@ -82,7 +82,7 @@ urlpatterns = [
     path('b2b/leads/<int:lead_id>/generate-invite/', GenerateCorporateInviteView.as_view(), name='generate-invite'),
     path('<int:course_id>/activate-invite/', ActivateInviteView.as_view(), name='activate-invite'),
     path('b2b/invites/<str:invite_code>/revoke/<int:user_id>/', RevokeEmployeeAccessView.as_view(), name='revoke-access'),
-    path('courses/promo-slots/', promo_slots, name='promo-slots'),
+    path('promo-slots/', promo_slots, name='promo-slots'),
 
     path('system-stats/', system_stats, name='system-stats'),
 

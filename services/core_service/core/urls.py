@@ -3,8 +3,10 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.conf import settings 
 from django.conf.urls.static import static 
+from .views import health
 
 urlpatterns = [
+    path('health/', health, name='health'),
     # Просто 'admin/', без api. Nginx сам разрулит.
     path('admin/', admin.site.urls),
     

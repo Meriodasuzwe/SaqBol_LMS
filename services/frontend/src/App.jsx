@@ -180,7 +180,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access'));
   const [userRole, setUserRole] = useState(null);
-  const [loadingRole, setLoadingRole] = useState(false);
+  const [loadingRole, setLoadingRole] = useState(isLoggedIn);
 
   // Теперь при логауте мы удаляем токены и сбрасываем состояние
   const handleLogout = () => {
@@ -189,21 +189,30 @@ function App() {
     
     setIsLoggedIn(false);
     setUserRole(null);
+    setLoadingRole(false);
   };
 
   useEffect(() => {
+    window.addEventListener('auth:expired', handleLogout);
+    return () => window.removeEventListener('auth:expired', handleLogout);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     if (isLoggedIn) {
       setLoadingRole(true);
       api.get('users/me/')
-        .then(response => setUserRole(response.data.role))
+        .then(response => { if (active) setUserRole(response.data.role); })
         .catch(err => {
+          if (!active) return;
           console.error("Не удалось получить роль", err);
           if (err.response?.status === 401) handleLogout();
         })
-        .finally(() => setLoadingRole(false));
+        .finally(() => { if (active) setLoadingRole(false); });
     } else {
       setUserRole(null);
     }
+    return () => { active = false; };
   }, [isLoggedIn]);
 
   const isTeacher = userRole === 'teacher' || userRole === 'admin';
@@ -223,13 +232,17 @@ function App() {
           pauseOnHover
           theme="colored"
         />
-        <AppLayout
+        {loadingRole ? (
+          <div className="min-h-screen flex items-center justify-center" role="status" aria-label="Loading">
+            <span className="loading loading-spinner loading-lg" />
+          </div>
+        ) : <AppLayout
           isLoggedIn={isLoggedIn}
           userRole={userRole}
           onLogout={handleLogout}
           isTeacher={isTeacher}
-          onLoginSuccess={() => setIsLoggedIn(true)}
-        />
+          onLoginSuccess={() => { setLoadingRole(true); setIsLoggedIn(true); }}
+        />}
       </Router>
     </GoogleOAuthProvider>
   );

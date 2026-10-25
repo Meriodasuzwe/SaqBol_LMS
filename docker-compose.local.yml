@@ -1,0 +1,10 @@
+# Local HTTP settings; keep production URLs and secure cookies in the base setup.
+# Run: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+services:
+  core_service:
+    environment:
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1,core-service,nginx
+      CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1
+      CORS_ALLOW_ALL_ORIGINS: "False"
+      FRONTEND_URL: http://localhost

@@ -8,6 +8,8 @@ export const setupAxiosInterceptors = (axiosInstance) => {
         (response) => response,
         (error) => {
 
+            if (error.code === 'ERR_CANCELED') return Promise.reject(error);
+
             // 1. Ошибка сети
             if (!error.response) {
                 toast.error(i18n.t('api.networkError'), {
@@ -37,6 +39,7 @@ export const setupAxiosInterceptors = (axiosInstance) => {
                 }
 
                 case 401:
+                    if (error.config?.skipAuth) break;
                     // toastId гарантирует что сколько бы запросов ни упало с 401
                     // юзер увидит ровно ОДИН тост
                     toast.info(i18n.t('api.sessionExpired'), {

@@ -43,19 +43,88 @@ class QuizSerializer(serializers.ModelSerializer):
         model = Quiz
         fields = ['id', 'title', 'description', 'questions', 'lesson']
 
+class SubmissionIdField(serializers.IntegerField):
+    """IDs in a JSON submission must be integers, not coerced strings or floats."""
+
+    def to_internal_value(self, data):
+        if type(data) is not int:
+            self.fail('invalid')
+        return super().to_internal_value(data)
+
+
 class AnswerItemSerializer(serializers.Serializer):
-    question_id = serializers.IntegerField()
+    question_id = SubmissionIdField(min_value=1)
     choice_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        min_length=1
+        child=SubmissionIdField(min_value=1),
+        allow_empty=True,
     )
+
+    def validate_choice_ids(self, choice_ids):
+        if len(choice_ids) != len(set(choice_ids)):
+            raise serializers.ValidationError('Выбранный вариант не должен повторяться.')
+        return choice_ids
+
 
 class QuizSubmissionSerializer(serializers.Serializer):
     answers = serializers.ListField(
         child=AnswerItemSerializer(),
-        min_length=1,
+        allow_empty=True,
         max_length=50
     )
+
+    def validate_answers(self, answers):
+        # Built once from this quiz's prefetched questions and choices by submit.
+        question_choices = self.context['question_choices']
+        seen_questions = set()
+        for index, answer in enumerate(answers):
+            question_id = answer['question_id']
+            if question_id in seen_questions:
+                raise serializers.ValidationError({
+                    index: {'question_id': 'Вопрос не должен повторяться.'},
+                })
+            seen_questions.add(question_id)
+            if question_id not in question_choices:
+                raise serializers.ValidationError({
+                    index: {'question_id': 'Вопрос не принадлежит сдаваемому тесту.'},
+                })
+            if any(choice_id not in question_choices[question_id] for choice_id in answer['choice_ids']):
+                raise serializers.ValidationError({
+                    index: {'choice_ids': 'Выбранный вариант не принадлежит указанному вопросу.'},
+                })
+        return answers
+
+
+class GeneratePreviewSerializer(serializers.Serializer):
+    lesson_id = serializers.IntegerField(required=False, min_value=1)
+    custom_text = serializers.CharField(required=False, allow_blank=True, max_length=50000)
+    count = serializers.IntegerField(default=3, min_value=1, max_value=20)
+    difficulty = serializers.ChoiceField(choices=['easy', 'medium', 'hard'], default='medium')
+    language = serializers.CharField(default='Русский')
+
+
+class GeneratedQuestionSerializer(serializers.Serializer):
+    question = serializers.CharField()
+    explanation = serializers.CharField(required=False, allow_blank=True, default='')
+    options = serializers.ListField(child=serializers.CharField(max_length=255), min_length=2)
+    correct_index = serializers.ListField(child=serializers.IntegerField(min_value=0), min_length=1)
+
+    def to_internal_value(self, data):
+        # Older clients submit one index instead of an array.
+        if isinstance(data, dict) and isinstance(data.get('correct_index'), (int, str)):
+            data = {**data, 'correct_index': [data['correct_index']]}
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        if any(index >= len(attrs['options']) for index in attrs['correct_index']):
+            raise serializers.ValidationError({'correct_index': 'Индекс ответа вне списка вариантов.'})
+        return attrs
+
+
+class SaveGeneratedSerializer(serializers.Serializer):
+    lesson_id = serializers.IntegerField(min_value=1)
+    quiz_id = serializers.IntegerField(required=False, min_value=1)
+    quiz_title = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    questions = GeneratedQuestionSerializer(many=True, allow_empty=False)
 
 # Сериализатор для отображения результатов теста после сдачи
 class QuizResultSerializer(serializers.ModelSerializer):

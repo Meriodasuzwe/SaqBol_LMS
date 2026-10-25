@@ -1,0 +1,216 @@
+{
+  "database": "temporary SQLite in memory; not production PostgreSQL",
+  "versions": {
+    "django": "4.2",
+    "djangorestframework": "3.15.2",
+    "djangorestframework-simplejwt": "5.3.1",
+    "pytest": "9.1.1"
+  },
+  "checks": {
+    "check": {
+      "exit_code": 0,
+      "output": "System check identified no issues (0 silenced)."
+    },
+    "makemigrations": {
+      "exit_code": 0,
+      "output": "No changes detected"
+    },
+    "duplicate_score_observed": 200,
+    "untrusted_xp_saved": 999999,
+    "original_question_survives_student_write": false,
+    "invalid_save": {
+      "status": 500,
+      "questions_after_error": [
+        "Malformed update"
+      ],
+      "choices_after_error": 0
+    },
+    "existing_pytest": {
+      "exit_code": 0,
+      "stdout": "...                                                                      [100%]\n3 passed in 1.09s",
+      "stderr": ""
+    }
+  },
+  "observations": [
+    {
+      "case": "anonymous paid content: /courses/",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "anonymous paid content: /courses/1/",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "anonymous paid content: /courses/1/lessons/",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "anonymous draft lesson content",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "non-buyer direct lesson denied",
+      "expected": 403,
+      "actual": 403,
+      "matches_expected": true
+    },
+    {
+      "case": "non-buyer quiz detail denied",
+      "expected": 403,
+      "actual": 200,
+      "matches_expected": false
+    },
+    {
+      "case": "paid self-enrollment denied",
+      "expected": 402,
+      "actual": 402,
+      "matches_expected": true
+    },
+    {
+      "case": "non-buyer quiz submission denied",
+      "expected": 403,
+      "actual": 200,
+      "matches_expected": false
+    },
+    {
+      "case": "duplicate questions rejected",
+      "expected": 400,
+      "actual": 200,
+      "matches_expected": false
+    },
+    {
+      "case": "score cannot exceed 100",
+      "expected": true,
+      "actual": false,
+      "matches_expected": false
+    },
+    {
+      "case": "question from other quiz rejected",
+      "expected": 400,
+      "actual": 200,
+      "matches_expected": false
+    },
+    {
+      "case": "non-buyer progress denied",
+      "expected": 403,
+      "actual": 200,
+      "matches_expected": false
+    },
+    {
+      "case": "student cannot publish course",
+      "expected": 403,
+      "actual": 201,
+      "matches_expected": false
+    },
+    {
+      "case": "untrusted HTML stripped from public description",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "manual enrollment is unique",
+      "expected": 1,
+      "actual": 1,
+      "matches_expected": true
+    },
+    {
+      "case": "active buyer login",
+      "expected": 200,
+      "actual": 200,
+      "matches_expected": true
+    },
+    {
+      "case": "enrolled JWT buyer reads lesson",
+      "expected": 200,
+      "actual": 200,
+      "matches_expected": true
+    },
+    {
+      "case": "correct flag hidden before submission",
+      "expected": false,
+      "actual": false,
+      "matches_expected": true
+    },
+    {
+      "case": "normal correct submission scores 100",
+      "expected": 100,
+      "actual": 100,
+      "matches_expected": true
+    },
+    {
+      "case": "submission supplies persisted result id",
+      "expected": true,
+      "actual": false,
+      "matches_expected": false
+    },
+    {
+      "case": "result saved to buyer history",
+      "expected": 1,
+      "actual": 1,
+      "matches_expected": true
+    },
+    {
+      "case": "one of two theory steps gives 50% progress",
+      "expected": 50,
+      "actual": 50,
+      "matches_expected": true
+    },
+    {
+      "case": "quiz submit persists answer details",
+      "expected": 1,
+      "actual": 0,
+      "matches_expected": false
+    },
+    {
+      "case": "analytics does not trust client correctness",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "registration request",
+      "expected": 201,
+      "actual": 201,
+      "matches_expected": true
+    },
+    {
+      "case": "email verification with local mail backend",
+      "expected": 200,
+      "actual": 200,
+      "matches_expected": true
+    },
+    {
+      "case": "duplicate email and weak password rejected",
+      "expected": 400,
+      "actual": 201,
+      "matches_expected": false
+    },
+    {
+      "case": "duplicate email does not crash verification",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "profile update cannot bypass email verification",
+      "expected": false,
+      "actual": true,
+      "matches_expected": false
+    },
+    {
+      "case": "student cannot overwrite teacher quiz",
+      "expected": 403,
+      "actual": 201,
+      "matches_expected": false
+    }
+  ]
+}

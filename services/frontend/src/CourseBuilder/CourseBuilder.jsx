@@ -214,24 +214,23 @@ function CourseBuilder() {
                         if (q.choices && q.choices.length > 0) {
                             optionsList = q.choices.map(c => c.text);
                             correctIdx = q.choices.reduce((acc, c, i) => c.is_correct ? [...acc, i] : acc, []);
-                            if (correctIdx.length === 0) correctIdx = [0];
                         } else if (q.options && q.options.length > 0) {
                             optionsList = q.options;
                             if (Array.isArray(q.correct_index)) {
                                 correctIdx = q.correct_index;
+                            } else if (Number.isInteger(q.correct_index)) {
+                                correctIdx = [q.correct_index];
                             } else {
-                                let singleIdx = optionsList.indexOf(q.correct_answer);
-                                correctIdx = singleIdx === -1 ? [0] : [singleIdx];
+                                const matches = optionsList.flatMap((option, i) => option === q.correct_answer ? [i] : []);
+                                correctIdx = matches.length === 1 ? matches : [];
                             }
-                        } else {
-                            optionsList = ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"];
-                            correctIdx = [0];
                         }
                         return {
                             id: q.id, question: q.text || q.question || "", options: optionsList,
                             correct_answer: correctIdx.map(i => optionsList[i]).join(' | '), 
                             user_selected_index: correctIdx,
-                            correct_option_index: correctIdx
+                            correct_option_index: correctIdx,
+                            explanation: q.explanation ?? ''
                         };
                     });
                     setQuizQuestions(mapped);
@@ -309,17 +308,41 @@ function CourseBuilder() {
         setLoading(true);
         try {
             let savedQuizId = currentQuizId;
-            if (activeStep.step_type === 'quiz' && quizQuestions) {
-                const payloadQuestions = quizQuestions.map(q => {
-                    const options = q.options.map(s => String(s || '').trim()).filter(Boolean);
-                    let userIndex = q.correct_option_index !== undefined ? q.correct_option_index : q.user_selected_index;
-                    if (!Array.isArray(userIndex)) userIndex = userIndex !== undefined ? [userIndex] : [0];
-                    userIndex = userIndex.filter(i => i >= 0 && i < options.length);
-                    if (userIndex.length === 0) userIndex = [0];
+            if (activeStep.step_type === 'quiz') {
+                if (!Array.isArray(quizQuestions) || quizQuestions.length === 0) {
+                    const error = new Error(t('builder.quizValidation.noQuestions'));
+                    error.name = 'QuizValidationError';
+                    throw error;
+                }
+                const payloadQuestions = quizQuestions.map((q, questionIndex) => {
+                    const invalid = reason => {
+                        const error = new Error(t(`builder.quizValidation.${reason}`, { number: questionIndex + 1 }));
+                        error.name = 'QuizValidationError';
+                        throw error;
+                    };
+                    if (typeof q.question !== 'string' || !q.question.trim()) invalid('question');
+                    if (!Array.isArray(q.options) || q.options.some(option => typeof option !== 'string')) invalid('options');
+                    const retainedOptions = q.options.map((text, originalIndex) => ({ text: text.trim(), originalIndex }))
+                        .filter(option => option.text.length > 0);
+                    if (retainedOptions.length < 2) invalid('options');
+                    if (retainedOptions.some(option => Array.from(option.text).length > 255)) invalid('optionLength');
+
+                    const selected = q.correct_option_index !== undefined ? q.correct_option_index : q.user_selected_index;
+                    const selectedIndices = Array.isArray(selected) ? selected : selected === undefined ? [] : [selected];
+                    if (selectedIndices.length === 0) invalid('correct');
+                    if (selectedIndices.some(i => !Number.isInteger(i) || i < 0 || i >= q.options.length)
+                        || new Set(selectedIndices).size !== selectedIndices.length) invalid('invalidKey');
+                    if (selectedIndices.some(i => !q.options[i].trim())) invalid('blankCorrect');
+                    if (q.explanation != null && typeof q.explanation !== 'string') invalid('explanation');
+
+                    // Carry the key by original position when removing unused blank options.
+                    const indexMap = new Map(retainedOptions.map((option, i) => [option.originalIndex, i]));
+                    const userIndex = selectedIndices.map(i => indexMap.get(i));
+                    const options = retainedOptions.map(option => option.text);
                     const mappedQ = { 
-                        question: String(q.question), options, 
+                        question: q.question, options,
                         correct_answer: userIndex.map(i => options[i]).join(' | '), 
-                        correct_index: userIndex, explanation: "" 
+                        correct_index: userIndex, explanation: q.explanation ?? ''
                     };
                     if (q.id) mappedQ.id = q.id; 
                     return mappedQ;
@@ -347,13 +370,18 @@ function CourseBuilder() {
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? res.data : s) } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data);
             toast.success(t('builder.toasts.stepSaved'));
-        } catch (err) { toast.error(t('builder.toasts.stepSaveError')); } finally { setLoading(false); }
+        } catch (err) {
+            toast.error(err.name === 'QuizValidationError' ? err.message : t('builder.toasts.stepSaveError'));
+        } finally { setLoading(false); }
     };
 
-    const handleQuestionChange = (index, field, value) => { const updated = [...quizQuestions]; updated[index][field] = value; setQuizQuestions(updated); };
+    const handleQuestionChange = (index, field, value) => {
+        setQuizQuestions(quizQuestions.map((question, i) => i === index ? { ...question, [field]: value } : question));
+    };
     
     const handleOptionChange = (qIndex, oIndex, value) => {
-        const updated = [...quizQuestions]; 
+        const updated = [...quizQuestions];
+        updated[qIndex] = { ...updated[qIndex], options: [...updated[qIndex].options] };
         updated[qIndex].options[oIndex] = value;
         const correctIndices = updated[qIndex].correct_option_index || [];
         if (correctIndices.includes(oIndex)) {
@@ -364,13 +392,14 @@ function CourseBuilder() {
 
     const handleCorrectSelect = (qIndex, oIndex) => {
         const updated = [...quizQuestions];
+        updated[qIndex] = { ...updated[qIndex] };
         let currentSelected = updated[qIndex].correct_option_index;
         if (currentSelected === undefined) currentSelected = updated[qIndex].user_selected_index;
         if (!Array.isArray(currentSelected)) currentSelected = currentSelected !== undefined ? [currentSelected] : [];
         if (currentSelected.includes(oIndex)) {
-            if (currentSelected.length > 1) currentSelected = currentSelected.filter(i => i !== oIndex);
+            currentSelected = currentSelected.filter(i => i !== oIndex);
         } else {
-            currentSelected.push(oIndex); 
+            currentSelected = [...currentSelected, oIndex];
         }
         updated[qIndex].user_selected_index = currentSelected;
         updated[qIndex].correct_option_index = currentSelected;
@@ -382,7 +411,7 @@ function CourseBuilder() {
         const newQuestion = { 
             id: null, question: "Новый вопрос", 
             options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], 
-            correct_answer: "Вариант 1", user_selected_index: [0], correct_option_index: [0]
+            correct_answer: '', user_selected_index: [], correct_option_index: [], explanation: ''
         };
         setQuizQuestions(quizQuestions ? [...quizQuestions, newQuestion] : [newQuestion]);
     };
@@ -394,7 +423,7 @@ function CourseBuilder() {
     const handleAddOption = (qIndex) => {
         const updated = [...quizQuestions];
         if (updated[qIndex].options.length < 6) {
-            updated[qIndex].options.push(`Новый вариант ${updated[qIndex].options.length + 1}`);
+            updated[qIndex] = { ...updated[qIndex], options: [...updated[qIndex].options, `Новый вариант ${updated[qIndex].options.length + 1}`] };
             setQuizQuestions(updated);
         }
     };
@@ -402,11 +431,12 @@ function CourseBuilder() {
     const handleRemoveOption = (qIndex, oIndex) => {
         const updated = [...quizQuestions];
         if (updated[qIndex].options.length > 2) {
+            updated[qIndex] = { ...updated[qIndex] };
             updated[qIndex].options = updated[qIndex].options.filter((_, i) => i !== oIndex);
-            let currentSelected = (updated[qIndex].correct_option_index || [0])
+            const selected = updated[qIndex].correct_option_index ?? updated[qIndex].user_selected_index ?? [];
+            const currentSelected = (Array.isArray(selected) ? selected : [selected])
                 .map(i => { if (i === oIndex) return -1; if (i > oIndex) return i - 1; return i; })
                 .filter(i => i !== -1);
-            if (currentSelected.length === 0) currentSelected = [0];
             updated[qIndex].user_selected_index = currentSelected;
             updated[qIndex].correct_option_index = currentSelected;
             updated[qIndex].correct_answer = currentSelected.map(i => updated[qIndex].options[i]).join(' | ');

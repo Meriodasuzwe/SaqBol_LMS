@@ -1,0 +1,11 @@
+@import "../../src/index.css";
+@source "../../src";
+
+/* System fonts only; no remote assets or font requests in the design harness. */
+:root { font-family: Arial, "Segoe UI", sans-serif; color-scheme: light; }
+body { margin: 0; }
+.preview-notice { padding: 10px 20px; background: #e8eef8; border-bottom: 1px solid #c7d5ea; color: #314a6b; font-size: 11px; line-height: 1.6; }
+.preview-notice strong, .preview-notice span { display: block; }
+.preview-notice strong { letter-spacing: .06em; }
+.preview-return { padding: 40px; font-size: 16px; }
+.preview-return a { color: #2563eb; text-decoration: underline; }
