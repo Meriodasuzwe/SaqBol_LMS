@@ -1,6 +1,6 @@
-// Audit reproductions: these assertions document the current defects. They are
-// expected to change when application fixes are authorized. No app is mounted,
-// no browser event is executed, and all fixtures below are synthetic.
+// Builder regressions assert the desired CNT-03 behavior. Remaining tests named
+// "audit reproduction" still document unrelated defects, not their fixes.
+// No app is mounted, no browser event runs, and all fixtures are synthetic.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -54,14 +54,14 @@ assert.equal(payloadMap.type, 'CallExpression');
 assert.equal(payloadMap.callee.object.name, 'quizQuestions');
 assert.equal(payloadMap.callee.property.name, 'map');
 assert.equal(payloadMap.arguments[0].type, 'ArrowFunctionExpression');
-const actualPayloadCallback = evaluateNode(builder, payloadMap.arguments[0]);
+const actualPayloadCallback = evaluateNode(builder, payloadMap.arguments[0], { t: key => key });
 
 function makePayload(question) {
     // Normalize the VM object's prototype for comparisons in this test realm.
     return JSON.parse(JSON.stringify(actualPayloadCallback(structuredClone(question))));
 }
 
-test('audit control: actual builder callback preserves single and multiple correct answers without empty options', () => {
+test('builder regression: preserves single and multiple correct answers without empty options', () => {
     for (const indices of [[1], [0, 2]]) {
         const result = makePayload({
             id: 901, question: 'Synthetic control question',
@@ -74,39 +74,183 @@ test('audit control: actual builder callback preserves single and multiple corre
     }
 });
 
-test('audit reproduction: actual builder callback discards a nonempty explanation', () => {
+test('builder regression: preserves a nonempty explanation', () => {
     const fixture = {
         question: 'Synthetic explanation question', options: ['Wrong', 'Right'],
         correct_option_index: [1], explanation: 'Synthetic rationale that must survive editing.',
     };
     const result = makePayload(fixture);
     assert.equal(result.correct_answer, 'Right');
-    assert.equal(result.explanation, '');
-    assert.notEqual(result.explanation, fixture.explanation);
+    assert.equal(result.explanation, fixture.explanation);
 });
 
-test('audit reproduction: removing an earlier empty option shifts the selected answer to a different option', () => {
+test('builder regression: removing an earlier blank keeps the same correct answer', () => {
     const fixture = {
         question: 'Synthetic leading blank question',
         options: ['   ', 'Originally correct', 'Originally incorrect'], correct_option_index: [1],
     };
     const result = makePayload(fixture);
     assert.deepEqual(result.options, ['Originally correct', 'Originally incorrect']);
-    assert.deepEqual(result.correct_index, [1]);
-    assert.equal(result.correct_answer, 'Originally incorrect');
-    assert.notEqual(result.correct_answer, fixture.options[fixture.correct_option_index[0]]);
+    assert.deepEqual(result.correct_index, [0]);
+    assert.equal(result.correct_answer, fixture.options[fixture.correct_option_index[0]]);
 });
 
-test('audit reproduction: an out-of-range original index after filtering falls back to the first wrong answer', () => {
+test('builder regression: removing a middle blank remaps the key without a fallback answer', () => {
     const fixture = {
         question: 'Synthetic middle blank question',
         options: ['Originally incorrect', '', 'Originally correct'], correct_option_index: [2],
     };
     const result = makePayload(fixture);
     assert.deepEqual(result.options, ['Originally incorrect', 'Originally correct']);
-    assert.deepEqual(result.correct_index, [0]);
-    assert.equal(result.correct_answer, 'Originally incorrect');
-    assert.notEqual(result.correct_answer, fixture.options[fixture.correct_option_index[0]]);
+    assert.deepEqual(result.correct_index, [1]);
+    assert.equal(result.correct_answer, fixture.options[fixture.correct_option_index[0]]);
+});
+
+test('builder regression: blank cleanup preserves every selected option and leaves input unchanged', () => {
+    const fixture = { question: 'Synthetic multi', options: ['', 'Alpha', ' ', 'Bravo', 'Charlie', ''], correct_option_index: [1, 4], explanation: 'Alpha and Charlie.' };
+    const before = structuredClone(fixture);
+    const result = JSON.parse(JSON.stringify(actualPayloadCallback(fixture)));
+    assert.deepEqual(result.options, ['Alpha', 'Bravo', 'Charlie']);
+    assert.deepEqual(result.correct_index, [0, 2]);
+    assert.equal(result.correct_answer, 'Alpha | Charlie');
+    assert.equal(result.explanation, fixture.explanation);
+    assert.deepEqual(fixture, before);
+});
+
+function runBuilderSave(questions) {
+    const writes = [], errors = [], successes = [], loading = [];
+    const step = { id: 903, step_type: 'quiz', title: 'Synthetic quiz', content: '', scenario_data: { quiz_id: 904 } };
+    const lesson = { id: 902, steps: [step] };
+    const handler = evaluateNode(builder, saveStep, {
+        quizQuestions: structuredClone(questions), activeStep: step, activeLesson: lesson,
+        currentQuizId: 904, lessons: [lesson], t: key => key,
+        setLoading: value => loading.push(value), setCurrentQuizId() {},
+        setLessons() {}, setActiveLesson() {}, setActiveStep() {},
+        toast: { error: message => errors.push(message), success: message => successes.push(message) },
+        api: {
+            post: async (url, payload) => { writes.push({ url, payload: JSON.parse(JSON.stringify(payload)) }); return { data: { quiz_id: 904 } }; },
+            patch: async (url, payload) => { writes.push({ url, payload: JSON.parse(JSON.stringify(payload)) }); return { data: { ...step, ...payload } }; },
+        },
+    });
+    return handler().then(() => ({ writes, errors, successes, loading }));
+}
+
+const validQuestion = { question: 'Synthetic valid question', options: ['Alpha', 'Bravo', 'Charlie'], correct_option_index: [1], explanation: 'Bravo is correct.' };
+for (const [name, changes] of [
+    ['no correct answer', { correct_option_index: [] }],
+    ['missing key', { correct_option_index: undefined }],
+    ['blank correct option', { options: ['Alpha', ' ', 'Charlie'] }],
+    ['out-of-range index', { correct_option_index: [3] }],
+    ['negative index', { correct_option_index: [-1] }],
+    ['fractional index', { correct_option_index: [0.5] }],
+    ['string index', { correct_option_index: ['1'] }],
+    ['duplicate indices', { correct_option_index: [1, 1] }],
+    ['too few nonblank options', { options: ['', 'Bravo', ' '] }],
+    ['blank question', { question: '   ' }],
+]) {
+    test(`builder regression: ${name} rejects the whole save before any API write`, async () => {
+        // Invalid second question must also block the valid first one.
+        const result = await runBuilderSave([validQuestion, { ...validQuestion, ...changes }]);
+        assert.equal(result.writes.length, 0);
+        assert.equal(result.successes.length, 0);
+        assert.equal(result.errors.length, 1);
+        assert.match(result.errors[0], /builder\.quizValidation\./);
+        assert.equal(result.loading.at(-1), false);
+    });
+}
+
+test('builder regression: an empty quiz is not saved', async () => {
+    const result = await runBuilderSave([]);
+    assert.equal(result.writes.length, 0);
+    assert.equal(result.successes.length, 0);
+    assert.equal(result.errors.length, 1);
+});
+
+test('builder regression: saving while quiz data is not loaded never reports success', async () => {
+    const result = await runBuilderSave(null);
+    assert.equal(result.writes.length, 0);
+    assert.equal(result.successes.length, 0);
+    assert.equal(result.errors.length, 1);
+});
+
+test('builder regression: a new question requires an explicit key', () => {
+    let questions;
+    evaluateNode(builder, initializer(builder, builder.ast, 'handleAddManualQuestion'), {
+        quizQuestions: [], setQuizQuestions: value => { questions = JSON.parse(JSON.stringify(value)); },
+    })();
+    assert.deepEqual(questions[0].correct_option_index, []);
+    assert.equal(questions[0].explanation, '');
+});
+
+test('builder regression: an author can uncheck the last selected option without choosing another', () => {
+    let edited;
+    evaluateNode(builder, initializer(builder, builder.ast, 'handleCorrectSelect'), {
+        quizQuestions: [structuredClone(validQuestion)], setQuizQuestions: value => { edited = JSON.parse(JSON.stringify(value)); },
+    })(0, 1);
+    assert.deepEqual(edited[0].correct_option_index, []);
+});
+
+async function loadBuilderQuestions(apiQuestions) {
+    let mapped;
+    const handler = evaluateNode(builder, initializer(builder, builder.ast, 'fetchQuizForStep'), {
+        api: { get: async () => ({ data: [{ id: 904, questions: apiQuestions }] }) },
+        setCurrentQuizId() {}, setQuizQuestions: value => { mapped = JSON.parse(JSON.stringify(value)); },
+    });
+    await handler(902, 904);
+    return mapped;
+}
+
+test('builder regression: real load/edit/save handlers preserve explanation and a multiple key', async () => {
+    const loaded = await loadBuilderQuestions([{ id: 905, text: 'Synthetic SQL question', explanation: 'Both expressions filter rows.', choices: [
+        { id: 911, text: 'WHERE x = 1', is_correct: true },
+        { id: 912, text: 'ORDER BY x', is_correct: false },
+        { id: 913, text: 'WHERE x > 2', is_correct: true },
+    ] }]);
+    assert.equal(loaded[0].explanation, 'Both expressions filter rows.');
+    let edited;
+    evaluateNode(builder, initializer(builder, builder.ast, 'handleQuestionChange'), {
+        quizQuestions: loaded, setQuizQuestions: value => { edited = value; },
+    })(0, 'question', 'Edited synthetic SQL question');
+    const result = await runBuilderSave(edited);
+    assert.deepEqual(result.errors, []);
+    assert.deepEqual(result.writes[0].payload.questions[0], {
+        id: 905, question: 'Edited synthetic SQL question',
+        options: ['WHERE x = 1', 'ORDER BY x', 'WHERE x > 2'], correct_index: [0, 2],
+        correct_answer: 'WHERE x = 1 | WHERE x > 2', explanation: 'Both expressions filter rows.',
+    });
+    assert.equal(result.writes[0].url, 'quizzes/save-generated/');
+    assert.equal(result.writes[0].payload.quiz_id, 904);
+    assert.equal(result.writes[0].payload.lesson_id, 902);
+    assert.equal(result.writes[1].url, 'courses/steps/903/');
+    assert.equal(result.successes.length, 1);
+});
+
+test('builder regression: loading a question without a key never guesses its first option', async () => {
+    const loaded = await loadBuilderQuestions([{ id: 905, text: 'No key', explanation: '', choices: [
+        { text: 'Alpha', is_correct: false }, { text: 'Bravo', is_correct: false },
+    ] }]);
+    assert.deepEqual(loaded[0].correct_option_index, []);
+    assert.equal((await runBuilderSave(loaded)).writes.length, 0);
+});
+
+test('builder regression: removing the last correct option requires a new explicit selection', async () => {
+    let edited;
+    evaluateNode(builder, initializer(builder, builder.ast, 'handleRemoveOption'), {
+        quizQuestions: [structuredClone(validQuestion)], setQuizQuestions: value => { edited = JSON.parse(JSON.stringify(value)); },
+    })(0, 1);
+    assert.deepEqual(edited[0].options, ['Alpha', 'Charlie']);
+    assert.deepEqual(edited[0].correct_option_index, []);
+    assert.equal((await runBuilderSave(edited)).writes.length, 0);
+});
+
+test('builder regression: removing an earlier option keeps a multiple key attached to its texts', () => {
+    let edited;
+    evaluateNode(builder, initializer(builder, builder.ast, 'handleRemoveOption'), {
+        quizQuestions: [{ ...structuredClone(validQuestion), correct_option_index: [1, 2] }],
+        setQuizQuestions: value => { edited = JSON.parse(JSON.stringify(value)); },
+    })(0, 0);
+    assert.deepEqual(edited[0].correct_option_index, [0, 1]);
+    assert.equal(edited[0].correct_answer, 'Bravo | Charlie');
 });
 
 test('audit reproduction and control: actual submitAnalytics sends only the first selected ID for a multiple-choice answer', async () => {

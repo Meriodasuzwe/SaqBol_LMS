@@ -1,0 +1,11 @@
+@import "../../src/index.css";
+@source "../../src";
+
+body { margin: 0; }
+.builder-preview-toolbar { padding: 12px 20px; background: #e8eef8; color: #233e65; border-bottom: 1px solid #bbcae0; font: 12px/1.45 Arial, sans-serif; }
+.builder-preview-toolbar p { margin: 4px 0 0; }
+.builder-preview-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.builder-preview-controls label { display: flex; flex-direction: column; gap: 4px; }
+.builder-preview-controls select, .builder-preview-controls button, .builder-preview-controls a { padding: 6px 10px; border: 1px solid #b5c6dd; border-radius: 5px; background: white; color: #233e65; font: inherit; }
+.builder-preview-controls :focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+[data-theme="dark"] .builder-preview-toolbar { background: #17243a; color: #d5e2f5; border-color: #33445f; }

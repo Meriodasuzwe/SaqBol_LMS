@@ -1,0 +1,351 @@
+Warning: truncated output (original token count: 3799)
+Total output lines: 381
+
+✔ builder regression: preserves single and multiple correct answers without empty options (1.6735ms)
+✖ builder regression: preserves a nonempty explanation (0.8836ms)
+✖ builder regression: removing an earlier blank keeps the same correct answer (0.5393ms)
+✖ builder regression: removing a middle blank remaps the key without a fallback answer (0.3416ms)
+✖ builder regression: blank cleanup preserves every selected option and leaves input unchanged (0.3788ms)
+✖ builder regression: no correct answer rejects the whole save before any API write (2.1114ms)
+✖ builder regression: missing key rejects the whole save before any API write (1.3187ms)
+✖ builder regression: blank correct option rejects the whole save before any API write (1.0483ms)
+✖ builder regression: out-of-range index rejects the whole save before any API write (1.1015ms)
+✖ builder regression: negative index rejects the whole save before any API write (1.0036ms)
+✖ builder regression: fractional index rejects the whole save before any API write (0.9553ms)
+✖ builder regression: string index rejects the whole save before any API write (0.9322ms)
+✖ builder regression: duplicate indices rejects the whole save before any API write (0.8758ms)
+✖ builder regression: too few nonblank options rejects the whole save before any API write (0.8831ms)
+✖ builder regression: blank question rejects the whole save before any API write (0.8369ms)
+✖ builder regression: an empty quiz is not saved (0.8259ms)
+✖ builder regression: real load/edit/save handlers preserve explanation and a multiple key (5.9238ms)
+✖ builder regression: loading a question without a key never guesses its first option (2.4304ms)
+✖ builder regression: removing the last correct option requires a new explicit selection (3.1331ms)
+✔ builder regression: removing an earlier option keeps a multiple key attached to its texts (2.8529ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 2
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 590.2408
+
+✖ failing tests:
+
+test at tests\trainingAudit.test.js:77:1
+✖ builder regression: preserves a nonempty explanation (0.8836ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + ''
+  - 'Synthetic rationale that must survive editing.'
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:84:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: 'Synthetic rationale that must survive editing.',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:87:1
+✖ builder regression: removing an earlier blank keeps the same correct answer (0.5393ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+  +   1
+  -   0
+    ]
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:94:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 1 ],
+    expected: [ 0 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:98:1
+✖ builder regression: removing a middle blank remaps the key without a fallback answer (0.3416ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+  +   0
+  -   1
+    ]
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:105:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0 ],
+    expected: [ 1 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:109:1
+✖ builder regression: blank cleanup preserves every selected option and leaves input unchanged (0.3788ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+  +   1
+  -   0,
+  -   2
+    ]
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 1 ],
+    expected: [ 0, 2 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: no correct answer rejects the whole save before any API write (2.1114ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: missing key rejects the whole save before any API write (1.3187ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    genera…299 tokens truncated…c Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: negative index rejects the whole save before any API write (1.0036ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: fractional index rejects the whole save before any API write (0.9553ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: string index rejects the whole save before any API write (0.9322ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: duplicate indices rejects the whole save before any API write (0.8758ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: too few nonblank options rejects the whole save before any API write (0.8831ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:151:5
+✖ builder regression: blank question rejects the whole save before any API write (0.8369ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:154:16)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:162:1
+✖ builder regression: an empty quiz is not saved (0.8259ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:164:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:179:1
+✖ builder regression: real load/edit/save handlers preserve explanation and a multiple key (5.9238ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'Both expressions filter rows.'
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:185:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'Both expressions filter rows.',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:204:1
+✖ builder regression: loading a question without a key never guesses its first option (2.4304ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + [
+  +   0
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:208:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0 ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\trainingAudit.test.js:212:1
+✖ builder regression: removing the last correct option requires a new explicit selection (3.1331ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + [
+  +   0
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/User/SaqBol_LMS/services/frontend/tests/trainingAudit.test.js:218:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0 ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

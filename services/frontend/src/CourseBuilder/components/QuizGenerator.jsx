@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     Plus, Trash2, ChevronDown, 
-    ChevronUp, CheckSquare, Square, HelpCircle, GripVertical, X
+    ChevronUp, HelpCircle, GripVertical, X
 } from 'lucide-react';
 
 const QuizGenerator = ({ 
@@ -80,10 +80,12 @@ const QuizGenerator = ({
                                             <textarea 
                                                 className="w-full px-4 py-3 bg-white border border-base-200 rounded-xl text-sm font-semibold text-base-content focus:border-blue-600 outline-none transition-all resize-none min-h-[80px] mb-5 shadow-sm" 
                                                 value={q.question || ''} 
+                                                aria-label={t('builder.quizQuestionLabel', { number: qIndex + 1 })}
                                                 onChange={(e) => onQuestionChange(qIndex, 'question', e.target.value)} 
                                                 placeholder={t('builder.questionPh', 'Напишите ваш вопрос здесь...')}
                                             />
                                             
+                                            <p className="text-sm text-base-content/70 mb-3">{t('builder.quizKeyHint')}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {q.options && q.options.map((opt, oIndex) => {
                                                     const correctData = q.correct_option_index !== undefined ? q.correct_option_index : q.user_selected_index;
@@ -94,19 +96,20 @@ const QuizGenerator = ({
                                                     return (
                                                         <div 
                                                             key={oIndex} 
-                                                            className={`relative flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer group/opt
+                                                            className={`relative flex items-start gap-3 p-3 rounded-xl border-2 transition-all group/opt
                                                                 ${isCorrect ? 'bg-blue-50 border-blue-600 shadow-sm' : 'bg-white border-base-200 hover:border-blue-300'}`}
-                                                            onClick={() => onCorrectSelect(qIndex, oIndex)}
                                                         >
-                                                            <div className="mt-0.5 shrink-0">
-                                                                {isCorrect 
-                                                                    ? <CheckSquare size={18} className="text-blue-600" /> 
-                                                                    : <Square size={18} className="text-base-content/30" />
-                                                                }
-                                                            </div>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isCorrect}
+                                                                onChange={() => onCorrectSelect(qIndex, oIndex)}
+                                                                aria-label={t('builder.quizCorrectLabel', { question: qIndex + 1, option: oIndex + 1 })}
+                                                                className="checkbox checkbox-primary checkbox-sm mt-0.5 shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                                            />
                                                             <textarea 
                                                                 className={`w-full bg-transparent text-sm font-medium focus:outline-none resize-none overflow-hidden min-h-[24px] pr-8 ${isCorrect ? 'text-blue-900' : 'text-base-content'}`} 
                                                                 value={opt || ''} 
+                                                                aria-label={t('builder.quizOptionLabel', { question: qIndex + 1, option: oIndex + 1 })}
                                                                 onChange={(e) => {
                                                                     e.stopPropagation(); 
                                                                     onOptionChange(qIndex, oIndex, e.target.value);
@@ -114,10 +117,10 @@ const QuizGenerator = ({
                                                                 placeholder={t('builder.optionPh', { num: oIndex + 1 })} 
                                                             />
                                                             
-                                                            {/* Кнопка удаления варианта (показывается при наведении, если вариантов > 2) */}
+                                                            {/* Кнопка удаления доступна также без наведения, если вариантов > 2. */}
                                                             {q.options.length > 2 && (
                                                                 <button
-                                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-base-content/30 hover:text-red-500 opacity-0 group-hover/opt:opacity-100 hover:bg-white rounded-md transition-all"
+                                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-base-content/50 hover:text-red-500 hover:bg-white rounded-md transition-all focus-visible:outline-2 focus-visible:outline-blue-600"
                                                                     onClick={(e) => { e.stopPropagation(); onRemoveOption(qIndex, oIndex); }}
                                                                     title="Удалить вариант"
                                                                 >
@@ -138,6 +141,17 @@ const QuizGenerator = ({
                                                     <Plus size={16} /> Добавить вариант
                                                 </button>
                                             )}
+                                            <label htmlFor={`quiz-explanation-${qIndex}`} className="block mt-5 mb-2 text-sm font-semibold text-base-content">
+                                                {t('builder.quizExplanation')}
+                                            </label>
+                                            <textarea
+                                                id={`quiz-explanation-${qIndex}`}
+                                                className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-xl text-sm text-base-content focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 resize-y"
+                                                rows={3}
+                                                value={q.explanation ?? ''}
+                                                onChange={e => onQuestionChange(qIndex, 'explanation', e.target.value)}
+                                                placeholder={t('builder.quizExplanationHint')}
+                                            />
                                         </div>
                                     )}
                                 </div>
