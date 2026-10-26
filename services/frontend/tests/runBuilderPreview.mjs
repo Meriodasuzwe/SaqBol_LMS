@@ -74,7 +74,12 @@ const isolatedApi = {
                         })),
                     }));
                     state.quizzes = [{ id: 904, lesson: 902, title: payload.quiz_title, description: '', questions }];
-                    return sendJson(response, 201, { message: 'Synthetic quiz saved.', quiz_id: 904 });
+                    let savedStep;
+                    if (payload.step_id === 903 && payload.step) {
+                        savedStep = state.lessons[0].steps.find(item => item.id === 903);
+                        Object.assign(savedStep, payload.step, { scenario_data: { ...payload.step.scenario_data, quiz_id: 904 } });
+                    }
+                    return sendJson(response, 201, { message: 'Synthetic quiz saved.', quiz_id: 904, ...(savedStep ? { step: savedStep } : {}) });
                 }
                 const stepMatch = path.match(/^\/courses\/steps\/(903|905)\/$/);
                 if (request.method === 'PATCH' && stepMatch) {

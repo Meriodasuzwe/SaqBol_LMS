@@ -117,22 +117,33 @@ test('builder regression: blank cleanup preserves every selected option and leav
     assert.deepEqual(fixture, before);
 });
 
-function runBuilderSave(questions) {
+function runBuilderSave(questions, { failSave = false, incompleteResponse = false, stepType = 'quiz', newQuiz = false } = {}) {
     const writes = [], errors = [], successes = [], loading = [];
-    const step = { id: 903, step_type: 'quiz', title: 'Synthetic quiz', content: '', scenario_data: { quiz_id: 904 } };
+    const step = { id: 903, step_type: stepType, title: 'Synthetic quiz', content: 'Synthetic draft content', scenario_data: { note: 'Keep metadata', ...(newQuiz ? {} : { quiz_id: 904 }) } };
     const lesson = { id: 902, steps: [step] };
+    const draft = structuredClone(questions);
+    const updates = { quizzes: [], steps: [], lessons: [] };
     const handler = evaluateNode(builder, saveStep, {
-        quizQuestions: structuredClone(questions), activeStep: step, activeLesson: lesson,
-        currentQuizId: 904, lessons: [lesson], t: key => key,
-        setLoading: value => loading.push(value), setCurrentQuizId() {},
-        setLessons() {}, setActiveLesson() {}, setActiveStep() {},
+        quizQuestions: draft, activeStep: step, activeLesson: lesson,
+        currentQuizId: newQuiz ? null : 904, lessons: [lesson], t: key => key,
+        setLoading: value => loading.push(value), setCurrentQuizId: value => updates.quizzes.push(value),
+        setLessons: value => updates.lessons.push(value), setActiveLesson() {}, setActiveStep: value => updates.steps.push(value),
         toast: { error: message => errors.push(message), success: message => successes.push(message) },
         api: {
-            post: async (url, payload) => { writes.push({ url, payload: JSON.parse(JSON.stringify(payload)) }); return { data: { quiz_id: 904 } }; },
-            patch: async (url, payload) => { writes.push({ url, payload: JSON.parse(JSON.stringify(payload)) }); return { data: { ...step, ...payload } }; },
+            post: async (url, payload) => {
+                writes.push({ method: 'POST', url, payload: JSON.parse(JSON.stringify(payload)) });
+                if (failSave) throw new Error('Synthetic server write failure');
+                if (incompleteResponse) return { data: { quiz_id: 904 } };
+                return { data: { quiz_id: 904, step: { ...step, ...payload.step, scenario_data: { ...step.scenario_data, quiz_id: 904 } } } };
+            },
+            patch: async (url, payload) => {
+                writes.push({ method: 'PATCH', url, payload: JSON.parse(JSON.stringify(payload)) });
+                if (failSave) throw new Error('Synthetic server write failure');
+                return { data: { ...step, ...payload } };
+            },
         },
     });
-    return handler().then(() => ({ writes, errors, successes, loading }));
+    return handler().then(() => JSON.parse(JSON.stringify({ writes, errors, successes, loading, updates, draft, step })));
 }
 
 const validQuestion = { question: 'Synthetic valid question', options: ['Alpha', 'Bravo', 'Charlie'], correct_option_index: [1], explanation: 'Bravo is correct.' };
@@ -221,8 +232,62 @@ test('builder regression: real load/edit/save handlers preserve explanation and 
     assert.equal(result.writes[0].url, 'quizzes/save-generated/');
     assert.equal(result.writes[0].payload.quiz_id, 904);
     assert.equal(result.writes[0].payload.lesson_id, 902);
-    assert.equal(result.writes[1].url, 'courses/steps/903/');
+    assert.equal(result.writes.length, 1, 'The quiz and step must have one atomic write');
+    assert.equal(result.writes[0].payload.step_id, 903);
+    assert.equal(result.writes[0].payload.step.title, 'Synthetic quiz');
+    assert.equal(result.writes[0].payload.step.scenario_data.note, 'Keep metadata');
     assert.equal(result.successes.length, 1);
+});
+
+test('builder atomic save: an unlinked quiz step is saved and linked in one request', async () => {
+    const result = await runBuilderSave([validQuestion], { newQuiz: true });
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.writes.length, 1);
+    assert.equal(result.writes[0].method, 'POST');
+    assert.equal(result.writes[0].payload.step_id, 903);
+    assert.equal(Object.hasOwn(result.writes[0].payload, 'quiz_id'), false);
+    assert.deepEqual(result.writes[0].payload.step, {
+        title: 'Synthetic quiz', content: 'Synthetic draft content', step_type: 'quiz', scenario_data: { note: 'Keep metadata' },
+    });
+    assert.deepEqual(result.updates.quizzes, [904]);
+    assert.equal(result.updates.steps[0].scenario_data.quiz_id, 904);
+    assert.equal(result.successes.length, 1);
+});
+
+test('builder atomic save: failure preserves the draft and allows retry without optimistic state updates', async () => {
+    const questions = [structuredClone(validQuestion)];
+    const failed = await runBuilderSave(questions, { failSave: true, newQuiz: true });
+    assert.equal(failed.writes.length, 1);
+    assert.deepEqual(failed.draft, questions);
+    assert.deepEqual(failed.updates, { quizzes: [], steps: [], lessons: [] });
+    assert.deepEqual(failed.successes, []);
+    assert.deepEqual(failed.errors, ['builder.toasts.stepSaveError']);
+    assert.equal(failed.step.title, 'Synthetic quiz');
+    assert.equal(failed.loading.at(-1), false);
+    const retried = await runBuilderSave(failed.draft, { newQuiz: true });
+    assert.equal(retried.writes.length, 1);
+    assert.deepEqual(retried.errors, []);
+    assert.equal(retried.successes.length, 1);
+});
+
+test('builder atomic save: a text step still uses only its existing PATCH', async () => {
+    const result = await runBuilderSave(null, { stepType: 'text', newQuiz: true });
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.writes.length, 1);
+    assert.equal(result.writes[0].method, 'PATCH');
+    assert.equal(result.writes[0].url, 'courses/steps/903/');
+    assert.equal(result.writes[0].payload.content, 'Synthetic draft content');
+    assert.equal(result.updates.steps[0].step_type, 'text');
+    assert.equal(result.successes.length, 1);
+});
+
+test('builder atomic save: an incomplete server response never falls back to a separate PATCH or reports success', async () => {
+    const result = await runBuilderSave([validQuestion], { incompleteResponse: true });
+    assert.equal(result.writes.length, 1);
+    assert.deepEqual(result.updates, { quizzes: [], steps: [], lessons: [] });
+    assert.deepEqual(result.successes, []);
+    assert.deepEqual(result.errors, ['builder.toasts.stepSaveError']);
+    assert.deepEqual(result.draft, [validQuestion]);
 });
 
 test('builder regression: loading a question without a key never guesses its first option', async () => {

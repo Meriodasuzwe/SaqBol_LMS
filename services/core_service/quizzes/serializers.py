@@ -2,6 +2,7 @@
 from rest_framework import serializers
 # Загрузка таблиц для создания сериализаторов
 from .models import Quiz, Question, Choice, Result
+from courses.serializers import LessonStepSerializer
 
 # Сериализатор для вариантов ответа
 # ModelSerializer автоматически создает поля на основе модели Choice.
@@ -120,11 +121,36 @@ class GeneratedQuestionSerializer(serializers.Serializer):
         return attrs
 
 
+class BuilderQuizStepSerializer(LessonStepSerializer):
+    """Only the quiz-step fields included in an atomic builder save."""
+
+    title = serializers.CharField(allow_blank=True, max_length=255)
+    content = serializers.CharField(allow_blank=True, trim_whitespace=False)
+    step_type = serializers.ChoiceField(choices=['quiz'])
+    scenario_data = serializers.DictField()
+
+    class Meta(LessonStepSerializer.Meta):
+        fields = ['title', 'content', 'step_type', 'scenario_data']
+        extra_kwargs = {}
+
+    def validate_scenario_data(self, value):
+        if 'quiz_id' in value and (type(value['quiz_id']) is not int or value['quiz_id'] < 1):
+            raise serializers.ValidationError('Идентификатор теста должен быть положительным целым числом.')
+        return value
+
+
 class SaveGeneratedSerializer(serializers.Serializer):
     lesson_id = serializers.IntegerField(min_value=1)
     quiz_id = serializers.IntegerField(required=False, min_value=1)
     quiz_title = serializers.CharField(required=False, allow_blank=True, max_length=255)
     questions = GeneratedQuestionSerializer(many=True, allow_empty=False)
+    step_id = SubmissionIdField(required=False, min_value=1)
+    step = BuilderQuizStepSerializer(required=False)
+
+    def validate(self, attrs):
+        if ('step_id' in attrs) != ('step' in attrs):
+            raise serializers.ValidationError('Поля step_id и step необходимо передавать вместе.')
+        return attrs
 
 # Сериализатор для отображения результатов теста после сдачи
 class QuizResultSerializer(serializers.ModelSerializer):
