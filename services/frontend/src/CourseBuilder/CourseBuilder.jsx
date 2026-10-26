@@ -123,19 +123,20 @@ function CourseBuilder() {
     }, [courseId]);
 
     useEffect(() => {
+        let cancelled = false;
+        setCurrentQuizId(null);
         if (activeStep?.step_type === 'quiz' && activeLesson) {
             const stepQuizId = activeStep.scenario_data?.quiz_id;
+            // A new step must never inherit the previous step's editable data.
+            setQuizQuestions(stepQuizId ? null : []);
             if (stepQuizId) {
-                if (currentQuizId !== stepQuizId) fetchQuizForStep(activeLesson.id, stepQuizId);
-            } else {
-                if (quizQuestions === null) setQuizQuestions([]); 
-                setCurrentQuizId(null);
+                fetchQuizForStep(activeLesson.id, stepQuizId, () => !cancelled);
             }
         } else {
             setQuizQuestions(null);
-            setCurrentQuizId(null);
         }
-    }, [activeStep?.id, activeLesson?.id, activeStep?.scenario_data?.quiz_id]); 
+        return () => { cancelled = true; };
+    }, [activeStep?.id, activeStep?.step_type, activeLesson?.id, activeStep?.scenario_data?.quiz_id]);
 
     const handleLessonDragEnd = (event) => {
         const { active, over } = event;
@@ -197,11 +198,14 @@ function CourseBuilder() {
         });
     };
 
-    const fetchQuizForStep = async (lessonId, targetQuizId) => {
+    const fetchQuizForStep = async (lessonId, targetQuizId, isCurrent = () => true) => {
         try {
             const res = await api.get(`quizzes/lesson/${lessonId}/?t=${new Date().getTime()}`, {
                 headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
             });
+            // A slow response belongs to the step that started it, not the one
+            // currently being edited (including a newly created empty step).
+            if (!isCurrent()) return;
             let data = res.data;
             if (!Array.isArray(data)) data = data.results ? data.results : [data];
             const targetQuiz = data.find(q => q.id === targetQuizId);
@@ -236,7 +240,10 @@ function CourseBuilder() {
                     setQuizQuestions(mapped);
                 } else setQuizQuestions([]);
             } else { setCurrentQuizId(null); setQuizQuestions([]); }
-        } catch (err) { setCurrentQuizId(null); setQuizQuestions([]); }
+        } catch (err) {
+            if (!isCurrent()) return;
+            setCurrentQuizId(null); setQuizQuestions([]);
+        }
     };
 
     const handleSaveCourseSettings = async () => {
@@ -307,7 +314,17 @@ function CourseBuilder() {
         if (!activeStep) return;
         setLoading(true);
         try {
-            let savedQuizId = currentQuizId;
+            let updatedScenarioData = activeStep.scenario_data;
+            if (typeof updatedScenarioData === 'string') {
+                try { updatedScenarioData = JSON.parse(updatedScenarioData); } catch(e) {}
+            }
+            if (typeof updatedScenarioData !== 'object' || updatedScenarioData === null
+                || (activeStep.step_type === 'quiz' && Array.isArray(updatedScenarioData))) {
+                updatedScenarioData = {};
+            } else {
+                updatedScenarioData = { ...updatedScenarioData };
+            }
+            let res;
             if (activeStep.step_type === 'quiz') {
                 if (!Array.isArray(quizQuestions) || quizQuestions.length === 0) {
                     const error = new Error(t('builder.quizValidation.noQuestions'));
@@ -347,26 +364,30 @@ function CourseBuilder() {
                     if (q.id) mappedQ.id = q.id; 
                     return mappedQ;
                 });
-                const payload = { lesson_id: Number(activeLesson.id), quiz_title: activeStep.title || `Тест к уроку`, questions: payloadQuestions };
+                const payload = {
+                    lesson_id: Number(activeLesson.id), quiz_title: activeStep.title || `Тест к уроку`, questions: payloadQuestions,
+                    step_id: activeStep.id,
+                    step: {
+                        title: activeStep.title, content: activeStep.content,
+                        step_type: activeStep.step_type, scenario_data: updatedScenarioData,
+                    },
+                };
                 if (currentQuizId) payload.quiz_id = currentQuizId;
+                // The backend commits the quiz and its step together. Never fall
+                // back to a second PATCH, which could leave a partially saved test.
                 const quizRes = await api.post(`quizzes/save-generated/`, payload);
-                savedQuizId = quizRes.data.quiz_id; 
-                setCurrentQuizId(savedQuizId);
-            }
-            let updatedScenarioData = activeStep.scenario_data;
-            if (typeof updatedScenarioData === 'string') {
-                try { updatedScenarioData = JSON.parse(updatedScenarioData); } catch(e) {}
-            }
-            if (typeof updatedScenarioData !== 'object' || updatedScenarioData === null) {
-                updatedScenarioData = {};
+                if (quizRes.data.step?.id !== activeStep.id || quizRes.data.step?.scenario_data?.quiz_id !== quizRes.data.quiz_id) {
+                    throw new Error('Incomplete atomic quiz save response');
+                }
+                res = { data: quizRes.data.step };
+                setCurrentQuizId(quizRes.data.quiz_id);
             } else {
-                updatedScenarioData = { ...updatedScenarioData };
+                if (currentQuizId) updatedScenarioData.quiz_id = currentQuizId;
+                res = await api.patch(`courses/steps/${activeStep.id}/`, {
+                    title: activeStep.title, content: activeStep.content,
+                    step_type: activeStep.step_type, scenario_data: updatedScenarioData,
+                });
             }
-            if (savedQuizId) updatedScenarioData.quiz_id = savedQuizId;
-            const res = await api.patch(`courses/steps/${activeStep.id}/`, { 
-                title: activeStep.title, content: activeStep.content, 
-                step_type: activeStep.step_type, scenario_data: updatedScenarioData 
-            });
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? res.data : s) } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data);
             toast.success(t('builder.toasts.stepSaved'));

@@ -51,6 +51,7 @@ def main():
             "quizzes/grading.py",
             "tests/test_training_audit.py",
             "tests/test_quiz_workflows.py",
+            "tests/test_builder_atomic_save.py",
             "tests/test_sql_selection_fixture.py",
             "tests/fixtures/sql_selection_training.json",
         )
@@ -95,6 +96,7 @@ def main():
             "--confcutdir", str(work), "-v", "-s", "--tb=short",
             "tests/test_training_audit.py", "tests/test_sql_selection_fixture.py",
             "tests/test_quiz_workflows.py",
+            "tests/test_builder_atomic_save.py",
         ])
 
 

@@ -8,13 +8,14 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema
 
 from .models import Quiz, Question, Choice, Result
 from .grading import calculate_submission_score
 # Импорт модели Lesson для получения контента урока при генерации тестов через AI
-from courses.models import Lesson
+from courses.models import Lesson, LessonStep
+from courses.serializers import LessonStepSerializer
 from .serializers import (
     QuizSerializer, 
     QuizSubmissionSerializer, 
@@ -22,6 +23,7 @@ from .serializers import (
     MyResultSerializer,
     GeneratePreviewSerializer,
     SaveGeneratedSerializer,
+    BuilderQuizStepSerializer,
 )
 
 # 1. ОБЫЧНЫЙ СПИСОК (для админки или общих целей)
@@ -141,8 +143,40 @@ class SaveGeneratedView(APIView):
 
         quiz_id = data.get('quiz_id')
         quiz_title = data.get('quiz_title')
-        if quiz_id:
+        step_serializer = None
+        scenario_data = None
+        quiz = None
+        if 'step_id' in data:
+            # Serialise saves of one step before resolving its authoritative quiz
+            # link. A retry of an initial save then reuses the newly linked quiz.
+            step = get_object_or_404(LessonStep.objects.select_for_update(), id=data['step_id'])
+            if step.lesson_id != lesson.id:
+                raise ValidationError({'step_id': 'Шаг не принадлежит указанному уроку.'})
+            if step.step_type != 'quiz':
+                raise ValidationError({'step_id': 'Сохранять тест можно только в шаге типа quiz.'})
+            saved_scenario = step.scenario_data if step.scenario_data is not None else {}
+            if not isinstance(saved_scenario, dict):
+                raise ValidationError({'step_id': 'Сохранённая связь шага с тестом повреждена.'})
+            linked_quiz_id = saved_scenario.get('quiz_id')
+            if 'quiz_id' in saved_scenario:
+                if type(linked_quiz_id) is not int or linked_quiz_id < 1:
+                    raise ValidationError({'step_id': 'Сохранённая связь шага с тестом повреждена.'})
+                quiz = Quiz.objects.select_for_update().filter(id=linked_quiz_id, lesson=lesson).first()
+                if quiz is None:
+                    raise ValidationError({'step_id': 'Связанный тест отсутствует или относится к другому уроку.'})
+            incoming_scenario = data['step']['scenario_data']
+            if ('quiz_id' in data and quiz_id != linked_quiz_id
+                    or 'quiz_id' in incoming_scenario and incoming_scenario['quiz_id'] != linked_quiz_id):
+                raise ValidationError({'quiz_id': 'Нельзя изменить привязку теста к шагу.'})
+            scenario_data = {**saved_scenario, **incoming_scenario}
+            step_serializer = BuilderQuizStepSerializer(
+                step, data=data['step'], context={'request': request},
+            )
+            step_serializer.is_valid(raise_exception=True)
+        elif quiz_id:
             quiz = get_object_or_404(Quiz.objects.select_for_update(), id=quiz_id, lesson=lesson)
+
+        if quiz is not None:
             if quiz_title:
                 quiz.title = quiz_title
                 quiz.save(update_fields=['title'])
@@ -160,4 +194,10 @@ class SaveGeneratedView(APIView):
                 Choice(question=question, text=option, is_correct=index in item['correct_index'])
                 for index, option in enumerate(item['options'])
             ])
-        return Response({'message': 'Тест сохранен', 'quiz_id': quiz.id}, status=201)
+        response_data = {'message': 'Тест сохранен', 'quiz_id': quiz.id}
+        if step_serializer is not None:
+            # The server owns this link; all other step metadata is retained.
+            scenario_data['quiz_id'] = quiz.id
+            step = step_serializer.save(scenario_data=scenario_data)
+            response_data['step'] = LessonStepSerializer(step, context={'request': request}).data
+        return Response(response_data, status=201)
