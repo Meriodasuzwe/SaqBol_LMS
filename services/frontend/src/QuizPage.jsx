@@ -125,9 +125,6 @@ function QuizPage() {
 
         const answersPayload = questions.map(q => {
             const choiceIds = answersMap[q.id] || [];
-            // Аналитика ждёт одно число — берём первый выбранный вариант
-            const firstChoiceId = choiceIds[0] || null;
-
             // Для is_correct проверяем через correct_answers_ids из результата
             const correctIds = resultData.correct_answers_ids?.[q.id] || [];
             const isCorrect = correctIds.length > 0 &&
@@ -139,7 +136,7 @@ function QuizPage() {
 
             return {
                 question_id: q.id,
-                selected_choice_id: firstChoiceId,  // аналитика ждёт одно число
+                selected_choice_ids: [...choiceIds],
                 is_correct: isCorrect,
             };
         });

@@ -82,6 +82,8 @@ class QuestionAnswer(models.Model):
         related_name='student_answers',
         verbose_name="Вопрос"
     )
+    # Full selection is canonical; the legacy FK keeps the first choice for old consumers.
+    selected_choice_ids = models.JSONField(default=list, blank=True, verbose_name="Выбранные варианты")
     selected_choice = models.ForeignKey(
         'quizzes.Choice',
         on_delete=models.SET_NULL,
