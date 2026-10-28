@@ -9,6 +9,7 @@ analytics/views.py — API эндпоинты аналитики.
 """
 
 import logging
+from django.db import transaction
 from django.db.models import Avg, Count, Q, F
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -16,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from courses.models import LessonStep
-from quizzes.models import Quiz, Question, Choice, Result
+from quizzes.models import Quiz, Result
 from .models import (
     QuizAttemptDetail, QuestionAnswer,
     ScenarioAttempt, ScenarioStepResult,
@@ -106,6 +107,7 @@ class SubmitQuizAttemptView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
         serializer = SubmitQuizAttemptSerializer(data=request.data)
         if not serializer.is_valid():
@@ -138,18 +140,16 @@ class SubmitQuizAttemptView(APIView):
         # Сохраняем ответы на каждый вопрос
         answers_to_create = []
         for ans in data['answers']:
-            question = Question.objects.filter(id=ans['question_id'], quiz=quiz).first()
-            if not question:
-                continue
-            choice = Choice.objects.filter(id=ans['selected_choice_id']).first() if ans.get('selected_choice_id') else None
+            selected = ans['selected_choice_ids']
             answers_to_create.append(QuestionAnswer(
                 attempt=attempt,
-                question=question,
-                selected_choice=choice,
+                question_id=ans['question_id'],
+                selected_choice_ids=selected,
+                selected_choice_id=selected[0] if selected else None,
                 is_correct=ans['is_correct'],
             ))
 
-        QuestionAnswer.objects.bulk_create(answers_to_create, ignore_conflicts=True)
+        QuestionAnswer.objects.bulk_create(answers_to_create)
 
         logger.info(f"ANALYTICS: Quiz attempt saved | student={student.id} | quiz={quiz.id} | score={data['score']}")
         return Response({'attempt_id': attempt.id}, status=status.HTTP_201_CREATED)

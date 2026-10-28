@@ -3,6 +3,8 @@ analytics/serializers.py — Сериализаторы для записи и �
 """
 
 from rest_framework import serializers
+from quizzes.models import Question
+from quizzes.serializers import SubmissionIdField
 from .models import QuizAttemptDetail, QuestionAnswer, ScenarioAttempt, ScenarioStepResult
 
 
@@ -12,9 +14,32 @@ from .models import QuizAttemptDetail, QuestionAnswer, ScenarioAttempt, Scenario
 
 class QuestionAnswerInputSerializer(serializers.Serializer):
     """Один ответ студента на вопрос при отправке результатов квиза."""
-    question_id = serializers.IntegerField()
-    selected_choice_id = serializers.IntegerField(allow_null=True)
+    question_id = SubmissionIdField(min_value=1)
+    selected_choice_id = SubmissionIdField(min_value=1, allow_null=True, required=False)
+    selected_choice_ids = serializers.ListField(
+        child=SubmissionIdField(min_value=1), allow_empty=True, required=False,
+    )
     is_correct = serializers.BooleanField()
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            unknown_fields = set(data) - set(self.fields)
+            if unknown_fields:
+                raise serializers.ValidationError({field: 'Неизвестное поле ответа.' for field in unknown_fields})
+        return super().to_internal_value(data)
+
+    def validate_selected_choice_ids(self, selected):
+        if len(selected) != len(set(selected)):
+            raise serializers.ValidationError('Выбранный вариант не должен повторяться.')
+        return selected
+
+    def validate(self, attrs):
+        if ('selected_choice_id' in attrs) == ('selected_choice_ids' in attrs):
+            raise serializers.ValidationError('Передайте только одно поле: selected_choice_ids или selected_choice_id.')
+        if 'selected_choice_id' in attrs:
+            selected = attrs.pop('selected_choice_id')
+            attrs['selected_choice_ids'] = [] if selected is None else [selected]
+        return attrs
 
 
 class SubmitQuizAttemptSerializer(serializers.Serializer):
@@ -26,6 +51,32 @@ class SubmitQuizAttemptSerializer(serializers.Serializer):
     correct_answers = serializers.IntegerField(min_value=0)
     time_spent_seconds = serializers.IntegerField(min_value=0, default=0)
     answers = QuestionAnswerInputSerializer(many=True)
+
+    def validate(self, attrs):
+        answers = attrs['answers']
+        questions = Question.objects.filter(
+            quiz_id=attrs['quiz_id'], id__in=[answer['question_id'] for answer in answers],
+        ).prefetch_related('choices')
+        choices_by_question = {
+            question.pk: {choice.pk for choice in question.choices.all()} for question in questions
+        }
+        seen = set()
+        for index, answer in enumerate(answers):
+            question_id = answer['question_id']
+            if question_id in seen:
+                raise serializers.ValidationError({
+                    'answers': {index: {'question_id': 'Вопрос не должен повторяться.'}},
+                })
+            seen.add(question_id)
+            if question_id not in choices_by_question:
+                raise serializers.ValidationError({
+                    'answers': {index: {'question_id': 'Вопрос не принадлежит указанному тесту.'}},
+                })
+            if any(choice_id not in choices_by_question[question_id] for choice_id in answer['selected_choice_ids']):
+                raise serializers.ValidationError({
+                    'answers': {index: {'selected_choice_ids': 'Выбранный вариант не принадлежит указанному вопросу.'}},
+                })
+        return attrs
 
 
 class ScenarioStepResultInputSerializer(serializers.Serializer):

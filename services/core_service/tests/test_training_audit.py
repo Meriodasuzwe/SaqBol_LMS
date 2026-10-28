@@ -424,26 +424,20 @@ def test_reproduces_result_without_detail_when_second_post_fails(training):
     print('REPRODUCES interrupted two-POST save: actual 1 Result, 0 detailed attempts, 0 answers.')
 
 
-def test_reproduces_analytics_rejecting_list_and_persisting_only_one_choice(training):
+def test_analytics_preserves_every_selected_choice(training):
     assert submit(training, fixture_answers(training)).status_code == 200
     result = Result.objects.get(student=training.student, quiz=training.quiz)
     item = next(item for item in training.items if len(item.correct_ids) > 1)
-    answer = {'question_id': item.question.id, 'selected_choice_id': item.correct_ids, 'is_correct': True}
-    rejected = training.client.post('/analytics/quiz-attempt/', analytics_payload(training, result, [answer]), format='json')
-    assert rejected.status_code == 400
-    assert 'selected_choice_id' in rejected.data['answers'][0]
-    assert not QuizAttemptDetail.objects.exists()
-    answer['selected_choice_id'] = item.correct_ids[0]
-    answer['selected_choice_ids'] = item.correct_ids
+    answer = {'question_id': item.question.id, 'selected_choice_ids': item.correct_ids, 'is_correct': True}
     accepted = training.client.post('/analytics/quiz-attempt/', analytics_payload(training, result, [answer]), format='json')
     assert accepted.status_code == 201
     saved = QuestionAnswer.objects.get(attempt_id=accepted.data['attempt_id'])
     assert saved.question_id == item.question.id
     assert saved.selected_choice_id == item.correct_ids[0]
+    assert saved.selected_choice_ids == item.correct_ids
     assert saved.is_correct is True
     assert list(QuestionAnswer.objects.filter(attempt_id=accepted.data['attempt_id']).values_list('selected_choice_id', flat=True)) == [item.correct_ids[0]]
     assert len(item.correct_ids) == 2
-    print('REPRODUCES multiple-choice history: actual list rejected; scalar plus plural field saves 1 of 2 choices.')
 
 
 def test_reproduces_quiz_edit_deleting_historical_answers_but_keeping_result(training):
