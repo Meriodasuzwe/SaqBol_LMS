@@ -70,7 +70,8 @@ class QuizSubmitView(APIView):
         response_data = calculate_submission_score(question_choices, serializer.validated_data['answers'])
 
         # No result records are written until the entire submission is validated.
-        Result.objects.create(student=request.user, quiz_id=quiz_id, score=response_data['score'])
+        result = Result.objects.create(student=request.user, quiz_id=quiz_id, score=response_data['score'])
+        response_data['id'] = result.pk
         return Response(response_data, status=status.HTTP_200_OK)
 
 # 5. Результаты пользователя

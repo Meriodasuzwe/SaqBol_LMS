@@ -63,7 +63,7 @@ def payload(graph, selections=None):
     if selections is None:
         selections = [[choice.pk for choice in graph.choices[0][:2]]]
     return {
-        'quiz_id': graph.quiz.pk, 'score': 50, 'total_questions': 2,
+        'quiz_id': graph.quiz.pk, 'result_id': graph.result.pk, 'score': 50, 'total_questions': 2,
         'correct_answers': 1, 'time_spent_seconds': 12,
         'answers': [
             {'question_id': graph.questions[index].pk, 'selected_choice_ids': list(selected), 'is_correct': True}

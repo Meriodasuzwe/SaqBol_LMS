@@ -45,7 +45,7 @@ class QuestionAnswerInputSerializer(serializers.Serializer):
 class SubmitQuizAttemptSerializer(serializers.Serializer):
     """Тело запроса при завершении квиза."""
     quiz_id = serializers.IntegerField()
-    result_id = serializers.IntegerField(required=False, allow_null=True)
+    result_id = SubmissionIdField(min_value=1)
     score = serializers.FloatField(min_value=0, max_value=100)
     total_questions = serializers.IntegerField(min_value=1)
     correct_answers = serializers.IntegerField(min_value=0)

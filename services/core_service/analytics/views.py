@@ -121,10 +121,20 @@ class SubmitQuizAttemptView(APIView):
         except Quiz.DoesNotExist:
             return Response({'error': 'Квиз не найден.'}, status=404)
 
-        # Получаем старый Result если передан (совместимость)
-        result_obj = None
-        if data.get('result_id'):
-            result_obj = Result.objects.filter(id=data['result_id'], student=student).first()
+        # Lock this result so concurrent requests cannot attach two sets of answers.
+        result_obj = Result.objects.select_for_update().filter(
+            pk=data['result_id'], student=student, quiz=quiz,
+        ).first()
+        if result_obj is None:
+            return Response(
+                {'result_id': ['Результат не найден для этого пользователя и теста.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if QuizAttemptDetail.objects.filter(result=result_obj).exists():
+            return Response(
+                {'result_id': ['Ответы для этого результата уже сохранены.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Создаём детальную попытку
         attempt = QuizAttemptDetail.objects.create(

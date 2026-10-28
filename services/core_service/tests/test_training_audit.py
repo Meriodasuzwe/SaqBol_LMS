@@ -407,9 +407,9 @@ def test_submit_last_invalid_answer_does_not_save_previous_valid_answers(trainin
 def test_reproduces_result_without_detail_when_second_post_fails(training):
     first = submit(training, fixture_answers(training))
     assert first.status_code == 200
-    assert 'id' not in first.data and 'result_id' not in first.data
-    # The current submit API omits the ID; locate only this synthetic result via ORM.
     result = Result.objects.get(student=training.student, quiz=training.quiz)
+    assert first.data['id'] == result.pk
+    # Returning the ID does not make the two separate POST requests atomic.
     assert not QuizAttemptDetail.objects.exists()
     training.client.raise_request_exception = False
     with patch('analytics.views.QuizAttemptDetail.objects.create', side_effect=RuntimeError('Synthetic second POST failure')):
