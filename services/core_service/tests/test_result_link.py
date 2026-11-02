@@ -1,8 +1,8 @@
 """Result linkage through real submit/analytics handlers, isolated synthetic DB only.
 
 These regressions exercise application validation and persistence without mocks.
-They do not change scoring or implement history, retry replay, or cross-request
-atomicity. Run through run_training_audit.py, never against a working database.
+They cover the atomic submit link and compatibility of the legacy analytics API.
+They do not implement history or retry replay. Run through run_training_audit.py, never against a working database.
 """
 
 from copy import deepcopy
@@ -107,21 +107,16 @@ def test_result_link_submit_returns_created_result_id_without_changing_score(lin
     assert response.data['score'] == saved.score == 100
     assert response.data['correct_count'] == response.data['total_questions'] == 1
     assert set(response.data['correct_answers_ids'][graph.question.pk]) == set(graph.correct_ids)
-    assert not QuizAttemptDetail.objects.exists()
+    assert QuizAttemptDetail.objects.get(result=saved).score == saved.score
 
 
-def test_result_link_real_submit_then_analytics_preserves_link_and_full_selection(link_graph):
+def test_result_link_single_submit_preserves_link_and_full_selection(link_graph):
     graph = link_graph
     response = submit(graph)
     assert response.status_code == 200
     result = Result.objects.get(student=graph.student, quiz=graph.quiz)
     result_before = list(Result.objects.values())
-    # The real frontend uses this exact fallback on the real submit response.
-    accepted = graph.client.post(
-        ANALYTICS_URL, analytics_payload(graph, response.data.get('id') or None), format='json',
-    )
-    assert accepted.status_code == 201
-    detail = QuizAttemptDetail.objects.get(pk=accepted.data['attempt_id'])
+    detail = QuizAttemptDetail.objects.get(result_id=response.data['id'])
     assert detail.result_id == result.pk, 'The detailed answers must point to this submission result.'
     assert detail.student_id == result.student_id
     assert detail.quiz_id == result.quiz_id
@@ -130,6 +125,17 @@ def test_result_link_real_submit_then_analytics_preserves_link_and_full_selectio
     assert answer.question_id == graph.question.pk
     assert Result.objects.count() == QuizAttemptDetail.objects.count() == QuestionAnswer.objects.count() == 1
     assert list(Result.objects.values()) == result_before
+
+
+def test_result_link_old_client_second_post_cannot_overwrite_atomic_submission(link_graph):
+    graph = link_graph
+    response = submit(graph)
+    assert response.status_code == 200
+    data = analytics_payload(graph, response.data['id'])
+    data['score'] = 0
+    data['answers'][0]['selected_choice_ids'] = []
+    data['answers'][0]['is_correct'] = False
+    assert_rejected_without_writes(graph, data)
 
 
 def test_result_link_separate_submissions_return_distinct_result_ids(link_graph):

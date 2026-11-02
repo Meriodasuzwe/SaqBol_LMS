@@ -9,7 +9,6 @@ are involved, and no browser executes the HTML marker.
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 from django.conf import settings as django_settings
@@ -404,29 +403,23 @@ def test_submit_last_invalid_answer_does_not_save_previous_valid_answers(trainin
     assert_rejected_without_attempt_records(response)
 
 
-def test_reproduces_result_without_detail_when_second_post_fails(training):
-    first = submit(training, fixture_answers(training))
-    assert first.status_code == 200
+def test_submit_saves_complete_attempt_without_a_second_post(training):
+    response = submit(training, fixture_answers(training))
+    assert response.status_code == 200
     result = Result.objects.get(student=training.student, quiz=training.quiz)
-    assert first.data['id'] == result.pk
-    # Returning the ID does not make the two separate POST requests atomic.
-    assert not QuizAttemptDetail.objects.exists()
-    training.client.raise_request_exception = False
-    with patch('analytics.views.QuizAttemptDetail.objects.create', side_effect=RuntimeError('Synthetic second POST failure')):
-        second = training.client.post('/analytics/quiz-attempt/', analytics_payload(training, result), format='json')
-    assert second.status_code == 500
-    assert Result.objects.filter(pk=result.id, score=100).exists()
-    assert not QuizAttemptDetail.objects.exists()
-    assert not QuestionAnswer.objects.exists()
+    assert response.data['id'] == result.pk
+    detail = QuizAttemptDetail.objects.get(result=result)
+    assert detail.score == result.score == 100
+    assert detail.total_questions == detail.correct_answers == 10
+    assert detail.answers.count() == 10
     history = training.client.get('/quizzes/my-results/')
     assert history.status_code == 200
     assert [entry['id'] for entry in history.data] == [result.id]
-    print('REPRODUCES interrupted two-POST save: actual 1 Result, 0 detailed attempts, 0 answers.')
 
 
 def test_analytics_preserves_every_selected_choice(training):
-    assert submit(training, fixture_answers(training)).status_code == 200
-    result = Result.objects.get(student=training.student, quiz=training.quiz)
+    # Legacy results without details can still use the existing analytics API.
+    result = Result.objects.create(student=training.student, quiz=training.quiz, score=100)
     item = next(item for item in training.items if len(item.correct_ids) > 1)
     answer = {'question_id': item.question.id, 'selected_choice_ids': item.correct_ids, 'is_correct': True}
     accepted = training.client.post('/analytics/quiz-attempt/', analytics_payload(training, result, [answer]), format='json')
@@ -443,9 +436,7 @@ def test_analytics_preserves_every_selected_choice(training):
 def test_reproduces_quiz_edit_deleting_historical_answers_but_keeping_result(training):
     assert submit(training, fixture_answers(training)).status_code == 200
     result = Result.objects.get(student=training.student, quiz=training.quiz)
-    detail = training.client.post('/analytics/quiz-attempt/', analytics_payload(training, result), format='json')
-    assert detail.status_code == 201
-    attempt_id = detail.data['attempt_id']
+    attempt_id = QuizAttemptDetail.objects.get(result=result).pk
     assert QuestionAnswer.objects.filter(attempt_id=attempt_id).count() == 10
     original_question_ids = set(training.quiz.questions.values_list('id', flat=True))
     edited = training.teacher_client.post('/quizzes/save-generated/', {

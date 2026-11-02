@@ -54,6 +54,8 @@ def main():
             "tests/test_builder_atomic_save.py",
             "tests/test_analytics_selection.py",
             "tests/test_result_link.py",
+            "tests/test_atomic_submission.py",
+            "tests/test_submission_idempotency.py",
             "tests/test_sql_selection_fixture.py",
             "tests/fixtures/sql_selection_training.json",
         )
@@ -101,6 +103,8 @@ def main():
             "tests/test_builder_atomic_save.py",
             "tests/test_analytics_selection.py",
             "tests/test_result_link.py",
+            "tests/test_atomic_submission.py",
+            "tests/test_submission_idempotency.py",
         ])
 
 
