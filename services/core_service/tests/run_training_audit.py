@@ -52,6 +52,8 @@ def main():
             "tests/test_training_audit.py",
             "tests/test_quiz_workflows.py",
             "tests/test_builder_atomic_save.py",
+            "tests/test_analytics_selection.py",
+            "tests/test_result_link.py",
             "tests/test_sql_selection_fixture.py",
             "tests/fixtures/sql_selection_training.json",
         )
@@ -97,6 +99,8 @@ def main():
             "tests/test_training_audit.py", "tests/test_sql_selection_fixture.py",
             "tests/test_quiz_workflows.py",
             "tests/test_builder_atomic_save.py",
+            "tests/test_analytics_selection.py",
+            "tests/test_result_link.py",
         ])
 
 

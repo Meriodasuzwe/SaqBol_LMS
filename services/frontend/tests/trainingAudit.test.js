@@ -318,7 +318,15 @@ test('builder regression: removing an earlier option keeps a multiple key attach
     assert.equal(edited[0].correct_answer, 'Bravo | Charlie');
 });
 
-test('audit reproduction and control: actual submitAnalytics sends only the first selected ID for a multiple-choice answer', async () => {
+for (const selection of [
+    { name: 'one option', selected: [820], correct: [820] },
+    { name: 'two options', selected: [820, 821], correct: [820, 821] },
+    { name: 'three options', selected: [820, 821, 822], correct: [820, 821, 822] },
+    { name: 'reversed options', selected: [821, 820], correct: [820, 821] },
+    { name: 'explicit skip', selected: [], correct: [820, 821] },
+    { name: 'omitted answer', selected: undefined, correct: [820, 821] },
+]) {
+test(`analytics selection: actual submitAnalytics preserves ${selection.name}`, async () => {
     const quizPage = readSource('QuizPage.jsx');
     const captured = [];
     const warnings = [];
@@ -328,23 +336,30 @@ test('audit reproduction and control: actual submitAnalytics sends only the firs
         api: { post: async (url, payload) => { captured.push({ url, payload: JSON.parse(JSON.stringify(payload)) }); } },
         console: { warn: (...args) => warnings.push(args) },
     });
-    const answers = { 811: [820, 821], 812: [830] };
+    const answers = Object.freeze({
+        ...(selection.selected === undefined ? {} : { 811: Object.freeze([...selection.selected]) }),
+        812: Object.freeze([830]),
+    });
+    const inputBefore = JSON.parse(JSON.stringify(answers));
+    const answered = Boolean(selection.selected?.length);
     await submitAnalytics(
         { id: 801, questions: [{ id: 811 }, { id: 812 }] },
-        { id: 901, score: 100, correct_answers_ids: { 811: [820, 821], 812: [830] } },
+        { id: 901, score: answered ? 100 : 50, correct_answers_ids: { 811: selection.correct, 812: [830] } },
         answers,
     );
     assert.deepEqual(warnings, [], 'The actual callback completed without swallowing an error');
     assert.equal(captured.length, 1);
     assert.equal(captured[0].url, 'analytics/quiz-attempt/');
     assert.deepEqual(captured[0].payload.answers, [
-        { question_id: 811, selected_choice_id: 820, is_correct: true },
-        { question_id: 812, selected_choice_id: 830, is_correct: true },
+        { question_id: 811, selected_choice_ids: selection.selected ?? [], is_correct: answered },
+        { question_id: 812, selected_choice_ids: [830], is_correct: true },
     ]);
-    assert.equal(captured[0].payload.correct_answers, 2, 'Correctness checks the complete selection before serialization loses the second ID');
+    assert.equal(captured[0].payload.correct_answers, answered ? 2 : 1);
     assert.equal(captured[0].payload.time_spent_seconds, 10);
-    assert.deepEqual(answers[811], [820, 821], 'The complete synthetic answer remains present in input');
+    assert.equal(captured[0].payload.result_id, 901);
+    assert.deepEqual(answers, inputBefore, 'Sending analytics must not modify the selected answers');
 });
+}
 
 const lesson = readSource('LessonPage.jsx');
 const actualRenderMath = evaluateNode(lesson, initializer(lesson, lesson.ast, 'renderMath'), { katex });
