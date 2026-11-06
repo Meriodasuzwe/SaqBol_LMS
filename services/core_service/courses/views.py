@@ -276,10 +276,17 @@ class MarkStepCompleteView(APIView):
         score = request.data.get('score', 10)
         is_admin = user.role == 'admin' or user.is_superuser
 
+        if step.step_type == 'quiz':
+            linked_quiz_id = step.scenario_data.get('quiz_id') if isinstance(step.scenario_data, dict) else None
+            if Quiz.objects.filter(pk=linked_quiz_id, lesson=step.lesson, mode=Quiz.Mode.KT_PROFILE).exists():
+                return Response(
+                    {'error': 'Пробник профильного блока КТ не засчитывается в прогресс курса и выдачу сертификата.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         if step.step_type == 'quiz' and not (step.lesson.course.teacher == user or is_admin):
             quizzes = Quiz.objects.filter(lesson=step.lesson)
             if quizzes.exists():
-                passed = Result.objects.filter(student=user, quiz__in=quizzes, score__gte=70).exists()
+                passed = Result.objects.filter(student=user, quiz__in=quizzes, quiz__mode=Quiz.Mode.TRAINING, scoring_mode=Quiz.Mode.TRAINING, score__gte=70).exists()
                 if not passed:
                     return Response(
                         {"error": "Сначала нужно успешно пройти тесты для этого урока (минимум 70%)."}, 
@@ -581,8 +588,11 @@ class ReviewListCreateView(generics.ListCreateAPIView):
                 completed_count = 0
                 for step in steps:
                     if step.step_type == 'quiz':
+                        linked_quiz_id = step.scenario_data.get('quiz_id') if isinstance(step.scenario_data, dict) else None
+                        if Quiz.objects.filter(pk=linked_quiz_id, lesson=step.lesson, mode=Quiz.Mode.KT_PROFILE).exists():
+                            continue
                         quizzes = Quiz.objects.filter(lesson=step.lesson)
-                        if quizzes.exists() and Result.objects.filter(student=user, quiz__in=quizzes, score__gte=70).exists():
+                        if quizzes.exists() and Result.objects.filter(student=user, quiz__in=quizzes, quiz__mode=Quiz.Mode.TRAINING, scoring_mode=Quiz.Mode.TRAINING, score__gte=70).exists():
                             completed_count += 1
                     else:
                         if StepProgress.objects.filter(student=user, step=step, is_completed=True).exists():
@@ -944,7 +954,8 @@ class B2BDashboardView(APIView):
 
                     quiz_results = Result.objects.filter(
                         student=student,
-                        quiz__lesson__course=course
+                        quiz__lesson__course=course,
+                        scoring_mode=Quiz.Mode.TRAINING,
                     ).order_by('-completed_at')
 
                     tests_data = []

@@ -5,9 +5,11 @@ import { toast } from 'react-toastify';
 import { Award, Download, Briefcase, ArrowRight, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getMediaUrl } from './utils/mediaUrl';
+import { getKtQuizCopy } from './ktQuizCopy';
 
 function Profile() {
     const { t, i18n } = useTranslation();
+    const ktCopy = getKtQuizCopy(i18n.resolvedLanguage || i18n.language);
     const [user, setUser] = useState(null);
     const [results, setResults] = useState([]);
     
@@ -359,14 +361,14 @@ function Profile() {
                                                     {r.completed_at ? new Date(r.completed_at).toLocaleDateString(getDateLocale()) : '—'}
                                                 </p>
                                             </div>
-                                            <span className={`shrink-0 font-bold text-xs px-2 py-1 rounded border ${r.score >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'}`}>
-                                                {r.score}%
+                                            <span className={`shrink-0 font-bold text-xs px-2 py-1 rounded border ${r.mode === 'kt_profile' ? 'bg-blue-500/10 text-blue-700 border-blue-500/30' : r.score >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'}`}>
+                                                {r.mode === 'kt_profile' ? `${r.grading.earned_points} / ${r.grading.max_points}` : `${r.score}%`}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-base-200 rounded-full h-1">
+                                        {r.mode === 'kt_profile' ? <p className="text-xs text-base-content/75">{ktCopy.title} · {ktCopy.points}</p> : <div className="w-full bg-base-200 rounded-full h-1">
                                             <div className={`h-1 rounded-full transition-all duration-500 ${r.score >= 70 ? 'bg-emerald-500' : r.score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
                                                 style={{ width: `${r.score}%` }} />
-                                        </div>
+                                        </div>}
                                     </div>
                                 ))}
                             </div>

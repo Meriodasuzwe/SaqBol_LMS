@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import {
     BookOpen, User, LogOut, ChevronDown,
     Sun, Moon, X, Settings,
-    BarChart2, ShieldCheck
+    BarChart2, ShieldCheck, ClipboardList
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import { getMediaUrl } from './utils/mediaUrl';
@@ -64,6 +64,15 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         setLangOpen(false);
     };
 
+    // Active exams can save before releasing authentication. Other routes keep
+    // the existing immediate logout behavior when nobody cancels this event.
+    const requestLogout = () => {
+        const event = new CustomEvent('saqbol:before-logout', {
+            cancelable: true, detail: { proceed: onLogout },
+        });
+        if (window.dispatchEvent(event)) onLogout();
+    };
+
     const isActive = path => location.pathname === path || location.pathname.startsWith(path + '/');
 
     const displayName = user?.first_name
@@ -115,7 +124,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
         { to: '/admin/stats', icon: <BarChart2 size={14}/>,    label: t('nav.stats'),      show: isAdmin },
     ].filter(i => i.show);
 
-    const mobileItems = dropItems;
+    const mobileItems = [{ to: '/exams', icon: <ClipboardList size={15} />, label: t('nav.exams') }, ...dropItems];
 
     return (
         <>
@@ -146,8 +155,9 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                     </Link>
 
                     {isLoggedIn && (
-                        <nav style={{ display: 'flex', alignItems: 'center', gap: 24, marginLeft: 8 }} className="hidden lg:flex">
+                        <nav style={{ alignItems: 'center', gap: 24, marginLeft: 8 }} className="hidden lg:flex">
                             <NavLink to="/courses" icon={<BookOpen size={14} style={{ opacity: 0.7 }} />}>{t('nav.catalog')}</NavLink>
+                            <NavLink to="/exams" icon={<ClipboardList size={14} style={{ opacity: 0.7 }} />}>{t('nav.exams')}</NavLink>
                         </nav>
                     )}
 
@@ -236,7 +246,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                                         </div>
 
                                         <div style={{ padding: '6px', borderTop: `1px solid ${themeColors.divider}` }}>
-                                            <button onClick={() => { setDropOpen(false); onLogout(); }}
+                                            <button onClick={() => { setDropOpen(false); requestLogout(); }}
                                                 style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 500, transition: 'background 0.12s', textAlign: 'left' }}
                                                 onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2'}
                                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -306,7 +316,7 @@ function Navbar({ isLoggedIn, userRole, onLogout }) {
                         ))}
 
                         <div style={{ borderTop: `1px solid ${themeColors.divider}`, marginTop: 8, paddingTop: 8 }}>
-                            <button onClick={onLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+                            <button onClick={requestLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
                                 <LogOut size={15} /> {t('nav.logout')}
                             </button>
                         </div>

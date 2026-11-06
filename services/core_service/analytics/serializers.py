@@ -157,6 +157,8 @@ class TeacherDashboardSerializer(serializers.Serializer):
 
 class StudentQuizHistorySerializer(serializers.Serializer):
     """История квизов студента."""
+    mode = serializers.CharField()
+    grading = serializers.JSONField(allow_null=True)
     attempt_id = serializers.IntegerField()
     quiz_title = serializers.CharField()
     score = serializers.FloatField()

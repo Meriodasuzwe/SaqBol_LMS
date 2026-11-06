@@ -21,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 sys.dont_write_bytecode = True
+kt_profile_mode = '--kt' in sys.argv
 source = Path('/source')
 if sys.platform != 'linux' or not source.is_dir():
     raise SystemExit('Use the isolated Docker runner.')
@@ -39,6 +40,11 @@ with tempfile.TemporaryDirectory(prefix='saqbol-idempotency-pg-') as temporary:
             target = work/path.relative_to(source)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, target)
+    if kt_profile_mode:
+        fixture = source/'tests/fixtures/kt_profile.py'
+        if fixture.is_symlink():
+            raise RuntimeError('No symlinks in fixture allowlist.')
+        shutil.copyfile(fixture, work/'kt_profile_fixture.py')
     (work/'idempotency_pg_settings.py').write_text('''from core.test_settings import *
 DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saqbol_idempotency_test', 'USER': 'postgres', 'HOST': 'idempotency-db', 'PORT': '5432', 'CONN_MAX_AGE': 0, 'OPTIONS': {'options': '-c statement_timeout=15000 -c lock_timeout=12000'}}}
 ''', encoding='utf-8')
@@ -67,10 +73,20 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
     category = Category.objects.create(title='Synthetic concurrency')
     course = Course.objects.create(teacher=teacher, category=category, title='Synthetic course')
     lesson = Lesson.objects.create(course=course, title='Synthetic lesson')
-    quiz = Quiz.objects.create(lesson=lesson, title='Synthetic concurrent quiz')
-    question = Question.objects.create(quiz=quiz, text='Synthetic multiple choice')
-    choices = [Choice.objects.create(question=question, text=f'Synthetic {index}', is_correct=index in (0, 2)) for index in range(4)]
-    correct_ids = [choices[0].pk, choices[2].pk]
+    if kt_profile_mode:
+        from kt_profile_fixture import create_profile_quiz
+        course.status = 'published'
+        course.save(update_fields=['status'])
+        quiz, profile_items = create_profile_quiz(lesson)
+        item = profile_items[31]  # Second subject, two correct choices.
+        question, choices, correct_ids = item['question'], item['choices'], item['correct_ids']
+        expected_answer_count = 50
+    else:
+        quiz = Quiz.objects.create(lesson=lesson, title='Synthetic concurrent quiz')
+        question = Question.objects.create(quiz=quiz, text='Synthetic multiple choice')
+        choices = [Choice.objects.create(question=question, text=f'Synthetic {index}', is_correct=index in (0, 2)) for index in range(4)]
+        correct_ids = [choices[0].pk, choices[2].pk]
+        expected_answer_count = 1
     url = f'/quizzes/{quiz.pk}/submit/'
     observed = []
     context = threading.local()
@@ -97,6 +113,22 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
         details = QuizAttemptDetail.objects.filter(result__in=results)
         return [results.count(), details.count(), QuestionAnswer.objects.filter(attempt__in=details).count()]
 
+    if kt_profile_mode:
+        full_key = uuid.uuid4()
+        full = worker({'submission_id': str(full_key), 'answers': [
+            {'question_id': item['question'].pk, 'choice_ids': item['correct_ids']} for item in profile_items
+        ]})
+        assert full['status'] == 200, full
+        assert full['data']['grading']['earned_points'] == 70
+        assert full['data']['grading']['max_points'] == 70
+        saved = Result.objects.get(submission_id=full_key)
+        assert saved.scoring_mode == 'kt_profile'
+        assert saved.scoring_details == full['data']['grading']
+        assert saved.detail.answers.count() == 50
+        assert sum(a.question_snapshot['earned_points'] for a in saved.detail.answers.all()) == 70
+        assert counts(full_key) == [1, 1, 50]
+        observed.append({'case': 'kt_full_submission_postgresql', 'points': '70/70', 'counts': counts(full_key), 'persisted_grading_matches_response': True})
+
     real_create = QuerySet.create
 
     def concurrent_pair(first, second):
@@ -120,13 +152,13 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
     same = concurrent_pair(payload(same_key), payload(same_key))
     assert [result['status'] for result in same] == [200, 200], same
     assert same[0]['data'] == same[1]['data'], same
-    assert counts(same_key) == [1, 1, 1]
+    assert counts(same_key) == [1, 1, expected_answer_count]
     observed.append({'case': 'concurrent_same_submission', 'statuses': [200, 200], 'distinct_database_connections': True, 'same_response': True, 'counts': counts(same_key)})
 
     conflicting_key = uuid.uuid4()
     conflicting = concurrent_pair(payload(conflicting_key), payload(conflicting_key, [choices[1].pk]))
     assert sorted(result['status'] for result in conflicting) == [200, 409], conflicting
-    assert counts(conflicting_key) == [1, 1, 1]
+    assert counts(conflicting_key) == [1, 1, expected_answer_count]
     winner = next(result for result in conflicting if result['status'] == 200)
     assert Result.objects.get(submission_id=conflicting_key).pk == winner['data']['id']
     observed.append({'case': 'concurrent_conflicting_answers', 'statuses': sorted(result['status'] for result in conflicting), 'counts': counts(conflicting_key)})
@@ -154,9 +186,9 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
             failed, recovered = first.result(timeout=25), second.result(timeout=25)
     assert failed['status'] == 500, failed
     assert recovered['status'] == 200, recovered
-    assert counts(rollback_key) == [1, 1, 1]
+    assert counts(rollback_key) == [1, 1, expected_answer_count]
     assert Result.objects.get(submission_id=rollback_key).pk == recovered['data']['id']
     observed.append({'case': 'concurrent_retry_after_winner_rolls_back', 'statuses': [500, 200], 'counts': counts(rollback_key)})
 
     connections.close_all()
-    print(json.dumps({'isolation': 'disposable PostgreSQL15 tmpfs, private internal network, no working DB', 'checks': observed}, ensure_ascii=False), flush=True)
+    print(json.dumps({'isolation': 'disposable PostgreSQL15 tmpfs, private internal network, no working DB', 'mode': 'kt_profile' if kt_profile_mode else 'training', 'checks': observed}, ensure_ascii=False), flush=True)
