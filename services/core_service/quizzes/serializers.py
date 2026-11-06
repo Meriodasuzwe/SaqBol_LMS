@@ -175,7 +175,7 @@ class QuizResultSerializer(serializers.ModelSerializer):
 # Сериализатор для отображения результатов тестов конкретного пользователя
 class MyResultSerializer(serializers.ModelSerializer):
     # Безопасное получение ID теста. Если тест удален, вернем null или заглушку.
-    quiz_id = serializers.IntegerField(source='quiz.id', read_only=True)
+    quiz_id = serializers.IntegerField(read_only=True, allow_null=True)
     #  MethodField позволяет нам создать кастомное поле для получения названия теста с проверкой на существование теста и его связей
     quiz_title = serializers.SerializerMethodField()
     lesson_title = serializers.SerializerMethodField()
@@ -188,7 +188,7 @@ class MyResultSerializer(serializers.ModelSerializer):
     # obj - это экземпляр модели Result, который мы сериализуем. Мы проверяем наличие связанного теста и возвращаем его название или заглушку, если тест удален.
     # self - это экземпляр сериализатора, который позволяет нам использовать методы и поля внутри класса сериализатора. В данном случае мы используем self для вызова метода get_quiz_title внутри сериализатора.
     def get_quiz_title(self, obj):
-        return obj.quiz.title if obj.quiz else "Тест удален"
+        return obj.recorded_quiz_title
     # Метод для получения названия урока с проверкой на существование теста и его связей. Если тест или урок удалены, возвращаем None.
     def get_lesson_title(self, obj):
         # Цепочка проверок: Result -> Quiz -> Lesson

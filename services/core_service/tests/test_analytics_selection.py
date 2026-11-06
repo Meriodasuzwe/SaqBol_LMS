@@ -282,8 +282,13 @@ def test_selection_migration_refuses_lossy_rollback(selection_graph):
     response = graph.client.post(ENDPOINT, payload(graph), format='json')
     assert response.status_code == 201
     before = record_state()
-    with pytest.raises(IrreversibleError):
-        executor.migrate([('analytics', '0001_initial')])
+    original_targets = executor.loader.graph.leaf_nodes()
+    try:
+        with pytest.raises(IrreversibleError):
+            executor.migrate([('analytics', '0001_initial')])
+    finally:
+        # A later reversible migration can be unapplied before 0002 rejects rollback.
+        MigrationExecutor(connection).migrate(original_targets)
     assert record_state() == before
     columns = connection.introspection.get_table_description(connection.cursor(), QuestionAnswer._meta.db_table)
     assert 'selected_choice_ids' in {column.name for column in columns}

@@ -433,11 +433,12 @@ def test_analytics_preserves_every_selected_choice(training):
     assert len(item.correct_ids) == 2
 
 
-def test_reproduces_quiz_edit_deleting_historical_answers_but_keeping_result(training):
+def test_quiz_edit_preserves_completed_answers_and_content(training):
     assert submit(training, fixture_answers(training)).status_code == 200
     result = Result.objects.get(student=training.student, quiz=training.quiz)
     attempt_id = QuizAttemptDetail.objects.get(result=result).pk
     assert QuestionAnswer.objects.filter(attempt_id=attempt_id).count() == 10
+    before = list(QuestionAnswer.objects.filter(attempt_id=attempt_id).order_by('pk').values())
     original_question_ids = set(training.quiz.questions.values_list('id', flat=True))
     edited = training.teacher_client.post('/quizzes/save-generated/', {
         'lesson_id': training.lesson.id, 'quiz_id': training.quiz.id,
@@ -447,10 +448,17 @@ def test_reproduces_quiz_edit_deleting_historical_answers_but_keeping_result(tra
     assert edited.data['quiz_id'] == training.quiz.id
     assert training.quiz.questions.count() == 10
     assert original_question_ids.isdisjoint(training.quiz.questions.values_list('id', flat=True))
-    assert not QuestionAnswer.objects.filter(attempt_id=attempt_id).exists()
+    after = list(QuestionAnswer.objects.filter(attempt_id=attempt_id).order_by('pk').values())
+    assert len(after) == 10, 'Replacing editable questions must keep all completed answers.'
+    assert all(row['question_id'] is None and row['selected_choice_id'] is None for row in after)
+    relation_fields = {'question_id', 'selected_choice_id'}
+    assert [{key: value for key, value in row.items() if key not in relation_fields} for row in after] == [
+        {key: value for key, value in row.items() if key not in relation_fields} for row in before
+    ]
+    assert all(row.get('question_snapshot') for row in after)
     assert QuizAttemptDetail.objects.filter(pk=attempt_id, result_id=result.id, score=100).exists()
     assert Result.objects.filter(pk=result.id, score=100).exists()
-    print('REPRODUCES editing attempted quiz: historical answers 10 -> 0; result and detailed attempt remain.')
+    print('Regression: real builder replacement preserves all 10 completed answer snapshots.')
 
 
 def test_control_backend_save_and_read_preserve_nonblank_explanations(training):

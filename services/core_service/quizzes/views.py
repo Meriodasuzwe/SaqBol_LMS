@@ -6,6 +6,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 # Стандартные импорты Django и DRF
 from django.db import transaction
+from django.db.models import Prefetch, Q
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -87,13 +88,21 @@ class QuizSubmitView(APIView):
         submission_id = serializer.validated_data.get('submission_id')
         fingerprint = self.submission_fingerprint(answers)
         if submission_id is not None:
+            # Detached attempts retain their original quiz ID in the server snapshot.
+            # Scope by owner AND original quiz; a UUID may be reused across quizzes.
             existing = Result.objects.filter(
-                student=request.user, quiz_id=quiz_id, submission_id=submission_id,
+                student=request.user, submission_id=submission_id,
+            ).filter(
+                Q(quiz_id=quiz_id)
+                | Q(quiz__isnull=True, detail__quiz_snapshot__id=quiz_id),
             ).first()
             if existing is not None:
                 return self.replay_submission(existing, answers, fingerprint)
 
-        questions = Question.objects.filter(quiz_id=quiz_id).prefetch_related('choices')
+        # Grade and snapshot the same materialized version of each question/choice.
+        questions = list(Question.objects.filter(quiz_id=quiz_id).select_related('quiz').order_by('id').prefetch_related(
+            Prefetch('choices', queryset=Choice.objects.order_by('id')),
+        ))
         question_choices = {
             question.id: {choice.id: choice.is_correct for choice in question.choices.all()}
             for question in questions
@@ -127,17 +136,27 @@ class QuizSubmitView(APIView):
             student=request.user,
             quiz_id=quiz_id,
             result=result,
+            quiz_snapshot={'id': quiz_id, 'title': questions[0].quiz.title},
             score=response_data['score'],
             total_questions=response_data['total_questions'],
             correct_answers=response_data['correct_count'],
             time_spent_seconds=serializer.validated_data['time_spent_seconds'],
         )
         answers_to_create = []
-        for question_id in question_choices:
+        for position, question in enumerate(questions):
+            question_id = question.pk
             selected = selected_by_question.get(question_id, [])
             answers_to_create.append(QuestionAnswer(
                 attempt=attempt,
                 question_id=question_id,
+                question_snapshot={
+                    'id': question_id,
+                    'position': position,
+                    'text': question.text,
+                    'explanation': question.explanation,
+                    'choices': [{'id': choice.pk, 'text': choice.text} for choice in question.choices.all()],
+                    'correct_choice_ids': response_data['correct_answers_ids'][question_id],
+                },
                 selected_choice_ids=selected,
                 selected_choice_id=selected[0] if selected else None,
                 is_correct=is_correct_by_question[question_id],
@@ -155,7 +174,7 @@ class MyQuizResultsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Result.objects.filter(student=self.request.user).order_by('-completed_at')
+        return Result.objects.filter(student=self.request.user).select_related('quiz__lesson__course', 'detail').order_by('-completed_at')
 
 # --- AI ФУНКЦИОНАЛ ---
 class GeneratePreviewView(APIView):

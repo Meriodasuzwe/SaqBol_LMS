@@ -56,8 +56,13 @@ def main():
             "tests/test_result_link.py",
             "tests/test_atomic_submission.py",
             "tests/test_submission_idempotency.py",
+            "tests/test_attempt_snapshots.py",
+            "tests/test_deleted_quiz_history.py",
+            "tests/test_deleted_quiz_migrations.py",
+            "tests/test_kt_scoring.py",
             "tests/test_sql_selection_fixture.py",
             "tests/fixtures/sql_selection_training.json",
+            "tests/fixtures/kt_scoring_cases.json",
         )
         packages = ("core", "users", "courses", "quizzes", "analytics", "notifications", "bug_reports")
         for package in packages:
@@ -105,6 +110,10 @@ def main():
             "tests/test_result_link.py",
             "tests/test_atomic_submission.py",
             "tests/test_submission_idempotency.py",
+            "tests/test_attempt_snapshots.py",
+            "tests/test_deleted_quiz_history.py",
+            "tests/test_deleted_quiz_migrations.py",
+            "tests/test_kt_scoring.py",
         ])
 
 
