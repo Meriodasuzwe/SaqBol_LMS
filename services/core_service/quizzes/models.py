@@ -38,8 +38,8 @@ class Choice(models.Model):
 class Result(models.Model):
     # Связь с пользователем через внешний ключ с каскадным удалением и related name для получения всех результатов студента verbose_name для админки
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    # Связь с тестом через внешний ключ с каскадным удалением и related name для получения всех результатов теста verbose_name для админки
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    # При удалении исходного теста сохраняем результат, обнуляя только связь.
+    quiz = models.ForeignKey(Quiz, on_delete=models.SET_NULL, null=True, blank=True)
     # Набранные баллы в процентах
     score = models.FloatField()
     # Дата и время завершения теста с автоматической установкой при создании записи verbose_name для админки
@@ -58,5 +58,12 @@ class Result(models.Model):
             ),
         ]
 
+    @property
+    def recorded_quiz_title(self):
+        detail = getattr(self, 'detail', None)
+        if detail is not None:
+            return detail.recorded_quiz_title
+        return self.quiz.title if self.quiz_id else 'Тест удалён'
+
     def __str__(self):
-        return f"{self.student.username} - {self.quiz.title}: {self.score}%"
+        return f"{self.student.username} - {self.recorded_quiz_title}: {self.score}%"

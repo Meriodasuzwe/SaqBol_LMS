@@ -45,7 +45,7 @@ def _get_weak_topics(queryset_filter: Q, limit: int = 5) -> list:
 
     stats = (
         QuestionAnswer.objects
-        .filter(queryset_filter)
+        .filter(queryset_filter, question__isnull=False)
         .values('question__id', 'question__text')
         .annotate(
             total=Count('id'),
@@ -355,7 +355,7 @@ class StudentDashboardView(APIView):
         quiz_history = [
             {
                 'attempt_id': a.id,
-                'quiz_title': a.quiz.title,
+                'quiz_title': a.recorded_quiz_title,
                 'score': a.score,
                 'correct_answers': a.correct_answers,
                 'total_questions': a.total_questions,

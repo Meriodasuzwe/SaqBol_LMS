@@ -22,5 +22,12 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
-    list_display = ('student', 'quiz', 'score', 'completed_at')
+    list_display = ('student', 'recorded_quiz_title', 'score', 'completed_at')
     readonly_fields = ('completed_at',)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('student', 'quiz', 'detail', 'detail__quiz')
+
+    @admin.display(description='Тест')
+    def recorded_quiz_title(self, obj):
+        return obj.recorded_quiz_title

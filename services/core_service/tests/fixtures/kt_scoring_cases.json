@@ -1,0 +1,112 @@
+{
+  "description": "Artificial scoring cases; not official exam questions or learning content.",
+  "source": {
+    "url": "https://old.adilet.zan.kz/rus/docs/V1900018657",
+    "paragraph": 42,
+    "revision": "2023-06-12",
+    "amending_order": "269"
+  },
+  "scoring_version": "kt_profile_2023_06_12_v1",
+  "matrix_axes": {
+    "rows": "selected correct answers, starting at zero",
+    "columns": "selected incorrect answers, starting at zero"
+  },
+  "multiple_choice_points": {
+    "1": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "2": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "3": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  }
+}

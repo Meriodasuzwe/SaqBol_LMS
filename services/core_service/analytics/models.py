@@ -33,7 +33,8 @@ class QuizAttemptDetail(models.Model):
     )
     quiz = models.ForeignKey(
         'quizzes.Quiz',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='attempt_details',
         verbose_name="Квиз"
     )
@@ -45,6 +46,9 @@ class QuizAttemptDetail(models.Model):
         related_name='detail',
         verbose_name="Результат (legacy)"
     )
+
+    # Captured only at submission; NULL means historical content is unavailable.
+    quiz_snapshot = models.JSONField(null=True, blank=True, editable=False)
 
     score = models.FloatField(verbose_name="Итоговый балл (%)")
     total_questions = models.PositiveIntegerField(verbose_name="Всего вопросов")
@@ -61,8 +65,14 @@ class QuizAttemptDetail(models.Model):
         verbose_name_plural = "Детальные попытки квизов"
         ordering = ['-completed_at']
 
+    @property
+    def recorded_quiz_title(self):
+        if isinstance(self.quiz_snapshot, dict) and isinstance(self.quiz_snapshot.get('title'), str):
+            return self.quiz_snapshot['title']
+        return self.quiz.title if self.quiz_id else 'Тест удалён'
+
     def __str__(self):
-        return f"{self.student.username} — {self.quiz.title} ({self.score:.0f}%)"
+        return f"{self.student.username} — {self.recorded_quiz_title} ({self.score:.0f}%)"
 
 
 class QuestionAnswer(models.Model):
@@ -78,10 +88,13 @@ class QuestionAnswer(models.Model):
     )
     question = models.ForeignKey(
         'quizzes.Question',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='student_answers',
         verbose_name="Вопрос"
     )
+    # Independent of live content so replacing questions cannot rewrite old answers.
+    question_snapshot = models.JSONField(null=True, blank=True, editable=False)
     # Full selection is canonical; the legacy FK keeps the first choice for old consumers.
     selected_choice_ids = models.JSONField(default=list, blank=True, verbose_name="Выбранные варианты")
     selected_choice = models.ForeignKey(
@@ -99,9 +112,15 @@ class QuestionAnswer(models.Model):
         # Один ответ на вопрос в рамках попытки
         unique_together = ('attempt', 'question')
 
+    @property
+    def recorded_question_text(self):
+        if isinstance(self.question_snapshot, dict) and isinstance(self.question_snapshot.get('text'), str):
+            return self.question_snapshot['text']
+        return self.question.text if self.question_id else 'Вопрос удалён; исторический текст недоступен'
+
     def __str__(self):
         status = "✅" if self.is_correct else "❌"
-        return f"{status} {self.attempt.student.username} — {self.question.text[:50]}"
+        return f"{status} {self.attempt.student.username} — {self.recorded_question_text[:50]}"
 
 
 # ---------------------------------------------------------------------------
