@@ -1,5 +1,7 @@
 # Этот импорт нужен для работы с AI-сервисом
 import requests
+import hashlib
+import json
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 # Стандартные импорты Django и DRF
@@ -13,6 +15,7 @@ from drf_spectacular.utils import extend_schema
 
 from .models import Quiz, Question, Choice, Result
 from .grading import calculate_submission_score
+from analytics.models import QuizAttemptDetail, QuestionAnswer
 # Импорт модели Lesson для получения контента урока при генерации тестов через AI
 from courses.models import Lesson, LessonStep
 from courses.serializers import LessonStepSerializer
@@ -52,9 +55,44 @@ class QuizDetailView(generics.RetrieveAPIView):
 # 4. Сдача теста
 class QuizSubmitView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def submission_fingerprint(answers):
+        # Question/choice order and explicit empty selections do not change a submission.
+        canonical = sorted(
+            (answer['question_id'], sorted(answer['choice_ids']))
+            for answer in answers if answer['choice_ids']
+        )
+        return hashlib.sha256(json.dumps(canonical, separators=(',', ':')).encode()).hexdigest()
+
+    @staticmethod
+    def replay_submission(result, answers, fingerprint):
+        response_data = result.submission_response or {}
+        original_questions = {int(key) for key in response_data.get('correct_answers_ids', {})}
+        if any(answer['question_id'] not in original_questions for answer in answers):
+            return Response({'answers': ['Вопрос не принадлежит сохранённой сдаче.']}, status=400)
+        if result.submission_fingerprint != fingerprint:
+            return Response(
+                {'submission_id': ['Эта сдача уже сохранена с другими ответами.']},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(response_data, status=status.HTTP_200_OK)
     
     @extend_schema(request=QuizSubmissionSerializer, responses={200: QuizResultSerializer})
+    @transaction.atomic
     def post(self, request, quiz_id):
+        serializer = QuizSubmissionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        answers = serializer.validated_data['answers']
+        submission_id = serializer.validated_data.get('submission_id')
+        fingerprint = self.submission_fingerprint(answers)
+        if submission_id is not None:
+            existing = Result.objects.filter(
+                student=request.user, quiz_id=quiz_id, submission_id=submission_id,
+            ).first()
+            if existing is not None:
+                return self.replay_submission(existing, answers, fingerprint)
+
         questions = Question.objects.filter(quiz_id=quiz_id).prefetch_related('choices')
         question_choices = {
             question.id: {choice.id: choice.is_correct for choice in question.choices.all()}
@@ -67,11 +105,48 @@ class QuizSubmitView(APIView):
             data=request.data, context={'question_choices': question_choices},
         )
         serializer.is_valid(raise_exception=True)
-        response_data = calculate_submission_score(question_choices, serializer.validated_data['answers'])
+        answers = serializer.validated_data['answers']
+        response_data = calculate_submission_score(question_choices, answers)
+        is_correct_by_question = response_data.pop('is_correct_by_question')
+        selected_by_question = {answer['question_id']: answer['choice_ids'] for answer in answers}
 
-        # No result records are written until the entire submission is validated.
-        result = Result.objects.create(student=request.user, quiz_id=quiz_id, score=response_data['score'])
+        # Validate and grade before writing; all three tables commit together.
+        if submission_id is None:
+            # Older clients remain compatible, but cannot deduplicate without an ID.
+            result = Result.objects.create(student=request.user, quiz_id=quiz_id, score=response_data['score'])
+        else:
+            # The unique DB constraint arbitrates simultaneous requests. get_or_create
+            # uses an inner savepoint, then reads the winner after its transaction commits.
+            result, created = Result.objects.get_or_create(
+                student=request.user, quiz_id=quiz_id, submission_id=submission_id,
+                defaults={'score': response_data['score'], 'submission_fingerprint': fingerprint},
+            )
+            if not created:
+                return self.replay_submission(result, answers, fingerprint)
+        attempt = QuizAttemptDetail.objects.create(
+            student=request.user,
+            quiz_id=quiz_id,
+            result=result,
+            score=response_data['score'],
+            total_questions=response_data['total_questions'],
+            correct_answers=response_data['correct_count'],
+            time_spent_seconds=serializer.validated_data['time_spent_seconds'],
+        )
+        answers_to_create = []
+        for question_id in question_choices:
+            selected = selected_by_question.get(question_id, [])
+            answers_to_create.append(QuestionAnswer(
+                attempt=attempt,
+                question_id=question_id,
+                selected_choice_ids=selected,
+                selected_choice_id=selected[0] if selected else None,
+                is_correct=is_correct_by_question[question_id],
+            ))
+        QuestionAnswer.objects.bulk_create(answers_to_create)
         response_data['id'] = result.pk
+        if submission_id is not None:
+            result.submission_response = response_data
+            result.save(update_fields=['submission_response'])
         return Response(response_data, status=status.HTTP_200_OK)
 
 # 5. Результаты пользователя

@@ -20,11 +20,14 @@ def calculate_submission_score(question_choices, answers):
         for question_id, choices in question_choices.items()
     }
     correct_count = 0
+    is_correct_by_question = {}
     for question_id, correct_ids in correct_answers_ids.items():
         selected = selected_by_question.get(question_id, set())
         # Both an omitted question and an explicit empty selection earn zero,
         # including when content has no correct option configured.
-        if selected and selected == set(correct_ids):
+        is_correct = bool(selected) and selected == set(correct_ids)
+        is_correct_by_question[question_id] = is_correct
+        if is_correct:
             correct_count += 1
 
     return {
@@ -32,4 +35,5 @@ def calculate_submission_score(question_choices, answers):
         'correct_count': correct_count,
         'total_questions': total_questions,
         'correct_answers_ids': correct_answers_ids,
+        'is_correct_by_question': is_correct_by_question,
     }

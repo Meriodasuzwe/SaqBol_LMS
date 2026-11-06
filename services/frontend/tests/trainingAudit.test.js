@@ -318,48 +318,244 @@ test('builder regression: removing an earlier option keeps a multiple key attach
     assert.equal(edited[0].correct_answer, 'Bravo | Charlie');
 });
 
-for (const selection of [
-    { name: 'one option', selected: [820], correct: [820] },
-    { name: 'two options', selected: [820, 821], correct: [820, 821] },
-    { name: 'three options', selected: [820, 821, 822], correct: [820, 821, 822] },
-    { name: 'reversed options', selected: [821, 820], correct: [820, 821] },
-    { name: 'explicit skip', selected: [], correct: [820, 821] },
-    { name: 'omitted answer', selected: undefined, correct: [820, 821] },
-]) {
-test(`analytics selection: actual submitAnalytics preserves ${selection.name}`, async () => {
-    const quizPage = readSource('QuizPage.jsx');
-    const captured = [];
-    const warnings = [];
-    const submitAnalytics = evaluateNode(quizPage, initializer(quizPage, quizPage.ast, 'submitAnalytics'), {
-        startTimeRef: { current: 1000 },
-        Date: { now: () => 11000 },
-        api: { post: async (url, payload) => { captured.push({ url, payload: JSON.parse(JSON.stringify(payload)) }); } },
-        console: { warn: (...args) => warnings.push(args) },
-    });
-    const answers = Object.freeze({
-        ...(selection.selected === undefined ? {} : { 811: Object.freeze([...selection.selected]) }),
-        812: Object.freeze([830]),
-    });
-    const inputBefore = JSON.parse(JSON.stringify(answers));
-    const answered = Boolean(selection.selected?.length);
-    await submitAnalytics(
-        { id: 801, questions: [{ id: 811 }, { id: 812 }] },
-        { id: 901, score: answered ? 100 : 50, correct_answers_ids: { 811: selection.correct, 812: [830] } },
-        answers,
-    );
-    assert.deepEqual(warnings, [], 'The actual callback completed without swallowing an error');
-    assert.equal(captured.length, 1);
-    assert.equal(captured[0].url, 'analytics/quiz-attempt/');
-    assert.deepEqual(captured[0].payload.answers, [
-        { question_id: 811, selected_choice_ids: selection.selected ?? [], is_correct: answered },
-        { question_id: 812, selected_choice_ids: [830], is_correct: true },
-    ]);
-    assert.equal(captured[0].payload.correct_answers, answered ? 2 : 1);
-    assert.equal(captured[0].payload.time_spent_seconds, 10);
-    assert.equal(captured[0].payload.result_id, 901);
-    assert.deepEqual(answers, inputBefore, 'Sending analytics must not modify the selected answers');
-});
+const quizPage = readSource('QuizPage.jsx');
+const actualSubmitQuiz = initializer(quizPage, quizPage.ast, 'submitQuiz');
+
+function prepareQuizSubmission(answers, { forcedAnswers = answers, request, now = 11000 } = {}) {
+    const captured = [], results = [], errors = [], successes = [], warnings = [], attempts = [], storage = [], statuses = [];
+    let uuidSequence = 0;
+    let currentTime = now;
+    const quiz = { id: 801, questions: [{ id: 811 }, { id: 812 }] };
+    const response = { id: 901, score: 100, correct_count: 2, total_questions: 2, correct_answers_ids: { 811: [820, 821], 812: [830] } };
+    const bindings = {
+        quiz, selectedAnswers: answers, selectedAnswersRef: { current: forcedAnswers },
+        startTimeRef: { current: 1000 }, Date: { now: () => currentTime }, attempts: 0,
+        currentResult: null, submissionRef: { current: null }, submissionStatus: 'idle',
+        crypto: { randomUUID: () => `00000000-0000-4000-8000-${String(++uuidSequence).padStart(12, '0')}` },
+        setSubmissionStatus: value => { bindings.submissionStatus = value; statuses.push(value); },
+        setCurrentResult: value => { bindings.currentResult = value; results.push(JSON.parse(JSON.stringify(value))); },
+        setSelectedAnswers: update => {
+            bindings.selectedAnswers = typeof update === 'function' ? update(bindings.selectedAnswers) : update;
+            bindings.selectedAnswersRef.current = bindings.selectedAnswers;
+        },
+        setCurrentIndex() {}, setCheatWarnings() {},
+        setAttempts: value => attempts.push(value), confetti() {},
+        toast: { error: message => errors.push(message), success: message => successes.push(message) },
+        localStorage: { removeItem: key => storage.push(['remove', key]), setItem: (key, value) => storage.push(['set', key, value]) },
+        api: { post: async (url, payload) => {
+            captured.push({ url, payload: JSON.parse(JSON.stringify(payload)) });
+            return request ? request(url, payload) : { data: response };
+        } },
+        console: { error() {}, warn: (...args) => warnings.push(args) },
+    };
+    // During RED, execute the old secondary callback too, so a second HTTP call
+    // cannot be hidden by replacing submitAnalytics with a no-op mock.
+    if (quizPage.source.includes('const submitAnalytics =')) {
+        bindings.submitAnalytics = evaluateNode(quizPage, initializer(quizPage, quizPage.ast, 'submitAnalytics'), bindings);
+    }
+    const submit = evaluateNode(quizPage, actualSubmitQuiz, bindings);
+    const restart = evaluateNode(quizPage, initializer(quizPage, quizPage.ast, 'restartQuiz'), bindings);
+    const answer = evaluateNode(quizPage, initializer(quizPage, quizPage.ast, 'handleAnswer'), bindings);
+    return { submit, restart, answer, captured, results, errors, successes, warnings, attempts, storage, response, statuses, bindings,
+        setTime: value => { currentTime = value; },
+    };
 }
+
+const settleSubmission = () => new Promise(resolve => setImmediate(resolve));
+
+for (const selection of [
+    { name: 'one option', selected: [820] },
+    { name: 'two options', selected: [820, 821] },
+    { name: 'three options', selected: [820, 821, 822] },
+    { name: 'reversed options', selected: [821, 820] },
+    { name: 'explicit skip', selected: [] },
+    { name: 'omitted answer', selected: undefined },
+]) {
+    test(`atomic quiz submit: actual handler preserves ${selection.name} in one request`, async () => {
+        const answers = Object.freeze({
+            ...(selection.selected === undefined ? {} : { 811: Object.freeze([...selection.selected]) }),
+            812: Object.freeze([830]),
+        });
+        const before = JSON.parse(JSON.stringify(answers));
+        const run = prepareQuizSubmission(answers);
+        run.submit(false);
+        await settleSubmission();
+        assert.deepEqual(run.warnings, []);
+        assert.deepEqual(run.errors, []);
+        assert.equal(run.captured.length, 1, 'Completion must not rely on a separate analytics request');
+        assert.equal(run.captured[0].url, 'quizzes/801/submit/');
+        assert.deepEqual(run.captured[0].payload, {
+            answers: [
+                ...(selection.selected === undefined ? [] : [{ question_id: 811, choice_ids: selection.selected }]),
+                { question_id: 812, choice_ids: [830] },
+            ],
+            time_spent_seconds: 10,
+            submission_id: '00000000-0000-4000-8000-000000000001',
+        }, 'The client sends selections and elapsed time, not scores or correctness flags');
+        assert.deepEqual(run.results, [run.response]);
+        assert.equal(run.successes.length, 1);
+        assert.deepEqual(answers, before, 'Submitting must not modify selected answers');
+    });
+}
+
+test('atomic quiz submit: forced completion uses the current ref selection in the same single request', async () => {
+    const run = prepareQuizSubmission({ 811: [820] }, { forcedAnswers: { 811: [821, 820], 812: [] } });
+    run.submit(true);
+    await settleSubmission();
+    assert.equal(run.captured.length, 1);
+    assert.deepEqual(run.captured[0].payload.answers, [
+        { question_id: 811, choice_ids: [821, 820] }, { question_id: 812, choice_ids: [] },
+    ]);
+    assert.deepEqual(run.errors, []);
+});
+
+test('atomic quiz submit: waits for the save and does not display a result on request failure', async () => {
+    let rejectSave;
+    const pending = new Promise((_, reject) => { rejectSave = reject; });
+    const run = prepareQuizSubmission({ 811: [820, 821], 812: [830] }, { request: () => pending });
+    run.submit(false);
+    await settleSubmission();
+    assert.equal(run.captured.length, 1);
+    assert.deepEqual(run.results, [], 'No result is shown before the server confirms the complete save');
+    assert.deepEqual(run.successes, []);
+    rejectSave(new Error('Synthetic atomic save failure'));
+    await settleSubmission();
+    assert.equal(run.captured.length, 1);
+    assert.deepEqual(run.results, []);
+    assert.deepEqual(run.successes, []);
+    assert.deepEqual(run.attempts, []);
+    assert.deepEqual(run.storage, []);
+    assert.deepEqual(run.errors, ['Не удалось получить результат. Повторите отправку: выбранные ответы сохранены для повтора.']);
+});
+
+test('atomic quiz submit: a clock adjustment cannot send negative elapsed seconds', async () => {
+    const run = prepareQuizSubmission({ 811: [820], 812: [830] }, { now: 0 });
+    run.submit(false);
+    await settleSubmission();
+    assert.equal(run.captured.length, 1);
+    assert.equal(run.captured[0].payload.time_spent_seconds, 0);
+});
+
+test('idempotent quiz submit: concurrent manual and forced clicks send one UUID and show one result', async () => {
+    let resolveSave;
+    const pending = new Promise(resolve => { resolveSave = resolve; });
+    const run = prepareQuizSubmission({ 811: [820, 821], 812: [830] }, { request: () => pending });
+    run.submit(false);
+    run.submit(true);
+    assert.equal(run.captured.length, 1);
+    assert.match(run.captured[0].payload.submission_id, /^[0-9a-f-]{36}$/);
+    assert.equal(run.statuses.at(-1), 'sending');
+    resolveSave({ data: run.response });
+    await settleSubmission();
+    run.submit(false);
+    assert.equal(run.captured.length, 1, 'A completed submission must not send again from a stale callback');
+    assert.deepEqual(run.results, [run.response]);
+    assert.equal(run.successes.length, 1);
+});
+
+for (const status of [undefined, 500]) {
+    test(`idempotent quiz submit: ambiguous ${status || 'network'} failure retries the same frozen payload`, async () => {
+        let calls = 0;
+        const original = { 811: [820, 821], 812: [830] };
+        const run = prepareQuizSubmission(original, { request: async () => {
+            if (++calls === 1) throw Object.assign(new Error('Synthetic lost response'), status ? { response: { status } } : {});
+            return { data: run.response };
+        } });
+        run.submit(false);
+        await settleSubmission();
+        assert.equal(run.statuses.at(-1), 'retry');
+        assert.equal(run.successes.length, 0);
+        const before = JSON.parse(JSON.stringify(run.bindings.selectedAnswers));
+        run.answer(811, 822);
+        assert.deepEqual(run.bindings.selectedAnswers, before, 'Choices remain frozen while acknowledgement is unknown');
+        original[811].push(822);
+        run.setTime(90000);
+        run.submit(false);
+        await settleSubmission();
+        assert.equal(run.captured.length, 2);
+        assert.deepEqual(run.captured[1], run.captured[0]);
+        assert.match(run.captured[0].payload.submission_id, /^[0-9a-f-]{36}$/);
+        assert.deepEqual(run.results, [run.response]);
+        assert.equal(run.successes.length, 1);
+    });
+}
+
+test('idempotent quiz submit: validation rejection unlocks choices and allows a fresh corrected request', async () => {
+    let calls = 0;
+    const run = prepareQuizSubmission({ 811: [820], 812: [830] }, { request: async () => {
+        if (++calls === 1) throw { response: { status: 400 } };
+        return { data: run.response };
+    } });
+    run.submit(false);
+    await settleSubmission();
+    assert.equal(run.statuses.at(-1), 'idle');
+    run.answer(811, 821);
+    assert.deepEqual(JSON.parse(JSON.stringify(run.bindings.selectedAnswers[811])), [820, 821]);
+    run.submit(false);
+    await settleSubmission();
+    assert.equal(run.captured.length, 2);
+    assert.notEqual(run.captured[1].payload.submission_id, run.captured[0].payload.submission_id);
+    assert.deepEqual(run.captured[1].payload.answers[0].choice_ids, [820, 821]);
+    assert.equal(run.successes.length, 1);
+});
+
+test('idempotent quiz submit: explicit restart creates a new UUID even for the same selections', async () => {
+    const run = prepareQuizSubmission({ 811: [820], 812: [830] });
+    run.submit(false);
+    await settleSubmission();
+    run.restart();
+    run.answer(811, 820);
+    run.answer(812, 830);
+    run.submit(false);
+    await settleSubmission();
+    assert.equal(run.captured.length, 2);
+    assert.notEqual(run.captured[1].payload.submission_id, run.captured[0].payload.submission_id);
+    assert.deepEqual(run.captured[1].payload.answers, run.captured[0].payload.answers);
+    assert.equal(run.successes.length, 2);
+});
+
+test('idempotent quiz submit: a different quiz never reuses the previous submission payload', async () => {
+    const run = prepareQuizSubmission({ 811: [820], 812: [830] });
+    run.submit(false);
+    await settleSubmission();
+    run.bindings.quiz = { id: 802, questions: [{ id: 815 }] };
+    run.bindings.currentResult = null;
+    run.bindings.selectedAnswers = { 815: [840] };
+    run.submit(false);
+    await settleSubmission();
+    assert.equal(run.captured[1].url, 'quizzes/802/submit/');
+    assert.deepEqual(run.captured[1].payload.answers, [{ question_id: 815, choice_ids: [840] }]);
+    assert.notEqual(run.captured[1].payload.submission_id, run.captured[0].payload.submission_id);
+});
+
+test('idempotent quiz submit: a response for a reset attempt cannot overwrite the current screen', async () => {
+    let resolveSave;
+    const pending = new Promise(resolve => { resolveSave = resolve; });
+    const run = prepareQuizSubmission({ 811: [820], 812: [830] }, { request: () => pending });
+    run.submit(false);
+    run.restart();
+    resolveSave({ data: run.response });
+    await settleSubmission();
+    assert.deepEqual(run.results, [null]);
+    assert.equal(run.successes.length, 0);
+    assert.equal(run.statuses.at(-1), 'idle');
+});
+
+test('idempotent quiz submit: real controls freeze choices but allow retry of a forced incomplete submission', () => {
+    const checkbox = findOne(quizPage.ast, node => node.type === 'JSXOpeningElement' && node.name.name === 'input'
+        && node.attributes.some(attr => attr.name?.name === 'type' && attr.value?.value === 'checkbox'), 'answer checkbox');
+    const disabledChoices = checkbox.attributes.find(attr => attr.name?.name === 'disabled').value.expression;
+    const submitButton = findOne(quizPage.ast, node => node.type === 'JSXOpeningElement' && node.name.name === 'button'
+        && node.attributes.some(attr => attr.name?.name === 'onClick' && quizPage.source.slice(attr.start, attr.end).includes('submitQuiz(false)')), 'submit button');
+    const disabledSubmit = submitButton.attributes.find(attr => attr.name?.name === 'disabled').value.expression;
+    for (const submissionStatus of ['sending', 'retry']) {
+        assert.equal(evaluateNode(quizPage, disabledChoices, { currentResult: null, submissionStatus }), true);
+    }
+    assert.equal(evaluateNode(quizPage, disabledChoices, { currentResult: null, submissionStatus: 'idle' }), false);
+    assert.equal(evaluateNode(quizPage, disabledSubmit, { isAllAnswered: true, submissionStatus: 'sending' }), true);
+    assert.equal(evaluateNode(quizPage, disabledSubmit, { isAllAnswered: false, submissionStatus: 'retry' }), false);
+    assert.equal(evaluateNode(quizPage, disabledSubmit, { isAllAnswered: false, submissionStatus: 'idle' }), true);
+});
 
 const lesson = readSource('LessonPage.jsx');
 const actualRenderMath = evaluateNode(lesson, initializer(lesson, lesson.ast, 'renderMath'), { katex });

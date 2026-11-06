@@ -44,6 +44,19 @@ class Result(models.Model):
     score = models.FloatField()
     # Дата и время завершения теста с автоматической установкой при создании записи verbose_name для админки
     completed_at = models.DateTimeField(auto_now_add=True)
+    # NULL keeps legacy results valid; new clients identify one submission by UUID.
+    submission_id = models.UUIDField(null=True, blank=True, editable=False)
+    submission_fingerprint = models.CharField(max_length=64, null=True, blank=True, editable=False)
+    # Original API response for retries, not a full historical content snapshot.
+    submission_response = models.JSONField(null=True, blank=True, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'quiz', 'submission_id'],
+                name='unique_student_quiz_submission',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.student.username} - {self.quiz.title}: {self.score}%"

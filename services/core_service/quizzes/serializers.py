@@ -66,7 +66,16 @@ class AnswerItemSerializer(serializers.Serializer):
         return choice_ids
 
 
+class SubmissionUUIDField(serializers.UUIDField):
+    def to_internal_value(self, data):
+        if not isinstance(data, str):
+            self.fail('invalid', value=data)
+        return super().to_internal_value(data)
+
+
 class QuizSubmissionSerializer(serializers.Serializer):
+    submission_id = SubmissionUUIDField(required=False)
+    time_spent_seconds = SubmissionIdField(min_value=0, max_value=2147483647, required=False, default=0)
     answers = serializers.ListField(
         child=AnswerItemSerializer(),
         allow_empty=True,
@@ -75,7 +84,8 @@ class QuizSubmissionSerializer(serializers.Serializer):
 
     def validate_answers(self, answers):
         # Built once from this quiz's prefetched questions and choices by submit.
-        question_choices = self.context['question_choices']
+        # Replay checks structure first; new submissions also validate live membership.
+        question_choices = self.context.get('question_choices')
         seen_questions = set()
         for index, answer in enumerate(answers):
             question_id = answer['question_id']
@@ -84,6 +94,8 @@ class QuizSubmissionSerializer(serializers.Serializer):
                     index: {'question_id': 'Вопрос не должен повторяться.'},
                 })
             seen_questions.add(question_id)
+            if question_choices is None:
+                continue
             if question_id not in question_choices:
                 raise serializers.ValidationError({
                     index: {'question_id': 'Вопрос не принадлежит сдаваемому тесту.'},

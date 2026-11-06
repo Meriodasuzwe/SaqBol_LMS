@@ -37,7 +37,9 @@ function QuizPage() {
     const [currentIndex, setCurrentIndex] = useState(0); 
     // selectedAnswers теперь хранит массивы ID: { [questionId]: [choiceId1, choiceId2, ...] }
     const [selectedAnswers, setSelectedAnswers] = useState({});
-    const [currentResult, setCurrentResult] = useState(null); 
+    const [currentResult, setCurrentResult] = useState(null);
+    const [submissionStatus, setSubmissionStatus] = useState('idle');
+    const submissionRef = useRef(null);
     
     // Счетчик попыток
     const [attempts, setAttempts] = useState(0);
@@ -53,6 +55,11 @@ function QuizPage() {
 
     // Загрузка данных и попыток
     useEffect(() => {
+        submissionRef.current = null;
+        setSubmissionStatus('idle');
+        setCurrentResult(null);
+        setSelectedAnswers({});
+        setCurrentIndex(0);
         const fetchData = async () => {
             setLoading(true);
             try {
@@ -78,6 +85,7 @@ function QuizPage() {
         };
         fetchData();
         startTimeRef.current = Date.now();
+        return () => { submissionRef.current = null; };
     }, [lessonId, targetQuizId]);
 
     useEffect(() => {
@@ -105,6 +113,7 @@ function QuizPage() {
 
     // Обновлённый handleAnswer: переключает выбор в массиве для конкретного вопроса
     const handleAnswer = (questionId, optionId) => {
+        if (submissionRef.current?.quizId === quiz?.id) return;
         setSelectedAnswers(prev => {
             const currentChoices = prev[questionId] || [];
             if (currentChoices.includes(optionId)) {
@@ -117,59 +126,37 @@ function QuizPage() {
         });
     };
 
-    const submitAnalytics = async (quizData, resultData, answersMap) => {
-    try {
-        const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
-        const questions = quizData.questions || [];
-        let correctCount = 0;
-
-        const answersPayload = questions.map(q => {
-            const choiceIds = answersMap[q.id] || [];
-            // Для is_correct проверяем через correct_answers_ids из результата
-            const correctIds = resultData.correct_answers_ids?.[q.id] || [];
-            const isCorrect = correctIds.length > 0 &&
-                choiceIds.length > 0 &&
-                choiceIds.every(id => correctIds.includes(id)) &&
-                correctIds.every(id => choiceIds.includes(id));
-
-            if (isCorrect) correctCount++;
-
-            return {
-                question_id: q.id,
-                selected_choice_ids: [...choiceIds],
-                is_correct: isCorrect,
-            };
-        });
-
-        await api.post('analytics/quiz-attempt/', {
-            quiz_id: quizData.id,
-            result_id: resultData?.id || null,
-            score: resultData.score,
-            total_questions: questions.length,
-            correct_answers: correctCount,
-            time_spent_seconds: timeSpent,
-            answers: answersPayload,
-        });
-    } catch (err) {
-        console.warn('Analytics submit failed:', err);
-    }
-};
-
     const submitQuiz = (isForced = false) => {
         if (!quiz) return;
-        
-        const answersToSubmit = isForced ? selectedAnswersRef.current : selectedAnswers;
+        let submission = submissionRef.current;
+        if (submission?.quizId === quiz.id && (submission.inFlight || submission.completed)) return;
 
-        // Отправляем массив choice_ids для каждого вопроса
-        const answers = Object.entries(answersToSubmit).map(([qId, oIds]) => ({
-            question_id: parseInt(qId),
-            choice_ids: Array.isArray(oIds) ? oIds : [oIds] // на случай старых данных
-        }));
-        
-        api.post(`quizzes/${quiz.id}/submit/`, { answers })
+        if (submission?.quizId !== quiz.id) {
+            const answersToSubmit = isForced ? selectedAnswersRef.current : selectedAnswers;
+            // Keep the exact request for a retry if the server response is lost.
+            submission = {
+                quizId: quiz.id,
+                payload: {
+                    submission_id: crypto.randomUUID(),
+                    answers: Object.entries(answersToSubmit).map(([qId, oIds]) => ({
+                        question_id: parseInt(qId),
+                        choice_ids: Array.isArray(oIds) ? [...oIds] : [oIds],
+                    })),
+                    time_spent_seconds: Math.max(0, Math.round((Date.now() - startTimeRef.current) / 1000)),
+                },
+                inFlight: false,
+                completed: false,
+            };
+            submissionRef.current = submission;
+        }
+        submission.inFlight = true;
+        setSubmissionStatus('sending');
+        api.post(`quizzes/${submission.quizId}/submit/`, submission.payload)
             .then(res => {
+                if (submissionRef.current !== submission) return;
+                submission.completed = true;
+                setSubmissionStatus('idle');
                 setCurrentResult(res.data);
-                submitAnalytics(quiz, res.data, answersToSubmit);
 
                 const isPassed = res.data.score >= 70;
 
@@ -188,12 +175,24 @@ function QuizPage() {
                 }
             })
             .catch(err => {
-                toast.error("Произошла ошибка при отправке ответов.");
+                if (submissionRef.current !== submission) return;
+                if (err.response?.status === 400) {
+                    // Validation rejected the entire request before any result was saved.
+                    submissionRef.current = null;
+                    setSubmissionStatus('idle');
+                    toast.error('Ответы не приняты. Проверьте выбранные варианты и отправьте снова.');
+                } else {
+                    setSubmissionStatus('retry');
+                    toast.error('Не удалось получить результат. Повторите отправку: выбранные ответы сохранены для повтора.');
+                }
                 console.error(err);
-            });
+            })
+            .finally(() => { submission.inFlight = false; });
     };
 
     const restartQuiz = () => {
+        submissionRef.current = null;
+        setSubmissionStatus('idle');
         setCurrentResult(null);
         setSelectedAnswers({});
         setCurrentIndex(0);
@@ -384,14 +383,14 @@ function QuizPage() {
                                 return (
                                     <label
                                         key={choice.id}
-                                        className={`flex min-h-16 items-start gap-3 rounded-xl border p-4 motion-safe:transition-colors motion-safe:duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-blue-700 sm:gap-4 sm:px-5 ${currentResult ? 'cursor-not-allowed' : 'cursor-pointer'} ${labelClass}`}
+                                        className={`flex min-h-16 items-start gap-3 rounded-xl border p-4 motion-safe:transition-colors motion-safe:duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-blue-700 sm:gap-4 sm:px-5 ${currentResult || submissionStatus !== 'idle' ? 'cursor-not-allowed' : 'cursor-pointer'} ${labelClass}`}
                                     >
                                         <span className="relative mt-0.5 flex shrink-0 items-center justify-center">
                                             <input 
                                                 type="checkbox"
                                                 className="h-5 w-5 appearance-none rounded border-2 border-base-content/50 checked:border-blue-600 checked:bg-blue-600 focus-visible:outline-none disabled:cursor-not-allowed"
                                                 checked={isSelected}
-                                                disabled={!!currentResult}
+                                                disabled={!!currentResult || submissionStatus !== 'idle'}
                                                 onChange={() => handleAnswer(currentQuestion.id, choice.id)}
                                             />
                                             {isSelected && (
@@ -412,6 +411,11 @@ function QuizPage() {
                             </div>
                         )}
 
+                        {submissionStatus === 'retry' && (
+                            <p id="quiz-retry-hint" className="mt-5 text-sm leading-relaxed text-base-content/75" role="status">
+                                Результат пока не получен. Выбранные ответы зафиксированы; повторная отправка не создаст вторую попытку.
+                            </p>
+                        )}
                         {/* КНОПКИ УПРАВЛЕНИЯ */}
                         {!currentResult ? (
                             <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-5 sm:mt-8">
@@ -431,14 +435,14 @@ function QuizPage() {
                                 ) : (
                                     <button 
                                         className={primaryButtonClass}
-                                        disabled={!isAllAnswered}
-                                        aria-describedby={!isAllAnswered ? 'quiz-submit-hint' : undefined}
+                                        disabled={submissionStatus === 'sending' || (!isAllAnswered && submissionStatus !== 'retry')}
+                                        aria-describedby={submissionStatus === 'retry' ? 'quiz-retry-hint' : !isAllAnswered ? 'quiz-submit-hint' : undefined}
                                         onClick={() => submitQuiz(false)}
                                     >
-                                        Завершить тест
+                                        {submissionStatus === 'sending' ? 'Сохранение…' : submissionStatus === 'retry' ? 'Повторить отправку' : 'Завершить тест'}
                                     </button>
                                 )}
-                                {currentIndex === questions.length - 1 && !isAllAnswered && (
+                                {currentIndex === questions.length - 1 && !isAllAnswered && submissionStatus === 'idle' && (
                                     <p id="quiz-submit-hint" className="mt-2 basis-full text-sm leading-relaxed text-base-content/65">
                                         Для завершения выберите ответы во всех вопросах.
                                     </p>
