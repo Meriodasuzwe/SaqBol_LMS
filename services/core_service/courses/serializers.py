@@ -30,7 +30,7 @@ class LessonStepSerializer(serializers.ModelSerializer):
             # Ищем конкретный ID теста, привязанный к этому квадратику
             quiz_id = obj.scenario_data.get('quiz_id') if obj.scenario_data else None
             if quiz_id:
-                return Result.objects.filter(student=request.user, quiz_id=quiz_id, score__gte=70).exists()
+                return Result.objects.filter(student=request.user, quiz_id=quiz_id, quiz__mode='training', scoring_mode='training', score__gte=70).exists()
             return False
 
         return StepProgress.objects.filter(
@@ -121,7 +121,7 @@ class CourseSerializer(serializers.ModelSerializer):
         for step in steps:
             if step.step_type == 'quiz':
                 quiz_id = step.scenario_data.get('quiz_id') if step.scenario_data else None
-                if quiz_id and Result.objects.filter(student=request.user, quiz_id=quiz_id, score__gte=70).exists():
+                if quiz_id and Result.objects.filter(student=request.user, quiz_id=quiz_id, quiz__mode='training', scoring_mode='training', score__gte=70).exists():
                     completed_count += 1
             else:
                 if StepProgress.objects.filter(student=request.user, step=step, is_completed=True).exists():

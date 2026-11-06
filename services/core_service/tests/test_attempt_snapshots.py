@@ -286,7 +286,9 @@ def test_attempt_snapshot_lossy_migration_rollback_is_refused(snapshot_graph, co
     try:
         with pytest.raises(IrreversibleError):
             executor.migrate([('analytics', '0002_questionanswer_selected_choice_ids')])
-        assert {model.__name__: list(model.objects.order_by('pk').values())
-            for model in (Result, QuizAttemptDetail, QuestionAnswer)} == before
     finally:
+        # Later reversible migrations may run before the snapshot guard refuses.
+        # Restore the current schema before querying current model fields.
         MigrationExecutor(connection).migrate(original_targets)
+    assert {model.__name__: list(model.objects.order_by('pk').values())
+        for model in (Result, QuizAttemptDetail, QuestionAnswer)} == before

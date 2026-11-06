@@ -130,6 +130,8 @@ class SubmitQuizAttemptView(APIView):
                 {'result_id': ['Результат не найден для этого пользователя и теста.']},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if result_obj.scoring_mode == Quiz.Mode.KT_PROFILE:
+            return Response({'result_id': ['Детали профильного пробника сохраняет сервер при сдаче.']}, status=400)
         if QuizAttemptDetail.objects.filter(result=result_obj).exists():
             return Response(
                 {'result_id': ['Ответы для этого результата уже сохранены.']},
@@ -234,7 +236,7 @@ class TeacherDashboardView(APIView):
 
         # Фильтруем квизы учителя
         quiz_qs = Quiz.objects.filter(
-            lesson__course__teacher=request.user
+            lesson__course__teacher=request.user, mode=Quiz.Mode.TRAINING,
         )
         if course_id:
             quiz_qs = quiz_qs.filter(lesson__course_id=course_id)
@@ -242,7 +244,7 @@ class TeacherDashboardView(APIView):
         quiz_ids = list(quiz_qs.values_list('id', flat=True))
 
         # Попытки по этим квизам
-        attempts_qs = QuizAttemptDetail.objects.filter(quiz_id__in=quiz_ids)
+        attempts_qs = QuizAttemptDetail.objects.filter(quiz_id__in=quiz_ids).exclude(result__scoring_mode=Quiz.Mode.KT_PROFILE)
 
         # Сценарии по курсам учителя
         scenario_qs = ScenarioAttempt.objects.filter(
@@ -334,7 +336,7 @@ class StudentDashboardView(APIView):
 
         quiz_attempts = QuizAttemptDetail.objects.filter(
             student=student
-        ).select_related('quiz').order_by('-completed_at')[:20]
+        ).select_related('quiz', 'result').order_by('-completed_at')[:20]
 
         scenario_attempts = ScenarioAttempt.objects.filter(
             student=student
@@ -356,6 +358,11 @@ class StudentDashboardView(APIView):
             {
                 'attempt_id': a.id,
                 'quiz_title': a.recorded_quiz_title,
+                'mode': a.result.scoring_mode if a.result_id else (
+                    a.quiz_snapshot.get('mode', Quiz.Mode.TRAINING)
+                    if isinstance(a.quiz_snapshot, dict) else Quiz.Mode.TRAINING
+                ),
+                'grading': a.result.scoring_details if a.result_id else None,
                 'score': a.score,
                 'correct_answers': a.correct_answers,
                 'total_questions': a.total_questions,

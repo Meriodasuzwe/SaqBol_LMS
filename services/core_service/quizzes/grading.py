@@ -122,7 +122,7 @@ def calculate_kt_profile_score(first_subject_questions, second_subject_questions
     not a question-format validator; the two supplied sections define scoring,
     even when a second-subject question has only one correct choice.
 
-    This opt-in calculator is not wired to submit, persistence or the frontend.
+    QuizSubmitView selects this policy only for a server-owned kt_profile quiz.
     The existing calculate_submission_score remains the training policy.
     """
     first_keys = _kt_section_keys(first_subject_questions, 30, 1, 'first_subject')

@@ -266,7 +266,7 @@ def test_selection_migration_copies_existing_single_and_empty_answers(selection_
         after = list(NewAnswer.objects.order_by('pk').values())
         assert [{key: value for key, value in row.items() if key != 'selected_choice_ids'} for row in after] == before
         assert list(NewAttempt.objects.values()) == attempt_before
-        assert Result.objects.get(pk=graph.result.pk).score == 50
+        assert new_apps.get_model('quizzes', 'Result').objects.get(pk=graph.result.pk).score == 50
         # A rollback is safe while every stored list is exactly the legacy value.
         MigrationExecutor(connection).migrate(old_target)
         old_apps = MigrationExecutor(connection).loader.project_state(old_target).apps

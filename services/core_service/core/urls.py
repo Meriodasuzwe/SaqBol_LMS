@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 from .views import health
 
 urlpatterns = [
+    path('exams/', include('quizzes.exam_urls')),
     path('health/', health, name='health'),
     # Просто 'admin/', без api. Nginx сам разрулит.
     path('admin/', admin.site.urls),

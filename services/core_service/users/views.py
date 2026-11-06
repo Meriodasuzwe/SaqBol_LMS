@@ -618,10 +618,11 @@ class PlatformStatsView(APIView):
         # ── АКТИВНОСТЬ ───────────────────────────────────────────
         total_enrollments    = Enrollment.objects.count()
         enrollments_30d      = Enrollment.objects.filter(enrolled_at__gte=month_ago).count()
-        total_quiz_results   = Result.objects.count()
-        avg_quiz_score_data  = Result.objects.aggregate(avg=models.Avg('score'))
+        training_results = Result.objects.filter(scoring_mode='training')
+        total_quiz_results   = training_results.count()
+        avg_quiz_score_data  = training_results.aggregate(avg=models.Avg('score'))
         avg_quiz_score       = round(avg_quiz_score_data['avg'] or 0, 1)
-        passed_quizzes       = Result.objects.filter(score__gte=70).count()
+        passed_quizzes       = training_results.filter(score__gte=70).count()
         pass_rate            = round(passed_quizzes / total_quiz_results * 100, 1) if total_quiz_results else 0
  
         # ── ТОП КУРСОВ по записям ────────────────────────────────

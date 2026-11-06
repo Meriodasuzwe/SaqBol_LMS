@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from './api';
+import { useTranslation } from 'react-i18next';
+import { getKtQuizCopy } from './ktQuizCopy';
 import { toast } from 'react-toastify';
 import confetti from 'canvas-confetti';
 import { 
@@ -26,12 +28,15 @@ function QuizText({ children }) {
 
 function QuizPage() {
     const { lessonId } = useParams();
+    const { i18n } = useTranslation();
+    const ktCopy = getKtQuizCopy(i18n.resolvedLanguage || i18n.language);
     const navigate = useNavigate();
     
     const [searchParams] = useSearchParams();
     const targetQuizId = searchParams.get('quiz_id');
 
-    const [quiz, setQuiz] = useState(null); 
+    const [quiz, setQuiz] = useState(null);
+    const isKtProfile = quiz?.mode === 'kt_profile';
     const [loading, setLoading] = useState(true);
 
     const [currentIndex, setCurrentIndex] = useState(0); 
@@ -40,6 +45,9 @@ function QuizPage() {
     const [currentResult, setCurrentResult] = useState(null);
     const [submissionStatus, setSubmissionStatus] = useState('idle');
     const submissionRef = useRef(null);
+    const questionHeadingRef = useRef(null);
+    const resultHeadingRef = useRef(null);
+    const pendingQuestionFocusRef = useRef(false);
     
     // Счетчик попыток
     const [attempts, setAttempts] = useState(0);
@@ -90,7 +98,7 @@ function QuizPage() {
 
     useEffect(() => {
         const handleVisibilityChange = () => {
-            if (document.hidden && !currentResult && quiz) {
+            if (document.hidden && !currentResult && quiz && quiz.mode !== 'kt_profile') {
                 const currentWarnings = cheatWarningsRef.current + 1;
                 setCheatWarnings(currentWarnings);
 
@@ -111,10 +119,33 @@ function QuizPage() {
         return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
     }, [currentResult, quiz]);
 
+    // Native focus reveals the new question/result without animated scrolling.
+    useEffect(() => {
+        if (isKtProfile && currentResult) resultHeadingRef.current?.focus();
+    }, [isKtProfile, currentResult]);
+
+    useEffect(() => {
+        if (isKtProfile && pendingQuestionFocusRef.current) {
+            pendingQuestionFocusRef.current = false;
+            questionHeadingRef.current?.focus();
+        }
+    }, [isKtProfile, currentIndex]);
+
+    const navigateQuestion = (index) => {
+        if (isKtProfile) {
+            if (index === currentIndex) questionHeadingRef.current?.focus();
+            else pendingQuestionFocusRef.current = true;
+        }
+        setCurrentIndex(index);
+    };
+
     // Обновлённый handleAnswer: переключает выбор в массиве для конкретного вопроса
     const handleAnswer = (questionId, optionId) => {
         if (submissionRef.current?.quizId === quiz?.id) return;
         setSelectedAnswers(prev => {
+            if (quiz?.mode === 'kt_profile' && quiz.questions.find(q => q.id === questionId)?.kt_subject === 'first_subject') {
+                return { ...prev, [questionId]: optionId === null ? [] : [optionId] };
+            }
             const currentChoices = prev[questionId] || [];
             if (currentChoices.includes(optionId)) {
                 // Убираем, если уже выбран
@@ -158,6 +189,10 @@ function QuizPage() {
                 setSubmissionStatus('idle');
                 setCurrentResult(res.data);
 
+                if (quiz.mode === 'kt_profile') {
+                    toast.success(ktCopy.saved);
+                    return;
+                }
                 const isPassed = res.data.score >= 70;
 
                 if (isPassed) {
@@ -180,10 +215,16 @@ function QuizPage() {
                     // Validation rejected the entire request before any result was saved.
                     submissionRef.current = null;
                     setSubmissionStatus('idle');
-                    toast.error('Ответы не приняты. Проверьте выбранные варианты и отправьте снова.');
+                    const serverError = err.response?.data?.error;
+                    const validationMessage = typeof serverError === 'string'
+                        ? serverError
+                        : Array.isArray(serverError) && serverError.every(message => typeof message === 'string')
+                            ? serverError.join(' ')
+                            : '';
+                    toast.error(quiz.mode === 'kt_profile' ? validationMessage || ktCopy.invalid : 'Ответы не приняты. Проверьте выбранные варианты и отправьте снова.');
                 } else {
                     setSubmissionStatus('retry');
-                    toast.error('Не удалось получить результат. Повторите отправку: выбранные ответы сохранены для повтора.');
+                    toast.error(quiz.mode === 'kt_profile' ? ktCopy.unavailable : 'Не удалось получить результат. Повторите отправку: выбранные ответы сохранены для повтора.');
                 }
                 console.error(err);
             })
@@ -229,8 +270,11 @@ function QuizPage() {
     // Вопрос считается отвеченным, если выбран хотя бы один вариант
     const isAllAnswered = questions.every(q => (selectedAnswers[q.id] || []).length > 0);
     
-    const isPassed = currentResult?.score >= 70;
-    const showAnswers = isPassed || attempts >= 5; // Показывать ответы если сдал ИЛИ 5 попыток
+    const isPassed = !isKtProfile && currentResult?.score >= 70;
+    const showAnswers = isKtProfile ? !!currentResult : isPassed || attempts >= 5; // Показывать ответы если сдал ИЛИ 5 попыток
+    const isSingleChoice = isKtProfile && currentQuestion.kt_subject === 'first_subject';
+    const currentPoints = currentResult?.grading?.questions?.[currentQuestion.id];
+    const explanation = isKtProfile ? currentResult?.explanations?.[currentQuestion.id] : currentQuestion.explanation;
     const answeredCount = questions.filter(q => (selectedAnswers[q.id] || []).length > 0).length;
     const secondaryButtonClass = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-base-content/70 hover:bg-base-200 hover:text-base-content focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600';
     const primaryButtonClass = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-base-200 disabled:text-base-content/50 sm:px-6';
@@ -243,22 +287,26 @@ function QuizPage() {
                             {currentResult ? 'Результат теста' : 'Прохождение теста'}
                         </p>
                         <h1 className="break-words text-xl font-semibold leading-snug sm:text-2xl">{quiz.title || 'Тест'}</h1>
+                        {isKtProfile && <p className="mt-2 max-w-[70ch] text-sm leading-6 text-base-content/75">{ktCopy.scope}</p>}
                     </div>
                     <button 
                         onClick={() => navigate(`/lesson/${lessonId}`)} 
                         className="-ml-2 inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm text-base-content/65 hover:bg-base-200 hover:text-base-content focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                     >
-                        <ChevronLeft size={18} aria-hidden="true" /> Покинуть тест
+                        <ChevronLeft size={18} aria-hidden="true" /> {isKtProfile ? ktCopy.exit : 'Покинуть тест'}
                     </button>
                 </header>
 
             <div className="grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
                 {/* НАВИГАЦИЯ ВОПРОСОВ */}
-                <aside className="min-w-0 border-b border-base-300 pb-5 lg:sticky lg:top-6 lg:border-0 lg:pb-0" aria-label="Навигация по тесту">
+                <aside className="min-w-0 border-b border-base-300 pb-5 lg:sticky lg:top-6 lg:border-0 lg:pb-0" aria-label={isKtProfile ? ktCopy.navigation : 'Навигация по тесту'}>
                     <div className="mb-3 flex items-center justify-between gap-3 text-sm">
-                        <h2 className="font-semibold">Вопросы</h2>
+                        <h2 className="font-semibold">{isKtProfile ? ktCopy.navigation : 'Вопросы'}</h2>
                         <span className="tabular-nums text-base-content/65">
-                            {currentResult ? `Результат: ${currentResult.score}%` : `Отвечено ${answeredCount} из ${questions.length}`}
+                            {isKtProfile
+                                ? currentResult ? `${currentResult.grading.earned_points} / ${currentResult.grading.max_points}` : `${answeredCount} / ${questions.length}`
+                                : currentResult ? `Результат: ${currentResult.score}%` : `Отвечено ${answeredCount} из ${questions.length}`}
+                            {isKtProfile && <span className="sr-only"> {currentResult ? ktCopy.points : ktCopy.answered}</span>}
                         </span>
                     </div>
                     {!currentResult && (
@@ -269,7 +317,7 @@ function QuizPage() {
                             aria-label="Количество отвеченных вопросов"
                         />
                     )}
-                    <nav className="grid grid-cols-5 gap-2 sm:grid-cols-10 lg:grid-cols-5 lg:gap-1.5" aria-label="Вопросы теста">
+                    <nav className={`grid grid-cols-5 gap-2 sm:grid-cols-10 lg:grid-cols-5 lg:gap-1.5 ${isKtProfile ? 'max-h-52 overflow-y-auto p-1 lg:max-h-none' : ''}`} aria-label={isKtProfile ? ktCopy.navigation : 'Вопросы теста'}>
                         {questions.map((q, idx) => {
                             const isAnswered = (selectedAnswers[q.id] || []).length > 0;
                             const isActive = idx === currentIndex;
@@ -280,7 +328,14 @@ function QuizPage() {
                                 if (isAnswered) btnClass = "bg-blue-500/10 border-blue-500/40 text-blue-700";
                                 if (isActive) btnClass = "bg-blue-600 border-blue-600 text-white ring-2 ring-blue-600 ring-offset-2 ring-offset-base-100 z-10";
                             } else {
-                                if (isPassed) {
+                                if (isKtProfile) {
+                                    const points = currentResult.grading.questions[q.id];
+                                    btnClass = points.earned_points === points.max_points
+                                        ? "bg-emerald-700 border-emerald-700 text-white"
+                                        : points.earned_points > 0
+                                            ? "bg-amber-100 border-amber-600 text-amber-900"
+                                            : "bg-red-700 border-red-700 text-white";
+                                } else if (isPassed) {
                                     btnClass = "bg-emerald-500 border-emerald-500 text-white";
                                 } else if (showAnswers) {
                                     // Проверяем правильность через correct_answers_ids от бэкенда
@@ -302,8 +357,11 @@ function QuizPage() {
                             return (
                                 <button
                                     key={q.id}
-                                    onClick={() => setCurrentIndex(idx)}
-                                    aria-label={`Вопрос ${idx + 1}${isAnswered ? ', ответ выбран' : ''}`}
+                                    onClick={() => navigateQuestion(idx)}
+                                    aria-label={isKtProfile
+                                        ? `${ktCopy.question} ${idx + 1}${currentResult ? `: ${currentResult.grading.questions[q.id].earned_points} / ${currentResult.grading.questions[q.id].max_points} ${ktCopy.points}` : isAnswered ? `, ${ktCopy.chosen}` : ''}`
+                                        : `Вопрос ${idx + 1}${isAnswered ? ', ответ выбран' : ''}`}
+                                    title={isKtProfile && currentResult ? `${currentResult.grading.questions[q.id].earned_points} / ${currentResult.grading.questions[q.id].max_points} ${ktCopy.points}` : undefined}
                                     aria-current={isActive ? 'step' : undefined}
                                     className={`relative flex min-h-11 min-w-11 items-center justify-center rounded-lg border text-sm font-semibold tabular-nums motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 ${btnClass}`}
                                 >
@@ -315,13 +373,31 @@ function QuizPage() {
                     </nav>
                     {!currentResult && (
                         <div className="mt-4 hidden flex-wrap gap-x-4 gap-y-2 text-xs text-base-content/70 lg:flex">
-                            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-blue-600" aria-hidden="true" />Текущий</span>
-                            <span className="flex items-center gap-2"><Check size={13} className="text-blue-700" aria-hidden="true" />Ответ выбран</span>
+                            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-blue-600" aria-hidden="true" /> {isKtProfile ? ktCopy.current : 'Текущий'}</span>
+                            <span className="flex items-center gap-2"><Check size={13} className="text-blue-700" aria-hidden="true" /> {isKtProfile ? ktCopy.chosen : 'Ответ выбран'}</span>
                         </div>
                     )}
                 </aside>
 
                 <div className="min-w-0">
+                {isKtProfile && currentResult && (
+                    <section className="mb-7 border-b border-base-300 pb-6" aria-labelledby="kt-result-title" aria-live="polite">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <h2 id="kt-result-title" ref={resultHeadingRef} tabIndex={-1} className="text-xl font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">{ktCopy.summary}</h2>
+                            <p className="text-xl font-semibold tabular-nums text-blue-600">{currentResult.grading.earned_points} / {currentResult.grading.max_points} <span className="text-sm font-normal text-base-content/75">{ktCopy.points}</span></p>
+                        </div>
+                        <dl className="mt-4 space-y-2 text-sm">
+                            {['first_subject', 'second_subject'].map(section => <div key={section} className="flex items-baseline justify-between gap-4">
+                                <dt>{section === 'first_subject' ? ktCopy.first : ktCopy.second}</dt>
+                                <dd className="shrink-0 font-semibold tabular-nums">{currentResult.grading.sections[section].earned_points} / {currentResult.grading.sections[section].max_points}</dd>
+                            </div>)}
+                        </dl>
+                        <p className="mt-3 text-sm text-base-content/75">{ktCopy.review}</p>
+                        <button onClick={restartQuiz} className={`${secondaryButtonClass} mt-3 -ml-4`}>
+                            <RefreshCcw size={16} aria-hidden="true" /> {ktCopy.restart}
+                        </button>
+                    </section>
+                )}
                 {/* ВЕРДИКТ ЕСЛИ ЗАВАЛИЛ И ПОПЫТОК < 5 */}
                 {currentResult && !isPassed && !showAnswers && (
                     <div className="mb-5 rounded-2xl border border-amber-500/35 bg-amber-500/10 p-5 sm:p-6">
@@ -341,7 +417,8 @@ function QuizPage() {
                 <section aria-labelledby="quiz-question">
                     <div>
                         <div className="mb-7 sm:mb-8">
-                            <h2 id="quiz-question" className="mb-4 text-sm font-semibold tabular-nums text-blue-600">Вопрос {currentIndex + 1} из {questions.length}</h2>
+                            <h2 id="quiz-question" ref={questionHeadingRef} tabIndex={isKtProfile ? -1 : undefined} className="mb-4 text-sm font-semibold tabular-nums text-blue-600">{isKtProfile ? ktCopy.question : 'Вопрос'} {currentIndex + 1} {isKtProfile ? ktCopy.of : 'из'} {questions.length}</h2>
+                            {isKtProfile && <p className="mb-3 text-sm font-semibold">{isSingleChoice ? ktCopy.first : ktCopy.second}</p>}
                             <div id="quiz-question-text" className="max-w-[70ch] text-lg leading-8 text-base-content sm:text-xl sm:leading-8">
                                 <QuizText>{currentQuestion?.question || currentQuestion?.text}</QuizText>
                             </div>
@@ -349,7 +426,9 @@ function QuizPage() {
 
                         {/* ВАРИАНТЫ ОТВЕТОВ */}
                         <fieldset className="grid min-w-0 gap-3" aria-describedby="quiz-question-text">
-                            <legend className="mb-3 text-sm font-semibold text-base-content/70">Варианты ответа</legend>
+                            <legend className="mb-3 text-sm font-semibold text-base-content/70">{isKtProfile ? ktCopy.options : 'Варианты ответа'}</legend>
+                            {isKtProfile && <p className="mb-1 text-sm leading-6 text-base-content/75">{isSingleChoice ? ktCopy.single : ktCopy.multiple}</p>}
+                            {isKtProfile && currentPoints && <p className="mb-1 text-sm font-semibold tabular-nums">{ktCopy.questionPoints}: {currentPoints.earned_points} / {currentPoints.max_points} · {currentPoints.earned_points === currentPoints.max_points ? ktCopy.full : currentPoints.earned_points > 0 ? ktCopy.partial : ktCopy.zero}</p>}
                             {choices.map(choice => {
                                 // Массив выбранных ID для текущего вопроса
                                 const selectedIds = selectedAnswers[currentQuestion.id] || [];
@@ -387,8 +466,9 @@ function QuizPage() {
                                     >
                                         <span className="relative mt-0.5 flex shrink-0 items-center justify-center">
                                             <input 
-                                                type="checkbox"
-                                                className="h-5 w-5 appearance-none rounded border-2 border-base-content/50 checked:border-blue-600 checked:bg-blue-600 focus-visible:outline-none disabled:cursor-not-allowed"
+                                                type={isSingleChoice ? 'radio' : 'checkbox'}
+                                                name={`question-${currentQuestion.id}`}
+                                                className={`h-5 w-5 appearance-none border-2 border-base-content/50 checked:border-blue-600 checked:bg-blue-600 focus-visible:outline-none disabled:cursor-not-allowed ${isSingleChoice ? 'rounded-full' : 'rounded'}`}
                                                 checked={isSelected}
                                                 disabled={!!currentResult || submissionStatus !== 'idle'}
                                                 onChange={() => handleAnswer(currentQuestion.id, choice.id)}
@@ -397,23 +477,31 @@ function QuizPage() {
                                                 <Check size={14} strokeWidth={3} className="pointer-events-none absolute text-white" aria-hidden="true" />
                                             )}
                                         </span>
-                                        <span className="min-w-0 text-base leading-7"><QuizText>{choice.text}</QuizText></span>
+                                        <span className="min-w-0 text-base leading-7">
+                                            <QuizText>{choice.text}</QuizText>
+                                            {isKtProfile && currentResult && (isSelected || currentResult.correct_answers_ids?.[currentQuestion.id]?.includes(choice.id)) && <span className="mt-1 block text-sm font-medium">
+                                                {[isSelected ? ktCopy.selected : null, currentResult.correct_answers_ids?.[currentQuestion.id]?.includes(choice.id) ? ktCopy.correct : null].filter(Boolean).join(' · ')}
+                                            </span>}
+                                        </span>
                                     </label>
                                 );
                             })}
                         </fieldset>
+                        {isSingleChoice && !currentResult && (selectedAnswers[currentQuestion.id] || []).length > 0 && (
+                            <button className={`${secondaryButtonClass} mt-2 -ml-4`} disabled={submissionStatus !== 'idle'} onClick={() => handleAnswer(currentQuestion.id, null)}>{ktCopy.clear}</button>
+                        )}
 
                         {/* ОБЪЯСНЕНИЕ (ПОКАЗЫВАЕТСЯ ТОЛЬКО ЕСЛИ СДАЛ ИЛИ 5 ПОПЫТОК) */}
                         {currentResult && showAnswers && (
                             <div className={`mt-6 rounded-xl border p-4 sm:p-5 ${isPassed ? 'bg-emerald-500/5 border-emerald-500/25' : 'bg-base-200 border-base-300'}`}>
-                                <h2 className="mb-2 text-sm font-semibold">Объяснение:</h2>
-                                <div className="text-base leading-7 text-base-content/80"><QuizText>{currentQuestion.explanation || 'Объяснение для этого вопроса отсутствует.'}</QuizText></div>
+                                <h2 className="mb-2 text-sm font-semibold">{isKtProfile ? ktCopy.explanation : 'Объяснение:'}</h2>
+                                <div className="text-base leading-7 text-base-content/80"><QuizText>{explanation || (isKtProfile ? ktCopy.noExplanation : 'Объяснение для этого вопроса отсутствует.')}</QuizText></div>
                             </div>
                         )}
 
                         {submissionStatus === 'retry' && (
                             <p id="quiz-retry-hint" className="mt-5 text-sm leading-relaxed text-base-content/75" role="status">
-                                Результат пока не получен. Выбранные ответы зафиксированы; повторная отправка не создаст вторую попытку.
+                                {isKtProfile ? ktCopy.retryHint : 'Результат пока не получен. Выбранные ответы зафиксированы; повторная отправка не создаст вторую попытку.'}
                             </p>
                         )}
                         {/* КНОПКИ УПРАВЛЕНИЯ */}
@@ -421,30 +509,32 @@ function QuizPage() {
                             <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-5 sm:mt-8">
                                 <button
                                     className={`${secondaryButtonClass} ${currentIndex === 0 ? 'invisible' : ''}`}
-                                    onClick={() => setCurrentIndex(v => v - 1)}
+                                    onClick={() => navigateQuestion(currentIndex - 1)}
                                 >
-                                    <ChevronLeft size={16} aria-hidden="true" /> Назад
+                                    <ChevronLeft size={16} aria-hidden="true" /> {isKtProfile ? ktCopy.back : 'Назад'}
                                 </button>
                                 {currentIndex < questions.length - 1 ? (
                                     <button
                                         className={primaryButtonClass}
-                                        onClick={() => setCurrentIndex(v => v + 1)}
+                                        onClick={() => navigateQuestion(currentIndex + 1)}
                                     >
-                                        Далее <ArrowRight size={16} aria-hidden="true" />
+                                        {isKtProfile ? ktCopy.next : 'Далее'} <ArrowRight size={16} aria-hidden="true" />
                                     </button>
                                 ) : (
                                     <button 
                                         className={primaryButtonClass}
-                                        disabled={submissionStatus === 'sending' || (!isAllAnswered && submissionStatus !== 'retry')}
+                                        disabled={submissionStatus === 'sending' || (!isKtProfile && !isAllAnswered && submissionStatus !== 'retry')}
                                         aria-describedby={submissionStatus === 'retry' ? 'quiz-retry-hint' : !isAllAnswered ? 'quiz-submit-hint' : undefined}
                                         onClick={() => submitQuiz(false)}
                                     >
-                                        {submissionStatus === 'sending' ? 'Сохранение…' : submissionStatus === 'retry' ? 'Повторить отправку' : 'Завершить тест'}
+                                        {isKtProfile
+                                            ? submissionStatus === 'sending' ? ktCopy.saving : submissionStatus === 'retry' ? ktCopy.retry : ktCopy.finish
+                                            : submissionStatus === 'sending' ? 'Сохранение…' : submissionStatus === 'retry' ? 'Повторить отправку' : 'Завершить тест'}
                                     </button>
                                 )}
                                 {currentIndex === questions.length - 1 && !isAllAnswered && submissionStatus === 'idle' && (
                                     <p id="quiz-submit-hint" className="mt-2 basis-full text-sm leading-relaxed text-base-content/65">
-                                        Для завершения выберите ответы во всех вопросах.
+                                        {isKtProfile ? ktCopy.skipped : 'Для завершения выберите ответы во всех вопросах.'}
                                     </p>
                                 )}
                             </div>
@@ -452,29 +542,29 @@ function QuizPage() {
                             <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-5 sm:mt-8">
                                 <button
                                     className={`${secondaryButtonClass} ${currentIndex === 0 ? 'invisible' : ''}`}
-                                    onClick={() => setCurrentIndex(v => v - 1)}
+                                    onClick={() => navigateQuestion(currentIndex - 1)}
                                 >
-                                    <ChevronLeft size={16} aria-hidden="true" /> Назад
+                                    <ChevronLeft size={16} aria-hidden="true" /> {isKtProfile ? ktCopy.back : 'Назад'}
                                 </button>
                                 {currentIndex < questions.length - 1 ? (
                                     <button
                                         className={primaryButtonClass}
-                                        onClick={() => setCurrentIndex(v => v + 1)}
+                                        onClick={() => navigateQuestion(currentIndex + 1)}
                                     >
-                                        Следующий вопрос
+                                        {isKtProfile ? ktCopy.nextQuestion : 'Следующий вопрос'}
                                     </button>
                                 ) : (
                                     <div className="ml-auto flex flex-wrap justify-end gap-2">
                                         {!isPassed && showAnswers && (
                                             <button onClick={restartQuiz} className={secondaryButtonClass}>
-                                                Пройти еще раз
+                                                {isKtProfile ? ktCopy.restart : 'Пройти еще раз'}
                                             </button>
                                         )}
                                         <button
                                             className={primaryButtonClass}
                                             onClick={() => navigate(`/lesson/${lessonId}`)}
                                         >
-                                            Вернуться к уроку
+                                            {isKtProfile ? ktCopy.lesson : 'Вернуться к уроку'}
                                         </button>
                                     </div>
                                 )}

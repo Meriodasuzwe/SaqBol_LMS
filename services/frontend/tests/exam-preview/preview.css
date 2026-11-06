@@ -1,0 +1,12 @@
+@import "../../src/index.css";
+@source "../../src";
+@source "./main.jsx";
+
+body { margin: 0; }
+.exam-preview-notice { padding: 8px 20px; font: 12px/1.5 Arial, sans-serif; background: #e8eef8; color: #314a6b; border-bottom: 1px solid #c7d5ea; }
+.exam-preview-dev { margin: 24px auto; padding: 16px; max-width: 1120px; border: 1px solid var(--color-base-300); font-size: 14px; }
+.exam-preview-dev summary { cursor: pointer; font-weight: 650; }
+.exam-preview-dev p { margin-block: 12px; }
+.exam-preview-dev button { margin: 4px; }
+.exam-preview-dev pre { overflow: auto; max-height: 400px; font-size: 12px; }
+.exam-preview-fallback { max-width: 800px; margin: 40px auto; padding: 24px; }

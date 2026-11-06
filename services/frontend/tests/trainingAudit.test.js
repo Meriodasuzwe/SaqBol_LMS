@@ -543,7 +543,7 @@ test('idempotent quiz submit: a response for a reset attempt cannot overwrite th
 
 test('idempotent quiz submit: real controls freeze choices but allow retry of a forced incomplete submission', () => {
     const checkbox = findOne(quizPage.ast, node => node.type === 'JSXOpeningElement' && node.name.name === 'input'
-        && node.attributes.some(attr => attr.name?.name === 'type' && attr.value?.value === 'checkbox'), 'answer checkbox');
+        && node.attributes.some(attr => attr.name?.name === 'onChange' && quizPage.source.slice(attr.start, attr.end).includes('handleAnswer(')), 'answer control');
     const disabledChoices = checkbox.attributes.find(attr => attr.name?.name === 'disabled').value.expression;
     const submitButton = findOne(quizPage.ast, node => node.type === 'JSXOpeningElement' && node.name.name === 'button'
         && node.attributes.some(attr => attr.name?.name === 'onClick' && quizPage.source.slice(attr.start, attr.end).includes('submitQuiz(false)')), 'submit button');
@@ -552,9 +552,9 @@ test('idempotent quiz submit: real controls freeze choices but allow retry of a 
         assert.equal(evaluateNode(quizPage, disabledChoices, { currentResult: null, submissionStatus }), true);
     }
     assert.equal(evaluateNode(quizPage, disabledChoices, { currentResult: null, submissionStatus: 'idle' }), false);
-    assert.equal(evaluateNode(quizPage, disabledSubmit, { isAllAnswered: true, submissionStatus: 'sending' }), true);
-    assert.equal(evaluateNode(quizPage, disabledSubmit, { isAllAnswered: false, submissionStatus: 'retry' }), false);
-    assert.equal(evaluateNode(quizPage, disabledSubmit, { isAllAnswered: false, submissionStatus: 'idle' }), true);
+    assert.equal(evaluateNode(quizPage, disabledSubmit, { isKtProfile: false, isAllAnswered: true, submissionStatus: 'sending' }), true);
+    assert.equal(evaluateNode(quizPage, disabledSubmit, { isKtProfile: false, isAllAnswered: false, submissionStatus: 'retry' }), false);
+    assert.equal(evaluateNode(quizPage, disabledSubmit, { isKtProfile: false, isAllAnswered: false, submissionStatus: 'idle' }), true);
 });
 
 const lesson = readSource('LessonPage.jsx');

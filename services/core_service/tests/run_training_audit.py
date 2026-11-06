@@ -49,6 +49,9 @@ def main():
         os.environ["HOME"] = str(work)
         explicit_files = (
             "quizzes/grading.py",
+            "quizzes/management/__init__.py",
+            "quizzes/management/commands/__init__.py",
+            "quizzes/management/commands/finalize_exam_attempts.py",
             "tests/test_training_audit.py",
             "tests/test_quiz_workflows.py",
             "tests/test_builder_atomic_save.py",
@@ -60,9 +63,12 @@ def main():
             "tests/test_deleted_quiz_history.py",
             "tests/test_deleted_quiz_migrations.py",
             "tests/test_kt_scoring.py",
+            "tests/test_kt_integration.py",
+            "tests/test_exam_lifecycle.py",
             "tests/test_sql_selection_fixture.py",
             "tests/fixtures/sql_selection_training.json",
             "tests/fixtures/kt_scoring_cases.json",
+            "tests/fixtures/kt_profile.py",
         )
         packages = ("core", "users", "courses", "quizzes", "analytics", "notifications", "bug_reports")
         for package in packages:
@@ -114,6 +120,8 @@ def main():
             "tests/test_deleted_quiz_history.py",
             "tests/test_deleted_quiz_migrations.py",
             "tests/test_kt_scoring.py",
+            "tests/test_kt_integration.py",
+            "tests/test_exam_lifecycle.py",
         ])
 
 

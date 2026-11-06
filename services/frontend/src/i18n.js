@@ -29,6 +29,7 @@ const resources = {
         },
       nav: {
         catalog: "Каталог курсов",
+        exams: "Пробное тестирование",
         dashboard: "Панель управления",
         analyticsTeacher: "Аналитика курсов",
         analyticsStudent: "Мой прогресс",
@@ -1096,6 +1097,7 @@ weekdays: {
         },
       nav: {
         catalog: "Курстар каталогы",
+        exams: "Сынақ тестілеуі",
         dashboard: "Басқару тақтасы",
         analyticsTeacher: "Курс аналитикасы",
         analyticsStudent: "Менің үлгерімім",
@@ -2170,6 +2172,7 @@ weekdays: {
 
       nav: {
         catalog: "Course Catalog",
+        exams: "Practice exam",
         dashboard: "Dashboard",
         analyticsTeacher: "Course Analytics",
         analyticsStudent: "My Progress",

@@ -11,14 +11,16 @@ import tailwindcss from '@tailwindcss/vite';
 const tests = dirname(fileURLToPath(import.meta.url));
 const frontend = resolve(tests, '..');
 const core = resolve(frontend, '../core_service');
-const root = resolve(tests, 'analytics-preview');
-const origin = 'http://127.0.0.1:4179';
-const containerName = `saqbol-analytics-preview-${process.pid}`;
+const ktProfile = process.argv.includes('--kt');
+const root = resolve(tests, ktProfile ? 'kt-preview' : 'analytics-preview');
+const port = ktProfile ? 4180 : 4179;
+const origin = `http://127.0.0.1:${port}`;
+const containerName = `saqbol-${ktProfile ? 'kt' : 'analytics'}-preview-${process.pid}`;
 const backend = spawn('docker', [
     'run', '--rm', '-i', '--name', containerName, '--pull', 'never', '--network', 'none', '--read-only',
     '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m',
     '--mount', `type=bind,source=${core},target=/source,readonly`,
-    '--entrypoint', 'python', 'saqbol_lms-core_service:latest', '/source/tests/run_analytics_preview.py',
+    '--entrypoint', 'python', 'saqbol_lms-core_service:latest', ktProfile ? '/source/tests/run_kt_preview.py' : '/source/tests/run_analytics_preview.py',
 ], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
 
 let sequence = 0, server, closing = false, backendReady = false, backendFinished = false, shutdownPromise;
@@ -167,9 +169,9 @@ try {
             },
         }, react(), tailwindcss()],
         server: {
-            host: '127.0.0.1', port: 4179, strictPort: true, open: false,
+            host: '127.0.0.1', port, strictPort: true, open: false,
             fs: { allow: [frontend] },
-            headers: { 'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws://127.0.0.1:4179; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" },
+            headers: { 'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws://127.0.0.1:${port}; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'` },
         },
     });
     if (closing || backendFinished) {
@@ -177,7 +179,7 @@ try {
         throw new Error('Isolated backend stopped before the preview could start.');
     }
     await server.listen();
-    console.log(`Real QuizPage analytics preview: ${origin}/`);
+    console.log(`Real QuizPage ${ktProfile ? 'KT profile' : 'analytics'} preview: ${origin}/`);
     console.log(`Read-only synthetic database state: ${origin}/__analytics_preview__/state`);
     console.log(`Container: ${containerName}. Network disabled; ephemeral SQLite; no .env or production data.`);
 } catch (error) {
