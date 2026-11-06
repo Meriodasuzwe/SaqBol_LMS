@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { Script } from 'node:vm';
 import { parse } from '@babel/parser';
@@ -13,15 +14,17 @@ const context = {
 const form = { title: '  Synthetic issue  ', category: 'functionality', description: '  Synthetic question description  ', page_url: 'http://localhost/exams' };
 
 test('question report allowlists public IDs and strips URL query/hash without copying answers or secrets', () => {
+  const forbiddenValue = randomUUID();
   const safe = buildExamReportContext({
-    ...context, token: 'do-not-send', answers: [131], correct_choice_ids: [1301],
-    content_snapshot: { explanation: 'do-not-send' }, password: 'do-not-send',
+    ...context, token: forbiddenValue, answers: [131], correct_choice_ids: [1301],
+    content_snapshot: { explanation: 'do-not-send' }, password: forbiddenValue,
   });
   assert.deepEqual(safe, {
     attempt_id: context.attempt_id, section_id: 'second_subject', question_id: 131,
     path: context.path.split('?')[0],
   });
   assert.equal(JSON.stringify(safe).includes('do-not-send'), false);
+  assert.equal(JSON.stringify(safe).includes(forbiddenValue), false);
 });
 
 test('question report rejects malformed identifiers and non-exam paths', () => {
