@@ -1,4 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useId } from 'react';
+import { useTranslation } from 'react-i18next';
+import { buildExamReportContext, submitBugReport } from './exams/examReport';
 import api from './api';
 import { Bug, X, Upload, Trash2, Send, ChevronDown, CheckCircle } from 'lucide-react';
 
@@ -13,7 +15,7 @@ const CATEGORIES = [
 const MAX_SCREENSHOTS = 5;
 const MAX_FILE_SIZE_MB = 5;
 
-const BugReportWidget = () => {
+const LegacyBugReportWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [step, setStep] = useState('form'); // 'form' | 'success'
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,14 +97,7 @@ const BugReportWidget = () => {
 
         setIsSubmitting(true);
         try {
-            const fd = new FormData();
-            fd.append('title', form.title.trim());
-            fd.append('category', form.category);
-            fd.append('description', form.description.trim());
-            fd.append('page_url', form.page_url);
-            screenshots.forEach(s => fd.append('screenshots', s.file));
-
-            await api.post('/bugs/', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+            await submitBugReport(api, form, screenshots);
             setStep('success');
         } catch (e) {
             setErrors({ submit: 'Не удалось отправить. Попробуйте ещё раз.' });
@@ -353,4 +348,130 @@ const BugReportWidget = () => {
     );
 };
 
-export default BugReportWidget;
+
+const examReportCopy = {
+  ru: {
+    trigger: 'Сообщить об ошибке', title: 'Ошибка в вопросе',
+    help: 'Опишите неточность. Номер вопроса будет приложен автоматически. Ответ в тесте сохранится.',
+    subject: 'Краткое описание', description: 'Что нужно проверить?',
+    placeholder: 'Например, не отображается часть условия или вариант ответа.',
+    send: 'Отправить сообщение', sending: 'Отправляем…', close: 'Закрыть',
+    success: 'Сообщение отправлено', thanks: 'Мы получили описание и идентификатор вопроса.',
+    invalid: 'Укажите заголовок (до 255 символов) и описание не короче 10 символов.',
+    failed: 'Не удалось отправить сообщение. Текст сохранён — попробуйте ещё раз.',
+  },
+  kk: {
+    trigger: 'Қате туралы хабарлау', title: 'Сұрақтағы қате',
+    help: 'Қатені сипаттаңыз. Сұрақ нөмірі автоматты түрде қосылады. Тесттегі жауабыңыз сақталады.',
+    subject: 'Қысқаша сипаттама', description: 'Нені тексеру керек?',
+    placeholder: 'Мысалы, шарттың немесе жауап нұсқасының бір бөлігі көрсетілмейді.',
+    send: 'Хабарлама жіберу', sending: 'Жіберілуде…', close: 'Жабу',
+    success: 'Хабарлама жіберілді', thanks: 'Сипаттама мен сұрақ идентификаторы алынды.',
+    invalid: 'Тақырыпты (255 таңбаға дейін) және кемінде 10 таңбалы сипаттаманы енгізіңіз.',
+    failed: 'Хабарлама жіберілмеді. Мәтін сақталды — қайталап көріңіз.',
+  },
+  en: {
+    trigger: 'Report a question', title: 'Question issue',
+    help: 'Describe the issue. The question ID is attached automatically. Your exam answer stays in place.',
+    subject: 'Short description', description: 'What should we check?',
+    placeholder: 'For example, part of the question or an answer option is missing.',
+    send: 'Send report', sending: 'Sending…', close: 'Close',
+    success: 'Report sent', thanks: 'We received your description and the question ID.',
+    invalid: 'Enter a title (up to 255 characters) and a description of at least 10 characters.',
+    failed: 'The report could not be sent. Your text is still here — please retry.',
+  },
+};
+
+function ExamQuestionReport({ context }) {
+  const { i18n } = useTranslation();
+  const copy = examReportCopy[i18n.language?.split('-')[0]] || examReportCopy.ru;
+  const dialog = useRef(null);
+  const trigger = useRef(null);
+  const fieldId = useId();
+  const sendingRef = useRef(false);
+  const [open, setOpen] = useState(false);
+  const [reportContext, setReportContext] = useState(null);
+  const [form, setForm] = useState({ title: '', description: '' });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (open && !dialog.current.open) dialog.current.showModal();
+  }, [open]);
+
+  const openReport = () => {
+    setReportContext(buildExamReportContext(context));
+    setForm({ title: '', description: '' });
+    setError('');
+    setSent(false);
+    setOpen(true);
+  };
+  const closeReport = () => {
+    if (!sendingRef.current) dialog.current.close();
+  };
+  const submit = async event => {
+    event.preventDefault();
+    if (sendingRef.current) return;
+    if (!form.title.trim() || form.title.trim().length > 255 || form.description.trim().length < 10) {
+      setError(copy.invalid);
+      return;
+    }
+    sendingRef.current = true;
+    setSending(true);
+    setError('');
+    try {
+      await submitBugReport(api, {
+        ...form, category: 'functionality', page_url: window.location.origin + reportContext.path,
+      }, [], reportContext);
+      setSent(true);
+    } catch {
+      setError(copy.failed);
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
+    }
+  };
+
+  return <>
+    <button ref={trigger} type="button" className="btn btn-ghost btn-sm exam-report-trigger" onClick={openReport}>
+      <Bug size={16} aria-hidden="true" />{copy.trigger}
+    </button>
+    <dialog ref={dialog} className="modal exam-report-dialog" aria-labelledby={`${fieldId}-heading`}
+      onCancel={event => { if (sendingRef.current) event.preventDefault(); }}
+      onClose={() => { setOpen(false); trigger.current?.focus(); }}
+      onClick={event => { if (event.target === event.currentTarget) closeReport(); }}>
+      <div className="modal-box bg-base-100 text-base-content max-w-lg max-h-[85dvh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h2 id={`${fieldId}-heading`} className="text-xl font-semibold">{sent ? copy.success : copy.title}</h2>
+          <button type="button" className="btn btn-ghost btn-sm btn-square" aria-label={copy.close} disabled={sending} onClick={closeReport}>
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
+        {sent ? <div role="status">
+          <p className="mb-6">{copy.thanks}</p>
+          <button type="button" className="btn btn-primary" onClick={closeReport}>{copy.close}</button>
+        </div> : <form onSubmit={submit}>
+          <p className="text-sm leading-relaxed mb-5">{copy.help}</p>
+          <label htmlFor={`${fieldId}-title`} className="block font-medium mb-2">{copy.subject}</label>
+          <input id={`${fieldId}-title`} autoFocus type="text" required maxLength={255} disabled={sending}
+            className="input input-bordered w-full mb-4" value={form.title}
+            onChange={event => setForm(current => ({ ...current, title: event.target.value }))} />
+          <label htmlFor={`${fieldId}-description`} className="block font-medium mb-2">{copy.description}</label>
+          <textarea id={`${fieldId}-description`} required minLength={10} rows={5} disabled={sending}
+            className="textarea textarea-bordered w-full" placeholder={copy.placeholder} value={form.description}
+            onChange={event => setForm(current => ({ ...current, description: event.target.value }))} />
+          {error && <p role="alert" className="text-error text-sm mt-3">{error}</p>}
+          <div className="flex justify-end gap-2 mt-5">
+            <button type="button" className="btn btn-ghost" disabled={sending} onClick={closeReport}>{copy.close}</button>
+            <button type="submit" className="btn btn-primary" disabled={sending}>{sending ? copy.sending : copy.send}</button>
+          </div>
+        </form>}
+      </div>
+    </dialog>
+  </>;
+}
+
+export default function BugReportWidget({ inline = false, context } = {}) {
+  return inline ? <ExamQuestionReport context={context} /> : <LegacyBugReportWidget />;
+}

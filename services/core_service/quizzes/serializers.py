@@ -23,7 +23,7 @@ class ChoiceSerializer(serializers.ModelSerializer):
                 if request.user == instance.question.quiz.lesson.course.teacher:
                     show_answer = True
 
-        if not show_answer:
+        if instance.question.quiz.mode == Quiz.Mode.KT_PROFILE or not show_answer:
             ret.pop('is_correct', None)
         return ret
 
@@ -34,15 +34,27 @@ class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True, read_only=True)
     class Meta:
         model = Question
-        fields = ['id', 'text', 'explanation', 'choices']
+        fields = ['id', 'text', 'explanation', 'choices', 'kt_subject']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.quiz.mode == Quiz.Mode.KT_PROFILE:
+            data.pop('explanation', None)
+        return data
 
 # Сериализатор тестов
 # вызываем сериализатор вопросов внутри сериализатора тестов чтобы получить данные о вопросах вместе с тестом
 class QuizSerializer(serializers.ModelSerializer):
-    questions = QuestionSerializer(many=True, read_only=True)
+    questions = serializers.SerializerMethodField()
     class Meta:
         model = Quiz
-        fields = ['id', 'title', 'description', 'questions', 'lesson']
+        fields = ['id', 'title', 'description', 'questions', 'lesson', 'mode']
+
+    def get_questions(self, instance):
+        questions = instance.questions.all()
+        if instance.mode == Quiz.Mode.KT_PROFILE:
+            questions = questions.order_by('kt_subject', 'id')
+        return QuestionSerializer(questions, many=True, context=self.context).data
 
 class SubmissionIdField(serializers.IntegerField):
     """IDs in a JSON submission must be integers, not coerced strings or floats."""
@@ -174,6 +186,8 @@ class QuizResultSerializer(serializers.ModelSerializer):
 
 # Сериализатор для отображения результатов тестов конкретного пользователя
 class MyResultSerializer(serializers.ModelSerializer):
+    mode = serializers.CharField(source='scoring_mode', read_only=True)
+    grading = serializers.JSONField(source='scoring_details', read_only=True)
     # Безопасное получение ID теста. Если тест удален, вернем null или заглушку.
     quiz_id = serializers.IntegerField(read_only=True, allow_null=True)
     #  MethodField позволяет нам создать кастомное поле для получения названия теста с проверкой на существование теста и его связей
@@ -183,7 +197,7 @@ class MyResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Result
-        fields = ['id', 'score', 'completed_at', 'quiz_id', 'quiz_title', 'lesson_title', 'course_title']
+        fields = ['id', 'score', 'completed_at', 'quiz_id', 'quiz_title', 'lesson_title', 'course_title', 'mode', 'grading']
     # Метод для получения названия теста с проверкой на существование теста и его связей. Если тест удален, возвращаем заглушку "Тест удален".
     # obj - это экземпляр модели Result, который мы сериализуем. Мы проверяем наличие связанного теста и возвращаем его название или заглушку, если тест удален.
     # self - это экземпляр сериализатора, который позволяет нам использовать методы и поля внутри класса сериализатора. В данном случае мы используем self для вызова метода get_quiz_title внутри сериализатора.

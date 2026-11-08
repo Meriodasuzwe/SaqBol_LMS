@@ -13,17 +13,20 @@ class QuestionInline(admin.StackedInline):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ('title', 'lesson')
+    list_display = ('title', 'lesson', 'mode')
+    list_filter = ('mode',)
     inlines = [QuestionInline]
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('text', 'quiz', 'kt_subject')
+    list_filter = ('kt_subject',)
     inlines = [ChoiceInline]
 
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
-    list_display = ('student', 'recorded_quiz_title', 'score', 'completed_at')
-    readonly_fields = ('completed_at',)
+    list_display = ('student', 'recorded_quiz_title', 'scoring_mode', 'score', 'completed_at')
+    readonly_fields = ('completed_at', 'scoring_mode', 'scoring_details')
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('student', 'quiz', 'detail', 'detail__quiz')

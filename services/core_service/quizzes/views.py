@@ -15,7 +15,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema
 
 from .models import Quiz, Question, Choice, Result
-from .grading import calculate_submission_score
+from .grading import calculate_submission_score, calculate_kt_profile_score
 from analytics.models import QuizAttemptDetail, QuestionAnswer
 # Импорт модели Lesson для получения контента урока при генерации тестов через AI
 from courses.models import Lesson, LessonStep
@@ -30,11 +30,27 @@ from .serializers import (
     BuilderQuizStepSerializer,
 )
 
+def visible_quizzes(user):
+    """Keep legacy access; new profile blocks require publication or authorship."""
+    quizzes = Quiz.objects.all()
+    if not user.is_authenticated:
+        return quizzes.none()
+    if user.is_staff or user.is_superuser or getattr(user, 'role', '') == 'admin':
+        return quizzes
+    return quizzes.filter(
+        Q(mode=Quiz.Mode.TRAINING)
+        | Q(lesson__course__status='published')
+        | Q(lesson__course__teacher=user)
+    )
+
+
 # 1. ОБЫЧНЫЙ СПИСОК (для админки или общих целей)
 class QuizListView(generics.ListAPIView):
-    queryset = Quiz.objects.all().order_by('-id')
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return visible_quizzes(self.request.user).order_by('-id')
 
 # 2. Получение тестов по конкретному уроку
 class QuizByLessonView(generics.ListAPIView):
@@ -44,14 +60,16 @@ class QuizByLessonView(generics.ListAPIView):
     def get_queryset(self):
         lesson_id = self.kwargs.get('lesson_id')
         if lesson_id:
-            return Quiz.objects.filter(lesson_id=lesson_id).order_by('id')
+            return visible_quizzes(self.request.user).filter(lesson_id=lesson_id).order_by('id')
         return Quiz.objects.none()
 
 # 3. Детальный просмотр теста по ID теста
 class QuizDetailView(generics.RetrieveAPIView):
-    queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return visible_quizzes(self.request.user)
 
 # 4. Сдача теста
 class QuizSubmitView(APIView):
@@ -99,10 +117,17 @@ class QuizSubmitView(APIView):
             if existing is not None:
                 return self.replay_submission(existing, answers, fingerprint)
 
+        quiz = Quiz.objects.select_related('lesson__course').filter(pk=quiz_id).first()
+        is_kt_profile = quiz is not None and quiz.mode == Quiz.Mode.KT_PROFILE
+        if is_kt_profile and not visible_quizzes(request.user).filter(pk=quiz_id).exists():
+            raise PermissionDenied('Этот пробник ещё не опубликован.')
+
         # Grade and snapshot the same materialized version of each question/choice.
         questions = list(Question.objects.filter(quiz_id=quiz_id).select_related('quiz').order_by('id').prefetch_related(
             Prefetch('choices', queryset=Choice.objects.order_by('id')),
         ))
+        if is_kt_profile:
+            questions.sort(key=lambda question: (question.kt_subject, question.pk))
         question_choices = {
             question.id: {choice.id: choice.is_correct for choice in question.choices.all()}
             for question in questions
@@ -115,20 +140,51 @@ class QuizSubmitView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         answers = serializer.validated_data['answers']
-        response_data = calculate_submission_score(question_choices, answers)
-        is_correct_by_question = response_data.pop('is_correct_by_question')
+        if is_kt_profile:
+            if any(question.kt_subject not in Question.KTSubject.values for question in questions):
+                raise ValidationError({'error': 'Для каждого вопроса пробника должен быть указан профильный предмет.'})
+            first_subject = {q.pk: question_choices[q.pk] for q in questions if q.kt_subject == Question.KTSubject.FIRST}
+            second_subject = {q.pk: question_choices[q.pk] for q in questions if q.kt_subject == Question.KTSubject.SECOND}
+            if any(answer['question_id'] in first_subject and len(answer['choice_ids']) > 1 for answer in answers):
+                raise ValidationError({'answers': 'В первом профильном предмете можно выбрать только один вариант.'})
+            try:
+                grading = calculate_kt_profile_score(first_subject, second_subject, answers)
+            except ValueError as error:
+                raise ValidationError({
+                    'error': 'Пробник настроен некорректно: нужны 30 вопросов с одним правильным ответом '
+                             'и 20 вопросов с 1–3 правильными ответами.',
+                }) from error
+            is_correct_by_question = {qid: item['is_correct'] for qid, item in grading['questions'].items()}
+            response_data = {
+                'score': grading['earned_points'] * 100 // grading['max_points'],
+                'correct_count': sum(is_correct_by_question.values()),
+                'total_questions': len(questions),
+                'correct_answers_ids': {qid: [cid for cid, correct in choices.items() if correct]
+                                        for qid, choices in question_choices.items()},
+                'mode': Quiz.Mode.KT_PROFILE,
+                'grading': grading,
+                'explanations': {q.pk: q.explanation for q in questions},
+            }
+        else:
+            response_data = calculate_submission_score(question_choices, answers)
+            is_correct_by_question = response_data.pop('is_correct_by_question')
         selected_by_question = {answer['question_id']: answer['choice_ids'] for answer in answers}
+        result_values = {'score': response_data['score']}
+        quiz_snapshot = {'id': quiz_id, 'title': quiz.title}
+        if is_kt_profile:
+            result_values.update(scoring_mode=Quiz.Mode.KT_PROFILE, scoring_details=grading)
+            quiz_snapshot.update(mode=Quiz.Mode.KT_PROFILE, scoring_version=grading['scoring_version'])
 
         # Validate and grade before writing; all three tables commit together.
         if submission_id is None:
             # Older clients remain compatible, but cannot deduplicate without an ID.
-            result = Result.objects.create(student=request.user, quiz_id=quiz_id, score=response_data['score'])
+            result = Result.objects.create(student=request.user, quiz_id=quiz_id, **result_values)
         else:
             # The unique DB constraint arbitrates simultaneous requests. get_or_create
             # uses an inner savepoint, then reads the winner after its transaction commits.
             result, created = Result.objects.get_or_create(
                 student=request.user, quiz_id=quiz_id, submission_id=submission_id,
-                defaults={'score': response_data['score'], 'submission_fingerprint': fingerprint},
+                defaults={**result_values, 'submission_fingerprint': fingerprint},
             )
             if not created:
                 return self.replay_submission(result, answers, fingerprint)
@@ -136,7 +192,7 @@ class QuizSubmitView(APIView):
             student=request.user,
             quiz_id=quiz_id,
             result=result,
-            quiz_snapshot={'id': quiz_id, 'title': questions[0].quiz.title},
+            quiz_snapshot=quiz_snapshot,
             score=response_data['score'],
             total_questions=response_data['total_questions'],
             correct_answers=response_data['correct_count'],
@@ -146,17 +202,22 @@ class QuizSubmitView(APIView):
         for position, question in enumerate(questions):
             question_id = question.pk
             selected = selected_by_question.get(question_id, [])
+            question_snapshot = {
+                'id': question_id,
+                'position': position,
+                'text': question.text,
+                'explanation': question.explanation,
+                'choices': [{'id': choice.pk, 'text': choice.text} for choice in question.choices.all()],
+                'correct_choice_ids': response_data['correct_answers_ids'][question_id],
+            }
+            if is_kt_profile:
+                points = grading['questions'][question_id]
+                question_snapshot.update(kt_subject=question.kt_subject,
+                                         earned_points=points['earned_points'], max_points=points['max_points'])
             answers_to_create.append(QuestionAnswer(
                 attempt=attempt,
                 question_id=question_id,
-                question_snapshot={
-                    'id': question_id,
-                    'position': position,
-                    'text': question.text,
-                    'explanation': question.explanation,
-                    'choices': [{'id': choice.pk, 'text': choice.text} for choice in question.choices.all()],
-                    'correct_choice_ids': response_data['correct_answers_ids'][question_id],
-                },
+                question_snapshot=question_snapshot,
                 selected_choice_ids=selected,
                 selected_choice_id=selected[0] if selected else None,
                 is_correct=is_correct_by_question[question_id],
@@ -271,6 +332,9 @@ class SaveGeneratedView(APIView):
         elif quiz_id:
             quiz = get_object_or_404(Quiz.objects.select_for_update(), id=quiz_id, lesson=lesson)
 
+        if quiz is not None and quiz.mode == Quiz.Mode.KT_PROFILE:
+            raise ValidationError({'quiz_id': 'Профильный пробник редактируется в админке с указанием предметов; '
+                                              'обычный конструктор пока не поддерживает этот формат.'})
         if quiz is not None:
             if quiz_title:
                 quiz.title = quiz_title

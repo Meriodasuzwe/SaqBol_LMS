@@ -17,6 +17,7 @@ import VerifyEmail from './VerifyEmail';
 import CourseList from './CourseList';
 import CourseDetail from './CourseDetail';
 import QuizPage from './QuizPage';
+import ExamPage from './exams/ExamPage';
 import Profile from './Profile';
 import VerifyCertificate from './VerifyCertificate';
 import LessonPage from './LessonPage';
@@ -38,6 +39,7 @@ import CorporateDashboard from './CorporateDashboard';
 function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }) {
   const location = useLocation();
   const isLanding = location.pathname === '/';
+  const isExam = location.pathname === '/exams' || location.pathname.startsWith('/exams/');
   
   const { t } = useTranslation(); 
 
@@ -56,7 +58,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
           </Routes>
         </main>
       ) : (
-        <main className="container mx-auto p-4 lg:p-8 flex-grow">
+        <main className={isExam ? "exam-app-main flex-grow min-w-0" : "container mx-auto p-4 lg:p-8 flex-grow"}>
           <Routes>
             <Route path="/login" element={
               !isLoggedIn ? <Login onLoginSuccess={onLoginSuccess} /> : <Navigate to="/courses" />
@@ -76,6 +78,18 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             } />
             <Route path="/quiz/lesson/:lessonId" element={
               isLoggedIn ? <QuizPage /> : <Navigate to="/login" />
+            } />
+            <Route path="/exams" element={
+              isLoggedIn ? <ExamPage /> : <Navigate to="/login" />
+            } />
+            <Route path="/exams/attempts/:attemptId" element={
+              isLoggedIn ? <ExamPage /> : <Navigate to="/login" />
+            } />
+            <Route path="/exams/attempts/:attemptId/result" element={
+              isLoggedIn ? <ExamPage /> : <Navigate to="/login" />
+            } />
+            <Route path="/exams/attempts/:attemptId/review" element={
+              isLoggedIn ? <ExamPage /> : <Navigate to="/login" />
             } />
             <Route path="/profile" element={
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
@@ -114,7 +128,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
       )}
 
       {/* 🔥 ФУТЕР 🔥 */}
-      <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {!isExam && <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-14">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-1">
@@ -171,8 +185,8 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
             </div>
           </div>
         </div>
-      </footer>
-      <BugReportWidget />
+      </footer>}
+      {!isExam && <BugReportWidget />}
     </div>
   );
 }
