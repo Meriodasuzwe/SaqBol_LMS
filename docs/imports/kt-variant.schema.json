@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SAQBol fixed KT variant v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "package_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "example_only": {
+      "type": "boolean"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 50,
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/$defs/question"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "kt_subject": {
+                "const": "first_subject"
+              }
+            },
+            "required": [
+              "kt_subject"
+            ]
+          },
+          "minContains": 30,
+          "maxContains": 30
+        },
+        {
+          "contains": {
+            "properties": {
+              "kt_subject": {
+                "const": "second_subject"
+              }
+            },
+            "required": [
+              "kt_subject"
+            ]
+          },
+          "minContains": 20,
+          "maxContains": 20
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_id",
+    "example_only",
+    "sources",
+    "questions"
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "file_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "id",
+        "title"
+      ]
+    },
+    "choice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ]
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kt_subject": {
+          "enum": [
+            "first_subject",
+            "second_subject"
+          ]
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "location": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "id",
+            "location"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "choices": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/choice"
+          }
+        },
+        "correct_choice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "explanation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "kt_subject",
+        "source",
+        "text",
+        "choices",
+        "correct_choice_ids",
+        "explanation"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kt_subject": {
+                "const": "first_subject"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "correct_choice_ids": {
+                "maxItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

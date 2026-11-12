@@ -21,6 +21,15 @@ _PROFILE = {
 
 def configurations():
     profile = deepcopy(_PROFILE)
+    kazakh = {
+        **deepcopy(_PROFILE), 'id': 'm094_profile_kk_v1', 'language': 'kk',
+        'program': {'code': 'M094', 'title': 'Ақпараттық технологиялар'},
+        'title': 'Бейіндік магистратура · M094',
+        'sections': [
+            {**deepcopy(_PROFILE_SECTIONS[0]), 'title': 'Алгоритмдер және деректер құрылымы'},
+            {**deepcopy(_PROFILE_SECTIONS[1]), 'title': 'Деректер базасы'},
+        ],
+    }
     scientific = {
         **deepcopy(_PROFILE), 'id': 'm094_scientific_ru_v1', 'format': 'scientific',
         'title': 'Научно-педагогическая магистратура · M094', 'duration_seconds': 14100,
@@ -39,7 +48,7 @@ def configurations():
     }
     if not getattr(settings, 'EXAM_DEMO_ENABLED', False):
         demo['unavailable_reason'] = 'Техническая демонстрация отключена в этом окружении.'
-    return [profile, scientific, demo]
+    return [profile, kazakh, scientific, demo]
 
 
 def get_configuration(key):

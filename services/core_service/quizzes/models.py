@@ -48,6 +48,17 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class QuizImportReceipt(models.Model):
+    """Import provenance only; questions remain in Quiz/Question/Choice."""
+    quiz = models.OneToOneField(Quiz, on_delete=models.CASCADE, related_name='import_receipt')
+    package_id = models.CharField(max_length=128, unique=True)
+    package_checksum = models.CharField(max_length=64)
+    content_checksum = models.CharField(max_length=64)
+    manifest = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
 # Модель для хранения результатов прохождения тестов студентами. Каждый результат связан с конкретным студентом и тестом через внешние ключи. Поля включают набранные баллы в процентах и дату завершения теста.
 class Result(models.Model):
     # Связь с пользователем через внешний ключ с каскадным удалением и related name для получения всех результатов студента verbose_name для админки

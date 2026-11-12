@@ -35,6 +35,7 @@ _fixture_spec.loader.exec_module(_fixture)
 
 pytestmark = pytest.mark.django_db
 CONFIG = 'm094_profile_ru_v1'
+KAZAKH_CONFIG = 'm094_profile_kk_v1'
 DEMO = 'm094_profile_ru_demo_v1'
 SCIENTIFIC = 'm094_scientific_ru_v1'
 
@@ -134,6 +135,73 @@ def test_exam_catalog_route_exists_and_reading_it_creates_nothing():
     assert history_counts() == (0, 0, 0)
 
 
+def test_exam_catalog_keeps_russian_and_adds_separately_bound_kazakh_profile(graph):
+    response = graph.client.get('/exams/configurations/')
+    assert response.status_code == 200
+    configs = {item['id']: item for item in response.json()}
+    assert set(configs) == {CONFIG, KAZAKH_CONFIG, SCIENTIFIC, DEMO}
+    russian, kazakh = configs[CONFIG], configs[KAZAKH_CONFIG]
+    assert russian['language'] == 'ru' and russian['available'] is True
+    assert kazakh['language'] == 'kk' and kazakh['available'] is False
+    assert kazakh['unavailable_reason']
+    assert russian['title'] == 'Профильная магистратура · M094'
+    assert kazakh['title'] == 'Бейіндік магистратура · M094'
+    assert kazakh['program'] == {'code': 'M094', 'title': 'Ақпараттық технологиялар'}
+    assert [section['title'] for section in kazakh['sections']] == [
+        'Алгоритмдер және деректер құрылымы', 'Деректер базасы',
+    ]
+    for field in ('version', 'format', 'duration_seconds', 'total_questions', 'max_points',
+                  'scoring_version', 'is_demo'):
+        assert kazakh[field] == russian[field]
+    assert [{key: section[key] for key in ('id', 'response_type', 'question_count', 'max_points')}
+            for section in kazakh['sections']] == [
+        {key: section[key] for key in ('id', 'response_type', 'question_count', 'max_points')}
+        for section in russian['sections']
+    ]
+    assert attempt_model().objects.count() == 0
+    assert history_counts() == (0, 0, 0)
+
+
+def test_exam_kazakh_profile_never_falls_back_to_russian_source(graph):
+    response = start(graph, configuration_id=KAZAKH_CONFIG)
+    assert response.status_code == 400
+    assert 'опубликованного набора' in str(response.data)
+    assert attempt_model().objects.count() == 0
+    assert history_counts() == (0, 0, 0)
+
+
+def test_exam_kazakh_profile_preserves_language_and_existing_scoring_in_attempt(graph):
+    Quiz.objects.filter(pk=graph.quiz.pk).update(exam_configuration_key=KAZAKH_CONFIG)
+    catalog = graph.client.get('/exams/configurations/').json()
+    configs = {item['id']: item for item in catalog}
+    assert configs[KAZAKH_CONFIG]['available'] is True
+    assert configs[CONFIG]['available'] is False
+    response = start(graph, configuration_id=KAZAKH_CONFIG)
+    assert response.status_code == 201, response.data
+    data = response.json()
+    assert data['configuration']['id'] == KAZAKH_CONFIG
+    assert data['configuration']['language'] == 'kk'
+    assert parse_datetime(data['deadline']) - parse_datetime(data['started_at']) == timedelta(minutes=100)
+    assert [len(section['questions']) for section in data['sections']] == [30, 20]
+    assert_no_solutions(data)
+    stored = attempt_model().objects.get(pk=data['id'])
+    assert stored.configuration_key == KAZAKH_CONFIG
+    assert stored.configuration_snapshot == data['configuration']
+    url = f"/exams/attempts/{data['id']}/"
+    completed = graph.client.post(url + 'finish/', mutation(all_answers(graph)), format='json')
+    assert completed.status_code == 200, completed.data
+    assert completed.json()['result']['grading']['earned_points'] == 70
+    assert completed.json()['result']['grading']['max_points'] == 70
+    # Relabelling the live source cannot relabel an already recorded attempt.
+    Quiz.objects.filter(pk=graph.quiz.pk).update(exam_configuration_key=CONFIG)
+    reviewed = graph.client.get(url + 'review/')
+    assert reviewed.status_code == 200
+    assert reviewed.json()['configuration']['language'] == 'kk'
+    history = graph.client.get('/exams/attempts/', {'status': 'completed'}).json()['results']
+    assert len(history) == 1 and history[0]['configuration']['id'] == KAZAKH_CONFIG
+    assert history_counts() == (1, 1, 50)
+
+
 def test_exam_start_creates_only_active_attempt_and_hides_solution(graph):
     data, _ = opened(graph)
     stored = attempt_model().objects.get(pk=data['id'])
@@ -211,8 +279,10 @@ def test_exam_explicit_new_start_uses_new_attempt_without_erasing_old(graph):
     assert state()['QuestionAnswer'] == before['QuestionAnswer']
 
 
+@pytest.mark.parametrize('configuration_id', [CONFIG, KAZAKH_CONFIG])
 @pytest.mark.parametrize('case', ['no_binding', 'draft', 'wrong_mode', 'ambiguous', 'wrong_count', 'unassigned_section', 'invalid_key'])
-def test_exam_unavailable_or_invalid_source_cannot_create_attempt(graph, case):
+def test_exam_unavailable_or_invalid_source_cannot_create_attempt(graph, case, configuration_id):
+    Quiz.objects.filter(pk=graph.quiz.pk).update(exam_configuration_key=configuration_id)
     if case == 'no_binding':
         Quiz.objects.filter(pk=graph.quiz.pk).update(exam_configuration_key='')
     elif case == 'draft':
@@ -221,14 +291,14 @@ def test_exam_unavailable_or_invalid_source_cannot_create_attempt(graph, case):
         Quiz.objects.filter(pk=graph.quiz.pk).update(mode='training')
     elif case == 'ambiguous':
         duplicate, _ = _fixture.create_profile_quiz(graph.lesson)
-        Quiz.objects.filter(pk=duplicate.pk).update(exam_configuration_key=CONFIG)
+        Quiz.objects.filter(pk=duplicate.pk).update(exam_configuration_key=configuration_id)
     elif case == 'wrong_count':
         graph.items[-1]['question'].delete()
     elif case == 'unassigned_section':
         Question.objects.filter(pk=graph.items[0]['question'].pk).update(kt_subject='')
     else:
         Choice.objects.filter(question=graph.items[0]['question']).update(is_correct=False)
-    response = start(graph)
+    response = start(graph, configuration_id=configuration_id)
     assert response.status_code in (400, 409), response.data
     assert attempt_model().objects.count() == 0
     assert history_counts() == (0, 0, 0)
