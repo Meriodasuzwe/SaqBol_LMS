@@ -84,7 +84,7 @@ const StepEditor = ({
             )}
 
             {/* ТЕСТ (КВИЗ) */}
-            {activeStep.step_type === 'quiz' && <QuizGenerator {...quizProps} />}
+            {activeStep.step_type === 'quiz' && <QuizGenerator key={activeStep.id} {...quizProps} />}
 
             {/* ТРЕНАЖЕР КОДА */}
             {activeStep.step_type === 'interactive_code' && <CodeEditor activeStep={activeStep} setActiveStep={setActiveStep} />}

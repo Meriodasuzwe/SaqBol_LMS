@@ -1,3 +1,5 @@
+import ExamDraftPage from './question-bank/ExamDraftPage';
+import QuestionBankPage from './question-bank/QuestionBankPage';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from './api';
@@ -95,6 +97,8 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
               isLoggedIn ? <Profile /> : <Navigate to="/login" />
             } />
             <Route path="/verify/:certId" element={<VerifyCertificate />} />
+            <Route path="/teacher/exam-drafts" element={isLoggedIn ? (isTeacher ? <ExamDraftPage /> : <Navigate to="/courses" />) : <Navigate to="/login" />} />
+            <Route path="/teacher/question-bank" element={isLoggedIn ? (isTeacher ? <QuestionBankPage /> : <Navigate to="/courses" />) : <Navigate to="/login" />} />
             <Route path="/teacher/course/:courseId/builder" element={
               isLoggedIn ? (
                 isTeacher ? <CourseBuilder /> : <Navigate to="/courses" />

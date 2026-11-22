@@ -289,3 +289,26 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
     connections.close_all()
     print(json.dumps({'database': 'disposable PostgreSQL 15', 'migrations': 'applied; no model drift',
                       'cases': observations}, ensure_ascii=False, indent=2))
+
+    # The new draft endpoint serializes retries on the author's row.
+    from uuid import uuid4
+    from quizzes.models import BankQuestion, ExamDraft
+    from quizzes.exam_drafts import assemble
+    from threading import Barrier
+    questions=[BankQuestion(owner=teacher,subject='first_subject' if i<30 else 'second_subject',topic='Artificial PG assembly',language='kk',usage='exam',text=f'Artificial {i}',explanation='',choices=[{'id':str(uuid4()),'text':'A','is_correct':True},{'id':str(uuid4()),'text':'B','is_correct':False}]) for i in range(50)]
+    BankQuestion.objects.bulk_create(questions)
+    draft_body={'request_id':str(uuid4()),'title':'Artificial concurrent draft','language':'kk','questions':[{'id':q.pk,'revision':1} for q in questions]}
+    gate=Barrier(2)
+    def create_draft():
+        close_old_connections()
+        try:
+            gate.wait(timeout=10)
+            item,created=assemble(teacher,copy.deepcopy(draft_body))
+            return item.pk,created
+        finally:
+            connections.close_all()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results=list(pool.map(lambda _:create_draft(),range(2)))
+    assert results[0][0]==results[1][0] and sorted(x[1] for x in results)==[False,True]
+    assert ExamDraft.objects.count()==1
+    print(json.dumps({'exam_draft_concurrent_retry':'passed','drafts':1,'questions':len(ExamDraft.objects.get().snapshot['questions'])}))

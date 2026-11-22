@@ -121,7 +121,9 @@ def validate_package(data):
     choice_number = 1
     for index, question in enumerate(data['questions']):
         path = f'questions[{index}]'
-        _object(question, path, ('id', 'kt_subject', 'source', 'text', 'choices', 'correct_choice_ids', 'explanation'))
+        _object(question, path, ('id', 'kt_subject', 'source', 'text', 'choices', 'correct_choice_ids', 'explanation'), ('topic',))
+        if 'topic' in question:
+            _text(question['topic'], f'{path}.topic', limit=255, empty=True)
         _identifier(question['id'], f'{path}.id')
         path += f' ({question["id"]})'
         if question['id'] in seen:
@@ -211,7 +213,7 @@ def _content(quiz, *, lock=False):
     questions = Question.objects.filter(quiz_id=quiz.pk).order_by('id')
     if lock:
         questions = questions.select_for_update()
-    rows = list(questions.values('id', 'kt_subject', 'text', 'explanation'))
+    rows = list(questions.values('id', 'kt_subject', 'text', 'explanation', 'topic'))
     choices = Choice.objects.filter(question_id__in=[row['id'] for row in rows]).order_by('id')
     if lock:
         choices = choices.select_for_update()
@@ -219,6 +221,9 @@ def _content(quiz, *, lock=False):
     for option in choices.values('id', 'question_id', 'text', 'is_correct'):
         by_question[option.pop('question_id')].append(option)
     for row in rows:
+        # Keep pre-topic receipts verifiable: empty metadata was never hashed.
+        if not row['topic']:
+            row.pop('topic')
         row['choices'] = by_question[row['id']]
     return {
         'schema_version': 1,
@@ -301,6 +306,7 @@ def import_variant(package, quiz_id, *, apply=False):
             for incoming in package['questions']:
                 question = Question.objects.create(
                     quiz=quiz, kt_subject=incoming['kt_subject'], text=incoming['text'],
+                    topic=incoming.get('topic', ''),
                     explanation=incoming['explanation'],  # None is SQL NULL, not an empty string.
                 )
                 for option in incoming['choices']:

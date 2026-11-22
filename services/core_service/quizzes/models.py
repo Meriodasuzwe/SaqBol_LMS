@@ -29,6 +29,7 @@ class Question(models.Model):
         FIRST = 'first_subject', 'Первый профильный предмет'
         SECOND = 'second_subject', 'Второй профильный предмет'
 
+    topic = models.CharField(max_length=255, blank=True, default='', verbose_name='Тема')
     kt_subject = models.CharField(max_length=20, choices=KTSubject.choices, blank=True, default='')
     # Связь с тестом через внешний ключ с каскадным удалением и related name для получения всех вопросов теста verbose_name для админки
     quiz = models.ForeignKey(Quiz, related_name='questions', on_delete=models.CASCADE)
@@ -129,3 +130,37 @@ class ExamAttempt(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(fields=['student', 'start_id'], name='unique_student_exam_start')]
         indexes = [models.Index(fields=['status', 'deadline'], name='exam_status_deadline_idx')]
+
+
+class BankQuestion(models.Model):
+    """Author-owned draft, independent of course quizzes and exam snapshots."""
+    class Usage(models.TextChoices):
+        EXAM = 'exam', 'Пробники'
+        TRAINING = 'training', 'Тренировки'
+        BOTH = 'both', 'Тренировки и пробники'
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=20, choices=Question.KTSubject.choices)
+    topic = models.CharField(max_length=255)
+    language = models.CharField(max_length=2, choices=[('ru', 'Русский'), ('kk', 'Қазақша')])
+    usage = models.CharField(max_length=10, choices=Usage.choices, default=Usage.EXAM)
+    text = models.TextField()
+    explanation = models.TextField(blank=True, default='')
+    choices = models.JSONField(default=list)
+    revision = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ExamDraft(models.Model):
+    """Immutable author-owned 30+20 snapshot; not a published exam source."""
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    request_id = models.UUIDField()
+    fingerprint = models.CharField(max_length=64)
+    title = models.CharField(max_length=255)
+    language = models.CharField(max_length=2, choices=[('ru', 'Русский'), ('kk', 'Қазақша')])
+    snapshot = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['owner', 'request_id'], name='unique_exam_draft_request')]
