@@ -717,3 +717,67 @@ def test_command_turns_package_and_target_errors_into_command_errors(graph, pack
     with pytest.raises(CommandError):
         call_command('import_kt_variant', str(path), '--quiz-id', str(graph.quiz.pk), '--apply', stdout=StringIO())
     assert snapshot() == before
+
+
+@pytest.mark.parametrize('topic', ['SQL: выборка и фильтрация', 'Құрылымдар', '', '  Exact topic  ', 'x' * 255])
+def test_import_preserves_optional_topic_and_repeat(graph, package, topic):
+    package['questions'][0]['topic'] = topic
+    assert validate_package(package) == package
+    imported = import_variant(package, graph.quiz.pk, apply=True)
+    saved = graph.quiz.questions.order_by('pk').first()
+    assert saved.topic == topic
+    assert graph.quiz.questions.filter(topic=topic).exists()
+    before = snapshot()
+    assert import_variant(package, graph.quiz.pk, apply=True)['status'] == 'already_loaded'
+    assert snapshot() == before
+    assert imported['status'] == 'imported'
+
+
+@pytest.mark.parametrize('topic', [None, 1, True, [], {}, 'x' * 256, 'bad\x00topic'])
+def test_invalid_topic_rejects_entire_package_without_writes(graph, package, topic):
+    package['questions'][1]['topic'] = topic
+    before = snapshot()
+    with pytest.raises(PackageError, match='topic'):
+        import_variant(package, graph.quiz.pk, apply=True)
+    assert snapshot() == before
+
+
+def test_legacy_package_and_receipt_keep_pre_topic_fingerprint(graph, package):
+    from quizzes.kt_variant_import import checksum
+    assert all('topic' not in q for q in package['questions'])
+    report = import_variant(package, graph.quiz.pk, apply=True)
+    assert set(graph.quiz.questions.values_list('topic', flat=True)) == {''}
+    # Reconstruct the exact pre-topic representation independently of _content.
+    rows = []
+    for question in graph.quiz.questions.order_by('id'):
+        rows.append({
+            'id': question.pk, 'kt_subject': question.kt_subject,
+            'text': question.text, 'explanation': question.explanation,
+            'choices': list(question.choices.order_by('id').values('id', 'text', 'is_correct')),
+        })
+    legacy_content = {
+        'schema_version': 1,
+        'quiz': {key: getattr(graph.quiz, key) for key in ('id', 'lesson_id', 'mode', 'title', 'description')},
+        'questions': rows,
+    }
+    assert report['content_checksum'] == checksum(legacy_content)
+    assert import_variant(package, graph.quiz.pk)['status'] == 'already_loaded'
+
+
+@pytest.mark.parametrize('original,changed', [('', 'SQL'), ('SQL', 'Trees'), ('SQL', '')])
+def test_changed_topic_conflicts_without_overwrite(graph, package, original, changed):
+    package['questions'][0]['topic'] = original
+    import_variant(package, graph.quiz.pk, apply=True)
+    saved = graph.quiz.questions.order_by('pk').first()
+    saved.topic = changed
+    saved.save(update_fields=['topic'])
+    before = snapshot()
+    with pytest.raises(ImportConflict, match='content_checksum'):
+        import_variant(package, graph.quiz.pk, apply=True)
+    assert snapshot() == before
+
+
+def test_new_questions_default_to_unassigned_topic(graph):
+    question = Question.objects.create(quiz=graph.training, text='Synthetic unassigned question')
+    question.refresh_from_db()
+    assert question.topic == ''

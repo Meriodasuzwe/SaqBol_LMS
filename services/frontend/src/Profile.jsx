@@ -379,6 +379,7 @@ function Profile() {
                 {/* ПРАВАЯ КОЛОНКА */}
                 <div className="xl:col-span-2 space-y-6">
                     
+                    {isTeacher && <Link to="/teacher/question-bank" className="btn btn-outline">{i18n.language?.startsWith('kk') ? 'Сұрақтар банкі' : i18n.language?.startsWith('en') ? 'Question bank' : 'Банк вопросов'}</Link>}
                     {/* 🔥 БЛОК 1: УПРАВЛЕНИЕ КУРСАМИ (ТОЛЬКО ДЛЯ УЧИТЕЛЕЙ) 🔥 */}
                     {isTeacher && (
                         <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 sm:p-8">

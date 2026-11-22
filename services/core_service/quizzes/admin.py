@@ -19,7 +19,8 @@ class QuizAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('text', 'quiz', 'kt_subject')
+    list_display = ('text', 'quiz', 'kt_subject', 'topic')
+    search_fields = ('text', 'topic')
     list_filter = ('kt_subject',)
     inlines = [ChoiceInline]
 

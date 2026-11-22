@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import BankQuestionPicker from '../../question-bank/BankQuestionPicker';
+import {appendBankQuestions,pickerCopy} from '../../question-bank/builderBank';
 import { useTranslation } from 'react-i18next';
 import { 
     Plus, Trash2, ChevronDown, 
@@ -8,9 +10,12 @@ import {
 const QuizGenerator = ({ 
     quizQuestions, onQuestionChange, onOptionChange, 
     onCorrectSelect, onAddManual, onDeleteQuestion,
-    onAddOption, onRemoveOption
+    onAddOption, onRemoveOption, setQuizQuestions, bankDisabled = false
 }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const bankCopy = pickerCopy(i18n.resolvedLanguage || i18n.language);
+    const [showBank,setShowBank] = useState(false);
+    const [bankMessage,setBankMessage] = useState('');
     const questions = Array.isArray(quizQuestions) ? quizQuestions : [];
     
     const [collapsedQs, setCollapsedQs] = useState({});
@@ -24,16 +29,21 @@ const QuizGenerator = ({
             
             {/* === РЕДАКТОР ВОПРОСОВ === */}
             <div>
-                <div className="flex justify-between items-center mb-4 px-1">
+                <div className="flex flex-wrap gap-3 justify-between items-center mb-4 px-1">
                     <h3 className="text-lg font-black text-base-content flex items-center gap-2">
                         <HelpCircle size={18} className="text-blue-600" />
                         {t('builder.quizQuestionsTitle', 'Вопросы теста')}
                         <span className="bg-base-200 text-base-content/60 text-xs px-2 py-0.5 rounded-full">{questions.length}</span>
                     </h3>
+                    <div className="flex flex-wrap gap-2">
+                    {setQuizQuestions && <button type="button" disabled={bankDisabled} className="btn btn-sm btn-outline border-blue-600 text-blue-600" onClick={()=>{setShowBank(v=>!v);setBankMessage('')}} aria-expanded={showBank}>{showBank?bankCopy.close:bankCopy.open}</button>}
                     <button className="text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors" onClick={onAddManual}>
                         <Plus size={14} strokeWidth={2.5} /> {t('builder.addBtn', 'Добавить')}
                     </button>
+                    </div>
                 </div>
+                {bankMessage && <p className="text-sm mb-4" role="status">{bankMessage}</p>}
+                {showBank && !bankDisabled && <BankQuestionPicker existingIds={questions.map(q=>q.bank_id).filter(Boolean)} onAdd={items=>{setQuizQuestions(current=>appendBankQuestions(current||[],items));setShowBank(false);setBankMessage(bankCopy.added)}} onClose={()=>setShowBank(false)} />}
 
                 {questions.length === 0 ? (
                     <div className="bg-base-100 border-2 border-dashed border-base-300 rounded-2xl p-10 text-center flex flex-col items-center">

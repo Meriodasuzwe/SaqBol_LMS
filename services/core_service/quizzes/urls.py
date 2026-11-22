@@ -1,3 +1,5 @@
+from .exam_drafts import ExamDraftList, ExamDraftDetail
+from .question_bank import BankList, BankDetail, BankMetadata
 from django.urls import path
 from .views import (
     QuizListView, # Общий список тестов, может использоваться для админки или общих целей
@@ -10,6 +12,11 @@ from .views import (
 )
 # Здесь будут определены все URL для тестов
 urlpatterns = [
+    path('exam-drafts/', ExamDraftList.as_view(), name='exam-draft-list'),
+    path('exam-drafts/<int:pk>/', ExamDraftDetail.as_view(), name='exam-draft-detail'),
+    path('bank/', BankList.as_view(), name='question-bank'),
+    path('bank/topics/', BankMetadata.as_view(), name='question-bank-topics'),
+    path('bank/<int:pk>/', BankDetail.as_view(), name='question-bank-detail'),
     # Общий путь для получения всех тестов, может использоваться для админки или общих целей. Этот путь будет обрабатывать URL вида: quizzes/
     path('', QuizListView.as_view(), name='quiz-list'),
     

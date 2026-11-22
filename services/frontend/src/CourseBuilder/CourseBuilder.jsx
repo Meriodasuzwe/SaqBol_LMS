@@ -234,7 +234,7 @@ function CourseBuilder() {
                             correct_answer: correctIdx.map(i => optionsList[i]).join(' | '), 
                             user_selected_index: correctIdx,
                             correct_option_index: correctIdx,
-                            explanation: q.explanation ?? ''
+                            explanation: q.explanation ?? '', ...(q.topic ? {topic:q.topic}:{}), ...(q.kt_subject ? {kt_subject:q.kt_subject}:{})
                         };
                     });
                     setQuizQuestions(mapped);
@@ -339,8 +339,8 @@ function CourseBuilder() {
                     };
                     if (typeof q.question !== 'string' || !q.question.trim()) invalid('question');
                     if (!Array.isArray(q.options) || q.options.some(option => typeof option !== 'string')) invalid('options');
-                    const retainedOptions = q.options.map((text, originalIndex) => ({ text: text.trim(), originalIndex }))
-                        .filter(option => option.text.length > 0);
+                    const retainedOptions = q.options.map((text, originalIndex) => ({ text, originalIndex }))
+                        .filter(option => option.text.trim().length > 0);
                     if (retainedOptions.length < 2) invalid('options');
                     if (retainedOptions.some(option => Array.from(option.text).length > 255)) invalid('optionLength');
 
@@ -359,7 +359,8 @@ function CourseBuilder() {
                     const mappedQ = { 
                         question: q.question, options,
                         correct_answer: userIndex.map(i => options[i]).join(' | '), 
-                        correct_index: userIndex, explanation: q.explanation ?? ''
+                        correct_index: userIndex, explanation: q.explanation ?? '',
+                        ...(q.topic ? {topic:q.topic}:{}), ...(q.kt_subject ? {kt_subject:q.kt_subject}:{})
                     };
                     if (q.id) mappedQ.id = q.id; 
                     return mappedQ;
@@ -481,11 +482,11 @@ function CourseBuilder() {
     }
 
     return (
-        <div className="fixed inset-0 top-[var(--navbar-height,64px)] flex w-full overflow-hidden bg-base-100 font-sans text-base-content animate-in fade-in">
+        <div className="fixed inset-0 top-[var(--navbar-height,64px)] flex flex-col md:flex-row w-full overflow-hidden bg-base-100 font-sans text-base-content animate-in fade-in">
             
             {/* === ЛЕВАЯ КОЛОНКА === */}
-            <div className="w-80 bg-base-200/50 border-r border-base-200 flex flex-col h-full shrink-0 z-20">
-                <div className="px-6 py-5 border-b border-base-200 flex justify-between items-center bg-base-100">
+            <div className="w-full md:w-80 max-h-56 md:max-h-none bg-base-200/50 border-b md:border-b-0 md:border-r border-base-200 flex flex-col md:h-full shrink-0 z-20">
+                <div className="px-3 py-2 md:px-6 md:py-5 border-b border-base-200 flex justify-between items-center bg-base-100">
                     <h2 className="font-black text-base-content truncate pr-4 text-lg" title={courseData.title}>
                         {courseData.title || t('builder.courseSettings')}
                     </h2>
@@ -528,7 +529,7 @@ function CourseBuilder() {
                     )}
                 </div>
 
-                <div className="p-4 border-t border-base-200 bg-base-100">
+                <div className="p-2 md:p-4 border-t border-base-200 bg-base-100">
                     <button 
                         className="w-full py-3 border border-base-200 bg-base-100 text-base-content font-bold rounded-xl hover:bg-base-200 hover:border-blue-400 transition-all flex items-center justify-center gap-2 shadow-sm" 
                         onClick={() => setIsLessonModalOpen(true)}
@@ -539,7 +540,7 @@ function CourseBuilder() {
             </div>
 
             {/* === ПРАВАЯ КОЛОНКА === */}
-            <div className="flex-1 flex flex-col min-h-0 bg-base-100 relative">
+            <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-base-100 relative">
                 {isSettingsMode ? (
                     <CourseSettingsTab 
                         courseData={courseData} setCourseData={setCourseData} 
@@ -548,7 +549,7 @@ function CourseBuilder() {
                 ) : activeLesson ? (
                     <>
                         {/* Шапка со шагами — не скроллится */}
-                        <div className="bg-base-200/30 border-b border-base-200 px-8 py-4 flex items-center justify-between z-10 shrink-0">
+                        <div className="bg-base-200/30 border-b border-base-200 px-3 md:px-8 py-4 flex items-center justify-between z-10 shrink-0">
                             <div className="flex items-center gap-3 flex-1 overflow-x-auto no-scrollbar">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2 shrink-0">{t('builder.stepsLabel')}</span>
                                 <div className="flex gap-2 items-center">
@@ -581,14 +582,14 @@ function CourseBuilder() {
                         </div>
 
                         {/* Единый скролл для всего контента */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 bg-base-200/20">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-6 md:p-10 bg-base-200/20">
                             {activeStep ? (
                                 <StepEditor 
                                     activeStep={activeStep} setActiveStep={setActiveStep} 
                                     handleDeleteStep={handleDeleteStep} handleSaveStep={handleSaveStep} 
                                     loading={loading}
                                     quizProps={{
-                                        quizQuestions, setQuizQuestions,
+                                        quizQuestions, setQuizQuestions, bankDisabled: loading || !Array.isArray(quizQuestions),
                                         onQuestionChange: handleQuestionChange, onOptionChange: handleOptionChange,
                                         onCorrectSelect: handleCorrectSelect, onAddManual: handleAddManualQuestion,
                                         onDeleteQuestion: handleDeleteQuestion,

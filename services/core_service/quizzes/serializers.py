@@ -34,7 +34,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True, read_only=True)
     class Meta:
         model = Question
-        fields = ['id', 'text', 'explanation', 'choices', 'kt_subject']
+        fields = ['id', 'text', 'explanation', 'choices', 'kt_subject', 'topic']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -128,9 +128,11 @@ class GeneratePreviewSerializer(serializers.Serializer):
 
 
 class GeneratedQuestionSerializer(serializers.Serializer):
-    question = serializers.CharField()
-    explanation = serializers.CharField(required=False, allow_blank=True, default='')
-    options = serializers.ListField(child=serializers.CharField(max_length=255), min_length=2)
+    topic = serializers.CharField(max_length=255, required=False, allow_blank=True, default='', trim_whitespace=False)
+    kt_subject = serializers.ChoiceField(choices=['', 'first_subject', 'second_subject'], required=False, default='')
+    question = serializers.CharField(trim_whitespace=False)
+    explanation = serializers.CharField(required=False, allow_blank=True, default='', trim_whitespace=False)
+    options = serializers.ListField(child=serializers.CharField(max_length=255, trim_whitespace=False), min_length=2)
     correct_index = serializers.ListField(child=serializers.IntegerField(min_value=0), min_length=1)
 
     def to_internal_value(self, data):
@@ -140,6 +142,10 @@ class GeneratedQuestionSerializer(serializers.Serializer):
         return super().to_internal_value(data)
 
     def validate(self, attrs):
+        if not attrs['question'].strip():
+            raise serializers.ValidationError({'question': 'Введите вопрос.'})
+        if any(not option.strip() for option in attrs['options']):
+            raise serializers.ValidationError({'options': 'Варианты не должны быть пустыми.'})
         if any(index >= len(attrs['options']) for index in attrs['correct_index']):
             raise serializers.ValidationError({'correct_index': 'Индекс ответа вне списка вариантов.'})
         return attrs

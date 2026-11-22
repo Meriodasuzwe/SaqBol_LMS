@@ -348,6 +348,7 @@ class SaveGeneratedView(APIView):
         for item in data['questions']:
             question = Question.objects.create(
                 quiz=quiz, text=item['question'], explanation=item['explanation'],
+                topic=item['topic'], kt_subject=item['kt_subject'],
             )
             Choice.objects.bulk_create([
                 Choice(question=question, text=option, is_correct=index in item['correct_index'])

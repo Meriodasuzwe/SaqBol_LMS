@@ -66,6 +66,8 @@ def main():
             "tests/test_kt_scoring.py",
             "tests/test_kt_integration.py",
             "tests/test_kt_variant_import.py",
+            "tests/test_question_bank.py",
+            "tests/test_exam_drafts.py",
             "tests/test_exam_lifecycle.py",
             "tests/test_sql_selection_fixture.py",
             "tests/fixtures/sql_selection_training.json",
@@ -125,6 +127,8 @@ def main():
             "tests/test_kt_scoring.py",
             "tests/test_kt_integration.py",
             "tests/test_kt_variant_import.py",
+            "tests/test_question_bank.py",
+            "tests/test_exam_drafts.py",
             "tests/test_exam_lifecycle.py",
         ])
 

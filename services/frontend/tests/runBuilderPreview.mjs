@@ -11,6 +11,10 @@ const frontendDirectory = resolve(testsDirectory, '..');
 const previewDirectory = resolve(testsDirectory, 'builder-preview');
 const apiSource = normalizePath(resolve(frontendDirectory, 'src/api'));
 let state = createBuilderFixture();
+const previewPort=Number(process.argv[2]||4177);
+if(!Number.isInteger(previewPort)||previewPort<1024||previewPort>65535)throw new Error('Invalid preview port');
+const previewOrigin='http://127.0.0.1:'+previewPort;
+const bankRows=['training','both','exam'].map((usage,i)=>({id:970+i,revision:1,usage,subject:'second_subject',language:'kk',topic:'Фильтрация и поиск данных в БД',text:'Искусственный вопрос банка '+(i+1)+'\nSELECT 1;',explanation:'Искусственное объяснение банка.',choices:[{id:'option-a',text:'Ответ A',is_correct:true},{id:'option-b',text:'Ответ B',is_correct:false},{id:'option-c',text:'Ответ C',is_correct:true}]}));
 
 function sendJson(response, status, data) {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -35,12 +39,12 @@ const isolatedApi = {
     },
     configureServer(server) {
         server.middlewares.use(async (request, response, next) => {
-            const url = new URL(request.url || '/', 'http://127.0.0.1:4177');
+            const url = new URL(request.url || '/', previewOrigin);
             if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
                 return sendJson(response, 503, { preview_only: true, detail: 'Production API is disabled.' });
             }
             if (!url.pathname.startsWith('/__builder_preview__/')) return next();
-            if (request.headers.origin && request.headers.origin !== 'http://127.0.0.1:4177') {
+            if (request.headers.origin && request.headers.origin !== previewOrigin) {
                 return sendJson(response, 403, { detail: 'Cross-origin preview access is disabled.' });
             }
             if (url.pathname === '/__builder_preview__/state' && request.method === 'GET') {
@@ -56,6 +60,13 @@ const isolatedApi = {
                 state.requests.push({ method: request.method, path, payload });
                 if (state.requests.length > 100) state.requests.shift();
                 if (request.method === 'GET') {
+                    if(path==='/quizzes/bank/topics/') return sendJson(response,200,{topics:{second_subject:['Фильтрация и поиск данных в БД']}});
+                    if(path==='/quizzes/bank/') {
+                        let rows=bankRows.filter(q=>q.usage!=='exam');
+                        for(const field of ['subject','topic'])if(url.searchParams.get(field))rows=rows.filter(q=>q[field]===url.searchParams.get(field));
+                        if(url.searchParams.get('search'))rows=rows.filter(q=>q.text.includes(url.searchParams.get('search')));
+                        return sendJson(response,200,{count:rows.length,results:rows,next:null,previous:null});
+                    }
                     if (path === '/courses/901/') return sendJson(response, 200, state.course);
                     if (path === '/courses/901/lessons/') return sendJson(response, 200, state.lessons);
                     if (path === '/quizzes/lesson/902/') return sendJson(response, 200, state.quizzes);
@@ -68,7 +79,7 @@ const isolatedApi = {
                     // Transport fixture only: no grading or application validation is replaced.
                     // Convert the actual request into the response shape used by the real API.
                     const questions = payload.questions.map(question => ({
-                        id: state.nextId++, text: question.question, explanation: question.explanation,
+                        id: state.nextId++, text: question.question, explanation: question.explanation, topic:question.topic||'', kt_subject:question.kt_subject||'',
                         choices: question.options.map((text, index) => ({
                             id: state.nextId++, text, is_correct: question.correct_index.includes(index),
                         })),
@@ -102,15 +113,15 @@ const server = await createServer({
     root: previewDirectory, publicDir: false, cacheDir: resolve(previewDirectory, '.vite-cache'),
     plugins: [isolatedApi, react(), tailwindcss()],
     server: {
-        host: '127.0.0.1', port: 4177, strictPort: true, open: false,
+        host: '127.0.0.1', port: previewPort, strictPort: true, open: false,
         fs: { allow: [frontendDirectory] },
         headers: {
-            'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws://127.0.0.1:4177; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'",
+            'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws://127.0.0.1:${previewPort}; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'`,
         },
     },
 });
 await server.listen();
-console.log('Isolated actual CourseBuilder: http://127.0.0.1:4177/');
-console.log('Synthetic requests/state: http://127.0.0.1:4177/__builder_preview__/state');
+console.log('Isolated actual CourseBuilder: '+previewOrigin+'/');
+console.log('Synthetic requests/state: '+previewOrigin+'/__builder_preview__/state');
 console.log('No production API, .env, DB, credentials or external services. Data lasts until this process stops.');
 for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, async () => { await server.close(); process.exit(0); });
