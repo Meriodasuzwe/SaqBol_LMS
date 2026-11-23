@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-23T18:05:09.463Z",
+  "title": "Design System: SAQBol landing lab",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Чернильный"
+      },
+      "blue": {
+        "role": "primary",
+        "displayName": "Учебный синий"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Бумага"
+      },
+      "note": {
+        "role": "secondary",
+        "displayName": "Тёплая записка"
+      },
+      "correct": {
+        "role": "secondary",
+        "displayName": "Правильный ответ"
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Клавиатурный фокус"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Hero",
+        "purpose": "Две строки hero; адаптивные размеры описаны в DESIGN.md."
+      },
+      "body": {
+        "displayName": "Текст процесса",
+        "purpose": "Размер конкретного абзаца; не глобальное значение body."
+      }
+    },
+    "shadows": [
+      {
+        "name": "folio",
+        "value": "0 18px 35px #141b3e25",
+        "purpose": "Наклонная обложка поверх фотографии."
+      },
+      {
+        "name": "note",
+        "value": "0 12px 30px #281a1020",
+        "purpose": "Тёплая записка поверх фотографии."
+      }
+    ],
+    "motion": [
+      {
+        "name": "hero-arrival",
+        "value": ".9s cubic-bezier(.16,1,.3,1)",
+        "purpose": "translateY(16px) и blur(3px) переходят в нулевые значения."
+      },
+      {
+        "name": "button",
+        "value": "background .2s, transform .2s",
+        "purpose": "Смена фона и translateY(-2px) при hover."
+      },
+      {
+        "name": "text-link",
+        "value": "color .18s",
+        "purpose": "Навигационные и текстовые ссылки."
+      },
+      {
+        "name": "faq-chevron",
+        "value": "transform .2s",
+        "purpose": "Поворот на 180deg при открытом details."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none; scroll-behavior: auto",
+        "purpose": "При prefers-reduced-motion: reduce; hover-подъём также отключён."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "(min-width: 1600px)"
+      },
+      {
+        "name": "compact-desktop",
+        "value": "(max-width: 1350px)"
+      },
+      {
+        "name": "tablet",
+        "value": "(max-width: 1050px)"
+      },
+      {
+        "name": "single-column",
+        "value": "(max-width: 760px)"
+      },
+      {
+        "name": "small-phone",
+        "value": "(max-width: 380px)"
+      }
+    ],
+    "focus": {
+      "outline": "3px solid #b34916",
+      "outlineOffset": "5px",
+      "radioLabelOutlineOffset": "3px",
+      "targets": "a, button, input, summary; radio label via :has(input:focus-visible)"
+    },
+    "scope": {
+      "path": "services/frontend/tests/landing-lab",
+      "sourceFiles": [
+        "landing.css",
+        "LandingConcept.jsx",
+        "README.md"
+      ],
+      "status": "Current code extracted; reviewer disposition ship for the three scored fixes. Context-engine verification unavailable.",
+      "globalIdentity": false
+    }
+  },
+  "components": [
+    {
+      "name": "Blue action",
+      "kind": "button",
+      "refersTo": "button-blue",
+      "description": "Hero anchor leading to the local practice section.",
+      "html": "<a class=\"ds-button ds-button-blue\" href=\"#practice\">Попробовать <svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 7h10v10M7 17 17 7\"/></svg></a>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:space-between;gap:28px;min-height:56px;padding:17px 22px;border-radius:5px;background:#171f30;color:#fff;border:0;font-family:Onest,Arial,sans-serif;font-size:13px;font-weight:550;line-height:1.5;text-decoration:none;cursor:pointer;transition:background .2s,transform .2s}.ds-button:hover{background:#293248;transform:translateY(-2px)}.ds-button:focus-visible{outline:3px solid #b34916;outline-offset:5px}.ds-button:disabled{cursor:not-allowed;opacity:.45}.ds-button-blue{background:#293cd7}.ds-button-blue:hover{background:#1b2cb1}@media(max-width:1350px){.ds-button{gap:20px}}@media(max-width:380px){.ds-button{font-size:12px;padding:15px 18px;gap:18px}}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}.ds-button:hover{transform:none}}"
+    },
+    {
+      "name": "Ink action",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Base action styling shared by the local submit and platform link.",
+      "html": "<button class=\"ds-button\" type=\"button\">Открыть платформу <svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 7h10v10M7 17 17 7\"/></svg></button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:space-between;gap:28px;min-height:56px;padding:17px 22px;border-radius:5px;background:#171f30;color:#fff;border:0;font-family:Onest,Arial,sans-serif;font-size:13px;font-weight:550;line-height:1.5;text-decoration:none;cursor:pointer;transition:background .2s,transform .2s}.ds-button:hover{background:#293248;transform:translateY(-2px)}.ds-button:focus-visible{outline:3px solid #b34916;outline-offset:5px}.ds-button:disabled{cursor:not-allowed;opacity:.45}.ds-button-blue{background:#293cd7}.ds-button-blue:hover{background:#1b2cb1}@media(max-width:1350px){.ds-button{gap:20px}}@media(max-width:380px){.ds-button{font-size:12px;padding:15px 18px;gap:18px}}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}.ds-button:hover{transform:none}}"
+    },
+    {
+      "name": "Answer option",
+      "kind": "input",
+      "refersTo": "answer-option",
+      "description": "Native radio; checked state corresponds to the source is-selected class.",
+      "html": "<label class=\"ds-option\"><input type=\"radio\" name=\"ds-answer\" value=\"a\" checked><span class=\"ds-option-letter\">A</span><span>Пример варианта ответа</span></label>",
+      "css": ".ds-option{position:relative;display:flex;align-items:center;gap:12px;padding:13px;border:1px solid #d1d7cb;border-radius:4px;cursor:pointer;font:12px/1.5 Onest,Arial,sans-serif;color:#171f30;min-height:48px}.ds-option:hover{border-color:#6074ae}.ds-option:has(input:checked){border-color:#293cd7;background:#e9edff}.ds-option input{position:absolute;opacity:0;width:1px;height:1px}.ds-option:has(input:focus-visible){outline:3px solid #b34916;outline-offset:3px}.ds-option-letter{width:22px;height:22px;border:1px solid #869181;border-radius:50%;display:grid;place-items:center;font-size:9px;flex-shrink:0}.ds-option:has(input:checked) .ds-option-letter{background:#293cd7;border-color:#293cd7;color:#fff}.ds-option-correct{border-color:#3d7856;background:#e9f2e8}.ds-option-correct .ds-option-letter{background:#3d7856;border-color:#3d7856;color:#fff}"
+    },
+    {
+      "name": "Section link",
+      "kind": "nav",
+      "description": "Desktop section anchor with the source hover and focus treatment.",
+      "html": "<a class=\"ds-nav-link\" href=\"#practice\">Как устроена подготовка</a>",
+      "css": ".ds-nav-link{display:inline-block;color:#171f30;text-decoration:none;font:450 13px/1.5 Onest,Arial,sans-serif;transition:color .18s}.ds-nav-link:hover{color:#293cd7}.ds-nav-link:focus-visible{outline:3px solid #b34916;outline-offset:5px}@media(prefers-reduced-motion:reduce){.ds-nav-link{transition:none}}"
+    },
+    {
+      "name": "Demo panel",
+      "kind": "card",
+      "refersTo": "demo-panel",
+      "description": "Light practice surface; the source code block is represented as static local content.",
+      "html": "<div class=\"ds-demo\"><div class=\"ds-demo-top\"><span>Учебная демонстрация</span><span>SQL</span></div><pre class=\"ds-code\"><code><span>SELECT</span> title\\n<span>FROM</span> books;</code></pre></div>",
+      "css": ".ds-demo{background:#f7f8f3;color:#171f30;padding:25px 30px 21px;border-radius:9px;min-width:0;font-family:Onest,Arial,sans-serif;line-height:1.5}.ds-demo-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:21px;border-bottom:1px solid #dde1d8;font-size:10px}.ds-demo-top>span:last-child{color:#3d527a}.ds-code{background:#e9ece5;padding:18px 20px;margin:22px 0 0;border-radius:3px;font-size:13px;line-height:1.75;overflow:auto;color:#26303d}.ds-code code{font-family:Consolas,'Courier New',monospace}.ds-code span{color:#384bb1}@media(max-width:1050px){.ds-demo{padding:20px}}@media(max-width:760px){.ds-demo{padding:21px}.ds-code{font-size:12px;padding:16px}}"
+    },
+    {
+      "name": "FAQ item",
+      "kind": "custom",
+      "description": "Native details with the existing summary chevron and outline.",
+      "html": "<details class=\"ds-faq\"><summary>Как работает демонстрация?<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></summary><p>Демонстрация работает в памяти страницы.</p></details>",
+      "css": ".ds-faq{border-bottom:1px solid #d5d9ce;color:#171f30;font-family:Onest,Arial,sans-serif;line-height:1.5}.ds-faq summary{padding:19px 0;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:20px;list-style:none}.ds-faq summary::-webkit-details-marker{display:none}.ds-faq summary:focus-visible{outline:3px solid #b34916;outline-offset:5px}.ds-faq summary svg{flex-shrink:0;transition:transform .2s}.ds-faq[open] summary svg{transform:rotate(180deg)}.ds-faq p{font-size:12px;line-height:1.8;color:#4b5661;padding-bottom:20px;max-width:65ch;margin:0}@media(prefers-reduced-motion:reduce){.ds-faq summary svg{transition:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Редакционная образовательная страница",
+    "overview": "Документ описывает реализованный изолированный концепт в `services/frontend/tests/landing-lab`. Источники — `landing.css`, `LandingConcept.jsx` и локальный README. Это снимок текущего кода, а не утверждение новой глобальной идентичности SAQBol или одобрения пользователем финального результата. Финальная визуальная проверка ещё ожидается.\n\nБумажный фон, крупная типографика Onest и фотография подготовки формируют спокойную учебную страницу. Синяя обложка и тёплая записка перекрывают фотографию; тёмная секция отделяет локальную SQL-демонстрацию. Направление реализовано сразу в коде в рамках разрешённого одного концепта.",
+    "keyCharacteristics": [
+      "Бумажная основа, чернильный текст и синий акцент.",
+      "Локальный Onest и крупные заголовки с плотным межбуквенным интервалом.",
+      "Учебные материалы поверх фотографии; плоские информационные секции.",
+      "Нативные radio и details для локальной демонстрации и FAQ."
+    ],
+    "rules": [
+      {
+        "name": "The Scope Rule",
+        "body": "Эти цвета и композиционные решения действуют только внутри landing-lab; глобальные токены и другие страницы приложения не меняются.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do сохранять изоляцию CSS и ассетов внутри landing-lab.",
+      "Do использовать нативные radio, details и видимый клавиатурный фокус.",
+      "Do сохранять отдельные состояния выбранного и правильного ответа.",
+      "Do уважать prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't считать этот концепт утверждённой глобальной идентичностью SAQBol.",
+      "Don't переносить композицию hero или мелкие подписи в глобальные правила приложения.",
+      "Don't выдавать локальную SQL-демонстрацию за официальный экзамен или сохранённый результат."
+    ]
+  }
+}
