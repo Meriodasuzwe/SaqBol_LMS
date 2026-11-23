@@ -47,18 +47,18 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
 
   return (
     <div className="min-h-screen bg-base-100 font-sans text-base-content flex flex-col transition-colors duration-300">
-      <Navbar
+      {!isLanding && <Navbar
         isLoggedIn={isLoggedIn}
         userRole={userRole}
         onLogout={onLogout}
-      />
+      />}
 
       {isLanding ? (
-        <main className="flex-grow">
+        <div className="flex-grow">
           <Routes>
             <Route path="/" element={<Landing />} />
           </Routes>
-        </main>
+        </div>
       ) : (
         <main className={isExam ? "exam-app-main flex-grow min-w-0" : "container mx-auto p-4 lg:p-8 flex-grow"}>
           <Routes>
@@ -132,7 +132,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
       )}
 
       {/* 🔥 ФУТЕР 🔥 */}
-      {!isExam && <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {!isExam && !isLanding && <footer className="bg-slate-900 text-slate-400 mt-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-14">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-1">
@@ -190,7 +190,7 @@ function AppLayout({ isLoggedIn, userRole, onLogout, isTeacher, onLoginSuccess }
           </div>
         </div>
       </footer>}
-      {!isExam && <BugReportWidget />}
+      {!isExam && !isLanding && <BugReportWidget />}
     </div>
   );
 }
