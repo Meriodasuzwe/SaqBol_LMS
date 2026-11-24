@@ -312,3 +312,25 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
     assert results[0][0]==results[1][0] and sorted(x[1] for x in results)==[False,True]
     assert ExamDraft.objects.count()==1
     print(json.dumps({'exam_draft_concurrent_retry':'passed','drafts':1,'questions':len(ExamDraft.objects.get().snapshot['questions'])}))
+
+    from quizzes.models import BankCreateReceipt
+    from quizzes.question_bank import BankList
+    from rest_framework.test import APIRequestFactory,force_authenticate
+    create_key=str(uuid4())
+    create_body={'subject':'first_subject','topic':'Artificial concurrent bank create','language':'kk','usage':'exam','text':'Artificial unique creation','explanation':'','choices':[{'id':str(uuid4()),'text':'A','is_correct':True},{'id':str(uuid4()),'text':'B','is_correct':False}]}
+    create_gate=Barrier(2)
+    bank_before=BankQuestion.objects.count()
+    def retry_bank_create():
+        close_old_connections()
+        try:
+            request=APIRequestFactory().post('/quizzes/bank/',copy.deepcopy(create_body),format='json',HTTP_IDEMPOTENCY_KEY=create_key)
+            force_authenticate(request,teacher);create_gate.wait(timeout=10)
+            response=BankList.as_view()(request)
+            return response.status_code,response.data['id']
+        finally:connections.close_all()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        creation_results=list(pool.map(lambda _:retry_bank_create(),range(2)))
+    assert sorted(x[0] for x in creation_results)==[200,201]
+    assert creation_results[0][1]==creation_results[1][1]
+    assert BankQuestion.objects.count()==bank_before+1 and BankCreateReceipt.objects.count()==1
+    print(json.dumps({'bank_concurrent_create_retry':'passed','new_questions':1,'receipts':1}))

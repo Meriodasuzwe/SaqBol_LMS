@@ -164,3 +164,15 @@ class ExamDraft(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['owner', 'request_id'], name='unique_exam_draft_request')]
+
+
+class BankCreateReceipt(models.Model):
+    """Original create response survives question edits and deletion."""
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    request_id = models.UUIDField()
+    fingerprint = models.CharField(max_length=64)
+    response = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['owner', 'request_id'], name='unique_bank_create_request')]

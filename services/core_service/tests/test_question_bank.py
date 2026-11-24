@@ -150,3 +150,63 @@ def test_bank_copy_to_actual_builder_save_is_independent_and_preserves_metadata(
     assert loaded['topic']==body['topic'] and loaded['kt_subject']==body['subject']
     question.text='Changed only in course';question.save(update_fields=['text'])
     assert BankQuestion.objects.get(pk=saved['id']).text=='Changed only in bank'
+
+
+def test_lost_creation_response_retry_returns_one_original_question(client,body):
+    key=str(uuid4())
+    first=client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key)
+    assert first.status_code==201
+    # The caller lost the response, then retries the same real endpoint.
+    retry=client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key)
+    assert BankQuestion.objects.count()==1
+    assert retry.status_code==200
+    assert retry.json()==first.json()
+
+
+def test_creation_key_conflicts_and_replay_survives_edits_and_deletion(client,body):
+    from quizzes.models import BankCreateReceipt
+    key=str(uuid4());first=client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key)
+    changed={**body,'text':'Changed body'}
+    assert client.post(URL,changed,format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==400
+    assert BankQuestion.objects.count()==BankCreateReceipt.objects.count()==1
+    BankQuestion.objects.filter(pk=first.data['id']).update(text='Edited after create',revision=2)
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).json()==first.json()
+    BankQuestion.objects.get(pk=first.data['id']).delete()
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).json()==first.json()
+    assert BankQuestion.objects.count()==0 and BankCreateReceipt.objects.count()==1
+
+
+def test_creation_key_scoped_to_author_and_new_action_gets_new_question(client,author,body):
+    key=str(uuid4())
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==201
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=str(uuid4())).status_code==201
+    other=get_user_model().objects.create_user(username='synthetic_retry_other',role='teacher');client.force_authenticate(other)
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==201
+    assert BankQuestion.objects.count()==3
+
+
+@pytest.mark.parametrize('key',['','not-a-uuid'])
+def test_bad_creation_key_creates_nothing(client,body,key):
+    from quizzes.models import BankCreateReceipt
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==400
+    assert BankQuestion.objects.count()==BankCreateReceipt.objects.count()==0
+
+
+def test_invalid_create_does_not_consume_key(client,body):
+    from quizzes.models import BankCreateReceipt
+    key=str(uuid4())
+    assert client.post(URL,{**body,'text':''},format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==400
+    assert BankCreateReceipt.objects.count()==0
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==201
+
+
+def test_receipt_failure_rolls_back_created_question_and_retry_succeeds(client,body):
+    from quizzes.models import BankCreateReceipt
+    from unittest.mock import patch
+    key=str(uuid4());original=BankCreateReceipt.objects.create
+    def fail(*a,**kw):
+        original(*a,**kw);raise RuntimeError('Artificial receipt failure after INSERT')
+    with patch.object(BankCreateReceipt.objects,'create',side_effect=fail):
+        with pytest.raises(RuntimeError):client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key)
+    assert BankQuestion.objects.count()==BankCreateReceipt.objects.count()==0
+    assert client.post(URL,body,format='json',HTTP_IDEMPOTENCY_KEY=key).status_code==201
