@@ -5,7 +5,7 @@ import {Plus,Search,ArrowLeft,Trash2} from 'lucide-react';
 import api from '../api';
 import {ExamText} from '../exams/ExamPrimitives';
 import {bankCopy} from './copy';
-import {newDraft,newChoice,selectCorrect,payload,validDraft,restoreDraft,storeDraft} from './draft';
+import {newDraft,newChoice,selectCorrect,payload,validDraft,restoreDraft,storeDraft,creationRequest,browserDraftStorage,browserSessionStorage} from './draft';
 import './question-bank.css';
 
 export default function QuestionBankPage({apiClient=api}) {
@@ -14,9 +14,24 @@ export default function QuestionBankPage({apiClient=api}) {
  const [rows,setRows]=useState([]),[count,setCount]=useState(0),[hasNext,setHasNext]=useState(false);
  const [filters,setFilters]=useState({search:'',subject:'',usage:'',language:''}),[page,setPage]=useState(1),[reload,setReload]=useState(0);
  const [topics,setTopics]=useState({}),[loading,setLoading]=useState(true),[loadError,setLoadError]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
- const heading=useRef(null);
+ const heading=useRef(null),inflight=useRef(false);
+ const [pendingCreate,setPendingCreate]=useState(null);
  const [storageKey,setStorageKey]=useState(null);
- useEffect(()=>{let active=true;apiClient.get('/quizzes/bank/topics/').then(r=>{if(active){setTopics(r.data.topics);if(Number.isInteger(r.data.author_id)){const key='saqbol.bank.draft.'+r.data.author_id;const restored=restoreDraft(sessionStorage,key);if(restored){setDraft(restored);setDirty(true);setMessage(c.restored)}setStorageKey(key)}}}).catch(()=>{});return()=>{active=false}},[apiClient]);
+ const [metadataAttempt,setMetadataAttempt]=useState(0),[metadataError,setMetadataError]=useState(false),[storageProblem,setStorageProblem]=useState(false);
+ useEffect(()=>{
+  let active=true;
+  setMetadataError(false);
+  apiClient.get('/quizzes/bank/topics/').then(r=>{
+   if(!active)return;
+   if(!Number.isInteger(r.data.author_id)||r.data.author_id<=0)throw new Error('Missing author identity');
+   const key='saqbol.bank.draft.'+r.data.author_id;
+   const restored=restoreDraft(browserDraftStorage,key)||restoreDraft(browserSessionStorage,key);
+   setTopics(r.data.topics);
+   if(restored){setDraft(restored);setPendingCreate(restored._pendingCreate||null);setDirty(true);setMessage(c.restored)}
+   setStorageKey(key);
+  }).catch(()=>{if(active)setMetadataError(true)});
+  return()=>{active=false};
+ },[apiClient,metadataAttempt]);
  useEffect(()=>{
   let active=true;setLoading(true);setLoadError(false);
   const query=new URLSearchParams({...filters,page:String(page)});
@@ -24,21 +39,37 @@ export default function QuestionBankPage({apiClient=api}) {
   return()=>{active=false};
  },[filters,page,reload,apiClient]);
  useEffect(()=>{const guard=e=>{if(dirty||saving){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',guard);return()=>window.removeEventListener('beforeunload',guard)},[dirty,saving]);
- useEffect(()=>{if(storageKey)storeDraft(sessionStorage,storageKey,draft,dirty)},[storageKey,draft,dirty]);
+ useEffect(()=>{
+  if(!storageKey)return;
+  const stored=storeDraft(browserDraftStorage,storageKey,{...draft,_pendingCreate:pendingCreate},dirty||!!pendingCreate);
+  setStorageProblem(!stored);
+  // Remove the legacy tab copy only after the durable write (or removal) succeeds.
+  if(stored)storeDraft(browserSessionStorage,storageKey,null,false);
+ },[storageKey,draft,dirty,pendingCreate]);
  const change=updates=>{setDraft(d=>({...d,...updates}));setDirty(true);setMessage('');setError('')};
- const open=item=>{if(saving||(dirty&&!window.confirm(c.discard)))return;setDraft(item?structuredClone(item):newDraft());setDirty(false);setError('');setMessage('');heading.current?.focus()};
+ const open=item=>{if(!storageKey||saving||pendingCreate||(dirty&&!window.confirm(c.discard)))return;setDraft(item?structuredClone(item):newDraft());setDirty(false);setError('');setMessage('');heading.current?.focus()};
  const save=async e=>{
-  e.preventDefault();if(saving)return;setMessage('');setError('');
-  if(!validDraft(draft)){setError(c.invalid);return;}
-  setSaving(true);
-  try {const response=draft.id?await apiClient.put('/quizzes/bank/'+draft.id+'/',payload(draft)):await apiClient.post('/quizzes/bank/',payload(draft));setDraft(response.data);setDirty(false);setMessage(c.saved);setReload(n=>n+1)}
-  catch(e){const detail=e.response?.data;setError(detail?Object.entries(detail).map(([field,value])=>(c[field]||field)+': '+(Array.isArray(value)?value.join(' '):String(value))).join(' · '):c.saveError)}
-  finally{setSaving(false)}
+  e.preventDefault();if(!storageKey||inflight.current)return;setMessage('');setError('');
+  if(!pendingCreate&&!validDraft(draft)){setError(c.invalid);return;}
+  inflight.current=true;setSaving(true);
+  const operation=draft.id?null:creationRequest(draft,pendingCreate);
+  if(operation){
+   // Persist the retry identity before dispatch, rather than waiting for a React effect.
+   const stored=storeDraft(browserDraftStorage,storageKey,{...draft,_pendingCreate:operation},true);
+   setStorageProblem(!stored);setPendingCreate(operation);
+  }
+  try {
+   const response=draft.id?await apiClient.put('/quizzes/bank/'+draft.id+'/',payload(draft)):await apiClient.post('/quizzes/bank/',operation.body,{headers:{'Idempotency-Key':operation.key}});
+   setDraft(response.data);setPendingCreate(null);setDirty(false);setMessage(c.saved);setReload(n=>n+1);
+  } catch(e){
+   if(e.response?.status===400)setPendingCreate(null);
+   const detail=e.response?.data;setError(detail?Object.entries(detail).map(([field,value])=>(c[field]||field)+': '+(Array.isArray(value)?value.join(' '):String(value))).join(' · '):operation?c.pendingCreate:c.saveError);
+  } finally{inflight.current=false;setSaving(false)}
  };
  const subjectName=value=>value==='first_subject'?c.first:c.second;
  return <section className="qb" aria-labelledby="bank-title">
   <Link className="qb-back" to="/profile" onClick={e=>{if(saving||(dirty&&!window.confirm(c.discard)))e.preventDefault()}}><ArrowLeft size={16}/>{c.back}</Link>
-  <header className="qb-heading"><div><h1 id="bank-title">{c.title}</h1><p>{c.intro}</p></div><button className="btn btn-primary" onClick={()=>open()} disabled={saving}><Plus size={18}/>{c.new}</button></header>
+  <header className="qb-heading"><div><h1 id="bank-title">{c.title}</h1><p>{c.intro}</p></div><button className="btn btn-primary" onClick={()=>open()} disabled={!storageKey||saving||!!pendingCreate}><Plus size={18}/>{c.new}</button></header>
   <Link className="btn btn-outline mb-4" to="/teacher/exam-drafts">{i18n.language?.startsWith('kk')?'Сынақ жинағын құрастыру':i18n.language?.startsWith('en')?'Assemble mock exam':'Собрать пробник'}</Link>
   <p className="qb-notice">{c.notice}</p>
   <div className="qb-workspace">
@@ -53,14 +84,15 @@ export default function QuestionBankPage({apiClient=api}) {
     </form>
     {loading?<p role="status">{c.loading}</p>:loadError?<div role="alert"><p>{c.error}</p><button className="btn btn-sm" onClick={()=>setReload(n=>n+1)}>{c.retry}</button></div>:<>
      <p className="qb-count">{c.total}: {count}</p>
-     {!rows.length?<div className="qb-empty"><h3>{c.empty}</h3><p>{c.emptyHint}</p></div>:<ul className="qb-rows">{rows.map(item=><li key={item.id}><button disabled={saving} type="button" className={draft.id===item.id?'is-current':''} aria-current={draft.id===item.id?'true':undefined} onClick={()=>open(item)}><span className="qb-row-meta">{subjectName(item.subject)} · {item.language.toUpperCase()}</span><strong>{item.text}</strong><span>{item.topic}</span><small>{c[item.usage]} · {c.draft}</small></button></li>)}</ul>}
+     {!rows.length?<div className="qb-empty"><h3>{c.empty}</h3><p>{c.emptyHint}</p></div>:<ul className="qb-rows">{rows.map(item=><li key={item.id}><button disabled={!storageKey||saving||!!pendingCreate} type="button" className={draft.id===item.id?'is-current':''} aria-current={draft.id===item.id?'true':undefined} onClick={()=>open(item)}><span className="qb-row-meta">{subjectName(item.subject)} · {item.language.toUpperCase()}</span><strong>{item.text}</strong><span>{item.topic}</span><small>{c[item.usage]} · {c.draft}</small></button></li>)}</ul>}
      <nav className="qb-pages" aria-label={c.page}><button className="btn btn-sm" disabled={page===1} onClick={()=>setPage(n=>n-1)}>{c.prev}</button><span>{c.page} {page}</span><button className="btn btn-sm" disabled={!hasNext} onClick={()=>setPage(n=>n+1)}>{c.next}</button></nav>
     </>}
    </aside>
    <div className="qb-editor">
+    {!storageKey&&(metadataError?<div role="alert"><p>{c.recoveryError}</p><button type="button" className="btn btn-sm" onClick={()=>setMetadataAttempt(n=>n+1)}>{c.retry}</button></div>:<p role="status">{c.recovering}</p>)}
     <h2 ref={heading} tabIndex={-1}>{draft.id?c.edit:c.new}</h2><p className="qb-help">{c.required}</p>
     <form onSubmit={save}>
-     <fieldset disabled={saving} className="qb-fields">
+     <fieldset disabled={!storageKey||saving||!!pendingCreate} className="qb-fields">
       <div className="qb-pair"><label><span>{c.subject} *</span><select value={draft.subject} onChange={e=>change({subject:e.target.value,topic:'',choices:draft.choices.map(o=>({...o,is_correct:false}))})}><option value="first_subject">{c.first}</option><option value="second_subject">{c.second}</option></select></label>
       <label><span>{c.language} *</span><select value={draft.language} onChange={e=>change({language:e.target.value})}><option value="kk">Қазақша</option><option value="ru">Русский</option></select></label></div>
       <label><span>{c.topic} *</span><input required maxLength={255} value={draft.topic} list="bank-topics" onChange={e=>change({topic:e.target.value})} placeholder={c.selectTopic} aria-describedby="topic-help"/><small id="topic-help">{c.topicHint}</small></label>
@@ -76,8 +108,10 @@ export default function QuestionBankPage({apiClient=api}) {
       <button type="button" className="btn btn-ghost btn-sm" disabled={draft.choices.length>=8} onClick={()=>change({choices:[...draft.choices,newChoice()]})}><Plus size={16}/>{c.add}</button></fieldset>
       <label><span>{c.explanation}</span><textarea rows={4} maxLength={50000} value={draft.explanation} onChange={e=>change({explanation:e.target.value})}/><small>{c.explainHint}</small></label>
      </fieldset>
+     {storageKey&&<p className="qb-help" role={storageProblem?'alert':'status'}>{storageProblem?c.localError:pendingCreate?c.localPending:dirty?c.localSaved:c.localHint}</p>}
+     {pendingCreate&&!saving&&<p role="status">{c.pendingCreate}</p>}
      {error&&<p className="qb-error" role="alert">{error}</p>}
-     <div className="qb-save"><button className="btn btn-primary" disabled={saving||(!dirty&&!!draft.id)}>{saving?c.saving:c.save}</button><span role="status">{message||(dirty?c.dirty:'')}</span></div>
+     <div className="qb-save"><button className="btn btn-primary" disabled={!storageKey||saving||(!dirty&&!!draft.id&&!pendingCreate)}>{saving?c.saving:pendingCreate?c.retry:c.save}</button><span role="status">{message||(dirty?c.dirty:'')}</span></div>
     </form>
     <details className="qb-preview"><summary>{c.preview}</summary><ExamText text={draft.text||c.noPreview}/><ol type="A">{draft.choices.map(o=><li key={o.id}><ExamText text={o.text}/>{o.is_correct&&<small>{c.correct}</small>}</li>)}</ol><h3>{c.explanation}</h3><ExamText text={draft.explanation}/></details>
    </div>

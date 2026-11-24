@@ -24,5 +24,18 @@ export function restoreDraft(storage,key) {
  } catch { return null; }
 }
 export function storeDraft(storage,key,draft,dirty) {
- try { if(dirty)storage.setItem(key,JSON.stringify(draft));else storage.removeItem(key); } catch { /* Restricted storage must not block saving to the server. */ }
+ try { if(dirty)storage.setItem(key,JSON.stringify(draft));else storage.removeItem(key); return true; } catch { return false; }
 }
+
+export function creationRequest(draft, pending = null) {
+ return pending || {key:crypto.randomUUID(),body:structuredClone(payload(draft))};
+}
+
+// Resolve the browser storage inside each call: even access to localStorage can throw.
+const browserStorage = name => ({
+ getItem: key => globalThis[name].getItem(key),
+ setItem: (key,value) => globalThis[name].setItem(key,value),
+ removeItem: key => globalThis[name].removeItem(key),
+});
+export const browserDraftStorage = browserStorage('localStorage');
+export const browserSessionStorage = browserStorage('sessionStorage');

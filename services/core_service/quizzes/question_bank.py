@@ -1,5 +1,8 @@
 """Draft question editing only; never publishes or mutates a live Quiz."""
 from uuid import UUID
+import hashlib
+import json
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
 from rest_framework import serializers, generics
@@ -8,7 +11,7 @@ from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import BankQuestion
+from .models import BankQuestion, BankCreateReceipt
 from .bank_topics import TOPICS
 
 
@@ -116,6 +119,33 @@ class BankList(BankAccess, generics.ListCreateAPIView):
         if search:
             query = query.filter(Q(text__icontains=search) | Q(topic__icontains=search))
         return query
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        key = request.headers.get('Idempotency-Key')
+        if key is None:
+            # Keep existing clients' correct requests compatible.
+            return super().create(request, *args, **kwargs)
+        try:
+            request_id = UUID(key)
+        except (ValueError, TypeError, AttributeError):
+            raise ValidationError({'request_id': ['Нужен UUID в Idempotency-Key.']})
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        digest = hashlib.sha256(json.dumps(serializer.validated_data, ensure_ascii=False,
+                                          sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        # Lock order is shared with exam-draft creation: author, then content.
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
+        receipt = BankCreateReceipt.objects.filter(owner=request.user, request_id=request_id).first()
+        if receipt:
+            if receipt.fingerprint != digest:
+                raise ValidationError({'request_id': ['Этот запрос уже сохранён с другим содержимым.']})
+            return Response(receipt.response, status=200)
+        self.perform_create(serializer)
+        data = dict(serializer.data)
+        BankCreateReceipt.objects.create(owner=request.user, request_id=request_id,
+                                         fingerprint=digest, response=data)
+        return Response(data, status=201)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
