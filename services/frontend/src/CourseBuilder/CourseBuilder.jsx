@@ -310,7 +310,7 @@ function CourseBuilder() {
         });
     };
 
-    const handleSaveStep = async () => { 
+    const handleSaveStep = async (saveOptions = {}) => {
         if (!activeStep) return;
         setLoading(true);
         try {
@@ -387,13 +387,17 @@ function CourseBuilder() {
                 res = await api.patch(`courses/steps/${activeStep.id}/`, {
                     title: activeStep.title, content: activeStep.content,
                     step_type: activeStep.step_type, scenario_data: updatedScenarioData,
+                    ...(activeStep.step_type === 'text' && saveOptions.expectedVersion ? {expected_version:saveOptions.expectedVersion}:{}),
                 });
             }
             const updatedLessons = lessons.map(l => l.id === activeLesson.id ? { ...l, steps: l.steps.map(s => s.id === activeStep.id ? res.data : s) } : l);
             setLessons(updatedLessons); setActiveLesson(updatedLessons.find(l => l.id === activeLesson.id)); setActiveStep(res.data);
             toast.success(t('builder.toasts.stepSaved'));
+            return res.data;
         } catch (err) {
             toast.error(err.name === 'QuizValidationError' ? err.message : t('builder.toasts.stepSaveError'));
+            if (activeStep.step_type === 'text' && err.response?.status === 409) throw err;
+            return null;
         } finally { setLoading(false); }
     };
 
@@ -584,7 +588,7 @@ function CourseBuilder() {
                         {/* Единый скролл для всего контента */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-6 md:p-10 bg-base-200/20">
                             {activeStep ? (
-                                <StepEditor 
+                                <StepEditor courseId={courseId}
                                     activeStep={activeStep} setActiveStep={setActiveStep} 
                                     handleDeleteStep={handleDeleteStep} handleSaveStep={handleSaveStep} 
                                     loading={loading}

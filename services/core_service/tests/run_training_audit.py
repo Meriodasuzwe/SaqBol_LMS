@@ -56,6 +56,7 @@ def main():
             "tests/test_training_audit.py",
             "tests/test_quiz_workflows.py",
             "tests/test_builder_atomic_save.py",
+            "tests/test_text_step_version.py",
             "tests/test_analytics_selection.py",
             "tests/test_result_link.py",
             "tests/test_atomic_submission.py",
@@ -114,9 +115,11 @@ def main():
         return pytest.main([
             "-p", "django", "-p", "no:cacheprovider", "--ds=core.test_settings",
             "--confcutdir", str(work), "-v", "-s", "--tb=short",
+            *(["tests/test_text_step_version.py"] if "--text-step-only" in sys.argv else [
             "tests/test_training_audit.py", "tests/test_sql_selection_fixture.py",
             "tests/test_quiz_workflows.py",
             "tests/test_builder_atomic_save.py",
+            "tests/test_text_step_version.py",
             "tests/test_analytics_selection.py",
             "tests/test_result_link.py",
             "tests/test_atomic_submission.py",
@@ -130,6 +133,7 @@ def main():
             "tests/test_question_bank.py",
             "tests/test_exam_drafts.py",
             "tests/test_exam_lifecycle.py",
+            ]),
         ])
 
 

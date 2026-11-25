@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+from django.db import transaction
+from .serializers import text_step_version
 import stripe
 import json
 import requests
@@ -228,6 +231,35 @@ class LessonStepDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = LessonStep.objects.all()
     serializer_class = LessonStepSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.select_for_update() if getattr(self, '_lock_step', False) else queryset
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        self._lock_step = True
+        # Reuse get_object: it locks the same row before the existing access checks.
+        step = self.get_object()
+        if not isinstance(request.data, Mapping):
+            return Response({'non_field_errors': ['Нужен JSON-объект полей шага.']}, status=400)
+        protected = {'title', 'content', 'step_type', 'scenario_data', 'file'}
+        if step.step_type == 'text' and protected.intersection(request.data):
+            if 'expected_version' not in request.data:
+                return Response({'expected_version': ['Откройте свежую версию текстового шага перед сохранением.']}, status=428)
+            expected = request.data['expected_version']
+            if not isinstance(expected, str) or len(expected) != 64 or any(c not in '0123456789abcdef' for c in expected):
+                return Response({'expected_version': ['Нужна корректная версия текстового шага.']}, status=400)
+            if expected != text_step_version(step):
+                return Response({'code': 'step_version_conflict', 'expected_version': ['Шаг изменён. Локальную копию необходимо сверить с новой версией.']}, status=409)
+        data = request.data.copy()
+        data.pop('expected_version', None)
+        serializer = self.get_serializer(step, data=data, partial=kwargs.pop('partial', False))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        if getattr(step, '_prefetched_objects_cache', None):
+            step._prefetched_objects_cache = {}
+        return Response(serializer.data)
 
     # 🔥 Здесь был скрытый баг. Мы убрали сломанный get_queryset и перенесли логику в get_object
     def get_object(self):

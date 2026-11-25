@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import TiptapEditor from './TiptapEditor';
+import TextStepRecovery from './TextStepRecovery';
 import QuizGenerator from './QuizGenerator';
 import CodeEditor from './CodeEditor';
 import { 
@@ -10,7 +11,7 @@ import {
 // ==========================================
 // ОСНОВНОЙ КОМПОНЕНТ STEP EDITOR
 // ==========================================
-const StepEditor = ({ 
+const StepEditorBody = ({
     activeStep, setActiveStep, handleDeleteStep, handleSaveStep, loading,
     quizProps
 }) => {
@@ -92,4 +93,7 @@ const StepEditor = ({
     );
 };
 
-export default StepEditor;
+export default function StepEditor(props){
+ if(props.activeStep?.step_type==='text')return <TextStepRecovery key={`${props.courseId}:${props.activeStep.id}`} {...props} renderEditor={recovery=><StepEditorBody {...props} {...recovery}/>}/>;
+ return <StepEditorBody {...props}/>;
+}

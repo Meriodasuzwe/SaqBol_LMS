@@ -117,7 +117,7 @@ test('builder regression: blank cleanup preserves every selected option and leav
     assert.deepEqual(fixture, before);
 });
 
-function runBuilderSave(questions, { failSave = false, incompleteResponse = false, stepType = 'quiz', newQuiz = false } = {}) {
+function runBuilderSave(questions, { failSave = false, incompleteResponse = false, stepType = 'quiz', newQuiz = false, expectedVersion, patchStatus } = {}) {
     const writes = [], errors = [], successes = [], loading = [];
     const step = { id: 903, step_type: stepType, title: 'Synthetic quiz', content: 'Synthetic draft content', scenario_data: { note: 'Keep metadata', ...(newQuiz ? {} : { quiz_id: 904 }) } };
     const lesson = { id: 902, steps: [step] };
@@ -139,11 +139,12 @@ function runBuilderSave(questions, { failSave = false, incompleteResponse = fals
             patch: async (url, payload) => {
                 writes.push({ method: 'PATCH', url, payload: JSON.parse(JSON.stringify(payload)) });
                 if (failSave) throw new Error('Synthetic server write failure');
+                if(patchStatus)throw {response:{status:patchStatus}};
                 return { data: { ...step, ...payload } };
             },
         },
     });
-    return handler().then(() => JSON.parse(JSON.stringify({ writes, errors, successes, loading, updates, draft, step })));
+    return handler({expectedVersion}).then(() => JSON.parse(JSON.stringify({ writes, errors, successes, loading, updates, draft, step })));
 }
 
 const validQuestion = { question: 'Synthetic valid question', options: ['Alpha', 'Bravo', 'Charlie'], correct_option_index: [1], explanation: 'Bravo is correct.' };
@@ -270,13 +271,14 @@ test('builder atomic save: failure preserves the draft and allows retry without 
     assert.equal(retried.successes.length, 1);
 });
 
-test('builder atomic save: a text step still uses only its existing PATCH', async () => {
-    const result = await runBuilderSave(null, { stepType: 'text', newQuiz: true });
+test('builder atomic save: text recovery uses the existing PATCH with its expected version', async () => {
+    const result = await runBuilderSave(null, { stepType: 'text', newQuiz: true, expectedVersion:'1'.repeat(64) });
     assert.deepEqual(result.errors, []);
     assert.equal(result.writes.length, 1);
     assert.equal(result.writes[0].method, 'PATCH');
     assert.equal(result.writes[0].url, 'courses/steps/903/');
     assert.equal(result.writes[0].payload.content, 'Synthetic draft content');
+    assert.equal(result.writes[0].payload.expected_version,'1'.repeat(64));
     assert.equal(result.updates.steps[0].step_type, 'text');
     assert.equal(result.successes.length, 1);
 });
@@ -610,4 +612,9 @@ test('audit control and reproduction: real renderMath renders KaTeX but leaves a
     assert.ok(!rendered.includes('$x^2$'));
     assert.ok(rendered.includes(htmlMarker), 'The actual math transform is not an HTML sanitizer');
     assert.equal(globalThis.__SAQBOL_AUDIT_MARKER__, undefined);
+});
+
+
+test('real CourseBuilder save propagates text version conflicts to the recovery controller',async()=>{
+ await assert.rejects(runBuilderSave(null,{stepType:'text',newQuiz:true,expectedVersion:'1'.repeat(64),patchStatus:409}),e=>e.response?.status===409);
 });

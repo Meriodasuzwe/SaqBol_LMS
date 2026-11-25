@@ -11,6 +11,9 @@ const frontendDirectory = resolve(testsDirectory, '..');
 const previewDirectory = resolve(testsDirectory, 'builder-preview');
 const apiSource = normalizePath(resolve(frontendDirectory, 'src/api'));
 let state = createBuilderFixture();
+let failNextTextSave = false;
+let raceNextTextSave = false;
+const bumpTextVersion = step => {step.edit_version=(BigInt('0x'+step.edit_version)+1n).toString(16).padStart(64,'0')};
 const previewPort=Number(process.argv[2]||4177);
 if(!Number.isInteger(previewPort)||previewPort<1024||previewPort>65535)throw new Error('Invalid preview port');
 const previewOrigin='http://127.0.0.1:'+previewPort;
@@ -54,12 +57,22 @@ const isolatedApi = {
                 state = createBuilderFixture();
                 return sendJson(response, 200, { preview_only: true, reset: true });
             }
+            if(url.pathname==='/__builder_preview__/change-text' && request.method==='POST'){
+                const step=state.lessons[0].steps.find(s=>s.id===905);step.content='<p>Искусственная новая серверная версия.</p>';bumpTextVersion(step);
+                return sendJson(response,200,{preview_only:true});
+            }
+            if(url.pathname==='/__builder_preview__/race-next-text-save' && request.method==='POST'){raceNextTextSave=true;return sendJson(response,200,{preview_only:true});}
+            if(url.pathname==='/__builder_preview__/fail-next-text-save' && request.method==='POST'){
+                failNextTextSave=true;return sendJson(response,200,{preview_only:true});
+            }
             const path = url.pathname.replace('/__builder_preview__/api', '');
             try {
                 const payload = ['POST', 'PATCH'].includes(request.method) ? await readJson(request) : null;
                 state.requests.push({ method: request.method, path, payload });
                 if (state.requests.length > 100) state.requests.shift();
                 if (request.method === 'GET') {
+                    if(path==='/users/me/')return sendJson(response,200,{id:999998,role:'teacher'});
+                    if(path==='/courses/steps/905/')return sendJson(response,200,state.lessons[0].steps.find(s=>s.id===905));
                     if(path==='/quizzes/bank/topics/') return sendJson(response,200,{topics:{second_subject:['Фильтрация и поиск данных в БД']}});
                     if(path==='/quizzes/bank/') {
                         let rows=bankRows.filter(q=>q.usage!=='exam');
@@ -94,10 +107,16 @@ const isolatedApi = {
                 }
                 const stepMatch = path.match(/^\/courses\/steps\/(903|905)\/$/);
                 if (request.method === 'PATCH' && stepMatch) {
+                    if(Number(stepMatch[1])===905 && failNextTextSave){failNextTextSave=false;return sendJson(response,503,{detail:'Artificial text save failure'});}
                     const step = state.lessons[0].steps.find(item => item.id === Number(stepMatch[1]));
+                    if(step.id===905){
+                        if(raceNextTextSave){raceNextTextSave=false;step.content='<p>Искусственная правка между GET и PATCH.</p>';bumpTextVersion(step);}
+                        if(payload.expected_version!==step.edit_version)return sendJson(response,409,{code:'step_version_conflict'});
+                    }
                     for (const key of ['title', 'content', 'step_type', 'scenario_data', 'order']) {
                         if (Object.hasOwn(payload, key)) step[key] = payload[key];
                     }
+                    if(step.id===905)bumpTextVersion(step);
                     return sendJson(response, 200, step);
                 }
                 return sendJson(response, 404, { detail: 'Operation is outside this synthetic preview.' });

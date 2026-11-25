@@ -334,3 +334,39 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.postgresql', 'NAME': 'saq
     assert creation_results[0][1]==creation_results[1][1]
     assert BankQuestion.objects.count()==bank_before+1 and BankCreateReceipt.objects.count()==1
     print(json.dumps({'bank_concurrent_create_retry':'passed','new_questions':1,'receipts':1}))
+
+
+    # Real compare-and-set race: coordinate both SELECT FOR UPDATE attempts,
+    # never replace the view, serializer, version comparison or persistence.
+    from courses.models import LessonStep
+    from courses.views import LessonStepDetailView
+    from courses.serializers import text_step_version
+    text_course=Course.objects.create(title='Artificial text race',category=category,teacher=teacher)
+    text_lesson=Lesson.objects.create(title='Artificial text race lesson',course=text_course)
+    text_step=LessonStep.objects.create(lesson=text_lesson,title='Original',step_type='text',content='<p>Original</p>',scenario_data={})
+    original_version=text_step_version(text_step)
+    text_gate=Barrier(2)
+    def update_text(label):
+        close_old_connections()
+        seen=False
+        def before_lock(execute,sql,params,many,context):
+            nonlocal seen
+            if not seen and 'FOR UPDATE' in sql.upper() and 'courses_lessonstep' in sql:
+                seen=True;text_gate.wait(timeout=10)
+            return execute(sql,params,many,context)
+        try:
+            request=APIRequestFactory().patch('/courses/steps/'+str(text_step.pk)+'/',{'content':'<p>'+label+'</p>','expected_version':original_version},format='json')
+            force_authenticate(request,teacher)
+            with connection.execute_wrapper(before_lock):
+                response=LessonStepDetailView.as_view()(request,pk=text_step.pk)
+            return response.status_code,label,seen
+        finally:connections.close_all()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        text_results=list(pool.map(update_text,['Artificial A','Artificial B']))
+    assert sorted(x[0] for x in text_results)==[200,409],text_results
+    assert all(x[2] for x in text_results),text_results
+    winner=next(x[1] for x in text_results if x[0]==200)
+    text_step.refresh_from_db()
+    assert text_step.content=='<p>'+winner+'</p>'
+    assert text_step_version(text_step)!=original_version
+    print(json.dumps({'text_step_atomic_version':'passed','statuses':[x[0] for x in text_results],'both_lock_attempts_observed':True,'winner_text_preserved':True}))
