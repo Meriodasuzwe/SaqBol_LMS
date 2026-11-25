@@ -128,6 +128,9 @@ export default function ExamAttempt({ attemptId, mode, c, language }) {
       {isReview ? <Link className="exam-button" to={'/exams/attempts/' + attemptId + '/result'}><ArrowLeft size={17} aria-hidden="true" />{c.backResult}</Link> : <button className="exam-button exam-button-primary" disabled={session.deadlineReached || session.finishing} onClick={() => setModal('finish')}>{c.finish}</button>}
     </header>
     <DemoNotice config={attempt.configuration} c={c} />
+    {!isReview && attempt.status === 'active' && session.localBackup !== 'none' && <div className={'exam-notice' + (session.localBackup === 'error' ? ' is-error' : '')} role={session.localBackup === 'error' ? 'alert' : 'status'}>
+      <p>{session.localBackup === 'error' ? c.localError : session.recovered ? c.localRecovered : c.localSaved}</p>
+    </div>}
     {!isReview && <SessionError session={session} c={c} reload={() => setModal('reload')} />}
     <div className="exam-mobile-navigation"><button className="exam-button" onClick={() => setModal('navigation')}><List size={18} aria-hidden="true" />{c.subjects}</button><span>{c.question} {question.number} {c.of} {section.questions.length}</span></div>
     <div className="exam-columns"><aside className="exam-desktop-navigation">{nav}{!isReview && <button className="exam-button exam-button-quiet exam-exit" onClick={() => { leaveAction.current = null; leaveTo.current = '/exams'; setModal('exit'); }}><LogOut size={17} aria-hidden="true" />{c.exit}</button>}</aside>

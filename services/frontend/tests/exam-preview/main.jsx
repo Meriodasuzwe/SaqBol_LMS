@@ -40,6 +40,8 @@ function DevPanel() {
         <p>Настоящие API и оценивание работают в одноразовой SQLite. Данные исчезнут при остановке процесса. Это служебная панель, она не входит в приложение.</p>
         <div className="flex flex-wrap gap-2">
             <button type="button" className="btn btn-sm" onClick={readState}>Прочитать сохранённое состояние</button>
+            <button type="button" className="btn btn-sm" onClick={() => control('offline_saves')}>Включить / выключить обрыв сохранений</button>
+            <button type="button" className="btn btn-sm" onClick={() => control('lose_next_save_response')}>Потерять ответ сохранения</button>
             <button type="button" className="btn btn-sm" onClick={() => control('fail_next_save')}>Ошибка следующего сохранения</button>
             <button type="button" className="btn btn-sm" onClick={() => control('fail_next_finish')}>Ошибка следующей сдачи</button>
             <button type="button" className="btn btn-sm" onClick={() => control('lose_next_finish_response')}>Потерять ответ после сдачи</button>

@@ -1,3 +1,5 @@
+import { recoveryKey, validateRecovery } from './examRecovery.js';
+
 // One client for the server-owned attempt. No scoring or answer keys live here.
 export const AUTOSAVE_DELAY = 650;
 
@@ -34,7 +36,7 @@ function errorInfo(error, kind) {
     return { kind: response?.status === 401 ? 'auth' : kind, code: data?.code || null, detail, status: response?.status || null };
 }
 
-export function createExamSession({ api, attemptId, now = Date.now, uuid = () => globalThis.crypto.randomUUID() }) {
+export function createExamSession({ api, attemptId, now = Date.now, uuid = () => globalThis.crypto.randomUUID(), recovery = null }) {
     const path = `exams/attempts/${encodeURIComponent(attemptId)}/`;
     const listeners = new Set();
     let disposed = false;
@@ -48,11 +50,12 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
     let writeFlight = null;
     let finishFlight = null;
     let readFlight = null;
+    let ownerId = null;
     let state = {
         attempt: null, answers: {}, flaggedQuestionIds: [], lastQuestionBySection: {},
         loading: true, saveStatus: 'saved', error: null, finishing: false,
         finishUncertain: false, deadlineReached: false, remainingSeconds: null,
-        editable: false, hasUnsentChanges: false,
+        editable: false, hasUnsentChanges: false, localBackup: 'none', recovered: false,
     };
 
     function publish(patch = {}) {
@@ -63,6 +66,51 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
             && !next.finishUncertain && !next.deadlineReached && next.saveStatus !== 'conflict';
         state = next;
         listeners.forEach(listener => listener());
+    }
+
+    function clearBackup() {
+        if (!recovery || !ownerId) return;
+        try {
+            recovery.storage.removeItem(recoveryKey(ownerId, attemptId));
+            publish({ localBackup: 'none', recovered: false });
+        } catch { publish({ localBackup: 'error' }); }
+    }
+
+    function backup() {
+        if (!recovery || !ownerId || !state.attempt) return;
+        if (state.attempt.status !== 'active' || !state.hasUnsentChanges) { clearBackup(); return; }
+        try {
+            recovery.storage.setItem(recoveryKey(ownerId, attemptId), JSON.stringify({
+                schema: 1, attemptId: String(attemptId), revision: state.attempt.revision,
+                answers: state.answers, flags: state.flaggedQuestionIds, positions: state.lastQuestionBySection,
+                localVersion, acknowledgedVersion, pendingWrite, pendingFinish,
+            }));
+            publish({ localBackup: 'saved' });
+        } catch { publish({ localBackup: 'error' }); }
+    }
+
+    function restore() {
+        if (!recovery || !ownerId || !state.attempt || state.attempt.status !== 'active' || state.deadlineReached) return;
+        let value;
+        try {
+            const raw = recovery.storage.getItem(recoveryKey(ownerId, attemptId));
+            if (!raw) return;
+            value = JSON.parse(raw);
+            if (!validateRecovery(value, state.attempt)) throw new Error('Invalid local answer copy');
+        } catch { publish({ localBackup: 'error' }); return; }
+        localVersion = value.localVersion;
+        acknowledgedVersion = value.acknowledgedVersion;
+        pendingWrite = value.pendingWrite;
+        pendingFinish = value.pendingFinish;
+        // A pending write must be resolved with its old UUID, even if its response was lost.
+        // Without such a receipt, a newer server revision needs an explicit discard.
+        const conflict = value.revision !== state.attempt.revision && !pendingWrite && !pendingFinish;
+        publish({
+            answers: value.answers, flaggedQuestionIds: value.flags, lastQuestionBySection: value.positions,
+            saveStatus: conflict ? 'conflict' : 'unsaved',
+            error: conflict ? { kind: 'conflict', code: 'revision_conflict' } : null,
+            finishUncertain: Boolean(pendingFinish), finishing: false, recovered: true, localBackup: 'saved',
+        });
     }
 
     function copyAnswers(attempt) {
@@ -88,6 +136,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
                 deadlineReached: attempt.completion_reason === 'deadline' });
         }
         publish(patch);
+        if (attempt.status === 'completed') clearBackup();
     }
 
     function body() {
@@ -107,8 +156,15 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
         if (initial) publish({ loading: true, error: null });
         const operation = (async () => {
             try {
-                const { data } = await api.get(path);
+                const [{ data }, verifiedOwner] = await Promise.all([
+                    api.get(path),
+                    recovery ? recovery.getOwnerId() : Promise.resolve(null),
+                ]);
                 if (disposed || currentGeneration !== generation) return false;
+                if (recovery) {
+                    if (!Number.isSafeInteger(verifiedOwner) || verifiedOwner <= 0) throw new Error('Unverified account');
+                    ownerId = verifiedOwner;
+                }
                 if (discard) {
                     pendingWrite = null;
                     pendingFinish = null;
@@ -117,6 +173,8 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
                     publish({ error: null, saveStatus: 'saved', finishing: false, finishUncertain: false, deadlineReached: false });
                 }
                 accept(data, { replaceLocal: discard || initial });
+                if (discard) clearBackup();
+                else if (initial) restore();
                 return true;
             } catch (error) {
                 if (!disposed && currentGeneration === generation) publish({ loading: false, error: errorInfo(error, state.deadlineReached ? 'deadline' : 'load') });
@@ -142,6 +200,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
         localVersion += 1;
         const blockedError = state.saveStatus === 'error' && pendingWrite;
         publish({ ...patch, saveStatus: blockedError ? 'error' : writeFlight ? 'saving' : 'unsaved', error: blockedError ? state.error : null });
+        backup();
     }
 
     function findQuestion(questionId) {
@@ -162,6 +221,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
         pendingWrite = write;
         const currentGeneration = generation;
         publish({ saveStatus: 'saving', error: null });
+        backup();
         const operation = (async () => {
             try {
                 const { data } = await api.patch(path + 'answers/', write.payload);
@@ -171,6 +231,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
                 acknowledgedVersion = write.version;
                 accept(data);
                 publish({ saveStatus: localVersion === acknowledgedVersion ? 'saved' : 'unsaved', error: null });
+                backup();
                 return true;
             } catch (error) {
                 if (disposed || currentGeneration !== generation) return false;
@@ -185,6 +246,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
                     if (error?.response?.status === 400) pendingWrite = null;
                     publish({ saveStatus: 'error', error: errorInfo(error, error?.response?.status === 400 ? 'validation' : 'save') });
                 }
+                backup();
                 return false;
             }
         })();
@@ -230,6 +292,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
             }
             if (!pendingFinish) pendingFinish = { payload: body() };
             publish({ finishUncertain: false });
+            backup();
             try {
                 const { data } = await api.post(path + 'finish/', pendingFinish.payload);
                 if (disposed || currentGeneration !== generation) return false;
@@ -249,6 +312,7 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
                 } else {
                     publish({ finishing: false, finishUncertain: true, error: errorInfo(error, 'finish') });
                 }
+                backup();
                 return false;
             }
         })();
@@ -311,8 +375,8 @@ export function createExamSession({ api, attemptId, now = Date.now, uuid = () =>
                 if (attachmentVersion !== detachedVersion) return;
                 disposed = true; generation += 1; readFlight = null;
             };
-            // SPA Back can unmount without beforeunload. Try to persist the
-            // last edit, but only acknowledged writes are promised on resume.
+            // SPA Back can unmount without beforeunload. Try a server flush;
+            // the separate browser copy retains unacknowledged edits.
             if (flushPending && state.hasUnsentChanges && !state.finishing && !pendingFinish
                 && state.saveStatus !== 'conflict' && !state.deadlineReached) {
                 return flush().finally(disconnect);

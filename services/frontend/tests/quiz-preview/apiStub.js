@@ -13,6 +13,7 @@ async function previewRequest(operation, payload) {
 
 export default {
     get(url) {
+        if (url === 'users/me/') return Promise.resolve({ data: { id: 99001 } }); // Explicitly synthetic preview owner.
         if (/^quizzes\/lesson\/9001\/(?:\?.*)?$/.test(url)) return previewRequest('quiz');
         throw new Error(`Isolated preview blocked an unexpected GET: ${url}`);
     },

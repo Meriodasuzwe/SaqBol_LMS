@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from './api';
+import { createQuizSubmissionRecovery, quizSubmissionStorage } from './quizSubmissionRecovery';
 import { useTranslation } from 'react-i18next';
 import { getKtQuizCopy } from './ktQuizCopy';
 import { toast } from 'react-toastify';
@@ -45,6 +46,7 @@ function QuizPage() {
     const [currentResult, setCurrentResult] = useState(null);
     const [submissionStatus, setSubmissionStatus] = useState('idle');
     const submissionRef = useRef(null);
+    const submissionRecoveryRef = useRef(null);
     const questionHeadingRef = useRef(null);
     const resultHeadingRef = useRef(null);
     const pendingQuestionFocusRef = useRef(false);
@@ -57,12 +59,17 @@ function QuizPage() {
     const [cheatWarnings, setCheatWarnings] = useState(0);
     const cheatWarningsRef = useRef(cheatWarnings);
     const selectedAnswersRef = useRef(selectedAnswers);
+    const [recoveryStatus, setRecoveryStatus] = useState('none');
     
     useEffect(() => { cheatWarningsRef.current = cheatWarnings; }, [cheatWarnings]);
     useEffect(() => { selectedAnswersRef.current = selectedAnswers; }, [selectedAnswers]);
 
     // Загрузка данных и попыток
     useEffect(() => {
+        let active = true;
+        submissionRecoveryRef.current = null;
+        setRecoveryStatus('none');
+        setQuiz(null);
         submissionRef.current = null;
         setSubmissionStatus('idle');
         setCurrentResult(null);
@@ -78,6 +85,46 @@ function QuizPage() {
                 if (validQuizzes.length > 0) {
                     const specificQuiz = targetQuizId ? validQuizzes.find(q => String(q.id) === String(targetQuizId)) : validQuizzes[0];
                     const activeQuiz = specificQuiz || validQuizzes[0];
+                    if (!active) return;
+                    if (activeQuiz.mode !== 'kt_profile') {
+                        // Verify the account through the authenticated API before reading its copy.
+                        const { data: owner } = await api.get('users/me/');
+                        if (!active) return;
+                        const recovery = createQuizSubmissionRecovery({
+                            storage: quizSubmissionStorage, ownerId: owner.id, lessonId, quizId: activeQuiz.id, quiz: activeQuiz,
+                        });
+                        submissionRecoveryRef.current = recovery;
+                        try {
+                            const saved = recovery.load();
+                            if (saved) {
+                                submissionRef.current = {quizId: activeQuiz.id, payload: saved.payload, inFlight: false, completed: false};
+                                const answers = Object.fromEntries(saved.payload.answers.map(answer => [answer.question_id, [...answer.choice_ids]]));
+                                selectedAnswersRef.current = answers;
+                                setSelectedAnswers(answers);
+                                startTimeRef.current = saved.startedAt;
+                                cheatWarningsRef.current = saved.warnings;
+                                setCheatWarnings(saved.warnings);
+                                setSubmissionStatus('retry');
+                                setRecoveryStatus('recovered');
+                            } else {
+                                try {
+                                    const draft = recovery.loadDraft();
+                                    if (draft) {
+                                        selectedAnswersRef.current = draft.answers;
+                                        setSelectedAnswers(draft.answers);
+                                        setCurrentIndex(draft.currentIndex);
+                                        startTimeRef.current = draft.startedAt;
+                                        cheatWarningsRef.current = draft.warnings;
+                                        setCheatWarnings(draft.warnings);
+                                        setRecoveryStatus('draft-restored');
+                                    }
+                                } catch { setRecoveryStatus('draft-blocked'); }
+                            }
+                        } catch {
+                            // Do not create a new submission while an unreadable old copy may exist.
+                            setRecoveryStatus('blocked');
+                        }
+                    }
                     setQuiz(activeQuiz);
                     
                     // Загружаем количество попыток из памяти браузера
@@ -85,21 +132,23 @@ function QuizPage() {
                     setAttempts(savedAttempts);
                 }
             } catch (err) {
+                if (!active) return;
                 console.error("Ошибка загрузки данных:", err);
                 toast.error("Не удалось загрузить тест.");
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
         };
         fetchData();
         startTimeRef.current = Date.now();
-        return () => { submissionRef.current = null; };
+        return () => { active = false; submissionRef.current = null; submissionRecoveryRef.current = null; };
     }, [lessonId, targetQuizId]);
 
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.hidden && !currentResult && quiz && quiz.mode !== 'kt_profile') {
                 const currentWarnings = cheatWarningsRef.current + 1;
+                cheatWarningsRef.current = currentWarnings;
                 setCheatWarnings(currentWarnings);
 
                 if (currentWarnings >= 3) {
@@ -108,6 +157,7 @@ function QuizPage() {
                     });
                     submitQuiz(true);
                 } else {
+                    if (submissionRecoveryRef.current) saveQuizDraft(selectedAnswersRef.current, currentIndex, currentWarnings);
                     toast.warning(`ПРЕДУПРЕЖДЕНИЕ (${currentWarnings}/3): Не покидайте вкладку с тестом!`, {
                         autoClose: 7000, theme: "colored"
                     });
@@ -117,7 +167,7 @@ function QuizPage() {
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
         return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-    }, [currentResult, quiz]);
+    }, [currentResult, quiz, currentIndex, recoveryStatus]);
 
     // Native focus reveals the new question/result without animated scrolling.
     useEffect(() => {
@@ -131,34 +181,45 @@ function QuizPage() {
         }
     }, [isKtProfile, currentIndex]);
 
+    const saveQuizDraft = (answers, index = currentIndex, warnings = cheatWarningsRef.current) => {
+        if (!submissionRecoveryRef.current || submissionRef.current || currentResult
+            || ['blocked', 'draft-blocked'].includes(recoveryStatus)) return;
+        try {
+            submissionRecoveryRef.current.saveDraft(answers, {
+                startedAt: startTimeRef.current, warnings, currentIndex: index,
+            });
+            setRecoveryStatus('draft');
+        } catch { setRecoveryStatus('error'); }
+    };
+
     const navigateQuestion = (index) => {
         if (isKtProfile) {
             if (index === currentIndex) questionHeadingRef.current?.focus();
             else pendingQuestionFocusRef.current = true;
         }
         setCurrentIndex(index);
+        if (!isKtProfile && submissionRecoveryRef.current) saveQuizDraft(selectedAnswersRef.current, index);
     };
 
     // Обновлённый handleAnswer: переключает выбор в массиве для конкретного вопроса
     const handleAnswer = (questionId, optionId) => {
-        if (submissionRef.current?.quizId === quiz?.id) return;
-        setSelectedAnswers(prev => {
-            if (quiz?.mode === 'kt_profile' && quiz.questions.find(q => q.id === questionId)?.kt_subject === 'first_subject') {
-                return { ...prev, [questionId]: optionId === null ? [] : [optionId] };
-            }
+        if (['blocked', 'draft-blocked'].includes(recoveryStatus) || submissionRef.current?.quizId === quiz?.id) return;
+        const prev = selectedAnswersRef.current;
+        let next;
+        if (quiz?.mode === 'kt_profile' && quiz.questions.find(q => q.id === questionId)?.kt_subject === 'first_subject') {
+            next = { ...prev, [questionId]: optionId === null ? [] : [optionId] };
+        } else {
             const currentChoices = prev[questionId] || [];
-            if (currentChoices.includes(optionId)) {
-                // Убираем, если уже выбран
-                return { ...prev, [questionId]: currentChoices.filter(id => id !== optionId) };
-            } else {
-                // Добавляем, если не выбран
-                return { ...prev, [questionId]: [...currentChoices, optionId] };
-            }
-        });
+            next = { ...prev, [questionId]: currentChoices.includes(optionId)
+                ? currentChoices.filter(id => id !== optionId) : [...currentChoices, optionId] };
+        }
+        selectedAnswersRef.current = next;
+        setSelectedAnswers(next);
+        if (submissionRecoveryRef.current) saveQuizDraft(next);
     };
 
     const submitQuiz = (isForced = false) => {
-        if (!quiz) return;
+        if (!quiz || ['blocked', 'draft-blocked'].includes(recoveryStatus)) return;
         let submission = submissionRef.current;
         if (submission?.quizId === quiz.id && (submission.inFlight || submission.completed)) return;
 
@@ -168,7 +229,7 @@ function QuizPage() {
             submission = {
                 quizId: quiz.id,
                 payload: {
-                    submission_id: crypto.randomUUID(),
+                    submission_id: submissionRecoveryRef.current?.draftId || crypto.randomUUID(),
                     answers: Object.entries(answersToSubmit).map(([qId, oIds]) => ({
                         question_id: parseInt(qId),
                         choice_ids: Array.isArray(oIds) ? [...oIds] : [oIds],
@@ -180,12 +241,25 @@ function QuizPage() {
             };
             submissionRef.current = submission;
         }
+        if (submissionRecoveryRef.current) {
+            try {
+                // Synchronous local write BEFORE dispatch, including the UUID and exact payload.
+                submissionRecoveryRef.current.save(submission, {
+                    startedAt: startTimeRef.current, warnings: cheatWarningsRef.current,
+                });
+                setRecoveryStatus('saved');
+            } catch { setRecoveryStatus('error'); }
+        }
         submission.inFlight = true;
         setSubmissionStatus('sending');
         api.post(`quizzes/${submission.quizId}/submit/`, submission.payload)
             .then(res => {
                 if (submissionRef.current !== submission) return;
                 submission.completed = true;
+                if (submissionRecoveryRef.current) {
+                    try { submissionRecoveryRef.current.clear(); setRecoveryStatus('none'); }
+                    catch { setRecoveryStatus('error'); }
+                }
                 setSubmissionStatus('idle');
                 setCurrentResult(res.data);
 
@@ -214,6 +288,10 @@ function QuizPage() {
                 if (err.response?.status === 400) {
                     // Validation rejected the entire request before any result was saved.
                     submissionRef.current = null;
+                    if (submissionRecoveryRef.current) {
+                        try { submissionRecoveryRef.current.clear(); setRecoveryStatus('none'); }
+                        catch { setRecoveryStatus('error'); }
+                    }
                     setSubmissionStatus('idle');
                     const serverError = err.response?.data?.error;
                     const validationMessage = typeof serverError === 'string'
@@ -232,12 +310,18 @@ function QuizPage() {
     };
 
     const restartQuiz = () => {
+        if (submissionRecoveryRef.current) {
+            try { submissionRecoveryRef.current.clear(); setRecoveryStatus('none'); }
+            catch { setRecoveryStatus('blocked'); return; }
+        }
         submissionRef.current = null;
         setSubmissionStatus('idle');
         setCurrentResult(null);
         setSelectedAnswers({});
         setCurrentIndex(0);
         setCheatWarnings(0);
+        cheatWarningsRef.current = 0;
+        selectedAnswersRef.current = {};
         startTimeRef.current = Date.now();
     };
 
@@ -296,6 +380,21 @@ function QuizPage() {
                         <ChevronLeft size={18} aria-hidden="true" /> {isKtProfile ? ktCopy.exit : 'Покинуть тест'}
                     </button>
                 </header>
+
+            {!isKtProfile && recoveryStatus !== 'none' && <div role={['error', 'blocked', 'draft-blocked'].includes(recoveryStatus) ? 'alert' : 'status'} className="mb-6 rounded-xl border border-base-300 bg-base-200 p-4 text-sm leading-relaxed">
+                {recoveryStatus === 'draft-blocked'
+                    ? 'Сохранённый выбор не удалось восстановить: тест изменился или локальная копия повреждена. Чтобы начать заново, явно сбросьте этот выбор.'
+                    : recoveryStatus === 'blocked'
+                    ? 'Не удалось прочитать локальную копию сдачи. Отправка заблокирована, чтобы не создать повторную попытку. Проверьте доступность хранилища браузера и обновите страницу.'
+                    : recoveryStatus === 'error'
+                        ? 'Не удалось сохранить или очистить локальную копию. До получения результата сервера не закрывайте страницу: восстановление после закрытия не гарантировано.'
+                        : ['draft', 'draft-restored'].includes(recoveryStatus)
+                            ? 'Выбор сохранён только в этом браузере. ' + (recoveryStatus === 'draft-restored' ? 'Ответы восстановлены. ' : '') + 'Результат появится после сдачи теста.'
+                        : recoveryStatus === 'recovered'
+                            ? 'Восстановлена неподтверждённая сдача. Ответы зафиксированы: нажмите «Повторить отправку», чтобы получить результат той же попытки.'
+                            : 'Запрос сдачи сохранён в этом браузере. Результат ещё не подтверждён сервером.'}
+                {recoveryStatus === 'draft-blocked' && <button type="button" className="mt-3 block min-h-11 rounded-lg border border-base-300 px-3 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" onClick={restartQuiz}>Сбросить локальный выбор и начать заново</button>}
+            </div>}
 
             <div className="grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
                 {/* НАВИГАЦИЯ ВОПРОСОВ */}
@@ -470,7 +569,7 @@ function QuizPage() {
                                                 name={`question-${currentQuestion.id}`}
                                                 className={`h-5 w-5 appearance-none border-2 border-base-content/50 checked:border-blue-600 checked:bg-blue-600 focus-visible:outline-none disabled:cursor-not-allowed ${isSingleChoice ? 'rounded-full' : 'rounded'}`}
                                                 checked={isSelected}
-                                                disabled={!!currentResult || submissionStatus !== 'idle'}
+                                                disabled={['blocked', 'draft-blocked'].includes(recoveryStatus) || !!currentResult || submissionStatus !== 'idle'}
                                                 onChange={() => handleAnswer(currentQuestion.id, choice.id)}
                                             />
                                             {isSelected && (
@@ -523,7 +622,7 @@ function QuizPage() {
                                 ) : (
                                     <button 
                                         className={primaryButtonClass}
-                                        disabled={submissionStatus === 'sending' || (!isKtProfile && !isAllAnswered && submissionStatus !== 'retry')}
+                                        disabled={['blocked', 'draft-blocked'].includes(recoveryStatus) || submissionStatus === 'sending' || (!isKtProfile && !isAllAnswered && submissionStatus !== 'retry')}
                                         aria-describedby={submissionStatus === 'retry' ? 'quiz-retry-hint' : !isAllAnswered ? 'quiz-submit-hint' : undefined}
                                         onClick={() => submitQuiz(false)}
                                     >

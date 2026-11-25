@@ -40,7 +40,7 @@ function evaluateNode(file, node, bindings = {}) {
     // No imports, component effects, network clients, or application bootstrap run.
     const expression = file.source.slice(node.start, node.end);
     return new Script(`(${expression})`, { filename: `${file.name}:${node.loc.start.line}` })
-        .runInNewContext(bindings, { timeout: 1000 });
+        .runInNewContext(Object.assign(bindings, { recoveryStatus: bindings.recoveryStatus || 'none' }), { timeout: 1000 });
 }
 
 function initializer(file, root, variableName) {
@@ -332,7 +332,7 @@ function prepareQuizSubmission(answers, { forcedAnswers = answers, request, now 
     const bindings = {
         quiz, selectedAnswers: answers, selectedAnswersRef: { current: forcedAnswers },
         startTimeRef: { current: 1000 }, Date: { now: () => currentTime }, attempts: 0,
-        currentResult: null, submissionRef: { current: null }, submissionStatus: 'idle',
+        currentResult: null, submissionRef: { current: null }, submissionRecoveryRef: { current: null }, cheatWarningsRef: { current: 0 }, recoveryStatus: 'none', submissionStatus: 'idle',
         crypto: { randomUUID: () => `00000000-0000-4000-8000-${String(++uuidSequence).padStart(12, '0')}` },
         setSubmissionStatus: value => { bindings.submissionStatus = value; statuses.push(value); },
         setCurrentResult: value => { bindings.currentResult = value; results.push(JSON.parse(JSON.stringify(value))); },

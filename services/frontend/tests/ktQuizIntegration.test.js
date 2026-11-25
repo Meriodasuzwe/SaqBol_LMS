@@ -25,7 +25,7 @@ function initializer(name) {
     return find(node => node.type === 'VariableDeclarator' && node.id.name === name).init;
 }
 function evaluate(node, bindings) {
-    return new Script(`(${source.slice(node.start, node.end)})`).runInNewContext(bindings, { timeout: 1000 });
+    return new Script(`(${source.slice(node.start, node.end)})`).runInNewContext(Object.assign(bindings, { recoveryStatus: bindings.recoveryStatus || 'none' }), { timeout: 1000 });
 }
 const normalize = value => JSON.parse(JSON.stringify(value));
 const fixtureQuiz = {
@@ -49,7 +49,7 @@ function handlers({ mode = 'kt_profile', result = fixtureResult, request } = {})
     let uuid = 0;
     const bindings = {
         quiz: { ...fixtureQuiz, mode }, selectedAnswers: {}, selectedAnswersRef: { current: {} },
-        submissionRef: { current: null }, startTimeRef: { current: 0 }, attempts: 0,
+        submissionRef: { current: null }, submissionRecoveryRef: { current: null }, cheatWarningsRef: { current: 0 }, recoveryStatus: 'none', startTimeRef: { current: 0 }, attempts: 0,
         ktCopy: getKtQuizCopy('ru'), crypto: { randomUUID: () => `synthetic-${++uuid}` },
         Date: { now: () => 10000 }, setSubmissionStatus() {}, setCurrentIndex() {}, setCheatWarnings() {},
         setSelectedAnswers(update) { bindings.selectedAnswers = typeof update === 'function' ? update(bindings.selectedAnswers) : update; bindings.selectedAnswersRef.current = bindings.selectedAnswers; },
@@ -124,7 +124,7 @@ test('KT does not force-submit on tab visibility changes; legacy training behavi
     for (const [mode, expectedSubmits] of [['kt_profile', 0], ['training', 1]]) {
         let submits = 0;
         evaluate(initializer('handleVisibilityChange'), {
-            document: { hidden: true }, currentResult: null, quiz: { mode },
+            submissionRecoveryRef: { current: null }, document: { hidden: true }, currentResult: null, quiz: { mode },
             cheatWarningsRef: { current: 2 }, setCheatWarnings() {},
             toast: { error() {}, warning() {} }, submitQuiz() { submits++; },
         })();
@@ -251,7 +251,7 @@ test('KT result focus runs only after a KT result; legacy training navigation ne
     afterResult();
     assert.deepEqual(focused, ['result']);
     evaluate(initializer('navigateQuestion'), {
-        isKtProfile: false, currentIndex: 0, setCurrentIndex() {},
+        submissionRecoveryRef: { current: null }, isKtProfile: false, currentIndex: 0, setCurrentIndex() {},
         questionHeadingRef: { current: { focus: () => assert.fail('Legacy focus must stay unchanged') } },
     })(1);
 });

@@ -11,19 +11,21 @@ import tailwindcss from '@tailwindcss/vite';
 const tests = dirname(fileURLToPath(import.meta.url));
 const frontend = resolve(tests, '..');
 const core = resolve(frontend, '../core_service');
-const root = resolve(tests, 'exam-preview');
-const port = 4181;
+const quizRecovery = process.argv.includes('--quiz-recovery');
+const root = resolve(tests, quizRecovery ? 'quiz-recovery-preview' : 'exam-preview');
+const port = Number(process.argv[2] || 4181);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid preview port.');
 const origin = `http://127.0.0.1:${port}`;
 const containerName = `saqbol-exam-preview-${process.pid}`;
 const backend = spawn('docker', [
     'run', '--rm', '-i', '--name', containerName, '--pull', 'never', '--network', 'none', '--read-only',
     '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m',
     '--mount', `type=bind,source=${core},target=/source,readonly`,
-    '--entrypoint', 'python', 'saqbol_lms-core_service:latest', '/source/tests/run_exam_preview.py',
+    '--entrypoint', 'python', 'saqbol_lms-core_service:latest', quizRecovery ? '/source/tests/run_quiz_recovery_preview.py' : '/source/tests/run_exam_preview.py',
 ], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
 
 let sequence = 0, server, closing = false, backendReady = false, backendFinished = false, shutdownPromise;
-const faults = { fail_next_save: false, fail_next_finish: false, lose_next_finish_response: false };
+const faults = { fail_next_save: false, offline_saves: false, lose_next_save_response: false, fail_next_finish: false, lose_next_finish_response: false };
 const pending = new Map();
 let resolveBackendExit;
 const backendExit = new Promise(resolve => { resolveBackendExit = resolve; });
@@ -183,7 +185,7 @@ try {
                         if (url.pathname === '/__exam_preview__/control' && request.method === 'POST') {
                             const data = await readBody(request);
                             if (Object.hasOwn(faults, data?.command)) {
-                                faults[data.command] = true;
+                                faults[data.command] = data.command === 'offline_saves' ? !faults[data.command] : true;
                                 return json(response, 200, { isolated: true, armed: data.command });
                             }
                             if (data?.command === 'deadline_in_five_seconds') {
@@ -194,7 +196,11 @@ try {
                         }
                         if (!url.pathname.startsWith('/api/')) return json(response, 404, { detail: 'Unknown test control.' });
                         const isSave = request.method === 'PATCH' && /\/exams\/attempts\/[^/]+\/answers\/$/.test(url.pathname);
-                        const isFinish = request.method === 'POST' && /\/exams\/attempts\/[^/]+\/finish\/$/.test(url.pathname);
+                        const isFinish = request.method === 'POST' && (quizRecovery && /\/quizzes\/904\/submit\/$/.test(url.pathname) || /\/exams\/attempts\/[^/]+\/finish\/$/.test(url.pathname));
+                        if (isSave && faults.offline_saves) {
+                            await readBody(request);
+                            return json(response, 503, { detail: 'Artificial offline saves. No backend write.' });
+                        }
                         const beforeFault = isSave && faults.fail_next_save ? 'fail_next_save' : isFinish && faults.fail_next_finish ? 'fail_next_finish' : null;
                         if (beforeFault) {
                             faults[beforeFault] = false;
@@ -206,6 +212,10 @@ try {
                             ...await readApiBody(request),
                             headers: { authorization: request.headers.authorization || '' },
                         });
+                        if (isSave && faults.lose_next_save_response) {
+                            faults.lose_next_save_response = false;
+                            return json(response, 502, { detail: 'Artificial lost save response after server commit.' });
+                        }
                         if (isFinish && faults.lose_next_finish_response) {
                             faults.lose_next_finish_response = false;
                             return json(response, 502, { detail: 'Искусственно потерян ответ после обработки сервером. Повторите ту же сдачу.' });
@@ -226,7 +236,8 @@ try {
         throw new Error('Isolated backend stopped before the preview could start.');
     }
     await server.listen();
-    console.log(`Real ExamPage preview: ${origin}/exams`);
+    if (quizRecovery) console.log('Quiz recovery route: http://127.0.0.1:' + port + '/quiz/lesson/902?quiz_id=904');
+    if (!quizRecovery) console.log(`Real ExamPage preview: ${origin}/exams`);
     console.log(`Read-only synthetic attempt state: ${origin}/__exam_preview__/state`);
     console.log(`Container: ${containerName}. Network disabled; ephemeral SQLite; no .env or production data.`);
 } catch (error) {

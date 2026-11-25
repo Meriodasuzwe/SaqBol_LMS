@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import defaultApi from '../api';
+import { browserExamStorage } from './examRecovery';
 import { AUTOSAVE_DELAY, createExamSession } from './examSession';
 
 export default function useExamSession(attemptId, { api = defaultApi } = {}) {
-    const session = useMemo(() => createExamSession({ api, attemptId }), [api, attemptId]);
+    const session = useMemo(() => createExamSession({ api, attemptId, recovery: {
+        storage: browserExamStorage, getOwnerId: async () => (await api.get('users/me/')).data.id,
+    } }), [api, attemptId]);
     const state = useSyncExternalStore(session.subscribe, session.getSnapshot, session.getSnapshot);
 
     useEffect(() => {
@@ -17,6 +20,15 @@ export default function useExamSession(attemptId, { api = defaultApi } = {}) {
         const timeout = window.setTimeout(() => { void session.save(); }, AUTOSAVE_DELAY);
         return () => window.clearTimeout(timeout);
     }, [session, state.answers, state.flaggedQuestionIds, state.lastQuestionBySection, state.editable, state.saveStatus]);
+
+    useEffect(() => {
+        const reconnect = () => {
+            const current = session.getSnapshot();
+            if (current.editable && current.hasUnsentChanges) void session.flush();
+        };
+        window.addEventListener('online', reconnect);
+        return () => window.removeEventListener('online', reconnect);
+    }, [session]);
 
     useEffect(() => {
         if (!state.hasUnsentChanges) return undefined;
