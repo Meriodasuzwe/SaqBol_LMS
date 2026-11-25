@@ -2,7 +2,7 @@
 export function createBuilderFixture() {
     const steps = [
         { id: 903, lesson: 902, title: 'Демонстрационный SQL-тест', step_type: 'quiz', order: 1, content: '', scenario_data: { quiz_id: 904 } },
-        { id: 905, lesson: 902, title: 'Искусственный текстовый шаг', step_type: 'text', order: 2, content: '<p>Этот шаг нужен только для проверки повторного открытия редактора вопросов.</p>', scenario_data: {} },
+        { id: 905, edit_version: '1'.padStart(64,'0'), lesson: 902, title: 'Искусственный текстовый шаг', step_type: 'text', order: 2, content: '<p>Этот шаг нужен только для проверки повторного открытия редактора вопросов.</p>', scenario_data: {} },
     ];
     return {
         course: { id: 901, title: 'Искусственный курс для проверки конструктора', description: '<p>Локальная тестовая фикстура. Не учебный материал для публикации.</p>', price: '0.00', status: 'draft', category: 900, cover_image: null },

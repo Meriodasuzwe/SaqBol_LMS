@@ -1,7 +1,7 @@
 // Preview-only transport replacement. It cannot forward arbitrary URLs or credentials.
 const base = 'http://builder-preview.invalid/';
 const allowed = {
-    GET: [/^\/quizzes\/bank\/$/, /^\/quizzes\/bank\/topics\/$/, /^\/courses\/901\/$/, /^\/courses\/901\/lessons\/$/, /^\/quizzes\/lesson\/902\/$/],
+    GET: [/^\/users\/me\/$/, /^\/courses\/steps\/905\/$/, /^\/quizzes\/bank\/$/, /^\/quizzes\/bank\/topics\/$/, /^\/courses\/901\/$/, /^\/courses\/901\/lessons\/$/, /^\/quizzes\/lesson\/902\/$/],
     POST: [/^\/quizzes\/save-generated\/$/],
     PATCH: [/^\/courses\/steps\/(903|905)\/$/],
 };

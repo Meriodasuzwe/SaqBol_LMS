@@ -290,8 +290,11 @@ def test_legacy_save_without_builder_fields_keeps_its_contract(client, graph):
 def test_text_step_patch_remains_available(client, graph):
     graph.step.step_type = 'text'
     graph.step.save()
+    current = client.get(f'/courses/steps/{graph.step.pk}/')
+    assert current.status_code == 200 and current.data['edit_version']
     response = client.patch(f'/courses/steps/{graph.step.pk}/', {
         'title': 'Changed text title', 'content': '<p>Synthetic text.</p>',
+        'expected_version': current.data['edit_version'],
     }, format='json')
     assert response.status_code == 200
     graph.step.refresh_from_db()

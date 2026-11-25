@@ -56,6 +56,9 @@ function Preview() {
                 </select></label>
                 <button type="button" onClick={() => setRevision(value => value + 1)}>Повторно открыть</button>
                 <button type="button" onClick={reset}>Сбросить фикстуру</button>
+                <button type="button" onClick={()=>fetch('/__builder_preview__/change-text',{method:'POST'})}>Изменить серверный текст (имитация)</button>
+                <button type="button" onClick={()=>fetch('/__builder_preview__/fail-next-text-save',{method:'POST'})}>Следующее сохранение текста: ошибка 503</button>
+                <button type="button" onClick={()=>fetch('/__builder_preview__/race-next-text-save',{method:'POST'})}>Правка между GET и PATCH (имитация)</button>
                 <a href="/__builder_preview__/state" target="_blank" rel="noreferrer">Данные и запросы</a>
             </div>
             {error && <p role="alert">{error}</p>}

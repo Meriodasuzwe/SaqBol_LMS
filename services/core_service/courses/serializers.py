@@ -1,7 +1,16 @@
+import hashlib
+import json
 from rest_framework import serializers
 from django.db.models import Avg 
 
 from .models import Course, Lesson, Category, LessonStep, StepProgress, Review, Certificate, Enrollment, B2BLead
+
+def text_step_version(step):
+    """State token, not a user-editable revision. Reordering alone is independent."""
+    data = [step.pk, step.step_type, step.title, step.content,
+            step.scenario_data, getattr(step.file, 'name', '') or '']
+    return hashlib.sha256(json.dumps(data, ensure_ascii=False, sort_keys=True,
+                                    separators=(',', ':')).encode()).hexdigest()
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,15 +18,19 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 class LessonStepSerializer(serializers.ModelSerializer):
+    edit_version = serializers.SerializerMethodField()
     is_completed = serializers.SerializerMethodField()
 
     class Meta:
         model = LessonStep
-        fields = ['id', 'title', 'step_type', 'content', 'file', 'scenario_data', 'order', 'is_completed']
+        fields = ['id', 'title', 'step_type', 'content', 'file', 'scenario_data', 'order', 'is_completed', 'edit_version']
         extra_kwargs = {
             'content': {'required': False, 'allow_blank': True},
             'scenario_data': {'required': False}, 
         }
+
+    def get_edit_version(self, obj):
+        return text_step_version(obj) if obj.step_type == 'text' else None
 
     def get_is_completed(self, obj):
         request = self.context.get('request')
